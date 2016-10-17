@@ -7,6 +7,7 @@ var common = require('web.form_common');
 var BarcodeEvents = require('barcodes.BarcodeEvents');
 var BarcodeHandlerMixin = require('barcodes.BarcodeHandlerMixin');
 var KanbanRecord = require('web_kanban.Record');
+var KanbanView = require('web_kanban.KanbanView');
 var Dialog = require('web.Dialog');
 
 var _t = core._t;
@@ -21,6 +22,34 @@ KanbanRecord.include({
     get: function (key) {
         return this.values[key] && this.values[key].value;
     },
+});
+var should_scroll = false;
+var last_scanned_barcode;
+KanbanView.include({
+    reload_record: function (record) {
+        $(window).scrollTop(record.$el.offset().top)
+        return this._super.apply(this,arguments);
+    },
+    do_search: function () {
+        var self = this;
+        return this._super.apply(this,arguments).then(function(){
+            if (should_scroll){
+                var record_to_scroll = _.find(self.widgets, function (record) {
+                    return record.get('product_barcode') === last_scanned_barcode;
+                });
+                if (! record_to_scroll){
+                    record_to_scroll = _.find(self.widgets, function (record) {
+                    return record.get('product_barcode').substring(0,7) === last_scanned_barcode.substring(0,7);
+                });
+                }
+                if (record_to_scroll){
+                    $(window).scrollTop(record_to_scroll.$el.offset().top)
+                }
+                should_scroll = false;
+                last_scanned_barcode = undefined;
+            }
+        });
+    }
 });
 
 var FormViewBarcodeHandler = common.AbstractField.extend(BarcodeHandlerMixin, {
@@ -160,7 +189,7 @@ var FormViewBarcodeHandler = common.AbstractField.extend(BarcodeHandlerMixin, {
                 // that every ongoing onchanges in the form view are done
                 var form_onchanges_mutex = function () {
                     return self.form_view.onchanges_mutex.def;
-                }
+                };
 
                 // before setting the barcode field with the received barcode, we commit
                 // every fields of the form view and we wait for their hypothetical ongoing
@@ -176,6 +205,8 @@ var FormViewBarcodeHandler = common.AbstractField.extend(BarcodeHandlerMixin, {
                 return commit_mutex.def.then(function () {
                     return self.pre_onchange_hook(barcode).then(function (proceed) {
                         if (proceed) {
+                            should_scroll = true;
+                            last_scanned_barcode = barcode;
                             self.set_value(barcode);       // set the barcode field with the received one
                             return form_onchanges_mutex(); // wait for its onchange to finish
                         }
