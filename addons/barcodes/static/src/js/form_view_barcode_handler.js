@@ -220,6 +220,9 @@ var FormViewBarcodeHandler = common.AbstractField.extend(BarcodeHandlerMixin, {
 
     _get_records: function(field) {
         var active_view = field.viewmanager.active_view;
+        if (! active_view) {
+            return [];
+        }
         if (active_view.type === "kanban") {
             return active_view.controller.widgets;
         } else {
