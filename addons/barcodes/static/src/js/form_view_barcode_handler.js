@@ -27,13 +27,15 @@ var should_scroll = false;
 var last_scanned_barcode;
 KanbanView.include({
     reload_record: function (record) {
-        $(window).scrollTop(record.$el.offset().top)
+        if (this.model === "stock.pack.operation") {
+            $(window).scrollTop(record.$el.offset().top);
+        }
         return this._super.apply(this,arguments);
     },
     do_search: function () {
         var self = this;
         return this._super.apply(this,arguments).then(function(){
-            if (should_scroll){
+            if (should_scroll && self.model === "stock.pack.operation") {
                 var record_to_scroll = _.find(self.widgets, function (record) {
                     return record.get('product_barcode') === last_scanned_barcode;
                 });
