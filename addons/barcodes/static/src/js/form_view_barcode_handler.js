@@ -41,7 +41,15 @@ KanbanView.include({
                 });
                 if (! record_to_scroll){
                     record_to_scroll = _.find(self.widgets, function (record) {
-                    return record.get('product_barcode').substring(0,7) === last_scanned_barcode.substring(0,7);
+                    // be sure that the product_barcode is not false before substring-ing it. this situation should
+                    // not happen but empty records (that somehow bypassed the required mechanism in the view) lead
+                    // to tracebacks here.
+
+                    var record_barcode = record.get('product_barcode');
+                    if (! record_barcode) {
+                        return false;
+                    }
+                    return record_barcode.substring(0,7) === last_scanned_barcode.substring(0,7);
                 });
                 }
                 if (record_to_scroll){
