@@ -322,12 +322,13 @@ class WebsiteSale(http.Controller):
 
     @http.route(['/shop/pricelist'], type='http', auth="public", website=True)
     def pricelist(self, promo, **post):
+        redirect = post.get('r', '/shop/cart')
         pricelist = request.env['product.pricelist'].sudo().search([('code', '=', promo)], limit=1)
         if pricelist and not request.website.is_pricelist_available(pricelist.id):
-            return request.redirect("/shop/cart?code_not_available=1")
+            return request.redirect("%s?code_not_available=1" % redirect)
 
         request.website.sale_get_order(code=promo)
-        return request.redirect("/shop/cart")
+        return request.redirect(redirect)
 
     @http.route(['/shop/cart'], type='http', auth="public", website=True)
     def cart(self, **post):
