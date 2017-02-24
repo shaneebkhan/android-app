@@ -629,3 +629,7 @@ a.no-decoration {
 .break-word {
   word-wrap: break-word;
 }
+
+.font-weight-normal {
+  font-weight: normal;
+}
