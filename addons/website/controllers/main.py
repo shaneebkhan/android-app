@@ -80,14 +80,15 @@ class Website(Home):
 
     @http.route(website=True, auth="public")
     def web_login(self, redirect=None, *args, **kw):
-        response = super(Website, self).web_login(redirect=redirect, *args, **kw)
-        if not redirect and request.params['login_success']:
-            if request.env['res.users'].browse(request.uid).has_group('base.group_user'):
-                redirect = '/web?' + request.httprequest.query_string
-            else:
-                redirect = '/'
-            return http.redirect_with_hash(redirect)
-        return response
+        return super(Website, self).web_login(redirect=redirect, *args, **kw)
+
+    @http.route('/website/login', website=True, auth="user")
+    def website_login(self, r=None, *args, **kw):
+        if request.env['res.users'].browse(request.uid).has_group('base.group_user'):
+            redirect = '/web'
+        else:
+            redirect = r
+        return http.redirect_with_hash(redirect)
 
     #------------------------------------------------------
     # Business

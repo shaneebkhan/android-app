@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import logging
+import werkzeug
 from itertools import groupby
 from lxml import etree
 
@@ -123,6 +124,8 @@ class View(models.Model):
         qcontext = dict(
             self._context.copy(),
             website=request.website,
+            url_encode=werkzeug.url_encode,
+            html_escape=tools.html_escape,
             url_for=website.url_for,
             slug=website.slug,
             res_company=company,
