@@ -389,6 +389,7 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
                 related_path = field.related.split('.')
                 comodel_name = self._fields[related_path[0]].comodel_name
                 start_time = time.time()
+                print field.name, comodel_name, values.get(related_path[0])
                 related_record = self.env[comodel_name].browse(values.get(related_path[0]))
                 related_value = related_record[related_path[1]]
                 _logger.warning("Elapsed time for browse: --- %s seconds ---" % (time.time() - start_time))
