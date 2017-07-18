@@ -388,8 +388,10 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
             for field in related_fields:
                 related_path = field.related.split('.')
                 comodel_name = self._fields[related_path[0]].comodel_name
+                start_time = time.time()
                 related_record = self.env[comodel_name].browse(values.get(related_path[0]))
-                related_value = self.env[comodel_name].browse(values.get(related_path[0]))[related_path[1]]
+                related_value = related_record[related_path[1]]
+                _logger.warning("Elapsed time for browse: --- %s seconds ---" % (time.time() - start_time))
                 if isinstance(related_value, models.BaseModel):
                     if related_record._fields[related_path[1]].type == 'many2one':
                         related_value = related_value.id
