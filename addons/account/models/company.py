@@ -93,6 +93,8 @@ Best Regards,''')
         #restrict the closing of FY if there are still unposted entries
         self._validate_fiscalyear_lock(values)
 
+        # print "OhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohioOhihohihohihohio"
+
         # Reflect the change on accounts
         for company in self:
             digits = values.get('accounts_code_digits') or company.accounts_code_digits
@@ -103,5 +105,6 @@ Best Regards,''')
                 new_cash_code = values.get('cash_account_code_prefix') or company.cash_account_code_prefix
                 company.reflect_code_prefix_change(company.cash_account_code_prefix, new_cash_code, digits)
             if values.get('accounts_code_digits'):
+                print "Why am I writing `account_code_digits`", values
                 company.reflect_code_digits_change(digits)
         return super(ResCompany, self).write(values)

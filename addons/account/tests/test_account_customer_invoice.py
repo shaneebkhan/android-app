@@ -1,6 +1,9 @@
 from odoo.addons.account.tests.account_test_users import AccountTestUsers
 import datetime
 
+import logging
+import time
+_logger = logging.getLogger(__name__)
 
 class TestAccountCustomerInvoice(AccountTestUsers):
 

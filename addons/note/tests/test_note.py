@@ -2,6 +2,9 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo.tests import common
+import logging
+import time
+_logger = logging.getLogger(__name__)
 
 class TestNote(common.TransactionCase):
 
@@ -9,7 +12,7 @@ class TestNote(common.TransactionCase):
         """ ensure any users can create new users """
         demo_user = self.env.ref('base.user_demo')
         group_erp = self.env.ref('base.group_erp_manager')
-
+        print "YOLO"
         demo_user.write({
             'groups_id': [(4, group_erp.id)],
         })

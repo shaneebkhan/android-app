@@ -5,9 +5,13 @@ from odoo.exceptions import UserError, AccessError
 from odoo.tools import pycompat
 
 from .test_sale_common import TestSale
+import logging
+import time
+_logger = logging.getLogger(__name__)
 
 
 class TestSaleOrder(TestSale):
+
     def test_sale_order(self):
         """ Test the sales order flow (invoicing and quantity updates)
             - Invoice repeatedly while varrying delivered quantities and check that invoice are always what we expect
@@ -138,3 +142,4 @@ class TestSaleOrder(TestSale):
         sol = so.order_line.filtered(lambda l: l.product_id == serv_cost)
         self.assertTrue(sol, 'Sale: cost invoicing does not add lines when confirming vendor invoice')
         self.assertEquals((sol.price_unit, sol.qty_delivered, sol.product_uom_qty, sol.qty_invoiced), (160, 2, 0, 0), 'Sale: line is wrong after confirming vendor invoice')
+

@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+import time
 
 from operator import attrgetter, add
 from lxml import etree
@@ -377,6 +378,30 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
     @api.multi
     def copy(self, values):
         raise UserError(_("Cannot duplicate configuration!"), "")
+
+    @api.multi
+    def create(self, values):
+        if self.env.context.get('compare_execution_time', False):
+            start_time = time.time()
+            related_fields = self.env['ir.model'].search([('name', '=', self._name)]).field_id.filtered(lambda field: field.related)
+            _logger.warning("Elapsed time for search: --- %s seconds ---" % (time.time() - start_time))
+            for field in related_fields:
+                related_path = field.related.split('.')
+                comodel_name = self._fields[related_path[0]].comodel_name
+                related_record = self.env[comodel_name].browse(values.get(related_path[0]))
+                related_value = self.env[comodel_name].browse(values.get(related_path[0]))[related_path[1]]
+                if isinstance(related_value, models.BaseModel):
+                    if related_record._fields[related_path[1]].type == 'many2one':
+                        related_value = related_value.id
+                    else:
+                        related_value = related_value.ids
+                transient_value = values.get(field.name)
+                # import pdb; pdb.set_trace()
+                # print field.name, related_value == transient_value, 'related_value', related_value, 'transient_value', transient_value
+                if related_value == transient_value:
+                    values.pop(field.name)
+        print values
+        return super(ResConfigSettings, self).create(values)
 
     # TODO: Find replacement for 'onchange' attribute in view with dynamic
     # api.onchange(...) and migrate the onchange_module(...) accordingly.

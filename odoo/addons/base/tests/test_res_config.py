@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import logging
+import time
 
 from odoo import exceptions
 from odoo.tests.common import TransactionCase
@@ -96,6 +97,15 @@ class TestResConfigExecute(TransactionCase):
         won't be executed is foo != `fields`
         """
         all_config_settings = self.env['ir.model'].search([('name', 'like', 'config.settings')])
+        start_time = time.time()
+        _logger.warning('OPTIMIZATION TESTS START')
+        for config_settings in all_config_settings:
+            _logger.warning("Testing %s" % (config_settings.name))
+            self.env[config_settings.name].create({}).execute()
+        _logger.warning("Execution Time without optimization: --- %s seconds ---" % (time.time() - start_time))
+        start_time = time.time()
         for config_settings in all_config_settings:
             _logger.info("Testing %s" % (config_settings.name))
-            self.env[config_settings.name].create({}).execute()
+            self.env[config_settings.name].with_context(compare_execution_time=True).create({}).execute()
+        _logger.warning("Execution Time with optimization: --- %s seconds ---" % (time.time() - start_time))
+        _logger.warning('OPTIMIZATION TESTS STOP')
