@@ -389,7 +389,7 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
                 related_path = field.related.split('.')
                 comodel_name = self._fields[related_path[0]].comodel_name
                 start_time = time.time()
-                print field.name, comodel_name, values.get(related_path[0])
+                _logger.warning("%s, %s, %s" % (field.name, comodel_name, values.get(related_path[0])))
                 related_record = self.env[comodel_name].browse(values.get(related_path[0]))
                 related_value = related_record[related_path[1]]
                 _logger.warning("Elapsed time for browse: --- %s seconds ---" % (time.time() - start_time))
@@ -403,7 +403,6 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
                 # print field.name, related_value == transient_value, 'related_value', related_value, 'transient_value', transient_value
                 if related_value == transient_value:
                     values.pop(field.name)
-        print values
         return super(ResConfigSettings, self).create(values)
 
     # TODO: Find replacement for 'onchange' attribute in view with dynamic
