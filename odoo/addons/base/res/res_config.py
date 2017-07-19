@@ -382,17 +382,17 @@ class ResConfigSettings(models.TransientModel, ResConfigModuleInstallationMixin)
     @api.multi
     def create(self, values):
         if self.env.context.get('compare_execution_time', False):
-            start_time = time.time()
+            #start_time = time.time()
             related_fields = self.env['ir.model'].search([('name', '=', self._name)]).field_id.filtered(lambda field: field.related)
-            _logger.warning("Elapsed time for search: --- %s seconds ---" % (time.time() - start_time))
+#            _logger.warning("Elapsed time for search: --- %s seconds ---" % (time.time() - start_time))
             for field in related_fields:
                 related_path = field.related.split('.')
                 comodel_name = self._fields[related_path[0]].comodel_name
-                start_time = time.time()
-                _logger.warning("%s, %s, %s" % (field.name, comodel_name, values.get(related_path[0])))
+                #start_time = time.time()
+#                _logger.warning("%s, %s, %s" % (field.name, comodel_name, values.get(related_path[0])))
                 related_record = self.env[comodel_name].browse(values.get(related_path[0]))
                 related_value = related_record[related_path[1]]
-                _logger.warning("Elapsed time for browse %s: --- %s seconds ---" % (self._name, time.time() - start_time))
+#                _logger.warning("Elapsed time for browse %s: --- %s seconds ---" % (self._name, time.time() - start_time))
                 if isinstance(related_value, models.BaseModel):
                     if related_record._fields[related_path[1]].type == 'many2one':
                         related_value = related_value.id
