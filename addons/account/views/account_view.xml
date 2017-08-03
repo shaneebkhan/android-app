@@ -576,6 +576,7 @@
                             <field name="accounting_date" groups="base.group_no_one"/>
                             <field name='company_id' options="{'no_create': True}" groups="base.group_multi_company" />
                             <field name="currency_id" invisible="1"/>
+                            <field name="is_valid_balance_start" invisible="1"/>
                         </group><group>
                             <label for="balance_start"/>
                             <div>
@@ -584,6 +585,9 @@
                                 string="&#8594; Count" type="action"
                                 attrs="{'invisible':['|','|',('state','!=','open'),('journal_type','!=','cash'),('cashbox_start_id','!=',False)]}" context="{'balance':'start'}"/>
                                 <button name="open_cashbox_id" attrs="{'invisible': ['|','|',('state','!=','open'),('journal_type','!=','cash'),('cashbox_start_id', '=', False)]}" string="&#8594; Count" type="object" class="oe_edit_only oe_link oe_inline" context="{'balance':'start', 'cashbox_id': cashbox_start_id}"/>
+                            </div>
+                            <div class="text-warning" style="background-color: #fcf8e3" colspan="2" attrs="{'invisible': [('is_valid_balance_start','=',True)]}">
+                                The starting balance doesn't match with the ending balance of the previous bank statement.
                             </div>
                             <label for="balance_end_real"/>
                             <div>

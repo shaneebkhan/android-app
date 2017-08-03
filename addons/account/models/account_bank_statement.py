@@ -83,6 +83,18 @@ class AccountBankStatement(models.Model):
         for bank_stmt in self:
             bank_stmt.is_difference_zero = float_is_zero(bank_stmt.difference, precision_digits=bank_stmt.currency_id.decimal_places)
 
+    @api.depends('date', 'balance_start', 'balance_end_real')
+    def _compute_is_valid_balance_start(self):
+        for bank_stmt in self:
+            previous_stmt = self.search([
+                ('journal_id.type', '=', 'bank'),
+                ('date', '<', bank_stmt.date),
+                ('journal_id', '=', bank_stmt.journal_id.id)
+            ], limit=1)
+            currency = bank_stmt.currency_id or bank_stmt.company_id.currency_id
+            balance_comparision = currency.compare_amounts(bank_stmt.balance_start, previous_stmt.balance_end_real)
+            bank_stmt.is_valid_balance_start = not previous_stmt or bank_stmt.journal_id.type != 'bank' or balance_comparision == 0
+
     @api.one
     @api.depends('journal_id')
     def _compute_currency(self):
@@ -129,12 +141,12 @@ class AccountBankStatement(models.Model):
 
     _name = "account.bank.statement"
     _description = "Bank Statement"
-    _order = "date desc, id desc"
+    _order = "date desc"
     _inherit = ['mail.thread']
 
     name = fields.Char(string='Reference', states={'open': [('readonly', False)]}, copy=False, readonly=True)
     reference = fields.Char(string='External Reference', states={'open': [('readonly', False)]}, copy=False, readonly=True, help="Used to hold the reference of the external mean that created this statement (name of imported file, reference of online synchronization...)")
-    date = fields.Date(required=True, states={'confirm': [('readonly', True)]}, index=True, copy=False, default=fields.Date.context_today)
+    date = fields.Datetime(required=True, states={'confirm': [('readonly', True)]}, index=True, copy=False, default=fields.Datetime.now)
     date_done = fields.Datetime(string="Closed On")
     balance_start = fields.Monetary(string='Starting Balance', states={'confirm': [('readonly', True)]}, default=_default_opening_balance)
     balance_end_real = fields.Monetary('Ending Balance', states={'confirm': [('readonly', True)]})
@@ -160,6 +172,9 @@ class AccountBankStatement(models.Model):
     cashbox_start_id = fields.Many2one('account.bank.statement.cashbox', string="Starting Cashbox")
     cashbox_end_id = fields.Many2one('account.bank.statement.cashbox', string="Ending Cashbox")
     is_difference_zero = fields.Boolean(compute='_is_difference_zero', string='Is zero', help="Check if difference is zero.")
+    # Technical field to show warning message on form view if starting balance is not matched with ending balance of previous statement.
+    is_valid_balance_start = fields.Boolean(compute='_compute_is_valid_balance_start', string="Valid Starting Balance",
+        help="If True, it indicates the `Starting Balance` of current statement has matched with the `Ending Balance` of previous statement, False otherwise.")
 
     @api.onchange('journal_id')
     def onchange_journal_id(self):

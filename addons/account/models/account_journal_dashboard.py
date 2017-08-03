@@ -5,7 +5,8 @@ from babel.dates import format_datetime, format_date
 
 from odoo import models, api, _, fields
 from odoo.release import version
-from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF, safe_eval
+from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF, DEFAULT_SERVER_DATETIME_FORMAT as DTF, safe_eval
+
 from odoo.tools.misc import formatLang
 
 class account_journal(models.Model):
@@ -54,9 +55,9 @@ class account_journal(models.Model):
         locale = self._context.get('lang') or 'en_US'
 
         #starting point of the graph is the last statement
-        last_stmt = BankStatement.search([('journal_id', '=', self.id), ('date', '<=', today.strftime(DF))], order='date desc, id desc', limit=1)
+        last_stmt = BankStatement.search([('journal_id', '=', self.id), ('date', '<', today.strftime(DTF))], limit=1)
         if not last_stmt:
-            last_stmt = BankStatement.search([('journal_id', '=', self.id), ('date', '<=', last_month.strftime(DF))], order='date desc, id desc', limit=1)
+            last_stmt = BankStatement.search([('journal_id', '=', self.id), ('date', '<', last_month.strftime(DTF))], limit=1)
         last_balance = last_stmt and last_stmt.balance_end_real or 0
         data.append(build_graph_data(today, last_balance))
 
