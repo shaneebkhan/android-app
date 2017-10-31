@@ -1278,7 +1278,11 @@ class MailThread(models.AbstractModel):
                 return False
 
         # find possible routes for the message
-        routes = self.message_route(msg_txt, msg, model, thread_id, custom_values)
+        try:
+            routes = self.message_route(msg_txt, msg, model, thread_id, custom_values)
+        except ValueError as e:
+            _logger.warning(e)
+            raise e
         thread_id = self.message_route_process(msg_txt, msg, routes)
         return thread_id
 
