@@ -487,6 +487,8 @@ on the extended template to select *context nodes* to which the specified
     the node's body replaces the context node's children
 ``replace``
     the node's body is used to replace the context node itself
+``attribute``
+    to change the attribute of context node or selected node in ``t-jquery``
 No operation
     if no ``t-operation`` is specified, the template body is interpreted as
     javascript code and executed with the context node as ``this``
