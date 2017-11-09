@@ -1,0 +1,82 @@
+.progress-wizard {
+    padding: 0 15px 15px 0px;
+
+
+    .progress-wizard-step {
+        padding: 0;
+        position: relative;
+        margin: 10px 0 20px 0px;
+
+
+        .progress-wizard-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            display: block;
+            background: @odoo-brand-primary;
+            left: 50%;
+            margin-top: -13px;
+            margin-left: -15px;
+            border-radius: 50%;
+
+            &:after {
+                content: ' ';
+                width: 10px;
+                height: 10px;
+                background: #fff;
+                border-radius: 50%;
+                position: absolute;
+                top: 5px;
+                left: 5px;
+            }
+        }
+
+
+        .progress-wizard-steplabel {
+            color: @odoo-main-color-muted;
+            padding-bottom: 5px;
+            margin-top: 10px;
+            font-size:18px;
+            @media (max-width: @screen-sm-max) {
+                font-size:14px;
+            }
+        }
+
+        .progress {
+            position: relative;
+            border-radius: 0;
+            height: 4px;
+            box-shadow: none;
+            background-color: @odoo-main-color-muted;
+            margin:15px 0 0;
+
+            .progress-bar {
+                width: 0;
+                box-shadow: none;
+                background: @odoo-brand-primary;
+            }
+        }
+
+        &.complete .progress .progress-bar, &.last_step.active .progress .progress-bar {
+            width: 100%;
+        }
+
+
+        &.active .progress .progress-bar, &.last_step .progress {
+            width: 50%;
+        }
+
+        &.progress-wizard-step.active .progress-wizard-steplabel {
+            color: @odoo-brand-primary;
+            font-weight: bolder;
+        }
+
+        &.disabled {
+            cursor: default;
+            .progress-wizard-dot {
+                background-color: @odoo-main-color-muted;
+            }
+        }
+    }
+
+}

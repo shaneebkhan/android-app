@@ -387,6 +387,10 @@ odoo.define('website_sale.website_sale', function (require) {
             $('input.js_variant_change, select.js_variant_change', this).first().trigger('change');
         });
 
+        $('.oe_website_sale').on('click', '.show_coupon', function(e) {
+            $(e.currentTarget).hide();
+            $('.coupon_form').removeClass('hidden');
+        });
         $('.oe_cart').on('click', '.js_change_shipping', function() {
           if (!$('body.editor_enable').length) { //allow to edit button text with editor
             var $old = $('.all_shipping').find('.panel.border_primary');
@@ -478,6 +482,9 @@ odoo.define('website_sale.website_sale', function (require) {
         }
         $("select[name='country_id']").change();
     });
+    if ($('#checkbox_cgv').length) {
+        $('#checkbox_cgv').trigger('change');
+    }
 
     // Deactivate image zoom for mobile devices, since it might prevent users to scroll
     if (!config.device.isMobile) {

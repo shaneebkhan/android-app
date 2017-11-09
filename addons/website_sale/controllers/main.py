@@ -615,16 +615,17 @@ class WebsiteSale(http.Controller):
                 values = kw
             else:
                 partner_id = self._checkout_form_save(mode, post, kw)
-
                 if mode[1] == 'billing':
                     order.partner_id = partner_id
                     order.onchange_partner_id()
+                    if not kw.get('use_same'):
+                        kw['callback'] = kw.get('callback') or (not order.only_services and '/shop/address')
                 elif mode[1] == 'shipping':
                     order.partner_shipping_id = partner_id
 
                 order.message_partner_ids = [(4, partner_id), (3, request.website.partner_id.id)]
                 if not errors:
-                    return request.redirect(kw.get('callback') or '/shop/checkout')
+                    return request.redirect(kw.get('callback') or '/shop/confirm_order')
 
         country = 'country_id' in values and values['country_id'] != '' and request.env['res.country'].browse(int(values['country_id']))
         country = country and country.exists() or def_country_id
@@ -638,6 +639,7 @@ class WebsiteSale(http.Controller):
             "states": country.get_website_sale_states(mode=mode[1]),
             'error': errors,
             'callback': kw.get('callback'),
+            'only_services': order and order.only_services,
         }
         return request.render("website_sale.address", render_values)
 
@@ -657,6 +659,10 @@ class WebsiteSale(http.Controller):
                 return request.redirect('/shop/address?partner_id=%d' % order.partner_id.id)
 
         values = self.checkout_values(**post)
+
+        if post.get('express'):
+            return request.redirect('/shop/confirm_order')
+
 
         values.update({'website_sale_order': order})
 
@@ -737,7 +743,7 @@ class WebsiteSale(http.Controller):
             order=order,
             payment_action_id=request.env.ref('payment.action_payment_acquirer').id,
             return_url= '/shop/payment/validate',
-            bootstrap_formatting= True
+            bootstrap_formatting= True,
         )
 
         acquirers = request.env['payment.acquirer'].search(
@@ -770,6 +776,7 @@ class WebsiteSale(http.Controller):
             return redirection
 
         render_values = self._get_shop_payment_values(order, **post)
+        render_values['only_services'] = order and order.only_services or False
 
         if render_values['errors']:
             render_values.pop('acquirers', '')
