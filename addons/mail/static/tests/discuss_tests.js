@@ -41,6 +41,10 @@ QUnit.module('Discuss', {
                         string: "Need Action",
                         type: 'boolean',
                     },
+                    is_history: {
+                        string: "Is history",
+                        type: 'boolean',
+                    },
                     needaction_partner_ids: {
                         string: "Partners with Need Action",
                         type: 'many2many',
@@ -73,6 +77,24 @@ QUnit.module('Discuss', {
                     im_status: 'online',
                 }]
             },
+            'mail.notification': {
+                fields: {
+                    is_read: {
+                        string: "Is Read",
+                        type: 'boolean',
+                    },
+                    mail_message_id: {
+                        string: "Message",
+                        type: 'many2one',
+                        relation: 'mail.message',
+                    },
+                    res_partner_id: {
+                        string: "Needaction Recipient",
+                        type: 'many2one',
+                        relation: 'res.partner',
+                    },
+                },
+            },
         };
         this.services = mailTestUtils.getMailServices();
     },
@@ -84,7 +106,7 @@ QUnit.module('Discuss', {
 });
 
 QUnit.test('basic rendering', async function (assert) {
-    assert.expect(5);
+    assert.expect(6);
 
     var discuss = await createDiscuss({
         id: 1,
@@ -106,11 +128,15 @@ QUnit.test('basic rendering', async function (assert) {
 
     var $inbox = $sidebar.find('.o_mail_discuss_item[data-thread-id=mailbox_inbox]');
     assert.strictEqual($inbox.length, 1,
-        "should have the channel item 'mailbox_inbox' in the sidebar");
+        "should have the mailbox item 'mailbox_inbox' in the sidebar");
 
     var $starred = $sidebar.find('.o_mail_discuss_item[data-thread-id=mailbox_starred]');
     assert.strictEqual($starred.length, 1,
-        "should have the channel item 'mailbox_starred' in the sidebar");
+        "should have the mailbox item 'mailbox_starred' in the sidebar");
+
+    var $history = $sidebar.find('.o_mail_discuss_item[data-thread-id=mailbox_history]');
+    assert.strictEqual($history.length, 1,
+        "should have the mailbox item 'mailbox_history' in the sidebar");
     discuss.destroy();
 });
 
@@ -1487,6 +1513,198 @@ QUnit.test('custom-named DM conversation', async function (assert) {
     var $dm = discuss.$('.o_mail_discuss_item[data-thread-id=1]');
     assert.isVisible($dm, "should display DM in the discuss sidebar");
     assert.strictEqual($dm.find('.o_thread_name').text().trim(), "My Buddy");
+
+    discuss.destroy();
+});
+
+QUnit.test('messages marked as read move to "History" mailbox', async function (assert) {
+    assert.expect(3);
+
+    this.data['mail.message'].records = [{
+        author_id: [5, 'Demo User'],
+        body: '<p>test 1</p>',
+        id: 1,
+        needaction: true,
+        needaction_partner_ids: [3],
+    }, {
+        author_id: [6, 'Test User'],
+        body: '<p>test 2</p>',
+        id: 2,
+        needaction: true,
+        needaction_partner_ids: [3],
+    }];
+    this.data['mail.notification'].records = [{
+        id: 50,
+        is_read: false,
+        mail_message_id: 1,
+        res_partner_id: 3,
+    }, {
+        id: 51,
+        is_read: false,
+        mail_message_id: 1,
+        res_partner_id: 3,
+    }];
+
+    this.data.initMessaging = {
+        needaction_inbox_counter: 2,
+    };
+
+    var markAllReadDef = testUtils.makeTestPromise();
+    var objectDiscuss;
+
+    var discuss = await createDiscuss({
+        id: 1,
+        context: {},
+        params: {},
+        data: this.data,
+        services: this.services,
+        session: { partner_id: 3 },
+        mockRPC: function (route, args) {
+            if (args.method === 'mark_all_as_read') {
+                _.each(this.data['mail.message'].records, function (message) {
+                    message.is_history = true;
+                });
+                var notificationData = {
+                    type: 'mark_as_read',
+                    message_ids: [1, 2],
+                };
+                var notification = [[false, 'res.partner', 3], notificationData];
+                objectDiscuss.call('bus_service', 'trigger', 'notification', [notification]);
+                markAllReadDef.resolve();
+                return Promise.resolve(3);
+            }
+            return this._super.apply(this, arguments);
+        },
+    })
+    objectDiscuss = discuss;
+
+    var $inbox = discuss.$('.o_mail_discuss_item[data-thread-id="mailbox_inbox"]');
+    var $history = discuss.$('.o_mail_discuss_item[data-thread-id="mailbox_history"]');
+
+    await testUtils.dom.click($history);
+    assert.containsOnce(discuss, '.o_mail_no_content',
+        "should display no content message");
+
+    await testUtils.dom.click($inbox);
+
+    var $markAllReadButton = $('.o_mail_discuss_button_mark_all_read');
+    testUtils.dom.click($markAllReadButton);
+
+    await markAllReadDef;
+    // immediately jump to end of the fadeout animation on messages
+    discuss.$('.o_thread_message').stop(false, true);
+    assert.containsNone(discuss, '.o_thread_message',
+        "there should no message in inbox anymore");
+
+    $history = discuss.$('.o_mail_discuss_item[data-thread-id="mailbox_history"]');
+    await testUtils.dom.click($history);
+
+    assert.containsN(discuss, '.o_thread_message', 2,
+        "there should be two messages in History");
+
+    discuss.destroy();
+});
+
+QUnit.test('all messages in "Inbox" in "History" after marked all as read', async function (assert) {
+    assert.expect(10);
+
+    var messagesData = [];
+
+    for (var i = 0; i < 40; i++) {
+        messagesData.push({
+            author_id: [i, 'User ' + i],
+            body: '<p>test ' + i + '</p>',
+            id: i,
+            needaction: true,
+            needaction_partner_ids: [3],
+        });
+    }
+
+    this.data['mail.message'].records = messagesData;
+    this.data.initMessaging = {
+        needaction_inbox_counter: 2,
+    };
+
+    var messageFetchCount = 0;
+    var loadMoreDef = testUtils.makeTestPromise();
+    var markAllReadDef = testUtils.makeTestPromise();
+    var objectDiscuss;
+
+    var discuss = await createDiscuss({
+        id: 1,
+        context: {},
+        params: {},
+        data: this.data,
+        services: this.services,
+        session: { partner_id: 3 },
+        mockRPC: function (route, args) {
+            if (args.method === 'mark_all_as_read') {
+                var messageIDs = [];
+                for (var i = 0; i < messagesData.length; i++) {
+                    this.data['mail.message'].records[i].is_history = true;
+                    this.data['mail.message'].records[i].needaction = false;
+                    messageIDs.push(i);
+                }
+                var notificationData = {
+                    type: 'mark_as_read',
+                    message_ids: messageIDs,
+                };
+                var notification = [[false, 'res.partner', 3], notificationData];
+                objectDiscuss.call('bus_service', 'trigger', 'notification', [notification]);
+                markAllReadDef.resolve();
+                return Promise.resolve(3);
+            }
+            if (args.method === 'message_fetch') {
+                // 1st message_fetch: 'Inbox' initially
+                // 2nd message_fetch: 'History' initially
+                // 3rd message_fetch: 'History' load more
+                assert.step(args.method);
+
+                messageFetchCount++;
+                if (messageFetchCount === 3) {
+                    loadMoreDef.resolve();
+                }
+            }
+            return this._super.apply(this, arguments);
+        },
+    });
+    objectDiscuss = discuss;
+
+    assert.verifySteps(['message_fetch'],
+        "should fetch messages once for needaction messages (Inbox)");
+    assert.containsN(discuss, '.o_thread_message', 30,
+        "there should be 30 messages that are loaded in Inbox");
+
+    var $markAllReadButton = $('.o_mail_discuss_button_mark_all_read');
+
+    await testUtils.dom.click($markAllReadButton);
+    await markAllReadDef;
+
+    // immediately jump to end of the fadeout animation on messages
+    discuss.$('.o_thread_message').stop(false, true);
+    assert.containsNone(discuss, '.o_thread_message',
+        "there should no message in inbox anymore");
+
+    var $history = discuss.$('.o_mail_discuss_item[data-thread-id="mailbox_history"]');
+
+    await testUtils.dom.click($history);
+
+    assert.verifySteps(['message_fetch'],
+        "should fetch messages once for history");
+
+    assert.containsN(discuss, '.o_thread_message', 30,
+        "there should be 30 messages in History");
+
+    // simulate a scroll to top to load more messages
+    discuss.$('.o_mail_thread').scrollTop(0);
+
+    await loadMoreDef;
+    await testUtils.nextTick();
+
+    assert.verifySteps(['message_fetch'],
+        "should fetch more messages in history for loadMore");
+    assert.containsN(discuss, '.o_thread_message', 40,
+        "there should be 40 messages in History");
 
     discuss.destroy();
 });
