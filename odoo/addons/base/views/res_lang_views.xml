@@ -38,6 +38,8 @@
                                 <field name="code"/>
                                 <field name="iso_code"/>
                                 <field name="translatable"/>
+                                <field name="position"/>
+                                <field name="is_space"/>
                             </group>
                             <group>
                                 <field name="direction"/>

@@ -34,8 +34,8 @@ class Currency(models.Model):
     rounding = fields.Float(string='Rounding Factor', digits=(12, 6), default=0.01)
     decimal_places = fields.Integer(compute='_compute_decimal_places', store=True)
     active = fields.Boolean(default=True)
-    position = fields.Selection([('after', 'After Amount'), ('before', 'Before Amount')], default='after',
-        string='Symbol Position', help="Determines where the currency symbol should be placed after or before the amount.")
+    position = fields.Selection(compute='_compute_currency_position', string='Symbol Position', selection=[('after', 'After Amount'), ('before', 'Before Amount')], help='Currency position (before or after) set from the language of user locale and user can change position from language.')
+    is_space = fields.Boolean(compute='_compute_currency_position', string='Allow space between amount and currency symbol', help='Space between amount and symbol set from language of user locale and user can change it from language form.')
     date = fields.Date(compute='_compute_date')
     currency_unit_label = fields.Char(string="Currency Unit", help="Currency Unit Name")
     currency_subunit_label = fields.Char(string="Currency Subunit", help="Currency Subunit Name")
@@ -76,6 +76,13 @@ class Currency(models.Model):
                 currency.decimal_places = int(math.ceil(math.log10(1/currency.rounding)))
             else:
                 currency.decimal_places = 0
+
+    def _compute_currency_position(self):
+        lang_code = self.env.context.get('lang') or self.env.user.lang
+        language = self.env['res.lang'].search([('code', '=', lang_code)])
+        for currency in self:
+            currency.position = language.position
+            currency.is_space = language.is_space
 
     @api.multi
     @api.depends('rate_ids.name')

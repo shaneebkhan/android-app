@@ -47,6 +47,9 @@ class Lang(models.Model):
              "Provided ',' as the thousand separator in each case.")
     decimal_point = fields.Char(string='Decimal Separator', required=True, default='.', trim=False)
     thousands_sep = fields.Char(string='Thousands Separator', default=',', trim=False)
+    position = fields.Selection([('after', 'After Amount'), ('before', 'Before Amount')], default='after', required=True,
+        string='Currency Symbol Position', help="Determines where the currency symbol should be placed after or before the amount.")
+    is_space = fields.Boolean(string='Allow space between amount and currency symbol')
 
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'The name of the language must be unique !'),
@@ -92,9 +95,12 @@ class Lang(models.Model):
     def load_lang(self, lang, lang_name=None):
         """ Create the given language if necessary, and make it active. """
         # if the language exists, simply make it active
+        conv = locale.localeconv()
         language = self.with_context(active_test=False).search([('code', '=', lang)], limit=1)
+        position = 'before' if conv.get('p_cs_precedes', 'n_cs_precedes') == 1 else 'after'
+        is_space = False if conv.get('p_sep_by_space', 'n_sep_by_space') == 0 else True
         if language:
-            language.write({'active': True})
+            language.write({'active': True, 'position': position, 'is_space': is_space})
             return language.id
 
         # create the language with locale information
@@ -136,7 +142,6 @@ class Lang(models.Model):
                 format = format.replace(pattern, replacement)
             return str(format)
 
-        conv = locale.localeconv()
         lang_info = {
             'code': lang,
             'iso_code': iso_lang,
@@ -148,6 +153,8 @@ class Lang(models.Model):
             'decimal_point' : fix_xa0(str(conv['decimal_point'])),
             'thousands_sep' : fix_xa0(str(conv['thousands_sep'])),
             'grouping' : str(conv.get('grouping', [])),
+            'position': position,
+            'is_space': is_space
         }
         try:
             return self.create(lang_info).id

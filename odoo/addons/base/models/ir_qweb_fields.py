@@ -429,9 +429,15 @@ class MonetaryConverter(models.AbstractModel):
 
         pre = post = u''
         if display_currency.position == 'before':
-            pre = u'{symbol}\N{NO-BREAK SPACE}'.format(symbol=display_currency.symbol or '')
+            if display_currency.is_space:
+                pre = u'{symbol}\N{NO-BREAK SPACE}'.format(symbol=display_currency.symbol or '')
+            else:
+                pre = u'{symbol}'.format(symbol=display_currency.symbol or '')
         else:
-            post = u'\N{NO-BREAK SPACE}{symbol}'.format(symbol=display_currency.symbol or '')
+            if display_currency.is_space:
+                post = u'\N{NO-BREAK SPACE}{symbol}'.format(symbol=display_currency.symbol or '')
+            else:
+                post = u'{symbol}'.format(symbol=display_currency.symbol or '')
 
         return u'{pre}<span class="oe_currency_value">{0}</span>{post}'.format(formatted_amount, pre=pre, post=post)
 

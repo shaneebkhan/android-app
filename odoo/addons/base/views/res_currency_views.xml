@@ -147,6 +147,7 @@
                             <group string="Display">
                                 <field name="symbol"/>
                                 <field name="position"/>
+                                <field name="is_space"/>
                             </group>
                         </group>
                     </sheet>
