@@ -417,6 +417,10 @@ class WebsiteSale(http.Controller):
             'compute_currency': lambda price: from_currency.compute(price, to_currency),
             'suggested_products': order._cart_accessories()
         })
+        value['website_sale.short_cart_summary'] = request.env['ir.ui.view'].render_template("website_sale.short_cart_summary", {
+            'website_sale_order': order,
+            'compute_currency': lambda price: from_currency.compute(price, to_currency),
+        })
         return value
 
     # ------------------------------------------------------

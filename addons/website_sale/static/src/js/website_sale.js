@@ -176,6 +176,7 @@ odoo.define('website_sale.website_sale', function (require) {
                 $('.js_quantity[data-line-id='+line_id+']').val(data.quantity).html(data.quantity);
 
                 $(".js_cart_lines").first().before(data['website_sale.cart_lines']).end().remove();
+                $(".js_cart_summary").first().before(data['website_sale.short_cart_summary']).end().remove();
 
                 if (data.warning) {
                     var cart_alert = $('.oe_cart').parent().find('#data_warning');
@@ -485,6 +486,9 @@ odoo.define('website_sale.website_sale', function (require) {
     if ($('#checkbox_cgv').length) {
         $('#checkbox_cgv').trigger('change');
     }
+    $('#shipping_use_same').on('change', function(e) {
+        $('.ship_to_other').toggle(!$(e.currentTarget).prop('checked'));
+    });
 
     // Deactivate image zoom for mobile devices, since it might prevent users to scroll
     if (!config.device.isMobile) {
