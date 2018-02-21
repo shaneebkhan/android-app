@@ -40,6 +40,16 @@
         vertical-align: middle;
     }
 
+    table#cart_products {
+        margin-bottom: 0;
+
+        td, th {
+            &:first-child {
+                padding-left: @grid-gutter-width*0.5;
+            }
+        }
+    }
+
     ul ul {
         margin-left: 1.5em;
     }
