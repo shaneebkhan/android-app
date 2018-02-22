@@ -42,7 +42,11 @@
                 width: 100%/4;
             }
         }
-
+        @media (max-width: @screen-xs-max) {
+            &.disabled, &.complete {
+                display:none;
+            }
+        }
         .progress-wizard-dot {
             .square(@o-wsale-wizard-dot-size);
             position: relative;
@@ -54,6 +58,8 @@
             @media (min-width: @screen-sm-min) {
                 .o-position-absolute(@left: 50%);
                 margin: -@tmp-dot-radius 0 0 -(@o-wsale-wizard-dot-size*0.5);
+            }
+            @media (max-width: @screen-sm-max) {
             }
         }
 
@@ -67,11 +73,17 @@
                 display: block;
                 margin: (10px + @tmp-dot-radius) 0 20px 0;
             }
+            @media (max-width: @screen-xs-max) {
+                margin-left: -15px;
+                font-size:24px;
+            }
         }
 
         .progress-wizard-bar {
             height: @o-wsale-wizard-thickness;
             background-color: @o-wsale-wizard-color-default;
+            @media (max-width: @screen-sm-max) {
+            }
         }
 
         &.active {
@@ -85,6 +97,9 @@
             .progress-wizard-steplabel {
                 color: @o-wsale-wizard-label-active;
                 font-weight: bolder;
+
+                @media (max-width: @screen-xs-max) {
+                }
             }
         }
 

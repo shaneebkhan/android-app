@@ -694,24 +694,24 @@
             <div class="col-lg-8">
                 <div class="wizard">
                     <div class="progress-wizard">
-                        <a t-att-href="step&gt;=10 and '/shop/cart' or '#'">
+                        <a class="no-decoration" t-att-href="step&gt;=10 and '/shop/cart' or '#'">
                           <div id="wizard-step10" t-att-class="'progress-wizard-step %s' % (step == 10 and 'active' or step&gt;10 and 'complete' or 'disabled')">
                             <div class="progress-wizard-bar hidden-xs"/>
-                            <span class="progress-wizard-dot"></span>
+                            <span class="progress-wizard-dot hidden-xs"></span>
                             <div class="text-center progress-wizard-steplabel">Review Order</div>
                           </div>
                         </a>
-                        <a t-att-href="step&gt;=20 and '/shop/checkout' or '#'">
+                        <a class="no-decoration" t-att-href="step&gt;=20 and '/shop/checkout' or '#'">
                           <div id="wizard-step20" t-att-class="'progress-wizard-step %s' % (step == 20 and 'active' or step&gt;20 and 'complete' or 'disabled')">
                             <div class="progress-wizard-bar hidden-xs"/>
-                            <span class="progress-wizard-dot"></span>
+                            <span class="progress-wizard-dot hidden-xs"></span>
                             <div class="text-center progress-wizard-steplabel">Address</div>
                           </div>
                         </a>
-                        <a t-att-href="step&gt;=40 and '/shop/payment' or '#'">
-                          <div id="wizard-step40" t-att-class="'last_step progress-wizard-step %s' % (step == 40 and 'active' or step&gt;40 and 'complete' or 'disabled')">
+                        <a class="no-decoration" t-att-href="step&gt;=40 and '/shop/payment' or '#'">
+                          <div id="wizard-step40" t-att-class="'progress-wizard-step %s' % (step == 40 and 'active' or step&gt;40 and 'complete' or 'disabled')">
                             <div class="progress-wizard-bar hidden-xs"/>
-                            <span class="progress-wizard-dot"></span>
+                            <span class="progress-wizard-dot hidden-xs"></span>
                             <div class="text-center progress-wizard-steplabel">Confirm Order</div>
                           </div>
                         </a>
@@ -796,10 +796,10 @@
             <span class="o_wizard_has_extra_step hidden"/>
         </xpath>
         <xpath expr="//div[@id='wizard-step20']" position="after">
-            <a t-att-href="step&gt;=30 and '/shop/extra_info' or '#'">
+            <a class="no-decoration" t-att-href="step&gt;=30 and '/shop/extra_info' or '#'">
                 <div id="wizard-step30" t-att-class="'progress-wizard-step %s' % (step == 30 and 'active' or step&gt;30 and 'complete' or 'disabled')">
                     <div class="progress-wizard-bar hidden-xs"/>
-                        <a t-att-href="step&gt;=30 and '/shop/extra_info'" class="progress-wizard-dot"></a>
+                        <span class="progress-wizard-dot hidden-xs"></span>
                     <div class="text-center progress-wizard-steplabel">Extra Info</div>
                 </div>
             </a>
@@ -1357,8 +1357,48 @@
 
     <template id="short_cart_summary" name="Short Cart right column">
         <div class="panel panel-default js_cart_summary">
-            <div class="panel-body row">
+            <div class="panel-body row hide visible-lg">
                 <h4 class='col-md-12'>Order Summary</h4>
+                <div class='col-md-12'>
+                    <table class='table'>
+                          <tr>
+                              <td class="text-right col-sm-4">Subtotal:</td>
+                              <td class="text-right-not-xs text-left-xs col-sm-8">
+                                  <span t-field="website_sale_order.amount_untaxed" style="white-space: nowrap;" t-options="{'widget': 'monetary','from_currency': website_sale_order.pricelist_id.currency_id,'display_currency': website.currency_id}" />
+                              </td>
+                          </tr>
+                          <tr>
+                              <td class="text-right noborder">Taxes:</td>
+                              <td class="text-right-not-xs text-left-xs noborder">
+                                   <span t-field="website_sale_order.amount_tax" style="white-space: nowrap;" t-options="{'widget': 'monetary', 'from_currency': website_sale_order.pricelist_id.currency_id, 'display_currency': website.currency_id}" />
+                              </td>
+                          </tr>
+                          <tr>
+                              <td class="text-right"><strong>Total:</strong></td>
+                              <td class="text-right-not-xs text-left-xs">
+                                  <strong t-field="website_sale_order.amount_total"
+                                      t-options='{"widget": "monetary", "display_currency": website_sale_order.pricelist_id.currency_id}'/>
+                              </td>
+                          </tr>
+                    </table>
+
+                    <t t-set='force_coupon' t-value="website_sale_order.pricelist_id.code or request.params.get('code_not_available')"/>
+                    <t t-if="not force_coupon">
+                        <a class='btn btn-link show_coupon'>I have a coupon</a>
+                    </t>
+                    <div t-attf-class='coupon_form #{not force_coupon and "hidden"}'>
+                        <t t-call='website_sale.coupon_form'>
+                            <t t-set="redirect">/shop/payment</t>
+                        </t>
+                    </div>
+
+                    <a t-if="website_sale_order and website_sale_order.website_order_line" class="btn btn-default pull-right mb32 mr8 hidden visible-lg" href="/shop/checkout?express=1">
+                        <span>Process Checkout</span>
+                    </a>
+                </div>
+            </div>
+            <div class="panel-body row hidden-lg">
+                <h4 class='col-md-12'>Order Summary smart</h4>
                 <div class='col-md-12'>
                     <table class='table'>
                           <tr>
