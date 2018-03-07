@@ -799,8 +799,21 @@ class Orderpoint(models.Model):
     @api.onchange('warehouse_id')
     def onchange_warehouse_id(self):
         """ Finds location id for changed warehouse. """
+        location_domain = []
         if self.warehouse_id:
             self.location_id = self.warehouse_id.lot_stock_id.id
+
+            # filter out locations not compatible with the selected warehouse
+            other_warehouses_view_locations = self.env['stock.warehouse']\
+                .search([('id', '!=', self.warehouse_id.id)])\
+                .mapped('view_location_id')
+            for other_warehouses_view_location in other_warehouses_view_locations:
+                location_domain += [
+                    '|',
+                        ('parent_left', '<', other_warehouses_view_location.parent_left),
+                        ('parent_right', '>', other_warehouses_view_location.parent_right)
+                ]
+        return {'domain': {'location_id': location_domain}}
 
     @api.onchange('product_id')
     def onchange_product_id(self):
