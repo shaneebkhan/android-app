@@ -489,6 +489,10 @@ odoo.define('website_sale.website_sale', function (require) {
     $('#shipping_use_same').on('change', function(e) {
         $('.ship_to_other').toggle(!$(e.currentTarget).prop('checked'));
     });
+    $('.toggle_summary').on('click', function(e) {
+        $('.toggle_summary_div').toggleClass('hidden');
+        $('.toggle_summary_div').removeClass('visible-lg');
+    });
 
     // Deactivate image zoom for mobile devices, since it might prevent users to scroll
     if (!config.device.isMobile) {
