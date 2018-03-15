@@ -1559,10 +1559,14 @@
     <template id="total">
         <div id="cart_total" t-att-class="extra_class or ''" t-if="website_sale_order and website_sale_order.website_order_line">
                     <table class='table'>
+                          <tr id="empty">
+                              <t t-if='not no_rowspan'><td rowspan="10"/></t>
+                              <td class="col-sm-2 col-xs-3"></td>
+                              <td class="col-sm-2 col-xs-3" ></td>
+                          </tr>
                           <tr id="order_total_untaxed">
-                              <t t-if='not no_rowspan'><td rowspan="3"/></t>
-                              <td class="text-right col-sm-2 col-xs-3">Subtotal:</td>
-                              <td class="text-left-not-lg text-right-lg col-sm-2 col-xs-3" >
+                              <td class="text-right noborder">Subtotal:</td>
+                              <td class="text-left-not-lg text-right-lg noborder" >
                                   <span t-field="website_sale_order.amount_untaxed" style="white-space: nowrap;" t-options="{'widget': 'monetary','from_currency': website_sale_order.pricelist_id.currency_id,'display_currency': website.currency_id}" />
                               </td>
                           </tr>
