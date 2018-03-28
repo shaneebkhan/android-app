@@ -23,7 +23,7 @@
                     </div>
                 </div>
             </xpath>
-            <div id="webmaster_settings" position="after">
+            <div id="multi_website" position="after">
                 <h2>Product Catalog</h2>
                 <div class="row mt16 o_settings_container" id="sale_product_catalog_settings">
                     <div class="col-12 col-lg-6 o_setting_box" id="product_attributes_setting">

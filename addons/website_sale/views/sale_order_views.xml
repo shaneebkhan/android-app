@@ -236,6 +236,9 @@
             <field name="partner_id" position="after">
                 <field name="can_directly_mark_as_paid" invisible="1"/>
             </field>
+            <field name="origin" position="after">
+                <field name="website_id" groups="website.group_multi_website"/>
+            </field>
         </field>
     </record>
 

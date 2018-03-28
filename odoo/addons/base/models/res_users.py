@@ -542,6 +542,10 @@ class Users(models.Model):
         # extra records will be deleted by the periodical garbage collection
         self.env['res.users.log'].create({}) # populated by defaults
 
+    @api.model
+    def _get_login_domain(self, login):
+        return [('login', '=', login)]
+
     @classmethod
     def _login(cls, db, login, password):
         if not password:
@@ -550,6 +554,7 @@ class Users(models.Model):
         try:
             with cls.pool.cursor() as cr:
                 self = api.Environment(cr, SUPERUSER_ID, {})[cls._name]
+<<<<<<< HEAD
                 with self._assert_can_auth():
                     user = self.search([('login', '=', login)])
                     if not user:
@@ -558,6 +563,13 @@ class Users(models.Model):
                     user = user.sudo(user.id)
                     user._check_credentials(password)
                     user._update_last_login()
+=======
+                user = self.search(self._get_login_domain(login))
+                if user:
+                    user_id = user.id
+                    user.sudo(user_id).check_credentials(password)
+                    user.sudo(user_id)._update_last_login()
+>>>>>>> [IMP] website,*: support multiple websites
         except AccessDenied:
             _logger.info("Login failed for db:%s login:%s from %s", db, login, ip)
             raise
