@@ -50,7 +50,7 @@ var TranslatePageMenu = websiteNavbarData.WebsiteNavbarActionWidget.extend({
         }
 
         var link = document.createElement('a');
-        link.href = '/website/lang/default';
+        link.href = '/website/lang/en_US';
         link.search += (link.search ? '&' : '?') + 'r=' + encodeURIComponent(current.pathname + current.search + current.hash);
 
         window.location = link.href;

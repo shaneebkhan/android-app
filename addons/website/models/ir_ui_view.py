@@ -98,10 +98,11 @@ class View(models.Model):
         if request and getattr(request, 'is_frontend', False):
 
             editable = request.website.is_publisher()
-            translatable = editable and self._context.get('lang') != request.website.default_lang_code
+            translatable = editable and self._context.get('lang') != 'en_US'
             editable = not translatable and editable
 
             # in edit mode ir.ui.view will tag nodes
+
             if not translatable and not self.env.context.get('rendering_bundle'):
                 if editable:
                     new_context = dict(self._context, inherit_branding=True)
@@ -121,7 +122,7 @@ class View(models.Model):
 
         if request and getattr(request, 'is_frontend', False):
             editable = request.website.is_publisher()
-            translatable = editable and self._context.get('lang') != request.env['ir.http']._get_default_lang().code
+            translatable = editable and self._context.get('lang') != 'en_US'
             editable = not translatable and editable
 
             if 'main_object' not in qcontext:

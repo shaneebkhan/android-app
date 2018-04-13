@@ -386,7 +386,7 @@ class IrHttp(models.AbstractModel):
                     routing_error = None
                     return cls.reroute('/'.join(path) or '/')
 
-            if request.lang == cls._get_default_lang().code:
+            if request.lang == 'en_US':
                 context = dict(request.context)
                 context['edit_translations'] = False
                 request.context = context
