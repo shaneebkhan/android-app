@@ -532,12 +532,13 @@ class StockMove(models.Model):
             # in case of a supplier return in anglo saxon mode, for products in average costing method, the stock_input
             # account books the real purchase price, while the stock account books the average price. The difference is
             # booked in the dedicated price difference account.
-            if self.location_dest_id.usage == 'supplier' and self.origin_returned_move_id and self.origin_returned_move_id.purchase_line_id:
-                debit_value = self.origin_returned_move_id.price_unit * qty
+            if self.location_dest_id.usage == 'supplier' and self.origin_returned_move_id:
+                if getattr(self.origin_returned_move_id, 'purchase_line_id', None):
+                    debit_value = -1 * self.origin_returned_move_id.price_unit * qty
             # in case of a customer return in anglo saxon mode, for products in average costing method, the stock valuation
             # is made using the original average price to negate the delivery effect.
             if self.location_id.usage == 'customer' and self.origin_returned_move_id:
-                debit_value = self.origin_returned_move_id.price_unit * qty
+                debit_value = abs(self.origin_returned_move_id.price_unit) * qty
                 credit_value = debit_value
         partner_id = (self.picking_id.partner_id and self.env['res.partner']._find_accounting_partner(self.picking_id.partner_id).id) or False
         debit_line_vals = {
@@ -566,7 +567,7 @@ class StockMove(models.Model):
         if credit_value != debit_value:
             # for supplier returns of product in average costing method, in anglo saxon mode
             diff_amount = debit_value - credit_value
-            price_diff_account = self.product_id.property_account_creditor_price_difference
+            price_diff_account = getattr(self, 'product_id.property_account_creditor_price_difference', None)
             if not price_diff_account:
                 price_diff_account = self.product_id.categ_id.property_account_creditor_price_difference_categ
             if not price_diff_account:

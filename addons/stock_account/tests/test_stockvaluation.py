@@ -2489,6 +2489,94 @@ class TestStockValuation(TransactionCase):
         move2.move_line_ids.qty_done = 0
         self.assertEqual(self.product1.stock_value, -187.5)
 
+    def test_average_return_anglosaxon_1(self):
+        self.product1.product_tmpl_id.cost_method = 'average'
+        self.env.user.company_id.anglo_saxon_accounting = True
+
+        move1 = self.env['stock.move'].create({
+            'name': 'Receive  10 units at 10',
+            'location_id': self.supplier_location.id,
+            'location_dest_id': self.stock_location.id,
+            'product_id': self.product1.id,
+            'product_uom': self.uom_unit.id,
+            'product_uom_qty': 10.0,
+            'price_unit': 10,
+        })
+        move1._action_confirm()
+        move1._action_assign()
+        move1.move_line_ids.qty_done = 10.0
+        move1._action_done()
+
+        out_pick = self.env['stock.picking'].create({
+            'location_id': self.stock_location.id,
+            'location_dest_id': self.customer_location.id,
+            'partner_id': self.env['res.partner'].search([], limit=1).id,
+            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+        })
+
+        move2 = self.env['stock.move'].create({
+            'name': 'Deliver 10 units',
+            'location_id': self.stock_location.id,
+            'location_dest_id': self.customer_location.id,
+            'product_id': self.product1.id,
+            'product_uom': self.uom_unit.id,
+            'product_uom_qty': 10.0,
+            'picking_id': out_pick.id,
+        })
+        move2._action_confirm()
+        move2._action_assign()
+        move2.move_line_ids.qty_done = 10.0
+        out_pick.button_validate()
+
+        stock_return_picking = self.env['stock.return.picking']\
+            .with_context(active_ids=[out_pick.id], active_id=out_pick.id)\
+            .create({})
+        stock_return_picking.product_return_moves.quantity = 5
+        stock_return_picking_action = stock_return_picking.create_returns()
+        return_pick = self.env['stock.picking'].browse(stock_return_picking_action['res_id'])
+        return_pick.move_lines[0].move_line_ids[0].qty_done = 5
+        return_pick.with_context(debug=True).do_transfer()
+
+        valuation_aml = self._get_stock_valuation_move_lines()
+        return_move_valuation_aml = valuation_aml[-1]
+        self.assertEqual(return_move_valuation_aml.debit, 50)
+        self.assertEqual(return_move_valuation_aml.credit, 0)
+
+        in_pick = self.env['stock.picking'].create({
+            'location_id': self.supplier_location.id,
+            'location_dest_id': self.stock_location.id,
+            'partner_id': self.env['res.partner'].search([], limit=1).id,
+            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+        })
+        move3 = self.env['stock.move'].create({
+            'name': 'Receive  10 units at 10',
+            'location_id': self.supplier_location.id,
+            'location_dest_id': self.stock_location.id,
+            'product_id': self.product1.id,
+            'product_uom': self.uom_unit.id,
+            'product_uom_qty': 10.0,
+            'price_unit': 10,
+            'picking_id': in_pick.id,
+        })
+        move3._action_confirm()
+        move3._action_assign()
+        move3.move_line_ids.qty_done = 10.0
+        in_pick.button_validate()
+
+        stock_return_picking = self.env['stock.return.picking']\
+            .with_context(active_ids=[out_pick.id], active_id=in_pick.id)\
+            .create({})
+        stock_return_picking.product_return_moves.quantity = 5
+        stock_return_picking_action = stock_return_picking.create_returns()
+        return_pick = self.env['stock.picking'].browse(stock_return_picking_action['res_id'])
+        return_pick.move_lines[0].move_line_ids[0].qty_done = 5
+        return_pick.with_context(debug=True).do_transfer()
+
+        valuation_aml = self._get_stock_valuation_move_lines()
+        return_move_valuation_aml = valuation_aml[-1]
+        self.assertEqual(return_move_valuation_aml.debit, 0)
+        self.assertEqual(return_move_valuation_aml.credit, 50)
+
     def test_average_negative_1(self):
         """ Test edit in the past. Receive 10, send 20, edit the second move to only send 10.
         """
