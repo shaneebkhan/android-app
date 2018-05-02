@@ -61,6 +61,9 @@ var RunningTourActionHelper = core.Class.extend({
     text: function (text, element) {
         this._text(this._get_action_values(element), text);
     },
+    scan: function(barcode, element) {
+        this._scan(this._get_action_values(element), barcode);
+    },
     drag_and_drop: function (to, element) {
         this._drag_and_drop(this._get_action_values(element), to);
     },
@@ -101,6 +104,9 @@ var RunningTourActionHelper = core.Class.extend({
             e.initMouseEvent(type, true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, $element[0]);
             $element[0].dispatchEvent(e);
         }
+    },
+    _scan: function (element, barcode) {
+        odoo.__DEBUG__.services['web.core'].bus.trigger('barcode_scanned', barcode, element);
     },
     _text: function (values, text) {
         this._click(values);
