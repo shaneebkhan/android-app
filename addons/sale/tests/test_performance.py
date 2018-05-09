@@ -60,7 +60,7 @@ class TestSalePerformance(TestCommonSaleNoChart):
             'product_uom': self.product_deliver.uom_id.id,
             'price_unit': self.product_deliver.list_price
         }
-        with self.assertQueryCount(admin=162, sales2=268):  # test_sale only: 3 - 3
+        with self.assertQueryCount(admin=168, sales2=888):  # sale only: 162 - 268
             so = self.env['sale.order'].create({
                 'user_id': self.env.uid,
                 'partner_id': customer_id,
