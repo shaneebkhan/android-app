@@ -147,7 +147,7 @@
                     <field name="date"/>
                     <templates>
                         <t t-name="kanban-box">
-                            <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                            <div class="oe_kanban_card oe_kanban_global_click">
                                 <div class="o_kanban_record_top mb8">
                                     <div class="o_kanban_record_headings">
                                         <strong class="o_kanban_record_title"><span><t t-esc="record.name.value"/></span></strong>
