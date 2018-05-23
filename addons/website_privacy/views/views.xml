@@ -1,62 +1,5 @@
 <odoo>
   <data>
-    <!-- explicit list view definition -->
-    <!--
-    <record model="ir.ui.view" id="website_privacy.list">
-      <field name="name">website_privacy list</field>
-      <field name="model">website_privacy.website_privacy</field>
-      <field name="arch" type="xml">
-        <tree>
-          <field name="name"/>
-          <field name="value"/>
-          <field name="value2"/>
-        </tree>
-      </field>
-    </record>
-    -->
-
-    <!-- actions opening views on models -->
-    <!--
-    <record model="ir.actions.act_window" id="website_privacy.action_window">
-      <field name="name">website_privacy window</field>
-      <field name="res_model">website_privacy.website_privacy</field>
-      <field name="view_mode">tree,form</field>
-    </record>
-    -->
-
-    <!-- server action to the one above -->
-    <!--
-    <record model="ir.actions.server" id="website_privacy.action_server">
-      <field name="name">website_privacy server</field>
-      <field name="model_id" ref="model_website_privacy_website_privacy"/>
-      <field name="code">
-        action = {
-          "type": "ir.actions.act_window",
-          "view_mode": "tree,form",
-          "res_model": self._name,
-        }
-      </field>
-    </record>
-    -->
-
-    <!-- Top menu item -->
-    <!--
-    <menuitem name="website_privacy" id="website_privacy.menu_root"/>
-    -->
-    <!-- menu categories -->
-    <!--
-    <menuitem name="Menu 1" id="website_privacy.menu_1" parent="website_privacy.menu_root"/>
-    <menuitem name="Menu 2" id="website_privacy.menu_2" parent="website_privacy.menu_root"/>
-    -->
-    <!-- actions -->
-    <!--
-    <menuitem name="List" id="website_privacy.menu_1_list" parent="website_privacy.menu_1"
-              action="website_privacy.action_window"/>
-    <menuitem name="Server to list" id="website_privacy" parent="website_privacy.menu_2"
-              action="website_privacy.action_server"/>
-    -->
-
-
 
     <record id="view_website_config_settings" model="ir.ui.view">
         <field name="name">Privacy settings</field>
@@ -74,7 +17,7 @@
               <label for="cookies_bar" />
               <div name="cookies_bar" >
                   <div class="oe_inline">
-                      <field name="cookies_bar"/> Add a simplified bar on your website to say that you use cookies.
+                      <field name="cookies_bar"/> Add a simplified bar on your website to say that you use cookies
                   </div>
               </div>
 
@@ -95,17 +38,17 @@
               <field name="signup_force_checkbox" />
 
 
-              <field name="website_form_installed" invisible="1" />
-              <label for="website_form_meta" attrs="{'invisible':[('website_form_installed','=',False)]}"/>
-              <div name="website_form_meta" attrs="{'invisible':[('website_form_installed','=',False)]}">
+              <field name="module_website_form" invisible="1" />
+              <label for="website_form_meta" attrs="{'invisible':[('module_website_form','=', False)]}"/>
+              <div name="website_form_meta" attrs="{'invisible':[('module_website_form','=', False)]}">
                   <div class="oe_inline">
-                      <field name="website_form_meta"/> Add meta data like ip in the record description of your forms.
+                      <field name="website_form_meta"/> Add meta data (IP, User Agent, Referer, ...) into the record created from your forms
                   </div>
               </div>
 
-              <field name="website_sale_installed" invisible="1" />
-              <label for="website_sale_show_cgv" attrs="{'invisible':[('website_sale_installed','=',False)]}"/>
-              <div name="website_sale_show_cgv" attrs="{'invisible':[('website_sale_installed','=',False)]}">
+              <field name="module_website_sale" invisible="1" />
+              <label for="website_sale_show_cgv" attrs="{'invisible':[('module_website_sale', '=', False)]}"/>
+              <div name="website_sale_show_cgv" attrs="{'invisible':[('module_website_sale', '=', False)]}">
                   <div class="oe_inline">
                       <field name="website_sale_show_cgv"/> Add a checkbox on the ecommerce checkout to valid CGV before to confirm an order
                   </div>
@@ -114,7 +57,6 @@
           </group>
         </field>
     </record>
-
 
   </data>
 </odoo>
