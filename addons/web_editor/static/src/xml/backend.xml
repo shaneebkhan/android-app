@@ -3,7 +3,7 @@
 
     <t t-name="web_editor.FieldTextHtmlSimple">
         <div class="oe_form_field oe_form_field_html_text" t-att-style="widget.node.attrs.style">
-            <textarea readonly="readonly"/>
+            <textarea readonly="readonly" />
         </div>
     </t>
 

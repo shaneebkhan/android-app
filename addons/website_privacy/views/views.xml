@@ -55,5 +55,66 @@
     <menuitem name="Server to list" id="website_privacy" parent="website_privacy.menu_2"
               action="website_privacy.action_server"/>
     -->
+
+
+
+    <record id="view_website_config_settings" model="ir.ui.view">
+        <field name="name">Privacy settings</field>
+        <field name="model">website.config.settings</field>
+        <field name="inherit_id" ref="website.view_website_config_settings"/>
+        <field name="arch" type="xml">
+          <group name="social" position="after">
+            <group name="privacy" string="Privacy">
+              <label for="ga_anonymize_ip" />
+              <div name="ga_anonymize_ip" >
+                  <div class="oe_inline">
+                      <field name="ga_anonymize_ip"/> Anonymize the IP addresses of hits sent to Google Analytics
+                  </div>
+              </div>
+              <label for="cookies_bar" />
+              <div name="cookies_bar" >
+                  <div class="oe_inline">
+                      <field name="cookies_bar"/> Add a simplified bar on your website to say that you use cookies.
+                  </div>
+              </div>
+
+              <label for="cookies_bar_msg" class="ml32" attrs="{'invisible':[('cookies_bar','=',False)]}"/>
+              <div name="cookies_bar_msg" attrs="{'invisible':[('cookies_bar','=',False)]}">
+                  <div class="oe_inline">
+                      <field name="cookies_bar_msg" />
+                  </div>
+              </div>
+              <label for="cookies_bar_btn" class="ml32" attrs="{'invisible':[('cookies_bar','=',False)]}"/>
+              <div name="cookies_bar_btn" attrs="{'invisible':[('cookies_bar','=',False)]}">
+                  <div class="oe_inline">
+                      <field name="cookies_bar_btn"/>
+                  </div>
+              </div>
+
+              <field name="signup_consent" />
+              <field name="signup_force_checkbox" />
+
+
+              <field name="website_form_installed" invisible="1" />
+              <label for="website_form_meta" attrs="{'invisible':[('website_form_installed','=',False)]}"/>
+              <div name="website_form_meta" attrs="{'invisible':[('website_form_installed','=',False)]}">
+                  <div class="oe_inline">
+                      <field name="website_form_meta"/> Add meta data like ip in the record description of your forms.
+                  </div>
+              </div>
+
+              <field name="website_sale_installed" invisible="1" />
+              <label for="website_sale_show_cgv" attrs="{'invisible':[('website_sale_installed','=',False)]}"/>
+              <div name="website_sale_show_cgv" attrs="{'invisible':[('website_sale_installed','=',False)]}">
+                  <div class="oe_inline">
+                      <field name="website_sale_show_cgv"/> Add a checkbox on the ecommerce checkout to valid CGV before to confirm an order
+                  </div>
+              </div>
+            </group>
+          </group>
+        </field>
+    </record>
+
+
   </data>
 </odoo>
