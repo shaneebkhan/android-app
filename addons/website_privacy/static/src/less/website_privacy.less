@@ -1,21 +1,34 @@
 
 
-.cookie_bar {
-    display: block;
+div.cookie_bar {
+    display: table !important;
+    width: 100%;
+    padding: 10px;
     background-color: @gray-lighter;
     opacity: 1;
     z-index: 1100;
 
-    p {
-        margin: 10px 0px;
+    p, div {
+        display: table-cell;
+        vertical-align:middle;
+        width:100%;
         font-style: italic;
     }
 
     .btn_cookies {
-       margin-top: 6px;
+        font-style: normal;
     }
 
+    @media (max-width: @screen-sm-min) {
+        p, div {
+            display: inline-block;
+        }
+        .btn_cookies {
+            float: right;
+        }
+    }
 }
+
 
 .privacy-consent {
     font-style: italic;

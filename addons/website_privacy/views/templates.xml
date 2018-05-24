@@ -11,12 +11,12 @@
         <template id="cookies_bar" inherit_id="website.layout" name="Privacy Cookies Bar">
             <xpath expr="//footer" position="after">
                 <div class="cookie_bar" t-if="website.cookies_bar and not request.httprequest.cookies.get('cookies_consent')">
-                    <p class='ml16 mr16 pull-left'>
-                        <t t-raw="website.cookies_bar_msg"/>
-                    </p>
-                    <a class='ml16 mr16 btn_cookies btn btn-sm btn-primary pull-right' onclick="document.cookie='cookies_consent=1';$('.cookies_bar').fadeOut('slow');">
-                        <t t-raw="website.cookies_bar_btn"/>
-                    </a>
+                    <p t-raw="website.cookies_bar_msg"/>
+                    <div>
+                        <a class='btn_cookies btn btn-sm btn-primary' onclick="document.cookie='cookies_consent=1';$('.cookies_bar').fadeOut('slow');">
+                            <t t-raw="website.cookies_bar_btn"/>
+                        </a>
+                    </div>
                 </div>
             </xpath>
         </template>
