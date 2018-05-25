@@ -4,6 +4,7 @@
         <template id="assets_frontend" inherit_id="website.assets_frontend" name="Privacy assets frontend">
             <xpath expr="." position="inside">
                 <link rel='stylesheet' href='/website_privacy/static/src/less/website_privacy.less'/>
+                <script type="text/javascript" src="/website_privacy/static/src/js/website_privacy.js"/>
             </xpath>
         </template>
 
@@ -11,25 +12,23 @@
         <template id="cookies_bar" inherit_id="website.layout" name="Privacy Cookies Bar">
             <xpath expr="//footer" position="after">
                 <div class="cookie_bar" t-if="website.cookies_bar and not request.httprequest.cookies.get('cookies_consent')">
-                    <p t-raw="website.cookies_bar_msg"/>
-                    <div>
-                        <a class='btn_cookies btn btn-sm btn-primary' onclick="document.cookie='cookies_consent=1';$('.cookies_bar').fadeOut('slow');">
-                            <t t-raw="website.cookies_bar_btn"/>
-                        </a>
+                    <div t-field="website.cookies_bar_msg" class="table-cell"/>
+                    <div class="table-cell">
+                        <a class='btn_cookies btn btn-sm btn-primary' href="#" t-field="website.cookies_bar_btn"/>
                     </div>
                 </div>
             </xpath>
         </template>
 
         <!-- signup consent -->
-        <template id="signup_consent" inherit_id="auth_signup.fields" name="Privacy Signup Consent">
+        <!-- <template id="signup_consent" inherit_id="auth_signup.fields" name="Privacy Signup Consent">
             <xpath expr="//div[contains(@class, 'field-confirm_password')]" position="after">
                 <div class="privacy-consent mb16">
                     <input type="checkbox" id="privacy-content-chkbx" class="privacy-content-chkbx pull-left mr8" required="required" t-if="website.signup_force_checkbox" />
-                    <label for="privacy-content-chkbx" t-raw="website.signup_consent" />
+                    <label for="privacy-content-chkbx" t-field="website.signup_consent" />
                 </div>
             </xpath>
-        </template>
+        </template> -->
 
         <!-- Google Analytics -->
         <template id="google_analytics_anonym" inherit_id="website.layout" name="Privacy Google Analytics Anonymized">

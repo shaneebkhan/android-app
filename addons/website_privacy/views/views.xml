@@ -34,8 +34,10 @@
                   </div>
               </div>
 
-              <field name="signup_consent" />
-              <field name="signup_force_checkbox" />
+              <field name="module_auth_signup" invisible="1" />
+              <field name="signup_consent" attrs="{'invisible':[('module_auth_signup','=', False)]}"/>
+              <field name="signup_consent_msg" attrs="{'invisible':['|', ('module_auth_signup','=',False), ('signup_consent','=',False)]}"/>
+              <field name="signup_force_checkbox" attrs="{'invisible':['|', ('module_auth_signup','=',False), ('signup_consent','=',False)]}"/>
 
 
               <field name="module_website_form" invisible="1" />
