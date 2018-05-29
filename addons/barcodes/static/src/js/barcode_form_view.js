@@ -407,7 +407,7 @@ FormRenderer.include({
             return $.when();
         };
         this.trigger_up('activeBarcode', {
-            name: node.attrs.name,
+            name: _.uniqueId('barcodeButtonHandler'),
             commands: commands
         });
     },
