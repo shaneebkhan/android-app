@@ -109,6 +109,7 @@ QUnit.module('basic_fields', {
                 fields: {
                     symbol: {string: "Currency Sumbol", type: "char", searchable: true},
                     position: {string: "Currency Position", type: "char", searchable: true},
+                    is_space: {string: "Allow space between amount and currency symbol", type: "boolean", searchable: true},
                 },
                 records: [{
                     id: 1,
@@ -683,7 +684,7 @@ QUnit.module('basic_fields', {
         });
 
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '$\u00a0-8.9',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '-$8.9',
             'The value should be displayed properly.');
 
         await testUtils.form.clickEdit(form);
@@ -698,7 +699,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.form.clickSave(form);
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '$\u00a0109.2',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '$109.2',
             'The new value should be rounded properly.');
 
         form.destroy();
@@ -3369,7 +3370,7 @@ QUnit.module('basic_fields', {
         });
 
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '$\u00a09.10',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '$9.10',
             'The value should be displayed properly.');
 
         await testUtils.form.clickEdit(form);
@@ -3384,7 +3385,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.form.clickSave(form);
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '$\u00a0108.25',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '$108.25',
             'The new value should be rounded properly.');
 
         form.destroy();
@@ -3410,7 +3411,7 @@ QUnit.module('basic_fields', {
         });
 
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '0.00\u00a0€',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '0.00€',
             'The value should be displayed properly.');
 
         await testUtils.form.clickEdit(form);
@@ -3425,7 +3426,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.form.clickSave(form);
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '108.25\u00a0€',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '108.25€',
             'The new value should be rounded properly.');
 
         form.destroy();
@@ -3467,7 +3468,7 @@ QUnit.module('basic_fields', {
         });
 
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '99.1234\u00a0Bs.F',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '99.1234Bs.F',
             'The value should be displayed properly.');
 
         await testUtils.form.clickEdit(form);
@@ -3482,7 +3483,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.form.clickSave(form);
         // Non-breaking space between the currency and the amount
-        assert.strictEqual(form.$('.o_field_widget').first().text(), '99.1111\u00a0Bs.F',
+        assert.strictEqual(form.$('.o_field_widget').first().text(), '99.1111Bs.F',
             'The new value should be rounded properly.');
 
         form.destroy();
@@ -3534,7 +3535,7 @@ QUnit.module('basic_fields', {
             'The typed value should be correctly displayed.');
 
         await testUtils.dom.click(list.$buttons.find('.o_list_button_save'));
-        assert.strictEqual(list.$('tr.o_data_row td:not(.o_list_record_selector):contains($)').text(), '$\u00a0108.25',
+        assert.strictEqual(list.$('tr.o_data_row td:not(.o_list_record_selector):contains($)').text(), '$108.25',
             'The new value should be rounded properly.');
 
         list.destroy();
@@ -3574,9 +3575,9 @@ QUnit.module('basic_fields', {
             },
         });
 
-        assert.strictEqual(form.$('.o_field_monetary').first().html(), "$&nbsp;9.10",
+        assert.strictEqual(form.$('.o_field_monetary').first().html(), "$9.10",
             "readonly value should contain the currency");
-        assert.strictEqual(form.$('.o_field_monetary').first().next().html(), "$&nbsp;4.20",
+        assert.strictEqual(form.$('.o_field_monetary').first().next().html(), "$4.20",
             "readonly value should contain the currency");
 
         await testUtils.form.clickEdit(form);
@@ -3594,7 +3595,7 @@ QUnit.module('basic_fields', {
         await testUtils.fields.many2one.clickItem('currency_id','€');
         assert.strictEqual(form.$('.o_field_monetary > span').html(), "€",
             "After currency change, the monetary field currency should have been updated");
-        assert.strictEqual(form.$('.o_field_monetary').first().next().html(), "4.20&nbsp;€",
+        assert.strictEqual(form.$('.o_field_monetary').first().next().html(), "4.20€",
             "readonly value should contain the updated currency");
 
         form.destroy();
@@ -3625,7 +3626,7 @@ QUnit.module('basic_fields', {
             },
         });
 
-        assert.strictEqual(form.$('.o_field_monetary').html(), "9.10&nbsp;€",
+        assert.strictEqual(form.$('.o_field_monetary').html(), "9.10€",
             "field monetary should be formatted with correct currency");
 
         form.destroy();
@@ -3671,7 +3672,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.dom.click(form.$el);
 
-        assert.strictEqual($o2m.find('.o_field_widget[name=qux]').html(), "$&nbsp;22.00",
+        assert.strictEqual($o2m.find('.o_field_widget[name=qux]').html(), "$22.00",
             "the value should have been formatted after losing the focus");
 
         // test the monetary field inside the many2many
@@ -3686,7 +3687,7 @@ QUnit.module('basic_fields', {
 
         await testUtils.dom.click(form.$el);
 
-        assert.strictEqual($m2m.find('.o_field_widget[name=qux]').html(), "22.00&nbsp;€",
+        assert.strictEqual($m2m.find('.o_field_widget[name=qux]').html(), "22.00€",
             "the value should have been formatted after losing the focus");
 
         form.destroy();
