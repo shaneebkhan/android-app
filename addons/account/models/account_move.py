@@ -9,7 +9,6 @@ from odoo.exceptions import RedirectWarning, UserError, ValidationError
 from odoo.tools.misc import formatLang, format_date
 from odoo.tools import float_is_zero, float_compare
 from odoo.tools.safe_eval import safe_eval
-from odoo.addons import decimal_precision as dp
 from lxml import etree
 
 #----------------------------------------------------------
@@ -619,7 +618,7 @@ class AccountMoveLine(models.Model):
 
     name = fields.Char(string="Label")
     move_name = fields.Char(string='Number', related='move_id.name', store=True, index=True)
-    quantity = fields.Float(digits=dp.get_precision('Product Unit of Measure'),
+    quantity = fields.Float(digits='Product Unit of Measure',
         help="The optional quantity expressed by this line, eg: number of product sold. The quantity is not a legal requirement but is very useful for some reports.")
     product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
     product_id = fields.Many2one('product.product', string='Product')

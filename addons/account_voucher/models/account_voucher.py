@@ -3,7 +3,6 @@
 
 
 from odoo import fields, models, api, _
-from odoo.addons import decimal_precision as dp
 from odoo.exceptions import UserError, ValidationError
 
 
@@ -436,10 +435,10 @@ class AccountVoucherLine(models.Model):
     account_id = fields.Many2one('account.account', string='Account',
         required=True, domain=[('deprecated', '=', False)],
         help="The income or expense account related to the selected product.")
-    price_unit = fields.Float(string='Unit Price', required=True, digits=dp.get_precision('Product Price'), oldname='amount')
+    price_unit = fields.Float(string='Unit Price', required=True, digits='Product Price', oldname='amount')
     price_subtotal = fields.Monetary(string='Amount',
         store=True, readonly=True, compute='_compute_subtotal')
-    quantity = fields.Float(digits=dp.get_precision('Product Unit of Measure'),
+    quantity = fields.Float(digits='Product Unit of Measure',
         required=True, default=1)
     account_analytic_id = fields.Many2one('account.analytic.account', 'Analytic Account')
     analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Analytic Tags')

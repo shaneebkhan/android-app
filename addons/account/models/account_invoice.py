@@ -17,7 +17,6 @@ from odoo.tools.misc import formatLang
 
 from odoo.exceptions import UserError, RedirectWarning, ValidationError, Warning
 
-from odoo.addons import decimal_precision as dp
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -1843,7 +1842,7 @@ class AccountInvoiceLine(models.Model):
     account_id = fields.Many2one('account.account', string='Account', domain=[('deprecated', '=', False)],
         default=_default_account,
         help="The income or expense account related to the selected product.")
-    price_unit = fields.Float(string='Unit Price', required=True, digits=dp.get_precision('Product Price'))
+    price_unit = fields.Float(string='Unit Price', required=True, digits='Product Price')
     price_subtotal = fields.Monetary(string='Amount (without Taxes)',
         store=True, readonly=True, compute='_compute_price', help="Total amount without taxes")
     price_total = fields.Monetary(string='Amount (with Taxes)',
@@ -1852,9 +1851,9 @@ class AccountInvoiceLine(models.Model):
         store=True, readonly=True, compute='_compute_price',
         help="Total amount in the currency of the company, negative for credit note.")
     price_tax = fields.Monetary(string='Tax Amount', compute='_get_price_tax', store=False)
-    quantity = fields.Float(string='Quantity', digits=dp.get_precision('Product Unit of Measure'),
+    quantity = fields.Float(string='Quantity', digits='Product Unit of Measure',
         required=True, default=1)
-    discount = fields.Float(string='Discount (%)', digits=dp.get_precision('Discount'),
+    discount = fields.Float(string='Discount (%)', digits='Discount',
         default=0.0)
     invoice_line_tax_ids = fields.Many2many('account.tax',
         'account_invoice_line_tax', 'invoice_line_id', 'tax_id',
