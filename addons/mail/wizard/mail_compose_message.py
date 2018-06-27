@@ -113,13 +113,13 @@ class MailComposer(models.TransientModel):
         'wizard_id', 'attachment_id', 'Attachments')
     is_log = fields.Boolean('Log an Internal Note',
                             help='Whether the message is an internal note (comment mode only)')
-    subject = fields.Char(default=False)
+    subject = fields.Char(default=False, related="template_id.subject")
     # mass mode options
     notify = fields.Boolean('Notify followers', help='Notify followers of the document (mass post only)')
     auto_delete = fields.Boolean('Delete Emails', help='Delete sent emails (mass mailing only)')
     auto_delete_message = fields.Boolean('Delete Message Copy', help='Do not keep a copy of the email in the document communication history (mass mailing only)')
     template_id = fields.Many2one(
-        'mail.template', 'Use template', index=True,
+        'mail.template', 'Subject', index=True,
         domain="[('model', '=', model)]")
     # mail_message updated fields
     message_type = fields.Selection(default="comment")
@@ -410,11 +410,10 @@ class MailComposer(models.TransientModel):
             template attached to the current document. """
         for record in self:
             model = self.env['ir.model']._get(record.model or 'mail.message')
-            model_name = model.name or ''
-            template_name = "%s: %s" % (model_name, tools.ustr(record.subject))
+            template_name = self._context.get('form_value')
             values = {
                 'name': template_name,
-                'subject': record.subject or False,
+                'subject': template_name or False,
                 'body_html': record.body or False,
                 'model_id': model.id or False,
                 'attachment_ids': [(6, 0, [att.id for att in record.attachment_ids])],
