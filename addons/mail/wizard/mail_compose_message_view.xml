@@ -58,7 +58,7 @@
                                 attrs="{'invisible': [('composition_mode', '!=', 'comment')]}"/>
                         </div>
                         <field name="subject" class="subject_autofill" invisible="1"/>
-                        <field name="template_id" context="{'default_model': model, 'default_body_html': body, 'default_subject': subject}" widget="save_template" string="Subject"/>
+                        <field name="template_id" context="{'force_render': context.get('force_render'), 'default_res_id': context.get('default_res_id'), 'default_model': model, 'default_body_html': body, 'default_subject': subject}" widget="save_template" string="Subject"/>
                         <!-- mass post -->
                         <field name="notify"
                             attrs="{'invisible':['|', ('composition_mode', '!=', 'mass_post')]}"/>

@@ -533,3 +533,12 @@ class MailTemplate(models.Model):
         if force_send:
             mail.send(raise_exception=raise_exception)
         return mail.id  # TDE CLEANME: return mail + api.returns ?
+
+    def name_get(self):
+        if self._context.get('force_render') and self._context.get('default_res_id'):
+            res_id = self._context.get('default_res_id')
+            result = []
+            for template in self:
+                name = template.render_template(template.subject, template.model, res_id)
+                result.append((template.id, name))
+            return result
