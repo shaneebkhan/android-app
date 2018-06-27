@@ -605,7 +605,7 @@ class AccountInvoice(models.Model):
             force_email=True
         )
         return {
-            'name': _('Compose Email'),
+            'name': _('Send Invoice ' + self.number),
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
