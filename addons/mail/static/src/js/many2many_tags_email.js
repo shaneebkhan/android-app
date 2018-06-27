@@ -57,6 +57,11 @@ var FieldMany2ManyTagsEmail = M2MTags.extend({
     }),
     specialData: "_setInvalidMany2ManyTagsEmail",
 
+    start: function (record, fieldName) {
+        this.followersEl = $('<span class="mail_followers">and ' + this.record.data.followers_count + ' Followers</span>');
+        return this._super.apply(this, arguments);
+    },
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -125,7 +130,9 @@ var FieldMany2ManyTagsEmail = M2MTags.extend({
             def.resolve();
         }
         return def.then(function () {
-            return _super.apply(self, arguments);
+            return _super.apply(self, arguments).then(function () {
+                self.followersEl.appendTo(self.$('.o_dropdown_button'));
+            });
         });
     },
 });

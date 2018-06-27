@@ -124,6 +124,14 @@ class MailComposer(models.TransientModel):
     # mail_message updated fields
     message_type = fields.Selection(default="comment")
     subtype_id = fields.Many2one(default=lambda self: self.env['ir.model.data'].xmlid_to_res_id('mail.mt_comment'))
+    followers_count = fields.Integer(compute='_get_followers')
+
+    @api.one
+    @api.depends('res_id', 'model')
+    def _get_followers(self):
+        record = self.env[self.model].browse(self.res_id)
+        if hasattr(record, 'message_partner_ids'):
+            self.followers_count = len(record.message_partner_ids)
 
     @api.multi
     def check_access_rule(self, operation):
