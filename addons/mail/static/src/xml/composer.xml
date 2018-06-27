@@ -90,4 +90,11 @@
             </button>
         </t>
     </t>
+    <span t-name="attach_button" class="pull-right">
+        <button class="btn btn-default o_attach">
+            <span class="fa fa-paperclip"/>
+            <t t-esc="widget.string"/>
+            Attachment
+        </button>
+    </span>
 </templates>

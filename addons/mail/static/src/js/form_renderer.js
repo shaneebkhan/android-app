@@ -9,6 +9,11 @@ var FormRenderer = require('web.FormRenderer');
  * subset of) the mail widgets (mail_thread, mail_followers and mail_activity).
  */
 FormRenderer.include({
+
+    custom_events: _.extend({}, FormRenderer.prototype.custom_events, {
+        'open_uploader' : '_onOpenUploader',
+    }),
+
     /**
      * @override
      */
@@ -63,6 +68,12 @@ FormRenderer.include({
         } else {
             return this._super.apply(this, arguments);
         }
+    },
+
+    _onOpenUploader: function (events) {
+        var allWidgets = this.allFieldWidgets[events.data.stateId];
+        var attachWidget = _.findWhere(allWidgets, {'name': events.data.fieldName});
+        attachWidget._onAttach ? attachWidget._onAttach() : true;
     },
 });
 
