@@ -194,7 +194,17 @@ class StockMove(models.Model):
 
     def _generate_move_phantom(self, bom_line, quantity):
         if bom_line.product_id.type in ['product', 'consu']:
-            return self.copy(default=self._prepare_phantom_move_values(bom_line, quantity))
+            move = self.copy(default=self._prepare_phantom_move_values(bom_line, quantity))
+            # check if mto
+            try:
+                mto_route = self.env['stock.warehouse']._get_mto_route()
+            except:
+                mto_route = False
+            product = move.product_id
+            routes = product.route_ids + product.route_from_categ_ids
+            if mto_route and mto_route in routes:
+                move.procure_method = 'make_to_order'
+            return move
         return self.env['stock.move']
 
     def _generate_consumed_move_line(self, qty_to_add, final_lot, lot=False):
