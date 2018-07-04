@@ -255,6 +255,12 @@ class StockMove(models.Model):
                 vals.update({'lot_id': lot.id})
             self.env['stock.move.line'].create(vals)
 
+    def _to_assign(self):
+        res = super(StockMove, self)._to_assign()
+        in_mo = bool(self.production_id or self.raw_material_production_id)
+        return bool(res and not in_mo)
+
+
 
 class PushedFlow(models.Model):
     _inherit = "stock.location.path"
