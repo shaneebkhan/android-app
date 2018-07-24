@@ -215,6 +215,7 @@ class Website(Home):
     @http.route(['/website/pages', '/website/pages/page/<int:page>'], type='http', auth="user", website=True)
     def pages_management(self, page=1, sortby='name', search='', **kw):
         # only website_designer should access the page Management
+        step = 50
         if not request.env.user.has_group('website.group_website_designer'):
             raise werkzeug.exceptions.NotFound()
 
@@ -224,25 +225,25 @@ class Website(Home):
             'name': {'label': _('Sort by Name'), 'order': 'name'},
         }
         # default sortby order
-        sort_order = searchbar_sortings.get(sortby, 'name')['order']
+        sort_order = searchbar_sortings.get(sortby, 'name')['order'] + ', website_id asc'
 
         domain = request.website.website_domain()
         if search:
             domain += ['|', ('name', 'ilike', search), ('url', 'ilike', search)]
 
-        pages_count = Page.search_count(domain)
+        pages = Page.search(domain, order=sort_order)
+        pages = pages.filtered(pages._is_most_specific_page)
+        pages_count = len(pages)
 
         pager = portal_pager(
             url="/website/pages",
             url_args={'sortby': sortby},
             total=pages_count,
             page=page,
-            step=50
+            step=step
         )
-        pages = Page.search(domain, order=sort_order, limit=50, offset=pager['offset'])
 
-        # only include pages if they are the most specific one available
-        pages = pages.filtered(pages._is_most_specific_page)
+        pages = pages[(page - 1) * step:page * step]
 
         values = {
             'pager': pager,
