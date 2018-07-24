@@ -269,6 +269,7 @@ class Http(models.AbstractModel):
 
         return super(Http, cls)._xmlid_to_obj(env, xmlid)
 
+
 class ModelConverter(ModelConverter):
 
     def generate(self, uid, dom=None, args=None):

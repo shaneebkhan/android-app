@@ -34,7 +34,7 @@ DEFAULT_CDN_FILTERS = [
 
 class Website(models.Model):
 
-    _name = "website"  # Avoid website.website convention for conciseness (for new api). Got a special authorization from xmo and rco
+    _name = "website"
     _description = "Website"
 
     def _active_languages(self):
@@ -141,9 +141,9 @@ class Website(models.Model):
         self.social_youtube = self.company_id.social_youtube
         self.social_googleplus = self.company_id.social_googleplus
 
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     # Page Management
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     def _bootstrap_homepage(self):
         standard_homepage = self.env.ref('website.homepage', raise_if_not_found=False)
         if not standard_homepage:
@@ -239,7 +239,7 @@ class Website(models.Model):
             if not string.startswith('website.'):
                 string = 'website.' + string
 
-        #Look for unique key
+        # Look for unique key
         key_copy = string
         inc = 0
         domain_static = ['|', ('website_id', '=', False), ('website_id', '=', website_id)]
@@ -371,9 +371,9 @@ class Website(models.Model):
         for view in views:
             dependencies.setdefault(view_key, [])
             dependencies[view_key].append({
-            'text': _('Template <b>%s (id:%s)</b> is calling this file') % (view.key or view.name, view.id),
-            'item': _('%s (id:%s)') % (view.key or view.name, view.id),
-            'link': '/web#id=%s&view_type=form&model=ir.ui.view' % view.id,
+                'text': _('Template <b>%s (id:%s)</b> is calling this file') % (view.key or view.name, view.id),
+                'item': _('%s (id:%s)') % (view.key or view.name, view.id),
+                'link': '/web#id=%s&view_type=form&model=ir.ui.view' % view.id,
             })
 
         return dependencies
@@ -388,9 +388,9 @@ class Website(models.Model):
         except Exception:
             return False
 
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     # Languages
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
 
     @api.multi
     def get_languages(self):
@@ -435,9 +435,9 @@ class Website(models.Model):
                 lang['hreflang'] = lang['short']
         return langs
 
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
     # Utilities
-    #----------------------------------------------------------
+    # ----------------------------------------------------------
 
     @api.model
     def get_current_website(self):
@@ -513,13 +513,13 @@ class Website(models.Model):
         methods = endpoint.routing.get('methods') or ['GET']
 
         converters = list(rule._converters.values())
-        if not ('GET' in methods
-            and endpoint.routing['type'] == 'http'
-            and endpoint.routing['auth'] in ('none', 'public')
-            and endpoint.routing.get('website', False)
-            and all(hasattr(converter, 'generate') for converter in converters)
-            and endpoint.routing.get('website')):
-            return False
+        if not ('GET' in methods and
+                endpoint.routing['type'] == 'http' and
+                endpoint.routing['auth'] in ('none', 'public') and
+                endpoint.routing.get('website', False) and
+                all(hasattr(converter, 'generate') for converter in converters) and
+                endpoint.routing.get('website')):
+                return False
 
         # dont't list routes without argument having no default value or converter
         spec = inspect.getargspec(endpoint.method.original_func)
@@ -579,7 +579,7 @@ class Website(models.Model):
             for (i, (name, converter)) in enumerate(convitems):
                 newval = []
                 for val in values:
-                    query = i == len(convitems)-1 and query_string
+                    query = i == len(convitems) - 1 and query_string
                     if query:
                         r = "".join([x[1] for x in rule._trace[1:] if not x[0]])  # remove model converter from route
                         query = sitemap_qs2dom(query, r, self.env[converter.model]._rec_name)
@@ -611,7 +611,7 @@ class Website(models.Model):
         domain = [('url', '!=', '/')]
         if not force:
             domain += [('website_indexed', '=', True)]
-            #is_visible
+            # is_visible
             domain += [('website_published', '=', True), '|', ('date_publish', '=', False), ('date_publish', '<=', fields.Datetime.now())]
 
         if query_string:
@@ -808,7 +808,7 @@ class Page(models.Model):
         website = self.env['website'].browse(website_id)
         page = self.browse(int(data['id']))
 
-        #If URL has been edited, slug it
+        # If URL has been edited, slug it
         original_url = page.url
         url = data['url']
         if not url.startswith('/'):
@@ -817,7 +817,7 @@ class Page(models.Model):
             url = '/' + slugify(url, max_length=1024, path=True)
             url = self.env['website'].get_unique_path(url)
 
-        #If name has changed, check for key uniqueness
+        # If name has changed, check for key uniqueness
         if page.name != data['name']:
             page_key = self.env['website'].get_unique_key(slugify(data['name']))
         else:
@@ -825,11 +825,11 @@ class Page(models.Model):
 
         menu = self.env['website.menu'].search([('page_id', '=', int(data['id']))])
         if not data['is_menu']:
-            #If the page is no longer in menu, we should remove its website_menu
+            # If the page is no longer in menu, we should remove its website_menu
             if menu:
                 menu.unlink()
         else:
-            #The page is now a menu, check if has already one
+            # The page is now a menu, check if has already one
             if menu:
                 menu.write({'url': url})
             else:
@@ -875,9 +875,9 @@ class Page(models.Model):
             # is copied from.
             # (eg: website_version: an ir.ui.view record with the same key is
             # expected to be the same ir.ui.view but from another version)
-            new_view = view.copy({'key': view.key + '.copy', 'name': '%s %s' % (view.name,  _('(copy)'))})
+            new_view = view.copy({'key': view.key + '.copy', 'name': '%s %s' % (view.name, _('(copy)'))})
             default = {
-                'name': '%s %s' % (self.name,  _('(copy)')),
+                'name': '%s %s' % (self.name, _('(copy)')),
                 'url': self.env['website'].get_unique_path(self.url),
                 'view_id': new_view.id,
             }
@@ -895,7 +895,7 @@ class Page(models.Model):
             if menu:
                 # If the page being cloned has a menu, clone it too
                 new_menu = menu.copy()
-                new_menu.write({'url': new_page.url, 'name': '%s %s' % (menu.name,  _('(copy)')), 'page_id': new_page.id})
+                new_menu.write({'url': new_page.url, 'name': '%s %s' % (menu.name, _('(copy)')), 'page_id': new_page.id})
 
         return new_page.url + '?enable_editor=1'
 

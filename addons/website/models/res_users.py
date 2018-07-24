@@ -26,7 +26,7 @@ class ResUsers(models.Model):
         # ('abc', NULL) to coexist because of how SQL handles NULLs.
         ('login_key', 'CHECK (1=1)', 'You can not have two users with the same login!')
     ]
-    
+
     @api.multi
     def _has_unsplash_key_rights(self):
         self.ensure_one()
