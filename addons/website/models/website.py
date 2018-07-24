@@ -886,7 +886,7 @@ class Page(models.Model):
             :param page_id : website.page identifier
         """
         page = self.browse(int(page_id))
-        new_page = page.copy()
+        new_page = page.copy(dict(website_id=self.env['website'].get_current_website()))
         if clone_menu:
             menu = self.env['website.menu'].search([('page_id', '=', page_id)], limit=1)
             if menu:
