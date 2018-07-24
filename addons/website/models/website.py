@@ -37,7 +37,7 @@ class Website(models.Model):
     _name = "website"
     _description = "Website"
 
-    @staticmethod
+    @api.model
     def website_domain(self, website_id=False):
         return ['|', ('website_id', '=', False), ('website_id', '=', website_id or self.id)]
 
