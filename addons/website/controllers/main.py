@@ -251,7 +251,7 @@ class Website(Home):
             'sortby': sortby,
             'searchbar_sortings': searchbar_sortings,
         }
-        return request.render("website.edit_website_pages", values)
+        return request.render("website.list_website_pages", values)
 
     @http.route(['/website/add/', '/website/add/<path:path>'], type='http', auth="user", website=True)
     def pagenew(self, path="", noredirect=False, add_menu=False, template=False):
