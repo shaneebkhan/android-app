@@ -37,6 +37,10 @@ class Website(models.Model):
     _name = "website"
     _description = "Website"
 
+    @staticmethod
+    def website_domain(self, website_id=False):
+        return ['|', ('website_id', '=', False), ('website_id', '=', website_id or self.id)]
+
     def _active_languages(self):
         return self.env['res.lang'].search([]).ids
 
@@ -217,9 +221,8 @@ class Website(models.Model):
         """ Given an url, return that url suffixed by counter if it already exists
             :param page_url : the url to be checked for uniqueness
         """
-        website_id = self.get_current_website().id
         inc = 0
-        domain_static = ['|', ('website_id', '=', False), ('website_id', '=', website_id)]
+        domain_static = self.get_current_website().website_domain()
         page_temp = page_url
         while self.env['website.page'].with_context(active_test=False).sudo().search([('url', '=', page_temp)] + domain_static):
             inc += 1
@@ -232,7 +235,6 @@ class Website(models.Model):
             :param string : the key to be checked for uniqueness, you can pass it with 'website.' or not
             :param template_module : the module to be prefixed on the key, if not set, we will use website
         """
-        website_id = self.get_current_website().id
         if template_module:
             string = template_module + '.' + string
         else:
@@ -242,7 +244,7 @@ class Website(models.Model):
         # Look for unique key
         key_copy = string
         inc = 0
-        domain_static = ['|', ('website_id', '=', False), ('website_id', '=', website_id)]
+        domain_static = self.get_current_website().website_domain()
         while self.env['website.page'].with_context(active_test=False).sudo().search([('key', '=', key_copy)] + domain_static):
             inc += 1
             key_copy = string + (inc and "-%s" % inc or "")
@@ -250,10 +252,8 @@ class Website(models.Model):
 
     def key_to_view_id(self, view_id):
         return self.env['ir.ui.view'].search([
-            ('id', '=', view_id),
-            '|', ('website_id', '=', self._context.get('website_id')), ('website_id', '=', False),
-            ('type', '=', 'qweb')
-        ])
+            ('id', '=', view_id), ('type', '=', 'qweb')
+        ] + self.env['website'].website_domain(self._context.get('website_id')))
 
     @api.model
     def page_search_dependencies(self, page_id=False):
@@ -268,13 +268,11 @@ class Website(models.Model):
             return dependencies
 
         page = self.env['website.page'].browse(int(page_id))
-        website_id = self._context.get('website_id')
+        website = self.env['website'].browse(self._context.get('website_id'))
         url = page.url
 
         # search for website_page with link
-        website_page_search_dom = [
-            '|', ('website_id', '=', False), ('website_id', '=', website_id), ('view_id.arch_db', 'ilike', url)
-        ]
+        website_page_search_dom = [('view_id.arch_db', 'ilike', url)] + website.website_domain()
         pages = self.env['website.page'].search(website_page_search_dom)
         page_key = _('Page')
         if len(pages) > 1:
@@ -290,10 +288,7 @@ class Website(models.Model):
             page_view_ids.append(page.view_id.id)
 
         # search for ir_ui_view (not from a website_page) with link
-        page_search_dom = [
-            '|', ('website_id', '=', website_id), ('website_id', '=', False),
-            ('arch_db', 'ilike', url), ('id', 'not in', page_view_ids)
-        ]
+        page_search_dom = [('arch_db', 'ilike', url), ('id', 'not in', page_view_ids)] + website.website_domain()
         views = self.env['ir.ui.view'].search(page_search_dom)
         view_key = _('Template')
         if len(views) > 1:
@@ -306,9 +301,7 @@ class Website(models.Model):
                 'item': _('%s (id:%s)') % (view.key or view.name, view.id),
             })
         # search for menu with link
-        menu_search_dom = [
-            '|', ('website_id', '=', website_id), ('website_id', '=', False), ('url', 'ilike', '%s' % url)
-        ]
+        menu_search_dom = [('url', 'ilike', '%s' % url)] + website.website_domain()
 
         menus = self.env['website.menu'].search(menu_search_dom)
         menu_key = _('Menu')
@@ -336,14 +329,14 @@ class Website(models.Model):
             return dependencies
 
         page = self.env['website.page'].browse(int(page_id))
-        website_id = self._context.get('website_id')
+        website = self.env['website'].browse(self._context.get('website_id'))
         key = page.key
 
         # search for website_page with link
         website_page_search_dom = [
-            '|', ('website_id', '=', False), ('website_id', '=', website_id), ('view_id.arch_db', 'ilike', key),
-            ('id', '!=', page.id),
-        ]
+            ('view_id.arch_db', 'ilike', key),
+            ('id', '!=', page.id)
+        ] + website.website_domain()
         pages = self.env['website.page'].search(website_page_search_dom)
         page_key = _('Page')
         if len(pages) > 1:
@@ -360,10 +353,9 @@ class Website(models.Model):
 
         # search for ir_ui_view (not from a website_page) with link
         page_search_dom = [
-            '|', ('website_id', '=', website_id), ('website_id', '=', False),
             ('arch_db', 'ilike', key), ('id', 'not in', page_view_ids),
             ('id', '!=', page.view_id.id),
-        ]
+        ] + website.website_domain()
         views = self.env['ir.ui.view'].search(page_search_dom)
         view_key = _('Template')
         if len(views) > 1:
@@ -629,7 +621,7 @@ class Website(models.Model):
 
     @api.multi
     def get_website_pages(self, domain=[], order='name', limit=None):
-        domain += ['|', ('website_id', '=', False), ('website_id', '=', self.get_current_website().id)]
+        domain += self.get_current_website().website_domain()
         pages = request.env['website.page'].search(domain, order='name', limit=limit)
         return pages
 
@@ -718,12 +710,12 @@ class WebsitePublishedMixin(models.AbstractModel):
             value = not value
 
         current_website_id = self._context.get('website_id')
+        is_published = [('is_published', '=', value)]
         if current_website_id:
-            is_published = [('is_published', '=', True)]
-            on_current_website = expression.OR([[('website_id', '=', False)], [('website_id', '=', current_website_id)]])
+            on_current_website = self.env['website'].website_domain(current_website_id)
             return (['!'] if value is False else []) + expression.AND([is_published, on_current_website])
         else:  # should be in the backend, return things that are published anywhere
-            return [('is_published', '=', value)]
+            return is_published
 
     @api.multi
     def _compute_website_url(self):
@@ -794,8 +786,11 @@ class Page(models.Model):
 
     @api.model
     def get_page_info(self, id, website_id):
-        domain = ['|', ('website_id', '=', False), ('website_id', '=', website_id), ('id', '=', id)]
-        item = self.search_read(domain, fields=['id', 'name', 'url', 'website_published', 'website_indexed', 'date_publish', 'menu_ids', 'is_homepage', 'website_id'], limit=1)
+        item = self.search_read(
+            domain=[('id', '=', id)] + self.env['website'].website_domain(website_id),
+            fields=['id', 'name', 'url', 'website_published', 'website_indexed', 'date_publish', 'menu_ids', 'is_homepage', 'website_id'],
+            limit=1
+        )
         return item
 
     @api.multi

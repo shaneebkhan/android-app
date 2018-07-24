@@ -37,16 +37,13 @@ class ResUsers(models.Model):
     @api.constrains('login', 'website_id')
     def _check_login(self):
         for user in self:
-            if self.search([('id', '!=', user.id), ('login', '=', user.login),
-                            '|', ('website_id', '=', False),
-                                 ('website_id', '=', user.website_id.id)]):
+            if self.search([('id', '!=', user.id), ('login', '=', user.login)] + user.website_id.website_domain()):
                 raise ValidationError(_('You can not have two users with the same login!'))
 
     @api.model
     def _get_login_domain(self, login):
-        current_website_id = self.env['website'].get_current_website().id
-        multi_website_domain = ['|', ('website_id', '=', False), ('website_id', '=', current_website_id)]
-        return super(ResUsers, self)._get_login_domain(login) + multi_website_domain
+        website = self.env['website'].get_current_website()
+        return super(ResUsers, self)._get_login_domain(login) + website.website_domain()
 
     @api.model
     def _signup_create_user(self, values):

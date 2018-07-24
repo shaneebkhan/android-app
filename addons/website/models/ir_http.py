@@ -117,7 +117,7 @@ class Http(models.AbstractModel):
     @classmethod
     def _serve_page(cls):
         req_page = request.httprequest.path
-        page_domain = [('url', '=', req_page), '|', ('website_id', '=', False), ('website_id', '=', request.website.id)]
+        page_domain = [('url', '=', req_page)] + request.website.website_domain()
 
         published_domain = page_domain + [('website_published', '=', True)]
         pages = request.env['website.page'].search(published_domain)
@@ -144,10 +144,7 @@ class Http(models.AbstractModel):
     @classmethod
     def _serve_redirect(cls):
         req_page = request.httprequest.path
-        domain = [
-            '|', ('website_id', '=', request.website.id), ('website_id', '=', False),
-            ('url_from', '=', req_page)
-        ]
+        domain = [('url_from', '=', req_page)] + request.website.website_domain()
         return request.env['website.redirect'].search(domain, limit=1)
 
     @classmethod

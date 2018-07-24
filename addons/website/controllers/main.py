@@ -226,7 +226,7 @@ class Website(Home):
         # default sortby order
         sort_order = searchbar_sortings.get(sortby, 'name')['order']
 
-        domain = ['|', ('website_id', '=', False), ('website_id', '=', request.website.id)]
+        domain = request.website.website_domain()
         if search:
             domain += ['|', ('name', 'ilike', search), ('url', 'ilike', search)]
 
