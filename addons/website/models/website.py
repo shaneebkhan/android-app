@@ -461,10 +461,12 @@ class Website(models.Model):
             country_specific_websites = websites.filtered(lambda website: country_id in website.country_group_ids.mapped('country_ids').ids)
             return country_specific_websites[0].id if country_specific_websites else websites[0].id
 
-    def _fix_to_session(self):
-        # call on empty recordset to clear
+    def _force(self):
+        self._force_website(self.id)
+
+    def _force_website(self, website_id):
         if request:
-            request.session['force_website_id'] = self.id
+            request.session['force_website_id'] = website_id and int(website_id)
 
     @api.model
     def is_publisher(self):
