@@ -677,10 +677,11 @@ class WebsitePublishedMixin(models.AbstractModel):
 
     _name = "website.published.mixin"
 
-    website_published = fields.Boolean('Visible on current website',
-                                       compute='_compute_website_published',
-                                       inverse='_inverse_website_published',
-                                       search='_search_website_published')  # todo jov evaluate places where this is used, we can probably replace some with is_published
+    # website_published = fields.Boolean('Visible on current website',
+    #                                    compute='_compute_website_published',
+    #                                    inverse='_inverse_website_published',
+    #                                    search='_search_website_published')  # todo jov evaluate places where this is used, we can probably replace some with is_published
+    website_published = fields.Boolean(related='is_published')
     is_published = fields.Boolean('Is published')
     website_id = fields.Many2one('website', string='Website', help='Restrict publishing to this website.')
     website_url = fields.Char('Website URL', compute='_compute_website_url', help='The full URL to access the document through the website.')
