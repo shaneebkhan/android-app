@@ -844,7 +844,7 @@ class Page(models.Model):
             'name': data['name'],
             'url': url,
             'is_published': data['website_published'],
-            'website_id': website.id if data['restrict_to_current_website'] else False,
+            'website_id': False if data['share_page_info'] else website.id,
             'website_indexed': data['website_indexed'],
             'date_publish': data['date_publish'] or None,
             'is_homepage': data['is_homepage'],
