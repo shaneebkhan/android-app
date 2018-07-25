@@ -942,10 +942,10 @@ Sitemap: <t t-esc="url_root"/>sitemap.xml
           </td>
           <td class="text-center"><i t-att-class="'fa fa-check' if page.website_indexed else 'fa fa-times text-muted'" t-att-title="'Checked' if page.website_indexed else 'Not checked'"></i></td>
           <td class="text-right">
-              <a class="mr4 fa fa-cog js_page_properties" t-att-data-id="page.id" href="#" title="Manage this page" aria-label="Manage this page"></a>
-              <a class="mr4 fa fa-pencil-square-o" t-attf-href="/web#id=#{page.view_id.id}&amp;view_type=form&amp;model=ir.ui.view" title="Edit code in backend" aria-label="Edit code in backend"></a>
-              <a class="mr4 fa fa-clone js_clone_page" t-att-data-id="page.id" href="#" title="Clone this page" aria-label="Clone this page"></a>
-              <a class="fa fa-trash js_delete_page" t-att-data-id="page.id" href="#" title="Delete this page" aria-label="Delete this page"></a>
+              <a class="mr4 fa fa-cog js_page_properties" t-att-data-id="page.id" href="#" title="Manage this page"></a>
+              <a class="mr4 fa fa-pencil-square-o" t-attf-href="/web#id=#{page.view_id.id}&amp;view_type=form&amp;model=ir.ui.view" title="Edit code in backend"></a>
+              <a class="mr4 fa fa-clone js_clone_page" t-att-data-id="page.id" href="#" title="Clone this page"></a>
+              <a class="fa fa-trash js_delete_page" t-att-data-id="page.id" href="#" title="Delete this page"></a>
           </td>
       </tr>
 </template>
