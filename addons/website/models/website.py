@@ -1049,7 +1049,7 @@ class Menu(models.Model):
             mid = menu['id']
             # new menu are prefixed by new-
             if isinstance(mid, pycompat.string_types):
-                new_menu = self.create({'name': menu['name']})
+                new_menu = self.create({'name': menu['name'], 'website_id': website_id})
                 replace_id(mid, new_menu.id)
         for menu in data['data']:
             menu_id = self.browse(menu['id'])
