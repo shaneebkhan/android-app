@@ -107,7 +107,7 @@ class Website(models.Model):
     def _compute_menu(self):
         Menu = self.env['website.menu']
         for website in self:
-            website.menu_id = Menu.search([('parent_id', '=', False), ('website_id', 'in', (website.id, False))], order='id', limit=1).id
+            website.menu_id = Menu.search([('parent_id', '=', False), ('website_id', '=', website.id)], order='id', limit=1).id
 
     # cf. Wizard hack in website_views.xml
     def noop(self, *args, **kwargs):
@@ -162,6 +162,9 @@ class Website(models.Model):
 
         self.homepage_id = self.env['website.page'].search([('website_id', '=', self.id),
                                                             ('key', '=', standard_homepage.key)])
+        top_menu = self.env['website.menu'].create({'name': 'Top Menu for website ' + str(self.id), 'website_id': self.id, 'sequence': 0})
+        self.menu_id = top_menu.id
+        self.env['website.menu'].create({'name': 'Home', 'url': '/', 'website_id': self.id, 'parent_id': top_menu.id})
 
     @api.model
     def new_page(self, name=False, add_menu=False, template='website.default_page', ispage=True, namespace=None):
@@ -940,37 +943,24 @@ class Menu(models.Model):
     parent_path = fields.Char(index=True)
     is_visible = fields.Boolean(compute='_compute_visible', string='Is Visible')
 
-    @api.multi
-    def unlink(self):
-        '''This implements COU (copy-on-unlink). When deleting a generic menu
-        item website-specific menu items will be created.'''
-        current_website_id = self._context.get('website_id')
-
-        if current_website_id and not self._context.get('no_cow'):
-            for menu in self.filtered(lambda menu: not menu.website_id):
-                for website in self.env['website'].search([('id', '!=', current_website_id)]):
-                    # reuse the COW mechanism to create website-specific copies
-                    menu.with_context(website_id=website.id).write({})
-
-        return super(Menu, self).unlink()
-
-    @api.multi
-    def write(self, vals):
-        '''This implements COW (copy-on-write). This way editing websites does
-        not impact other websites and newly created websites will only
-        contain the default menus.
+    @api.model
+    def create(self, vals):
+        ''' In case a menu without a website_id is trying to be created, we duplicate
+            it for every website.
+            Note: Particulary useful when installing a module that adds a menu like
+                  /shop. So every website has the shop menu.
         '''
-        current_website_id = self._context.get('website_id')
-
-        if current_website_id and not self.website_id and not self._context.get('no_cow'):
-            new_website_specific_menu = self.copy({'website_id': current_website_id})
-
-            for child in self.child_id:
-                child.write({'parent_id': new_website_specific_menu.id})
-
-            return new_website_specific_menu.write(vals)
-
-        return super(Menu, self).write(vals)
+        if vals.get('website_id'):
+            return super(Menu, self).create(vals)
+        elif self._context.get('website_id'):
+            vals.update({'website_id': self._context.get('website_id')})
+            return super(Menu, self).create(vals)
+        else:
+            # create for every site
+            for website in self.env['website'].search([]):
+                vals.update({'website_id': website.id})
+                res = super(Menu, self).create(vals)
+        return res  # create loop, what to return ? last created record ?
 
     @api.one
     def _compute_visible(self):
