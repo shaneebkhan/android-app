@@ -788,13 +788,10 @@ class Page(models.Model):
         return most_specific_page == page_to_test
 
     @api.model
-    def get_page_info(self, id, website_id):
-        item = self.search_read(
-            domain=[('id', '=', id)] + self.env['website'].website_domain(website_id),
-            fields=['id', 'name', 'url', 'website_published', 'website_indexed', 'date_publish', 'menu_ids', 'is_homepage', 'website_id'],
-            limit=1
+    def get_page_info(self, id):
+        return self.browse(id).read(
+            ['id', 'name', 'url', 'website_published', 'website_indexed', 'date_publish', 'menu_ids', 'is_homepage', 'website_id'],
         )
-        return item
 
     @api.multi
     def get_view_identifier(self):

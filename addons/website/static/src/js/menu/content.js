@@ -80,7 +80,7 @@ var PagePropertiesDialog = weWidgets.Dialog.extend({
         defs.push(this._rpc({
             model: 'website.page',
             method: 'get_page_info',
-            args: [this.page_id, context.website_id],
+            args: [this.page_id],
             context: context,
         }).then(function (page) {
             page[0].url = _.str.startsWith(page[0].url, '/') ? page[0].url.substring(1) : page[0].url;
