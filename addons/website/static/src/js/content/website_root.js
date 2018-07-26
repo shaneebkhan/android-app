@@ -289,7 +289,7 @@ var WebsiteRoot = BodyManager.extend({
      * @param {OdooEvent} ev
      */
     _multiWebsiteSwitch: function (ev) {
-        var website_id_to_switch_to = ev.target.getAttribute('website-id');
+        var website_id_to_switch_to = ev.currentTarget.getAttribute('website-id');
         this._rpc({
             route: '/website/force_website',
             params: {
