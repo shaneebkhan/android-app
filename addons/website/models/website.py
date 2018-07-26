@@ -225,7 +225,10 @@ class Website(models.Model):
             :param page_url : the url to be checked for uniqueness
         """
         inc = 0
-        domain_static = self.get_current_website().website_domain()
+        # we only want a unique_path for website specific.
+        # we need to be able to have /url for website=False, and /url for website=1
+        # in case of duplicate, page manager will allow you to manage this case
+        domain_static = [('website_id', '=', self.get_current_website().id)]  # .website_domain()
         page_temp = page_url
         while self.env['website.page'].with_context(active_test=False).sudo().search([('url', '=', page_temp)] + domain_static):
             inc += 1
