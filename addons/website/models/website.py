@@ -199,10 +199,11 @@ class Website(models.Model):
         if view.arch_fs:
             view.arch_fs = False
 
+        website = self.get_current_website()
         if ispage:
             page = self.env['website.page'].create({
                 'url': page_url,
-                'website_id': self.get_current_website().id,
+                'website_id': website.id,  # remove it if only one webiste or not?
                 'view_id': view.id,
             })
             result['view_id'] = view.id
@@ -210,9 +211,9 @@ class Website(models.Model):
             self.env['website.menu'].create({
                 'name': name,
                 'url': page_url,
-                'parent_id': self.get_current_website().menu_id.id,
+                'parent_id': website.menu_id.id,
                 'page_id': page.id,
-                'website_id': self.get_current_website().id,
+                'website_id': website.id,
             })
         return result
 
