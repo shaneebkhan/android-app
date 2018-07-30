@@ -162,9 +162,18 @@ class Website(models.Model):
 
         self.homepage_id = self.env['website.page'].search([('website_id', '=', self.id),
                                                             ('key', '=', standard_homepage.key)])
-        top_menu = self.env['website.menu'].create({'name': 'Top Menu for website ' + str(self.id), 'website_id': self.id, 'sequence': 0})
+        top_menu = self.env['website.menu'].create({
+            'name': 'Top Menu for website ' + str(self.id),
+            'website_id': self.id,
+            'sequence': 0
+        })
         self.menu_id = top_menu.id
-        self.env['website.menu'].create({'name': 'Home', 'url': '/', 'website_id': self.id, 'parent_id': top_menu.id})
+        self.env['website.menu'].create({
+            'name': 'Home', 'url': '/',
+            'website_id': self.id,
+            'parent_id': top_menu.id,
+            'sequence': 10
+        })
 
     @api.model
     def new_page(self, name=False, add_menu=False, template='website.default_page', ispage=True, namespace=None):
@@ -877,7 +886,10 @@ class Page(models.Model):
             # is copied from.
             # (eg: website_version: an ir.ui.view record with the same key is
             # expected to be the same ir.ui.view but from another version)
-            new_view = view.copy({'key': view.key + '.copy', 'name': '%s %s' % (view.name, _('(copy)'))})
+            website_id = default.get('website_id')
+            # website_id should be set during copy to avoid copying a generic page to another generic copy and then write on it
+            # which would result in the generic page copied to a generic one and a specific one
+            new_view = view.copy({'key': view.key + '.copy', 'name': '%s %s' % (view.name, _('(copy)')), 'website_id': website_id.id})
             default = {
                 'name': '%s %s' % (self.name, _('(copy)')),
                 'url': self.env['website'].get_unique_path(self.url),
@@ -892,7 +904,9 @@ class Page(models.Model):
         """
         page = self.browse(int(page_id))
         new_page = page.copy(dict(website_id=self.env['website'].get_current_website()))
-        if clone_menu:
+        # Should not clone menu if the page was cloned from one website to another
+        # Eg: Cloning a generic page (no website) will create a page with a website, we can't clone menu (not same container)
+        if clone_menu and new_page.website_id == page.website_id:
             menu = self.env['website.menu'].search([('page_id', '=', page_id)], limit=1)
             if menu:
                 # If the page being cloned has a menu, clone it too
@@ -962,7 +976,10 @@ class Menu(models.Model):
         else:
             # create for every site
             for website in self.env['website'].search([]):
-                vals.update({'website_id': website.id})
+                vals.update({
+                    'website_id': website.id,
+                    'parent_id': website.menu_id.id,
+                })
                 res = super(Menu, self).create(vals)
         return res  # create loop, what to return ? last created record ?
 
@@ -988,21 +1005,6 @@ class Menu(models.Model):
                     url = '/%s' % self.url
         return url
 
-    def get_children_for_current_website(self):
-        most_specific_child_menus = self.env['website.menu']
-        website_id = self._context.get('website_id')
-
-        if not website_id:
-            return self.child_id
-
-        for child in self.child_id:
-            if child.website_id and child.website_id.id == website_id:
-                most_specific_child_menus |= child
-            elif not child.website_id and not any(child.clean_url() == child2.clean_url() and child2.website_id.id == website_id for child2 in self.child_id):
-                most_specific_child_menus |= child
-
-        return most_specific_child_menus
-
     # would be better to take a menu_id as argument
     @api.model
     def get_tree(self, website_id, menu_id=None):
@@ -1019,7 +1021,7 @@ class Menu(models.Model):
                 children=[],
                 is_homepage=is_homepage,
             )
-            for child in node.get_children_for_current_website():
+            for child in node.child_id:
                 menu_node['children'].append(make_tree(child))
             return menu_node
         if menu_id:

@@ -108,9 +108,6 @@ class View(models.Model):
             new_page = page.copy({
                 'view_id': new_view.id,
             })
-            for menu in page.menu_ids:
-                # trigger COW
-                menu.write({'page_id': new_page.id})
 
     @api.model
     def get_related_views(self, key, bundles=False):
