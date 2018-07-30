@@ -45,7 +45,7 @@ var ThemeCustomizeDialog = Widget.extend({
         this.flag = false;
         this.active_select_tags();
         this.$inputs = this.$('input[data-xmlid],input[data-enable],input[data-disable]');
-        setTimeout(function () {self.$el.addClass('in');}, 0);
+        setTimeout(function () {self.$el.addClass('show');}, 0);
         this.keydown_escape = function (event) {
             if (event.keyCode === 27) {
                 self.close();
@@ -269,7 +269,7 @@ var ThemeCustomizeDialog = Widget.extend({
         $(document).off('keydown', this.keydown_escape);
         $('#theme_error').remove();
         $('link[href*=".assets_"]').removeAttr('data-loading');
-        this.$el.removeClass('in');
+        this.$el.removeClass('show');
         this.$el.addClass('out');
         setTimeout(function () {self.destroy();}, 500);
     }
