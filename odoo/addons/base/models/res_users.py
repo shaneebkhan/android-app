@@ -554,22 +554,12 @@ class Users(models.Model):
         try:
             with cls.pool.cursor() as cr:
                 self = api.Environment(cr, SUPERUSER_ID, {})[cls._name]
-<<<<<<< HEAD
                 with self._assert_can_auth():
-                    user = self.search([('login', '=', login)])
-                    if not user:
-                        raise AccessDenied()
-
-                    user = user.sudo(user.id)
-                    user._check_credentials(password)
-                    user._update_last_login()
-=======
-                user = self.search(self._get_login_domain(login))
-                if user:
-                    user_id = user.id
-                    user.sudo(user_id).check_credentials(password)
-                    user.sudo(user_id)._update_last_login()
->>>>>>> [IMP] website,*: support multiple websites
+                    user = self.search(self._get_login_domain(login))
+                    if user:
+                        user = user.sudo(user.id)
+                        user._check_credentials(password)
+                        user._update_last_login()
         except AccessDenied:
             _logger.info("Login failed for db:%s login:%s from %s", db, login, ip)
             raise
