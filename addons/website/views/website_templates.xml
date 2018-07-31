@@ -892,16 +892,15 @@ Sitemap: <t t-esc="url_root"/>sitemap.xml
               </div>
           </t>
           <div t-if="pages" class="table-responsive">
-              <table class="table table-hover o_my_status_table">
+              <table class="table table-hover">
                   <thead>
-                    <tr class="active">
-                      <th style='width:65px'></th>
+                    <tr>
                       <th>Name</th>
                       <th>Url</th>
-                      <th class="col-lg-1 text-center"><i title="Is the page included in the main menu?" class="fa fa-thumb-tack"></i></th>
-                      <th class="col-lg-1 text-center"><i title="Is the page published?" class="fa fa-eye"></i></th>
-                      <th class="col-lg-1 text-center"><i title="Is the page indexed by search engines?" class="fa fa-globe"></i></th>
-                      <th class="col-md-3 col-lg-2"></th>
+                      <th class="text-center"><i title="Is the page included in the main menu?" class="fa fa-thumb-tack"></i></th>
+                      <th class="text-center"><i title="Is the page published?" class="fa fa-eye"></i></th>
+                      <th class="text-center"><i title="Is the page indexed by search engines?" class="fa fa-globe"></i></th>
+                      <th style='width:140px;'></th>
                     </tr>
                   </thead>
                   <t t-set='prev_page' t-value='False' />
@@ -929,11 +928,11 @@ Sitemap: <t t-esc="url_root"/>sitemap.xml
       <t t-set='final_page' t-value="(next_page and page.url != next_page.url) or not next_page or specific_page"/>
       <tr t-att-style='not final_page and "color:#999"'>
           <td>
-            <t t-if='specific_page and prev_page and prev_page.url == page.url and not prev_page.website_id'>&amp;nbsp;&amp;nbsp;&amp;nbsp;</t>
-            |----<small><t t-esc='not specific_page and "*" or specific_page.id' /></small>
+              <t t-if='specific_page and prev_page and prev_page.url == page.url and not prev_page.website_id'><i class="fa fa-level-up fa-rotate-90 ml16 mr4"></i></t>
+              <i t-else="1" class="fa fa-globe mr4" t-att-style='specific_page and "visibility:hidden;"' />
+              <i t-if="page.is_homepage" class="fa fa-home" title="Home"></i> <span t-esc="page.name"/>
           </td>
-          <td><i t-if="page.is_homepage" class="fa fa-home" title="Home"></i> <span style="word-break: break-all;" t-esc="page.name"/></td>
-          <td><a t-if='final_page' style="word-break: break-all;" t-attf-href="{{page.url}}"><t t-esc="page.url"/></a></td>
+          <td><a t-if='final_page' t-attf-href="{{page.url}}"><t t-esc="page.url"/></a></td>
           <td class="text-center"><i t-att-class="'fa fa-check' if page.menu_ids else 'fa fa-times text-muted'" t-att-title="'Checked' if page.menu_ids else 'Not checked'"></i></td>
           <t t-set='date_formatted'><t  t-options='{"widget": "date"}' t-esc="page.date_publish"/></t>
           <td class="text-center">
@@ -941,7 +940,7 @@ Sitemap: <t t-esc="url_root"/>sitemap.xml
                  t-att-class="'fa fa-check' if page.is_visible and page.website_published else 'fa fa-eye-slash' if not page.is_visible and page.website_published else 'fa fa-times text-muted'"></i>
           </td>
           <td class="text-center"><i t-att-class="'fa fa-check' if page.website_indexed else 'fa fa-times text-muted'" t-att-title="'Checked' if page.website_indexed else 'Not checked'"></i></td>
-          <td class="text-right">
+          <td class="text-right" style="white-space:nowrap;">
               <a class="mr4 fa fa-cog js_page_properties" t-att-data-id="page.id" href="#" title="Manage this page"></a>
               <a class="mr4 fa fa-pencil-square-o" t-attf-href="/web#id=#{page.view_id.id}&amp;view_type=form&amp;model=ir.ui.view" title="Edit code in backend"></a>
               <a class="mr4 fa fa-clone js_clone_page" t-att-data-id="page.id" href="#" title="Clone this page"></a>
