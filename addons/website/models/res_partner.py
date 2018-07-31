@@ -40,7 +40,7 @@ class Partner(models.Model):
     @api.multi
     def _get_name(self):
         name = super(Partner, self)._get_name()
-        if self._context.get('display_website'):
+        if self._context.get('display_website') and self.env.user.has_group('website.group_multi_website'):
             if self.website_id:
                 name += ' [%s]' % self.website_id.name
         return name
