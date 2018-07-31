@@ -441,7 +441,7 @@
                             <field name="cash_rounding_id" groups="account.group_cash_rounding"/>
                         </group>
                         <group>
-                            <field name="date_invoice"/>
+                            <field name="date_invoice" options="{'warn_future': true}"/>
                             <field name="date_due" attrs="{'readonly': ['|',('payment_term_id','!=',False), ('state', 'in', ['open', 'paid'])]}" force_save="1"/>
                             <field name="move_name" invisible="1"/>
                             <field name="user_id" groups="base.group_user"/>

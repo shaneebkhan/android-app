@@ -509,7 +509,10 @@ var FieldDate = InputField.extend({
             this,
             _.defaults(
                 this.nodeOptions.datepicker || {},
-                {defaultDate: this.value}
+                {
+                    defaultDate: this.value,
+                    warn_future: this.nodeOptions.warn_future || false
+                }
             )
         );
     },
