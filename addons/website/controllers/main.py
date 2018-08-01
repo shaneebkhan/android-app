@@ -226,12 +226,13 @@ class Website(Home):
         # default sortby order
         sort_order = searchbar_sortings.get(sortby, 'name')['order'] + ', website_id desc'
 
-        domain = not kw.get('multi') and request.website.website_domain() or []
+        domain = request.website.website_domain()
         if search:
             domain += ['|', ('name', 'ilike', search), ('url', 'ilike', search)]
 
-        allpages = Page.search(domain, order=sort_order)
-        pages = allpages # .filtered(pages._is_most_specific_page)
+        pages = Page.search(domain, order=sort_order)
+        if sortby != 'url':
+            pages = pages.filtered(pages._is_most_specific_page)
         pages_count = len(pages)
 
         step = 50
