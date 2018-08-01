@@ -23,11 +23,12 @@ class View(models.Model):
     website_id = fields.Many2one('website', ondelete='cascade', string="Website")
     page_ids = fields.One2many('website.page', 'view_id')
     first_page_id = fields.Many2one('website.page', string='Website Page', help='First page linked to this view', compute='_compute_first_page_id')
-    theme_id = fields.Many2one('ir.module.module')
+    # theme_id = fields.Many2one('ir.module.module')
 
-    @api.one
+    @api.multi
     def _compute_first_page_id(self):
-        self.first_page_id = self.env['website.page'].search([('view_id', '=', self.id)], limit=1)
+        for view in self:
+            view.first_page_id = self.env['website.page'].search([('view_id', '=', view.id)], limit=1)
 
     @api.multi
     def write(self, vals):
@@ -41,7 +42,7 @@ class View(models.Model):
                 currently_updating = self._context.get('install_mode_data', {}).get('module', '')
                 if 'theme_' in currently_updating:
                     current_website_id = False
-                    view = view._get_theme_specific_view(currently_updating)
+                    view = view._get_theme_specific_view()
 
                 # if generic view in multi-website context
                 if current_website_id and not view.website_id:
@@ -86,18 +87,22 @@ class View(models.Model):
     def _get_theme_specific_view(self, theme_name):
         self.ensure_one()
         view = self
-        module_being_updated = self.env['ir.module.module'].search([('name', '=', theme_name)])
+        current_website = self._context.get('website_id')
+
         xml_id = self.env['ir.model.data'].search([('model', '=', 'ir.ui.view'), ('res_id', '=', view.id)])
-        if xml_id and xml_id.module != theme_name:
+        if xml_id:
             _logger.info('%s is updating view %s (ID: %s)', theme_name, xml_id.complete_name, view.id)
 
             # check if a previously copied view for this theme already exists
-            theme_specific_view = self.env['ir.ui.view'].search([('key', '=', view.key), ('theme_id', '=', module_being_updated.id)])
+            theme_specific_view = self.env['ir.ui.view'].search([('key', '=', view.key), ('website_id', '=', current_website)])
             if theme_specific_view:
                 view = theme_specific_view
                 _logger.info('diverting write to %s (ID: %s)', view.name, view.id)
             else:
-                view = view.copy({'theme_id': module_being_updated.id})
+                view = view.copy({'website_id': current_website})
+                                                                                
+                # why not view.website_id = xxx
+                                                                                
                 _logger.info('created new theme-specific view %s (ID: %s)', view.name, view.id)
 
         return view
@@ -105,7 +110,7 @@ class View(models.Model):
     def _create_website_specific_pages_for_view(self, new_view, website):
         for page in self.page_ids:
             # create new pages for this view
-            new_page = page.copy({
+            page.copy({
                 'view_id': new_view.id,
             })
 
@@ -179,16 +184,13 @@ class View(models.Model):
     @api.model
     def _get_inheriting_views_arch_domain(self, view_id, model):
         domain = super(View, self)._get_inheriting_views_arch_domain(view_id, model)
-        current_website = self._get_inheriting_views_arch_website(view_id)
 
-        website_views_domain = [('theme_id', '=', False)] + current_website.website_domain()
+        current_website = self._get_inheriting_views_arch_website(view_id)
+        website_views_domain = [current_website.website_domain() + domain]
         # when rendering for the website we have to include inactive views
         # we will prefer inactive website-specific views over active generic ones
         if current_website:
             domain = [leaf for leaf in domain if 'active' not in leaf]
-            if current_website.theme_ids:
-                theme_views_domain = [('theme_id', 'in', current_website.theme_ids.ids)]
-                website_views_domain = expression.OR([website_views_domain, theme_views_domain])
 
         return expression.AND([website_views_domain, domain])
 
