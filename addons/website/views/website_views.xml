@@ -264,7 +264,6 @@
             <field name="arch" type="xml">
                 <field name="name" position="after">
                     <field name="website_id" groups="website.group_multi_website"/>
-                    <field name="theme_id" groups="base.group_no_one"/>
                     <field name="key" readonly="1"/>
                     <field name="page_ids" invisible="1" />
                     <field name="first_page_id" attrs="{'invisible': [('page_ids', '=', [])]}" />

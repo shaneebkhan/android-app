@@ -122,6 +122,9 @@ class IrModuleModule(models.Model):
         hidden_categories_ids = [theme_hidden_category.id if theme_hidden_category else 0]
         current_website = self.env['website'].get_current_website()
 
+        self = self.with_context(website_id=current_website.id, button_choose_theme='button_choose_theme')
+        print(">> self", self)
+
         themes_to_uninstall = self.search([ # Uninstall the theme(s) which is (are) installed
             ('state', '=', 'installed'),
             ('category_id', 'not in', hidden_categories_ids),

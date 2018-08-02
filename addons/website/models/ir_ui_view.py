@@ -39,11 +39,6 @@ class View(models.Model):
         if not self._context.get('no_cow'):
             current_website_id = self._context.get('website_id')
             for view in self:
-                currently_updating = self._context.get('install_mode_data', {}).get('module', '')
-                if 'theme_' in currently_updating:
-                    current_website_id = False
-                    view = view._get_theme_specific_view()
-
                 # if generic view in multi-website context
                 if current_website_id and not view.website_id:
                     new_website_specific_view = view.copy({'website_id': current_website_id})
@@ -184,9 +179,8 @@ class View(models.Model):
     @api.model
     def _get_inheriting_views_arch_domain(self, view_id, model):
         domain = super(View, self)._get_inheriting_views_arch_domain(view_id, model)
-
         current_website = self._get_inheriting_views_arch_website(view_id)
-        website_views_domain = [current_website.website_domain() + domain]
+        website_views_domain = current_website.website_domain() + domain
         # when rendering for the website we have to include inactive views
         # we will prefer inactive website-specific views over active generic ones
         if current_website:
@@ -211,10 +205,7 @@ class View(models.Model):
     def get_view_id(self, xml_id):
         if 'website_id' in self._context and not isinstance(xml_id, pycompat.integer_types):
             current_website = self.env['website'].browse(self._context.get('website_id'))
-            key_domain = [('key', '=', xml_id)]
-            theme_views_domain = [('theme_id', 'in', current_website.theme_ids.ids)]
-            website_views_domain = [('theme_id', '=', False)] + current_website.website_domain()
-            domain = expression.AND([expression.OR([theme_views_domain, website_views_domain]), key_domain])
+            domain = ['&', ('key', '=', xml_id)] + current_website.website_domain()
 
             view = self.search(domain, order='website_id', limit=1)
             if not view:
@@ -301,3 +292,4 @@ class View(models.Model):
             'url': '/website/pages',
             'target': 'self',
         }
+

@@ -582,6 +582,10 @@ form: module.record_id""" % (xml_id,)
             rec_context['install_module'] = self.module
             rec_context['install_filename'] = self.xml_filename
 
+            # import pudb; pudb.set_trace()
+            # if self.module.startswith('theme_') and not rec_context.get('website_id'):
+                # _logger.error(_('You cannot install/update theme without website_id in context'))
+
         self._test_xml_id(rec_id)
         xid = self.make_xml_id(rec_id)
 

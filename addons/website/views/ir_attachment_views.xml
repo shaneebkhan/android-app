@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <field name="mimetype" position="after">
                 <field name="key" groups="base.group_no_one"/>
-                <field name="theme_id" groups="base.group_no_one"/>
+                <field name="website_id" groups="base.group_multi_website"/>
             </field>
         </field>
     </record>

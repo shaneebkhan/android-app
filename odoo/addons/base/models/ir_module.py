@@ -373,6 +373,7 @@ class Module(models.Model):
     @assert_log_admin_access
     @api.multi
     def button_install(self):
+        print('button_install :' , self._context)
         # domain to select auto-installable (but not yet installed) modules
         auto_domain = [('state', '=', 'uninstalled'), ('auto_install', '=', True)]
 

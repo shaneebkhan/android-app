@@ -984,10 +984,12 @@ class Menu(models.Model):
             Note: Particulary useful when installing a module that adds a menu like
                   /shop. So every website has the shop menu.
         '''
+        print(">> self._context.get('website_id')", self._context.get('website_id'))
+
         if vals.get('website_id'):
             return super(Menu, self).create(vals)
         elif self._context.get('website_id'):
-            vals.update({'website_id': self._context.get('website_id')})
+            vals['website_id'] = self._context.get('website_id')
             return super(Menu, self).create(vals)
         else:
             # create for every site
