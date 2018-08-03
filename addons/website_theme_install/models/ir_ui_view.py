@@ -8,6 +8,23 @@ _logger = logging.getLogger(__name__)
 class BaseModel(models.AbstractModel):
     _inherit = 'base'
 
+    @api.model
+    def _force_website_for_theme(self, vals):
+        if 'install_module' in self._context and self._context['install_module'].startswith('theme_'):
+            if 'website_id' in self._fields and 'website_id' not in vals:
+                if request and 'website_id' in request.session:
+                vals['website_id'] = request.session['website_id']
+
+
+class View(models.AbstractModel):
+    _inherit = 'ir.ui.view'
+
+class View(models.AbstractModel):
+    _inherit = 'ir.attachment'
+
+class View(models.AbstractModel):
+    _inherit = 'website.menu'
+
     THEME_PREFIX = 'theme_'
 
     @api.multi
