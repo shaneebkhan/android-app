@@ -1,56 +1,70 @@
 # coding: utf-8
 import logging
 from odoo import api, models
+from odoo.http import request
 
 _logger = logging.getLogger(__name__)
+
+THEME_PREFIX = 'theme_'
 
 
 class BaseModel(models.AbstractModel):
     _inherit = 'base'
 
     @api.model
-    def _force_website_for_theme(self, vals):
-        if 'install_module' in self._context and self._context['install_module'].startswith('theme_'):
+    def _need_force_website_for_theme(self, vals):
+        if 'install_module' in self._context and self._context['install_module'].startswith(THEME_PREFIX):
             if 'website_id' in self._fields and 'website_id' not in vals:
+
+                #TODO REMOVEME
+                if self._name not in set(['website.menu', 'website.page', 'ir.ui.view', 'ir.attachment']):
+                    _logger.error("WE ARE FORCEING website_id for %s model... ARE YOU SURE JKE ????" % self.name)
+
                 if request and 'website_id' in request.session:
-                vals['website_id'] = request.session['website_id']
+                    return True
 
-
-class View(models.AbstractModel):
-    _inherit = 'ir.ui.view'
-
-class View(models.AbstractModel):
-    _inherit = 'ir.attachment'
-
-class View(models.AbstractModel):
-    _inherit = 'website.menu'
-
-    THEME_PREFIX = 'theme_'
+                #TODO REMOVEME
+                else:
+                    _logger.error("SHOULD NEVER BE HERE")
+        return False
 
     @api.multi
     def write(self, vals):
-        if 'install_module' in self._context and self._context['install_module'].startswith('theme_'):
-            if 'website_id' in self._fields and 'website_id' not in vals:
-                vals['website_id'] = self._context['website_id']
-
-                if not vals['website_id']:
-                    _logger.error(('You cannot install/update theme without website_id in context'))
-                    return False
+        if self._need_force_website_for_theme(vals):
+            vals['website_id'] = request.session['install_website_id']
 
         return super(BaseModel, self).write(vals)
 
     @api.model
     def create(self, vals):
-        if 'install_module' in self._context and self._context['install_module'].startswith('theme_'):
-            if 'website_id' in self._fields and 'website_id' not in vals:
-                #import ipdb; ipdb.set_trace()
-                vals['website_id'] = self._context['website_id']
 
-                if not vals['website_id']:
-                    _logger.error(('You cannot install/update theme without website_id in context'))
-                    return False
-
+        if self._need_force_website_for_theme(vals):
+            vals['website_id'] = request.session['install_website_id']
         return super(BaseModel, self).create(vals)
+
+        # res = False
+        # if self._need_force_website_for_theme(vals):
+        #     for website_id in request.session['install_website_ids']:
+        #         vals['website_id'] = website_id
+        #         res = super(BaseModel, self).create(vals)
+        # else:
+        #     return super(BaseModel, self).create(vals)
+
+# class View(models.model):
+#     _inherit = 'ir.ui.view'
+
+
+# class Attachment(models.AbstractModel):
+#     _inherit = 'ir.attachment'
+
+
+# class Menu(models.AbstractModel):
+#     _inherit = 'website.menu'
+
+
+# class Page(models.AbstractModel):
+#     _inherit = 'website.page'
+
     # @api.model
     # def create(self, vals):
     #     currently_updating = self._context.get('install_module', '')
