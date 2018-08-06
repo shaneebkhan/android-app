@@ -26,7 +26,9 @@
                             </div>
                             <div t-attf-class="bg-gray-lighter #{has_screenshot? 'o_theme_screenshot' : (has_image ? 'o_theme_cover' : 'o_theme_logo')}" t-attf-style="background-image: url(#{image_url});"/>
                             <div t-if="record.is_installed_on_current_website.raw_value" class="o_button_area">
-                                <button type="object" name="button_immediate_uninstall" class="btn btn-primary">Uninstall theme</button>
+                                <button type="object" name="button_immediate_upgrade" class="btn btn-primary">Update theme</button>
+                                <hr />
+                                <button type="object" name="button_immediate_uninstall" class="btn btn-secondary">Uninstall theme</button>
                             </div>
                             <div t-else="" class="o_button_area">
                                 <button type="object" name="button_choose_theme" class="btn btn-primary">Use this theme</button>
