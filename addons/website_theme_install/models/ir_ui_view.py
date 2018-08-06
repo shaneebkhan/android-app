@@ -20,27 +20,40 @@ class BaseModel(models.AbstractModel):
                 if self._name not in set(['website.menu', 'website.page', 'ir.ui.view', 'ir.attachment']):
                     _logger.error("WE ARE FORCEING website_id for %s model... ARE YOU SURE JKE ????" % self.name)
 
-                if request and 'website_id' in request.session:
+                if request and ('force_website_id' not in request.session or
+                                'installing_theme_on' not in request.session or
+                                request.session['force_website_id'] != request.session['installing_theme_on']):
+                    print(request.session)
+                    _logger.error("WHAT THE FUCK DURING INSTALL %s vs %s... ARE YOU SURE JKE ????" % (request.session['force_website_id'], request.session['installing_theme_on']))
+                if request and 'force_website_id' in request.session:
                     return True
 
                 #TODO REMOVEME
                 else:
-                    _logger.error("SHOULD NEVER BE HERE")
+                    _logger.error("SHOULD NEVER BE HERE", self._context['install_module'])
         return False
 
     @api.multi
     def write(self, vals):
         if self._need_force_website_for_theme(vals):
-            vals['website_id'] = request.session['install_website_id']
+            vals['website_id'] = request.session['force_website_id']
+
+            print('WY', self._name, vals.get('name', '-'), vals.get('website_id'))
+        else:
+            print('WN', self._name, vals.get('name', '-'), vals.get('website_id'))
 
         return super(BaseModel, self).write(vals)
 
-    @api.model
-    def create(self, vals):
+    # @api.model
+    # def create(self, vals):
 
-        if self._need_force_website_for_theme(vals):
-            vals['website_id'] = request.session['install_website_id']
-        return super(BaseModel, self).create(vals)
+    #     if self._need_force_website_for_theme(vals):
+    #         vals['website_id'] = request.session['force_website_id']
+    #         print('CY', self._name, vals.get('name', '-'), vals.get('website_id'))
+    #     else:
+    #         print('CN', self._name, vals.get('name', '-'), vals.get('website_id'))
+
+    #     return super(BaseModel, self).create(vals)
 
         # res = False
         # if self._need_force_website_for_theme(vals):
@@ -50,18 +63,47 @@ class BaseModel(models.AbstractModel):
         # else:
         #     return super(BaseModel, self).create(vals)
 
-# class View(models.model):
-#     _inherit = 'ir.ui.view'
+class View(models.Model):
+    _inherit = 'ir.ui.view'
 
+    @api.model
+    def create(self, vals):
 
-# class Attachment(models.AbstractModel):
-#     _inherit = 'ir.attachment'
+        if self._need_force_website_for_theme(vals):
+            vals['website_id'] = request.session['force_website_id']
+            print('VCY', self._name, vals.get('name', '-'), vals.get('website_id'))
+        else:
+            print('VCN', self._name, vals.get('name', '-'), vals.get('website_id'))
 
+        return super(View, self).create(vals)
 
-# class Menu(models.AbstractModel):
-#     _inherit = 'website.menu'
+class Attachment(models.Model):
+    _inherit = 'ir.attachment'
 
+    @api.model
+    def create(self, vals):
 
+        if self._need_force_website_for_theme(vals):
+            vals['website_id'] = request.session['force_website_id']
+            print('ACY', self._name, vals.get('name', '-'), vals.get('website_id'))
+        else:
+            print('ACN', self._name, vals.get('name', '-'), vals.get('website_id'))
+
+        return super(Attachment, self).create(vals)
+
+class Menu(models.Model):
+    _inherit = 'website.menu'
+
+    @api.model
+    def create(self, vals):
+
+        if self._need_force_website_for_theme(vals):
+            vals['website_id'] = request.session['force_website_id']
+            print('MCY', self._name, vals.get('name', '-'), vals.get('website_id'))
+        else:
+            print('MCN', self._name, vals.get('name', '-'), vals.get('website_id'))
+
+        return super(Menu, self).create(vals)
 # class Page(models.AbstractModel):
 #     _inherit = 'website.page'
 

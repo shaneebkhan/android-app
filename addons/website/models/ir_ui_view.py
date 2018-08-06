@@ -78,30 +78,6 @@ class View(models.Model):
         self.clear_caches()
         return result
 
-    @api.multi
-    def _get_theme_specific_view(self, theme_name):
-        self.ensure_one()
-        view = self
-        current_website = self._context.get('website_id')
-
-        xml_id = self.env['ir.model.data'].search([('model', '=', 'ir.ui.view'), ('res_id', '=', view.id)])
-        if xml_id:
-            _logger.info('%s is updating view %s (ID: %s)', theme_name, xml_id.complete_name, view.id)
-
-            # check if a previously copied view for this theme already exists
-            theme_specific_view = self.env['ir.ui.view'].search([('key', '=', view.key), ('website_id', '=', current_website)])
-            if theme_specific_view:
-                view = theme_specific_view
-                _logger.info('diverting write to %s (ID: %s)', view.name, view.id)
-            else:
-                view = view.copy({'website_id': current_website})
-                                                                                
-                # why not view.website_id = xxx
-                                                                                
-                _logger.info('created new theme-specific view %s (ID: %s)', view.name, view.id)
-
-        return view
-
     def _create_website_specific_pages_for_view(self, new_view, website):
         for page in self.page_ids:
             # create new pages for this view
@@ -292,4 +268,3 @@ class View(models.Model):
             'url': '/website/pages',
             'target': 'self',
         }
-

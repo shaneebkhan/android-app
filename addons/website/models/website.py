@@ -101,12 +101,16 @@ class Website(models.Model):
     menu_id = fields.Many2one('website.menu', compute='_compute_menu', string='Main Menu')
     homepage_id = fields.Many2one('website.page', string='Homepage')
     favicon = fields.Binary(string="Website Favicon", help="This field holds the image used to display a favicon on the website.")
-    installed_theme_id = fields.Many2one('ir.module.module')
-    theme_ids = fields.Many2many('ir.module.module', 'website_theme', 'website_id', 'ir_module_module_id')
+    theme_id = fields.Many2one('ir.module.module')
+    depending_theme_ids = fields.One2many('ir.module.module', compute='_compute_depending_theme')
     auth_signup_uninvited = fields.Selection([
         ('b2b', 'On invitation (B2B)'),
         ('b2c', 'Free sign up (B2C)'),
     ], string='Customer Account', default='b2b')
+
+    def _compute_depending_theme(self):
+        for website in self:
+            website.depending_theme_ids = website.theme_id.upstream_dependencies(exclude_states=('',)).filtered(lambda x: x.name.startswith('theme_'))
 
     @api.multi
     def _compute_menu(self):
@@ -984,8 +988,7 @@ class Menu(models.Model):
             Note: Particulary useful when installing a module that adds a menu like
                   /shop. So every website has the shop menu.
         '''
-        print(">> self._context.get('website_id')", self._context.get('website_id'))
-
+        print('menu', vals)
         if vals.get('website_id'):
             return super(Menu, self).create(vals)
         elif self._context.get('website_id'):

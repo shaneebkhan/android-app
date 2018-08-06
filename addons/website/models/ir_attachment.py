@@ -26,21 +26,21 @@ class Attachment(models.Model):
         self |= self.search([('key', 'in', self.filtered('key').mapped('key'))])
         return super(Attachment, self).unlink()
 
-    @api.multi
-    def write(self, vals):
-        current_website = self.env['website'].get_current_website().id
-        if 'website_id' not in vals and self._context.get('website_id'):
-            print(">> attachment write website FORCED %s" % current_website)
-            vals['website_id'] = current_website
+    # @api.multi
+    # def write(self, vals):
+    #     current_website = self.env['website'].get_current_website().id
+    #     if 'website_id' not in vals and self._context.get('website_id'):
+    #         print(">> attachment write website FORCED %s" % current_website)
+    #         vals['website_id'] = current_website
 
-        super(Attachment, self).write(vals)
-        return True
+    #     super(Attachment, self).write(vals)
+    #     return True
 
-    @api.model
-    def create(self, vals):
-        current_website = self.env['website'].get_current_website().id
-        if 'website_id' not in vals and self._context.get('website_id'):
-            print(">> attachment create website FORCED %s" % current_website)
-            vals['website_id'] = current_website
+    # @api.model
+    # def create(self, vals):
+    #     current_website = self.env['website'].get_current_website().id
+    #     if 'website_id' not in vals and self._context.get('website_id'):
+    #         print(">> attachment create website FORCED %s" % current_website)
+    #         vals['website_id'] = current_website
 
-        return super(Attachment, self).create(vals)
+    #     return super(Attachment, self).create(vals)

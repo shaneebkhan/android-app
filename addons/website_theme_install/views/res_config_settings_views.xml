@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@id='domain_setting']/div[hasclass('o_setting_right_pane')]" position="inside">
                 <div>
-                    <button name="website_install_theme" type="object" string="Change theme" class="btn-link" icon="fa-arrow-right"/>
+                    <button name="install_theme_on_current_website" type="object" string="Change theme" class="btn-link" icon="fa-arrow-right"/>
                 </div>
             </xpath>
         </field>
