@@ -698,52 +698,29 @@ class SeoMetadata(models.AbstractModel):
     website_meta_keywords = fields.Char("Website meta keywords", translate=True)
 
 
+class WebsiteMultiMixin(models.AbstractModel):
+
+    _name = 'website.multi.mixin'
+
+    website_id = fields.Many2one('website', string='Website', help='Restrict publishing to this website.')
+
+    @api.multi
+    def can_access_from_current_website(self, website_id=False):
+        can_access = True
+        for record in self:
+            if (website_id or record.website_id.id) not in (False, request.website.get_current_website().id):
+                can_access = False
+                continue
+        return can_access
+
+
 class WebsitePublishedMixin(models.AbstractModel):
 
     _name = "website.published.mixin"
 
-    # website_published = fields.Boolean('Visible on current website',
-    #                                    compute='_compute_website_published',
-    #                                    inverse='_inverse_website_published',
-    #                                    search='_search_website_published')  # todo jov evaluate places where this is used, we can probably replace some with is_published
-    website_published = fields.Boolean(related='is_published')
+    website_published = fields.Boolean('Visible on current website', related='is_published')
     is_published = fields.Boolean('Is published')
-    website_id = fields.Many2one('website', string='Website', help='Restrict publishing to this website.')
     website_url = fields.Char('Website URL', compute='_compute_website_url', help='The full URL to access the document through the website.')
-
-    @api.multi
-    @api.depends('is_published', 'website_id')
-    def _compute_website_published(self):
-        current_website_id = self._context.get('website_id')
-        for record in self:
-            if current_website_id:
-                record.website_published = record.is_published and (not record.website_id or record.website_id.id == current_website_id)
-            else:
-                record.website_published = record.is_published
-
-    @api.multi
-    def _inverse_website_published(self):
-        current_website_id = self._context.get('website_id')
-        for record in self:
-            record.is_published = record.website_published
-            if record.website_published and current_website_id:
-                record.write({'website_id': current_website_id})
-
-    def _search_website_published(self, operator, value):
-        if not isinstance(value, bool) or operator not in ('=', '!='):
-            logger.warning('unsupported search on website_published: %s, %s', operator, value)
-            return [()]
-
-        if operator in expression.NEGATIVE_TERM_OPERATORS:
-            value = not value
-
-        current_website_id = self._context.get('website_id')
-        is_published = [('is_published', '=', value)]
-        if current_website_id:
-            on_current_website = self.env['website'].website_domain(current_website_id)
-            return (['!'] if value is False else []) + expression.AND([is_published, on_current_website])
-        else:  # should be in the backend, return things that are published anywhere
-            return is_published
 
     @api.multi
     def _compute_website_url(self):
@@ -765,10 +742,62 @@ class WebsitePublishedMixin(models.AbstractModel):
         }
 
 
+class WebsitePublishedMultiMixin(WebsitePublishedMixin):
+
+    _name = 'website.published.multi.mixin'
+    _inherit = ['website.published.mixin', 'website.multi.mixin']
+
+    website_published = fields.Boolean(compute='_compute_website_published',
+                                       inverse='_inverse_website_published',
+                                       search='_search_website_published',
+                                       related=False)  # todo jov evaluate places where this is used, we can probably replace some with is_published
+
+    @api.multi
+    @api.depends('is_published', 'website_id')
+    def _compute_website_published(self):
+        current_website_id = self._context.get('website_id')
+        for record in self:
+            if current_website_id:
+                record.website_published = record.is_published and (not record.website_id or record.website_id.id == current_website_id)
+            else:
+                record.website_published = record.is_published
+
+    @api.multi
+    def _inverse_website_published(self):
+        for record in self:
+            record.is_published = record.website_published
+
+    def _search_website_published(self, operator, value):
+        if not isinstance(value, bool) or operator not in ('=', '!='):
+            logger.warning('unsupported search on website_published: %s, %s', operator, value)
+            return [()]
+
+        if operator in expression.NEGATIVE_TERM_OPERATORS:
+            value = not value
+
+        current_website_id = self._context.get('website_id')
+        is_published = [('is_published', '=', value)]
+        if current_website_id:
+            on_current_website = self.env['website'].website_domain(current_website_id)
+            return (['!'] if value is False else []) + expression.AND([is_published, on_current_website])
+        else:  # should be in the backend, return things that are published anywhere
+            return is_published
+
+    @api.multi
+    def website_publish_button(self):
+        self.ensure_one()
+        if self.env.user.has_group('website.group_website_publisher') and self.website_url != '#':
+            # Force website to land on record's website to publish/unpublish it
+            if self.env.user.has_group('website.group_multi_website'):
+                self.website_id._force()
+            return self.open_website_url()
+        return self.write({'website_published': not self.website_published})
+
+
 class Page(models.Model):
     _name = 'website.page'
     _inherits = {'ir.ui.view': 'view_id'}
-    _inherit = 'website.published.mixin'
+    _inherit = 'website.published.multi.mixin'
     _description = 'Page'
     _order = 'website_id'
 
