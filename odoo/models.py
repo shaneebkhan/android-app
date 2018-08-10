@@ -4145,7 +4145,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         existing = self.browse(ids + new_ids)
         if len(existing) < len(self):
             # mark missing records in cache with a failed value
-            print("MissingError", self._name, ids)
             exc = MissingError(_("Record does not exist or has been deleted."))
             self.env.cache.set_failed(self - existing, self._fields.values(), exc)
         return existing

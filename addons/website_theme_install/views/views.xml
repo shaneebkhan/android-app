@@ -26,9 +26,9 @@
                             </div>
                             <div t-attf-class="bg-gray-lighter #{has_screenshot? 'o_theme_screenshot' : (has_image ? 'o_theme_cover' : 'o_theme_logo')}" t-attf-style="background-image: url(#{image_url});"/>
                             <div t-if="record.is_installed_on_current_website.raw_value" class="o_button_area">
-                                <button type="object" name="button_immediate_upgrade" class="btn btn-primary">Update theme</button>
+                                <button type="object" name="button_refresh_theme" class="btn btn-primary">Update theme</button>
                                 <hr />
-                                <button type="object" name="button_immediate_uninstall" class="btn btn-secondary">Uninstall theme</button>
+                                <button type="object" name="button_remove_theme" class="btn btn-secondary">Remove theme</button>
                             </div>
                             <div t-else="" class="o_button_area">
                                 <button type="object" name="button_choose_theme" class="btn btn-primary">Use this theme</button>
@@ -108,11 +108,29 @@ action = {
             <a href="/web#action=website_theme_install.theme_install_kanban_action">See themes here</a>
         </xpath>
     </template>
+
+    <!-- Add link to theme install in default customize modal -->
+     <record id="website_settings_payment" model="ir.ui.view">
+        <field name="name">website.form</field>
+        <field name="model">website</field>
+        <field name="inherit_id" ref="website.view_website_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='other']" position='before'>
+                <div name="theme">
+                    <separator string="Theme"/>
+                    <group name="Theme">
+                        <button type="object" name="button_view_theme" class="btn btn-primary">View themes</button>
+                    </group>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <!-- ONBOARDING -->
     <template id="onboarding_website_theme_step">
         <t t-call="base.onboarding_step">
             <t t-set="title">Website Theme</t>
-            <t t-set="description">Select a theme for your wonderful website.</t>
+            <t t-set="description">Select a theme for your website.</t>
             <t t-set="btn_text">Let's start!</t>
             <t t-set="method" t-value="'action_open_website_theme_selector'" />
             <t t-set="model" t-value="'res.company'" />

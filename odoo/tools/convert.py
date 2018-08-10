@@ -663,7 +663,16 @@ form: module.record_id""" % (xml_id,)
             self.cr.commit()
         return rec_model, record.id
 
+    def _tag_theme(self, el, data_node=None, mode=None):
+        return self._template_or_theme(el, data_node=data_node, mode=mode, model="theme.ir.ui.view")
+
     def _tag_template(self, el, data_node=None, mode=None):
+        return self._template_or_theme(el, data_node=data_node, mode=mode)
+
+    def get_model_for_template_tag(self):
+        return 'ir.ui.view'
+
+    def _template_or_theme(self, el, data_node=None, mode=None, model=False):
         # This helper transforms a <template> element into a <record> and forwards it
         tpl_id = el.get('id', el.get('t-name'))
         full_tpl_id = tpl_id
@@ -679,7 +688,7 @@ form: module.record_id""" % (xml_id,)
 
         record_attrs = {
             'id': tpl_id,
-            'model': 'ir.ui.view',
+            'model': model or self.get_model_for_template_tag(),
         }
         for att in ['forcecreate', 'context']:
             if att in el.attrib:
@@ -774,6 +783,7 @@ form: module.record_id""" % (xml_id,)
             'function': self._tag_function,
             'menuitem': self._tag_menuitem,
             'template': self._tag_template,
+            'theme': self._tag_theme,
             'report': self._tag_report,
             'act_window': self._tag_act_window,
             'assert': self._tag_assert,

@@ -26,7 +26,6 @@ _test_logger = logging.getLogger('odoo.tests')
 
 
 def load_data(cr, idref, mode, kind, package, report):
-    print(cr, idref, mode, kind, package, report)
     """
 
     kind: data, demo, test, init_xml, update_xml, demo_xml.

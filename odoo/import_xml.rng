@@ -171,7 +171,11 @@
     </rng:define>
 
     <rng:define name="template">
-        <rng:element name="template">
+        <rng:element>
+            <rng:choice>
+                <rng:name>template</rng:name>
+                <rng:name>theme</rng:name>
+            </rng:choice>
             <rng:optional><rng:attribute name="id"/></rng:optional>
             <rng:optional><rng:attribute name="t-name"/></rng:optional>
             <rng:optional><rng:attribute name="name"/></rng:optional>
