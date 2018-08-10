@@ -6,4 +6,14 @@
         <field name="domain_force">[('website_published', '=', True)]</field>
         <field name="groups" eval="[(4, ref('base.group_public')), (4, ref('base.group_portal'))]"/>
     </record>
+    <record model="ir.rule" id="website_blog_post_website_specific">
+        <field name="name">Blog Post: all: website specific</field>
+        <field name="model_id" ref="model_blog_post"/>
+        <field name="domain_force">['|', ('website_id', '=', False), ('website_id', '=', website_id)]</field>
+    </record>
+    <record model="ir.rule" id="website_blog_blog_website_specific">
+        <field name="name">Blog: all: website specific</field>
+        <field name="model_id" ref="model_blog_blog"/>
+        <field name="domain_force">['|', ('website_id', '=', False), ('website_id', '=', website_id)]</field>
+    </record>
 </odoo>
