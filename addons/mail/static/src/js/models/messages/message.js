@@ -247,6 +247,7 @@ var Message =  AbstractMessage.extend(Mixins.EventDispatcherMixin, ServicesMixin
      */
     getPreview: function () {
         var id, title;
+        var isMail = _.contains(this._threadIDs, 'mailbox_inbox');
         if (this.isLinkedToDocumentThread()) {
             id = this.getDocumentModel() + '_' + this.getDocumentID();
             title = this.getDocumentName();
@@ -264,6 +265,7 @@ var Message =  AbstractMessage.extend(Mixins.EventDispatcherMixin, ServicesMixin
             imageSRC: this._getModuleIcon() || this.getAvatarSource(),
             status: this.status,
             title: title,
+            isMail: isMail,
         };
     },
     /**
