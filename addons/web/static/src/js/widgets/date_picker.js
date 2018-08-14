@@ -56,9 +56,15 @@ var DateWidget = Widget.extend({
      * @override
      */
     start: function () {
+        var self = this;
         this.$input = this.$('input.o_datepicker_input');
         this.$input.focus(function (e) {
             e.stopImmediatePropagation();
+        });
+        this.$input.focusout(function(){
+            self.__libInput = true;
+            self.$input.datetimepicker('hide');
+            self.__libInput = false;
         });
         this.__libInput = true;
         this.$input.datetimepicker(this.options);
