@@ -14,7 +14,7 @@ var TimeRangeMenu = Widget.extend({
     template: 'web.TimeRangeMenu',
     events: {
         'click .o_apply_range': '_onApplyButtonClick',
-        'click .o_comparison_checkbox': '_onCheckBoxClick',
+        'change .o_comparison_checkbox': '_onCheckBoxClick',
     },
 
     /**
