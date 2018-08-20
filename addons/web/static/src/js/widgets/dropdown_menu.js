@@ -59,14 +59,18 @@ var DropdownMenu = Widget.extend({
     //--------------------------------------------------------------------------
 
     /**
-     * @param {Array[number]} groupIds
+     * @param {string[]} activeItemIds
      */
-    unsetGroups: function (groupIds) {
-        var self = this;
-        _.each(self.items, function (item) {
-            if (_.contains(groupIds, item.groupId)) {
+    updateItemsStatus: function (activeItemIds) {
+        _.each(this.items, function (item) {
+            if (!_.contains(activeItemIds, item.itemId)) {
                 item.isActive = false;
                 item.currentOptionId = false;
+            } else {
+                item.isActive = true;
+                item.currentOptionId = item.hasOptions ?
+                    (item.currentOptionId || item.defaultOptionId) :
+                    false;
             }
         });
         this._renderMenuItems();

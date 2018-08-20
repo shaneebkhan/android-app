@@ -571,7 +571,7 @@ var SearchView = Widget.extend({
         _.invoke(this.input_subviews, 'destroy');
         this.input_subviews = [];
 
-        var selectedGroupIds = {
+        var activeItemIds = {
             groupByCategory: [],
             filterCategory: [],
         };
@@ -580,35 +580,33 @@ var SearchView = Widget.extend({
 
             var values = facet.get('values');
             if (facet.attributes.cat === "groupByCategory") {
-                selectedGroupIds.groupByCategory = _.uniq(
-                    values.reduce(
-                        function (acc, value) {
-                            var groupby = value.value;
-                            var description = _.findWhere(self.groupbysMapping, {groupby: groupby});
-                            if (description) {
-                                acc.push(description.groupId);
-                            }
-                            return acc;
-                        },
-                        []
-                    )
-                );
-            }
-            if (facet.attributes.cat === "filterCategory") {
-                selectedGroupIds.filterCategory = selectedGroupIds.filterCategory.concat(
-                    _.uniq(
-                        values.reduce(
+                activeItemIds.groupByCategory = activeItemIds.groupByCategory.concat(
+                    _.uniq(values.reduce(
                             function (acc, value) {
-                                var filter = value.value;
-                                var description = _.findWhere(self.filtersMapping, {filter: filter});
+                                var groupby = value.value;
+                                var description = _.findWhere(self.groupbysMapping, {groupby: groupby});
                                 if (description) {
-                                    acc.push(description.groupId);
+                                    acc.push(description.groupbyId);
                                 }
                                 return acc;
                             },
                             []
-                        )
-                    )
+                    ))
+                );
+            }
+            if (facet.attributes.cat === "filterCategory") {
+                activeItemIds.filterCategory = activeItemIds.filterCategory.concat(
+                    _.uniq(values.reduce(
+                            function (acc, value) {
+                                var filter = value.value;
+                                var description = _.findWhere(self.filtersMapping, {filter: filter});
+                                if (description) {
+                                    acc.push(description.filterId);
+                                }
+                                return acc;
+                            },
+                            []
+                    ))
                 );
             }
 
@@ -633,10 +631,10 @@ var SearchView = Widget.extend({
                 _.last(self.input_subviews).$el.focus();
             }
             if (self.groupby_menu) {
-                self._unsetUnusedGroupbys(selectedGroupIds.groupByCategory);
+                self.groupby_menu.updateItemsStatus(activeItemIds.groupByCategory);
             }
             if (self.filters_menu) {
-                self._unsetUnusedFilters(selectedGroupIds.filterCategory);
+                self.filters_menu.updateItemsStatus(activeItemIds.filterCategory);
             }
         });
     },
@@ -871,46 +869,6 @@ var SearchView = Widget.extend({
         fv.arch = utils.xml_to_json(doc, true);
         return fv;
     },
-    /**
-     * This function ask the groupby menu to deactive all groupbys if no
-     * groupby is used.
-     *
-     * @param {string[]]} selectedGroupIds
-     */
-    _unsetUnusedGroupbys: function (selectedGroupIds) {
-        var groupIds = this.groupsMapping.reduce(
-            function (acc, triple) {
-                if (triple.category === 'Group By') {
-                    acc.push(triple.groupId);
-                }
-                return acc;
-            },
-            []
-        );
-        this.selectedGroupIds.groupByCategory = selectedGroupIds;
-        if (selectedGroupIds.length === 0) {
-            this.groupby_menu.unsetGroups(groupIds);
-        }
-    },
-    /**
-     * @private
-     * @param {string[]]} selectedGroupIds
-     */
-     _unsetUnusedFilters: function (selectedGroupIds) {
-         var groupIds = this.groupsMapping.reduce(
-             function (acc, triple) {
-                 if (triple.category === 'Filters') {
-                     if (!_.contains(selectedGroupIds, triple.groupId)) {
-                         acc.push(triple.groupId);
-                     }
-                 }
-                 return acc;
-             },
-             []
-         );
-         this.selectedGroupIds.filterCategory = selectedGroupIds;
-         this.filters_menu.unsetGroups(groupIds);
-     },
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -956,7 +914,6 @@ var SearchView = Widget.extend({
             this.intervalMapping.push({groupby: groupby, interval: interval});
         }
         var group = new search_inputs.FilterGroup([groupby], this, this.intervalMapping);
-        group.toggle(groupby);
         this.groupbysMapping.push({
             groupbyId: event.data.itemId,
             groupby: groupby,
@@ -967,6 +924,7 @@ var SearchView = Widget.extend({
             group: group,
             category: 'Group By',
         });
+        group.toggle(groupby);
     },
         /**
      * @private
