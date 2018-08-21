@@ -942,8 +942,8 @@ var PivotModel = AbstractModel.extend({
                         value: self._getValue(dataPoint, groupBys),
                         domain: dataPoint.__domain,
                         comparisonDomain: dataPoint.__comparisonDomain,
-                        length: dataPoint.__count.data ? dataPoint.__count.data : dataPoint.__count,
-                        comparisonLength: dataPoint.__count.comparisonData || 0
+                        length: dataPoint.__count && dataPoint.__count.data ? dataPoint.__count.data : dataPoint.__count || 0,
+                        comparisonLength: dataPoint.__count && dataPoint.__count.comparisonData || 0
                     };
 
                     if (j === 0) {
