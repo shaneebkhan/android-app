@@ -205,7 +205,12 @@ class ModuleDoc(NSDoc):
 
     def post_process(self, modules):
         for callback in self._post_process:
-            callback(modules)
+            try:
+                callback(modules)
+            except Exception as e:
+                print(e)
+                import pdb; pdb.set_trace()
+                raise e
 
     @property
     def module(self):

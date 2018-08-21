@@ -61,7 +61,14 @@ def _resolve_references(byname):
             byname
         )
     ):
-        byname[name].post_process(byname)
+        try:
+            byname[name].post_process(byname)
+        except Exception as e:
+            print("Error at module: %s" % name)
+            print(byname[name])
+            import pprint
+            pprint.pprint(byname[name].__dict__)
+            raise e
 
 ABSTRACT_MODULES = [
     jsdoc.ModuleDoc({
