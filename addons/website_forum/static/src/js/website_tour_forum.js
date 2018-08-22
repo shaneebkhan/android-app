@@ -64,6 +64,7 @@ odoo.define("website_forum.tour_forum", function (require) {
         content: _t("Click to post your answer."),
         position: "bottom",
     }, {
+        extra_trigger: 'div.modal:not([aria-hidden=true]) .modal-header button.close:visible',
         trigger: ".modal-header button.close",
         auto: true,
     }, {
