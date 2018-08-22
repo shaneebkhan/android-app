@@ -821,6 +821,9 @@ var PivotModel = AbstractModel.extend({
                         if (typeof measureValue === 'boolean') {
                             measureValue = measureValue ? 1 : 0;
                         }
+                        if (measureValue === null) {
+                            measureValue = 0;
+                        }
                         if (!(measureValue instanceof Array) && measureName !== '__count') {
                             dataPoint[measureName] = {
                                 data: measureValue,
@@ -856,6 +859,9 @@ var PivotModel = AbstractModel.extend({
                             if (typeof(measureComparisonValue) === 'boolean') {
                                 measureComparisonValue = measureComparisonValue ? 1 : 0;
                             }
+                            if (measureComparisonValue === null) {
+                                measureComparisonValue = 0;
+                            }
                             if (!(measureComparisonValue instanceof Array) && measureName !== '__count') {
                                 dataPoint[measureName] = {
                                     data: 0,
@@ -885,6 +891,9 @@ var PivotModel = AbstractModel.extend({
                             measureComparisonValue = dataPoint[measureName];
                             if (typeof(measureComparisonValue) === 'boolean') {
                                 measureComparisonValue = measureComparisonValue ? 1 : 0;
+                            }
+                            if (measureComparisonValue === null) {
+                                measureComparisonValue = 0;
                             }
                             if (!(measureComparisonValue instanceof Array) && measureName !== '__count') {
                                 dataPoints[groupIdentifier][measureName].comparisonData = measureComparisonValue;
