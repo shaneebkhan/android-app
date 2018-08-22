@@ -8,11 +8,11 @@ declaration.
 
 Signed,
 
-Pieter Paulussen pieter.paulussen@dynapps.be https://github.com/PieterPaulussen
+Stijn Houben stijn.houben@dynapps.be https://github.com/stijnh92
 
 List of contributors:
 
-Pieter Paulussen pieter.paulussen@dynapps.be https://github.com/PieterPaulussen
+Stijn Houben stijn.houben@dynapps.be https://github.com/stijnh92
 Raf Ven raf.ven@dynapps.be https://github.com/rven
 Kurt Schmitz kurt.schmitz@dynapps.be https://github.com/kurt-schmitz
 Rod Schouteden rod.schouteden@dynapps.be https://github.com/schout-it
