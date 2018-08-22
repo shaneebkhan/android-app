@@ -111,8 +111,8 @@ action = {
         </xpath>
     </template>
 
-    <!-- Add link to theme install in default customize modal -->
-     <record id="website_settings_payment" model="ir.ui.view">
+    <!-- Add link to theme install in website form views -->
+     <record id="view_website_form_inherit_view_themes" model="ir.ui.view">
         <field name="name">website.form</field>
         <field name="model">website</field>
         <field name="inherit_id" ref="website.view_website_form"/>
@@ -124,6 +124,17 @@ action = {
                         <button type="object" name="button_view_theme" class="btn btn-primary">View themes</button>
                     </group>
                 </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_website_form_create_inherit_view_themes" model="ir.ui.view">
+        <field name="name">website.form</field>
+        <field name="model">website</field>
+        <field name="inherit_id" ref="website.view_website_form_create"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='buttons']" position='inside'>
+                <button type="object" name="button_view_theme" class="btn btn-primary ml-2">View themes</button>
             </xpath>
         </field>
     </record>

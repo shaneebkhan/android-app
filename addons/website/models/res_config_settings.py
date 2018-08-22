@@ -102,3 +102,13 @@ class ResConfigSettings(models.TransientModel):
             'url': '/',
             'target': 'self',
         }
+
+    def company_go_to(self):
+        return {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'res.company',
+            'type': 'ir.actions.act_window',
+            'target': 'current',
+            'res_id': self.website_id.company_id.id,
+        }

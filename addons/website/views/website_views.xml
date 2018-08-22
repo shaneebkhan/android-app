@@ -27,7 +27,7 @@
                         <separator string="Other Info"/>
                         <group name="other">
                             <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="language_ids" widget="many2many_checkboxes"/>
+                            <field name="language_ids" widget="many2many_tags"/>
                             <field name="default_lang_id" widget="selection"/>
                         </group>
                     </div>
@@ -309,5 +309,29 @@
         <menuitem id="menu_website_google_analytics" parent="menu_dashboard"
             sequence="20" name="Analytics"
             action="website.ir_actions_server_website_google_analytics"/>
+
+        <record id="view_website_form_create" model="ir.ui.view">
+            <field name="name">website.form</field>
+            <field name="model">website</field>
+            <field name="arch" type="xml">
+                <form string="Website Settings">
+                    <div name="domain">
+                        <group>
+                            <group name="domain">
+                                <field name="name"/>
+                                <field name="domain"/>
+                                <field name="country_group_ids" widget="many2many_tags"/>
+                                <field name="language_ids" widget="many2many_tags"/>
+                                <field name="default_lang_id" widget="selection"/>
+                            </group>
+                        </group>
+                    </div>
+                    <div name="buttons">
+                        <button type="object" name="button_go_website" class="btn btn-primary">Go to website</button>
+                        <button type="object" name="button_website_add_features" class="btn btn-primary ml-2">Go to Apps</button>
+                    </div>
+                </form>
+            </field>
+        </record>
     </data>
 </odoo>

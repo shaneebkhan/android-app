@@ -67,7 +67,7 @@ class Website(models.Model):
     def _default_social_googleplus(self):
         return self.env.ref('base.main_company').social_googleplus
 
-    name = fields.Char('Website Name')
+    name = fields.Char('Website Name', required=True)
     domain = fields.Char('Website Domain')
     country_group_ids = fields.Many2many('res.country.group', 'website_country_group_rel', 'website_id', 'country_group_id',
                                          string='Country Groups', help='Used when multiple websites have the same domain.')
@@ -682,6 +682,26 @@ class Website(models.Model):
         if self.env.user.has_group('base.group_system') or self.env.user.has_group('website.group_website_designer'):
             return self.env.ref('website.backend_dashboard').read()[0]
         return self.env.ref('website.action_website').read()[0]
+
+    def button_website_add_features(self):
+        return {
+            'name': 'Apps',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'kanban,tree,form',
+            'res_model': 'ir.module.module',
+            'res_id': self.id,
+            'context': dict(
+                search_default_category_id=self.env.ref('base.module_category_website').id
+            ),
+        }
+
+    def button_go_website(self):
+        self._force()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/',
+            'target': 'self',
+        }
 
 
 class SeoMetadata(models.AbstractModel):
