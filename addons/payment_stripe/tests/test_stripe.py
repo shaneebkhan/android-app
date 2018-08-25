@@ -62,6 +62,9 @@ class StripeTest(StripeCommon):
         popup_script_src = 'script src="https://checkout.stripe.com/checkout.js"'
         # check form result
         self.assertIn(popup_script_src, res, "Stripe: popup script not found in template render")
+        print("###################################################################")
+        print(res)
+        print("###################################################################")
         # Generated and received
         self.assertIn(self.buyer_values.get('partner_email'), res, 'Stripe: email input not found in rendered template')
 
