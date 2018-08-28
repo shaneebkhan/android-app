@@ -48,5 +48,7 @@ class WebsiteSaleWishlist(WebsiteSale):
 
     @http.route(['/shop/wishlist/remove/<model("product.wishlist"):wish>'], type='json', auth="public", website=True)
     def rm_from_wishlist(self, wish, **kw):
+        if request.website.is_public_user() and wish.id in request.session.get('wishlist_ids', []):
+            wish = wish.sudo()
         wish.active = False
         return True
