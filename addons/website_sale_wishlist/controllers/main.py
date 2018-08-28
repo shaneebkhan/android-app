@@ -31,7 +31,7 @@ class WebsiteSaleWishlist(WebsiteSale):
         )
 
         if not partner_id:
-            request.session['wishlist_ids'] = request.session.get('wishlist_ids', []) + [wish_id.id]
+            request.session['wishlist_ids'] = (request.session.get('wishlist_ids') or []) + [wish_id.id]
 
         return wish_id
 
@@ -48,5 +48,12 @@ class WebsiteSaleWishlist(WebsiteSale):
 
     @http.route(['/shop/wishlist/remove/<model("product.wishlist"):wish>'], type='json', auth="public", website=True)
     def rm_from_wishlist(self, wish, **kw):
-        wish.active = False
+        if request.website.is_public_user():
+            wish_ids = request.session.get('wishlist_ids') or []
+            if wish.id in wish_ids:
+                request.session['wishlist_ids'].remove(wish.id)
+                request.session.modified = True
+                wish = wish.sudo().unlink()
+        else:
+            wish.active = False
         return True
