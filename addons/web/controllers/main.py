@@ -1427,7 +1427,6 @@ class Export(http.Controller):
             for k, v in self.fields_info(model, export_fields).items())
 
 class ExportFormat(object):
-    raw_data = False
 
     @property
     def content_type(self):
@@ -1463,7 +1462,7 @@ class ExportFormat(object):
             fields = [field for field in fields if field['name'] != 'id']
 
         field_names = [f['name'] for f in fields]
-        import_data = records.export_data(field_names, self.raw_data).get('datas',[])
+        import_data = records.export_data(field_names).get('datas',[])
 
         if import_compat:
             columns_headers = field_names
@@ -1509,8 +1508,6 @@ class CSVExport(ExportFormat, http.Controller):
         return fp.getvalue()
 
 class ExcelExport(ExportFormat, http.Controller):
-    # Excel needs raw data to correctly handle numbers and date values
-    raw_data = True
 
     @http.route('/web/export/xls', type='http', auth="user")
     @serialize_exception
