@@ -36,10 +36,14 @@ class ReportJournal(models.AbstractModel):
 
         query_get_clause = self._get_query_get_clause(data)
         params = [tuple(move_state), tuple(journal_id.ids)] + query_get_clause[2]
-        self.env.cr.execute('SELECT SUM(debit) FROM ' + query_get_clause[0] + ', account_move am '
+        currency = self.env['res.company'].browse(data['form']['company_id'][0]).currency_id
+        self.env.cr.execute('SELECT "account_move_line".debit, "account_move_line".date FROM ' + query_get_clause[0] + ', account_move am '
                         'WHERE "account_move_line".move_id=am.id AND am.state IN %s AND "account_move_line".journal_id IN %s AND ' + query_get_clause[1] + ' ',
                         tuple(params))
-        return self.env.cr.fetchone()[0] or 0.0
+        sum_debit = 0.0
+        for line_data in self.env.cr.dictfetchall():
+            sum_debit += currency._convert(from_amount=line_data['debit'], to_currency=self.env.user.company_id.currency_id, company=self.env.user.company_id, date=line_data['date'])
+        return sum_debit
 
     def _sum_credit(self, data, journal_id):
         move_state = ['draft', 'posted']
@@ -48,12 +52,17 @@ class ReportJournal(models.AbstractModel):
 
         query_get_clause = self._get_query_get_clause(data)
         params = [tuple(move_state), tuple(journal_id.ids)] + query_get_clause[2]
-        self.env.cr.execute('SELECT SUM(credit) FROM ' + query_get_clause[0] + ', account_move am '
+        currency = self.env['res.company'].browse(data['form']['company_id'][0]).currency_id
+        self.env.cr.execute('SELECT "account_move_line".credit, "account_move_line".date FROM ' + query_get_clause[0] + ', account_move am '
                         'WHERE "account_move_line".move_id=am.id AND am.state IN %s AND "account_move_line".journal_id IN %s AND ' + query_get_clause[1] + ' ',
                         tuple(params))
-        return self.env.cr.fetchone()[0] or 0.0
+        sum_credit = 0.0
+        for line_data in self.env.cr.dictfetchall():
+            sum_credit += currency._convert(from_amount=line_data['credit'], to_currency=self.env.user.company_id.currency_id, company=self.env.user.company_id, date=line_data['date'])
+        return sum_credit
 
     def _get_taxes(self, data, journal_id):
+        currency = self.env['res.company'].browse(data['form']['company_id'][0]).currency_id
         move_state = ['draft', 'posted']
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = ['posted']
@@ -61,30 +70,35 @@ class ReportJournal(models.AbstractModel):
         query_get_clause = self._get_query_get_clause(data)
         params = [tuple(move_state), tuple(journal_id.ids)] + query_get_clause[2]
         query = """
-            SELECT rel.account_tax_id, SUM("account_move_line".balance) AS base_amount
+            SELECT rel.account_tax_id, "account_move_line".date, "account_move_line".balance AS base_amount
             FROM account_move_line_account_tax_rel rel, """ + query_get_clause[0] + """ 
             LEFT JOIN account_move am ON "account_move_line".move_id = am.id
             WHERE "account_move_line".id = rel.account_move_line_id
                 AND am.state IN %s
                 AND "account_move_line".journal_id IN %s
-                AND """ + query_get_clause[1] + """
-           GROUP BY rel.account_tax_id"""
+                AND """ + query_get_clause[1] + """ """
         self.env.cr.execute(query, tuple(params))
         ids = []
         base_amounts = {}
-        for row in self.env.cr.fetchall():
-            ids.append(row[0])
-            base_amounts[row[0]] = row[1]
-
+        for line_data in self.env.cr.dictfetchall():
+            ids.append(line_data['account_tax_id'])
+            converted_base_amount = currency._convert(from_amount=line_data['base_amount'], to_currency=self.env.user.company_id.currency_id, company=self.env.user.company_id, date=line_data['date'])
+            if base_amounts.get(line_data['account_tax_id']):
+                base_amounts[line_data['account_tax_id']] += converted_base_amount
+            else:
+                base_amounts[line_data['account_tax_id']] = converted_base_amount
 
         res = {}
-        for tax in self.env['account.tax'].browse(ids):
-            self.env.cr.execute('SELECT sum(debit - credit) FROM ' + query_get_clause[0] + ', account_move am '
+        for tax in self.env['account.tax'].browse(list(set(ids))):
+            sum_tax_amount = 0.0
+            self.env.cr.execute('SELECT debit, credit, account_move_line.date FROM ' + query_get_clause[0] + ', account_move am '
                 'WHERE "account_move_line".move_id=am.id AND am.state IN %s AND "account_move_line".journal_id IN %s AND ' + query_get_clause[1] + ' AND tax_line_id = %s',
                 tuple(params + [tax.id]))
+            for line_data in self.env.cr.dictfetchall():
+                sum_tax_amount += currency._convert(from_amount=line_data['debit'] - line_data['credit'], to_currency=self.env.user.company_id.currency_id, company=self.env.user.company_id, date=line_data['date'])
             res[tax] = {
                 'base_amount': base_amounts[tax.id],
-                'tax_amount': self.env.cr.fetchone()[0] or 0.0,
+                'tax_amount':  sum_tax_amount,
             }
             if journal_id.type == 'sale':
                 #sales operation are credits
