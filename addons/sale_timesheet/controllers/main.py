@@ -8,7 +8,7 @@ import json
 
 from odoo import http, fields, _
 from odoo.http import request
-from odoo.tools import float_round
+from odoo.tools import float_round, pycompat
 
 from odoo.addons.web.controllers.main import clean_action
 
@@ -75,12 +75,16 @@ class SaleTimesheetController(http.Controller):
         # profitability, using profitability SQL report
         profit = dict.fromkeys(['invoiced', 'to_invoice', 'cost', 'expense_cost', 'expense_amount_untaxed_invoiced', 'total'], 0.0)
         profitability_raw_data = request.env['project.profitability.report'].read_group([('project_id', 'in', projects.ids)], ['project_id', 'amount_untaxed_to_invoice', 'amount_untaxed_invoiced', 'timesheet_cost', 'expense_cost', 'expense_amount_untaxed_invoiced'], ['project_id'])
-        for data in profitability_raw_data:
-            profit['invoiced'] += data.get('amount_untaxed_invoiced', 0.0)
-            profit['to_invoice'] += data.get('amount_untaxed_to_invoice', 0.0)
-            profit['cost'] += data.get('timesheet_cost', 0.0)
-            profit['expense_cost'] += data.get('expense_cost', 0.0)
-            profit['expense_amount_untaxed_invoiced'] += data.get('expense_amount_untaxed_invoiced', 0.0)
+        for data, project_id in pycompat.izip(profitability_raw_data, projects.ids):
+            task_id = request.env['project.task'].search([('project_id', '=', project_id)])
+            currency = task_id.company_id.currency_id
+            date = task_id.date_end or task_id.create_date
+            params = request.env.user.company_id.currency_id, task_id.company_id, date
+            profit['invoiced'] += currency._convert(data.get('amount_untaxed_invoiced', 0.0), *params)
+            profit['to_invoice'] += currency._convert(data.get('amount_untaxed_to_invoice', 0.0), *params)
+            profit['cost'] += currency._convert(data.get('timesheet_cost', 0.0), *params)
+            profit['expense_cost'] += currency._convert(data.get('expense_cost', 0.0), *params)
+            profit['expense_amount_untaxed_invoiced'] += currency._convert(data.get('expense_amount_untaxed_invoiced', 0.0), *params)
         profit['total'] = sum([profit[item] for item in profit.keys()])
         dashboard_values['profit'] = profit
 
