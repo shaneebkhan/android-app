@@ -174,18 +174,7 @@ class CustomerPortal(CustomerPortal):
             values['res_company'] = order_sudo.company_id
 
         if order_sudo.has_to_be_paid():
-            domain = expression.AND([
-                ['&', ('website_published', '=', True), ('company_id', '=', order_sudo.company_id.id)],
-                ['|', ('specific_countries', '=', False), ('country_ids', 'in', [order_sudo.partner_id.country_id.id])]
-            ])
-            acquirers = request.env['payment.acquirer'].sudo().search(domain)
-
-            values['acquirers'] = acquirers.filtered(lambda acq: (acq.payment_flow == 'form' and acq.view_template_id) or
-                                                     (acq.payment_flow == 's2s' and acq.registration_view_template_id))
-            values['pms'] = request.env['payment.token'].search(
-                [('partner_id', '=', order_sudo.partner_id.id),
-                ('acquirer_id', 'in', acquirers.filtered(lambda acq: acq.payment_flow == 's2s').ids)])
-            values['acq_extra_fees'] = acquirers.get_acquirer_extra_fees(order_sudo.amount_total, order_sudo.currency_id, order_sudo.partner_id.country_id.id)
+            values.update(self._get_payment_values(order_sudo))
 
         if order_sudo.state in ('draft', 'sent', 'cancel'):
             history = request.session.get('my_quotations_history', [])
@@ -194,6 +183,22 @@ class CustomerPortal(CustomerPortal):
         values.update(get_records_pager(history, order_sudo))
 
         return request.render('sale.sale_order_portal_template', values)
+
+    def _get_payment_values(self, order_sudo):
+        domain = expression.AND([
+            ['&', ('website_published', '=', True), ('company_id', '=', order_sudo.company_id.id)],
+            ['|', ('specific_countries', '=', False), ('country_ids', 'in', [order_sudo.partner_id.country_id.id])]
+        ])
+        acquirers = request.env['payment.acquirer'].sudo().search(domain)
+        values = {
+            'acquirers': acquirers.filtered(lambda acq: (acq.payment_flow == 'form' and acq.view_template_id) or
+                                            (acq.payment_flow == 's2s' and acq.registration_view_template_id)),
+            'pms': request.env['payment.token'].search(
+                [('partner_id', '=', order_sudo.partner_id.id),
+                 ('acquirer_id', 'in', acquirers.filtered(lambda acq: acq.payment_flow == 's2s').ids)]),
+            'acq_extra_fees': acquirers.get_acquirer_extra_fees(order_sudo.amount_total, order_sudo.currency_id, order_sudo.partner_id.country_id.id),
+        }
+        return values
 
     @http.route(['/my/orders/<int:order_id>/accept'], type='json', auth="public", website=True)
     def portal_quote_accept(self, order_id, access_token=None, name=None, signature=None):

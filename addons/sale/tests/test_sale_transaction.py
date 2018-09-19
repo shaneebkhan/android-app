@@ -28,8 +28,10 @@ class TestSaleTransaction(AccountingTestCase):
             ],
         })
 
+        acquirer = self.env.ref('payment.payment_acquirer_transfer')
+        acquirer.journal_id.write({'post_at_bank_rec': False})
         transaction = order._create_payment_transaction({
-            'acquirer_id': self.env.ref('payment.payment_acquirer_transfer').id,
+            'acquirer_id': acquirer.id,
         })
         transaction._set_transaction_done()
         transaction._post_process_after_done()

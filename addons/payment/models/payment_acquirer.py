@@ -151,6 +151,7 @@ class PaymentAcquirer(models.Model):
     # TDE FIXME: remove that brol
     module_id = fields.Many2one('ir.module.module', string='Corresponding Module')
     module_state = fields.Selection(selection=ir_module.STATES, string='Installation State', related='module_id.state', readonly=False)
+    module_to_buy = fields.Boolean(string='Odoo Enterprise Module', related='module_id.to_buy', readonly=True, store=False)
 
     image = fields.Binary(
         "Image", help="This field holds the image used for this provider, limited to 1024x1024px")
@@ -264,7 +265,7 @@ class PaymentAcquirer(models.Model):
         # If the trigger comes from the chart template wizard, the modules are already installed.
         acquirer_modules = self.env['ir.module.module'].search(
             [('name', 'like', 'payment_%'), ('state', 'in', ('to install', 'installed'))])
-        acquirer_names = [a.name.split('_')[1] for a in acquirer_modules]
+        acquirer_names = [a.name.split('_', 1)[1] for a in acquirer_modules]
 
         # Search for acquirers having no journal
         company = company or self.env.company
@@ -334,11 +335,15 @@ class PaymentAcquirer(models.Model):
         active_acquirers = self.sudo().search([('website_published', '=', True), ('company_id', '=', company.id)])
         acquirers = active_acquirers.filtered(lambda acq: (acq.payment_flow == 'form' and acq.view_template_id) or
                                                                (acq.payment_flow == 's2s' and acq.registration_view_template_id))
+
+        tokens = self.env['payment.token'].search([
+            ('partner_id', 'in', [partner.id, partner.commercial_partner_id.id]),
+            ('acquirer_id', 'in', acquirers.ids)
+        ])
+
         return {
             'acquirers': acquirers,
-            'pms': self.env['payment.token'].search([
-                ('partner_id', '=', partner.id),
-                ('acquirer_id', 'in', acquirers.ids)]),
+            'pms':   tokens,
         }
 
     @api.multi

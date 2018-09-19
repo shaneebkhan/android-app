@@ -21,11 +21,12 @@
                     <sheet>
                         <field name="module_id" invisible="1"/>
                         <field name="module_state" invisible="1"/>
+                        <field name="module_to_buy" invisible="1"/>
                         <field name="inbound_payment_method_ids" invisible="1"/>
                         <div class="oe_button_box" name="button_box" attrs="{'invisible': ['&amp;', ('module_id', '!=', False), ('module_state', '!=', 'installed')]}">
-                            <!-- transfer referenced here due to view inheritance issue in current master (post-saas-16) -->
+                            <!-- transfer and sepa_direct_debit referenced here due to view inheritance issue in current master (post-saas-16) -->
                             <button name="toggle_environment_value"
-                                    attrs="{'invisible': ['|', ('environment', '=', 'test'), ('provider', '=', 'transfer')]}"
+                                    attrs="{'invisible': ['|', ('environment', '=', 'test'), ('provider', 'in', ['transfer', 'sepa_direct_debit'])]}"
                                     class="oe_stat_button"
                                     type="object" icon="fa-play">
                                 <div class="o_stat_info o_field_widget">
@@ -33,9 +34,9 @@
                                     <span class="o_stat_text">Environment</span>
                                 </div>
                             </button>
-                            <!-- transfer referenced here due to view inheritance issue in current master (post-saas-16) -->
+                            <!-- transfer and sepa_direct_debit referenced here due to view inheritance issue in current master (post-saas-16) -->
                             <button name="toggle_environment_value"
-                                    attrs="{'invisible': ['|', ('environment', '=', 'prod'), ('provider', '=', 'transfer')]}"
+                                    attrs="{'invisible': ['|', ('environment', '=', 'prod'), ('provider', 'in', ['transfer', 'sepa_direct_debit'])]}"
                                     class="oe_stat_button"
                                     type="object" icon="fa-stop">
                                 <div class="o_stat_info o_field_widget">
@@ -55,7 +56,8 @@
                             <h1><field name="name" placeholder="Name"/></h1>
                         </div>
                         <div attrs="{'invisible': ['|', ('module_state', '=', 'installed'), ('module_id', '=', False)]}">
-                            <button type="object" class="btn btn-primary" name="button_immediate_install" string="Install"/>
+                            <a attrs="{'invisible': [('module_to_buy', '=', False)]}" href="https://odoo.com/pricing?utm_source=db&amp;utm_medium=module" class="btn btn-info" role="button">Upgrade</a>
+                            <button attrs="{'invisible': [('module_to_buy', '=', True)]}" type="object" class="btn btn-primary" name="button_immediate_install" string="Install"/>
                             <div class="o_payment_acquirer_desc">
                                 <field name="description"/>
                             </div>
@@ -141,9 +143,11 @@
                     <field name="module_id"/>
                     <field name="module_state"/>
                     <field name="website_published"/>
+                    <field name="module_to_buy"/>
                     <templates>
                         <t t-name="kanban-box">
                             <t t-set="installed" t-value="!record.module_id.value || (record.module_id.value &amp;&amp; record.module_state.raw_value === 'installed')"/>
+                            <t t-set="to_buy" t-value="record.module_to_buy.raw_value === true"/>
                             <div t-attf-class="oe_kanban_global_click #{installed and record.website_published.raw_value ? 'oe_kanban_color_5' : 'oe_kanban_color_white'}">
                                 <div class="o_kanban_image">
                                     <img type="open" t-att-src="kanban_image('payment.acquirer', 'image_small', record.id.raw_value)" alt="Acquirer"/>
@@ -156,7 +160,11 @@
                                     <t t-if="installed">
                                         <field name="environment" widget="label_selection" options="{'classes': {'test': 'warning', 'production': 'success'}}"/>
                                     </t>
-                                    <button t-if="!installed" type="object" class="btn btn-secondary float-right" name="button_immediate_install">Install</button>
+                                    <button t-if="!installed &amp; !to_buy" type="object" class="btn btn-secondary float-right" name="button_immediate_install">Install</button>
+                                    <t t-if="!installed &amp; to_buy">
+                                        <button href="https://odoo.com/pricing?utm_source=db&amp;utm_medium=module" class="btn btn-info btn-sm float_right">Upgrade</button>
+                                        <span class="badge badge-primary oe_inline o_enterprise_label">Enterprise</span>
+                                    </t>
                                     <button t-if="installed and !record.website_published.raw_value" type="edit" class="btn btn-primary float-right">Activate</button>
                                     <button t-if="installed and record.website_published.raw_value" type="edit" class="btn btn-primary float-right">Configure</button>
                                 </div>

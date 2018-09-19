@@ -127,8 +127,7 @@ class WebsitePayment(http.Controller):
         }
         return request.render("payment.pay_methods", values)
 
-    @http.route(['/website_payment/pay'], type='http', auth='public', website=True, sitemap=False)
-    def pay(self, reference='', order_id=None, amount=False, currency_id=None, acquirer_id=None, **kw):
+    def _get_payment_values(self, reference='', order_id=None, amount=False, currency_id=None, acquirer_id=None, **kw):
         env = request.env
         user = env.user.sudo()
 
@@ -190,6 +189,11 @@ class WebsitePayment(http.Controller):
         values['acquirers'] = [acq for acq in acquirers if acq.payment_flow in ['form', 's2s']]
         values['pms'] = request.env['payment.token'].search([('acquirer_id', 'in', acquirers.filtered(lambda x: x.payment_flow == 's2s').ids)])
 
+        return values
+
+    @http.route(['/website_payment/pay'], type='http', auth='public', website=True, sitemap=False)
+    def pay(self, reference='', order_id=None, amount=False, currency_id=None, acquirer_id=None, **kw):
+        values = self._get_payment_values(reference, order_id, amount, currency_id, acquirer_id, **kw)
         return request.render('payment.pay', values)
 
     @http.route(['/website_payment/transaction/<string:reference>/<string:amount>/<string:currency_id>',
