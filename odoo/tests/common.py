@@ -152,7 +152,7 @@ class MetaCase(type):
         # assign default test tags
         if cls.__module__.startswith('odoo.addons.'):
             module = cls.__module__.split('.')[2]
-            cls.test_tags = {'standard', 'at_install', module}
+            cls.test_tags = {'jke'} # standard', 'at_install', module}
 
 
 class BaseCase(TreeCase, MetaCase('DummyCase', (object,), {})):
