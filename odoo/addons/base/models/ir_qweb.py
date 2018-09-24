@@ -360,7 +360,7 @@ class IrQWeb(models.AbstractModel, QWeb):
             else:
                 # the other cases are ignored
                 pass
-
+        print("$$$", files, remains)
         return (files, remains)
 
     def _get_field(self, record, field_name, expression, tagName, field_options, options, values):

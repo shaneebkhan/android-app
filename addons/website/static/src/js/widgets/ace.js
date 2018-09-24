@@ -38,7 +38,8 @@ var WebsiteAceEditor = AceEditor.extend({
     _saveResources: function () {
         return this._super.apply(this, arguments).then((function () {
             this._updateHash();
-            window.location.reload();
+            debugger;
+            window.location.reload(true);
             return $.Deferred();
         }).bind(this));
     },
@@ -47,7 +48,7 @@ var WebsiteAceEditor = AceEditor.extend({
      */
     _resetResource: function () {
         return this._super.apply(this, arguments).then((function () {
-            window.location.reload();
+            window.location.reload(true);
             return $.Deferred();
         }).bind(this));
     },

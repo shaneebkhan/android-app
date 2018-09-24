@@ -730,7 +730,7 @@ class WebsiteSale(http.Controller):
         order.order_line._compute_tax_id()
         request.session['sale_last_order_id'] = order.id
         request.website.sale_get_order(update_pricelist=True)
-        extra_step = request.env.ref('website_sale.extra_info_option')
+        extra_step = request.website.ref('website_sale.extra_info_option')
         if extra_step.active:
             return request.redirect("/shop/confirm_order")
 
@@ -742,7 +742,7 @@ class WebsiteSale(http.Controller):
     @http.route(['/shop/extra_info'], type='http', auth="public", website=True)
     def extra_info(self, **post):
         # Check that this option is activated
-        extra_step = request.env['ir.ui.view']._view_obj('website_sale.extra_info_option')  # ref but specific
+        extra_step = request.website.ref('website_sale.extra_info_option')  # ref but specific
         if not extra_step.active:
             return request.redirect("/shop/payment")
 

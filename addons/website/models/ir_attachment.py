@@ -3,6 +3,8 @@
 
 import logging
 from odoo import fields, models, api
+from odoo.exceptions import UserError
+from odoo.tools.translate import _
 _logger = logging.getLogger(__name__)
 
 
@@ -25,3 +27,15 @@ class Attachment(models.Model):
     @api.model
     def get_serving_groups(self):
         return super(Attachment, self).get_serving_groups() + ['website.group_website_designer']
+
+    @api.multi
+    def _get_most_specific(self):
+        if len(set(self.mapped('key'))) > 1:
+            # to imp: with groupby key
+            raise UserError(_('Cannot have most_specific for several keys'))
+        website_id = self.env.context.get('website_id')
+        print(self.mapped(lambda x: (website_id, x.key, x.website_id)))
+        rec_sorted = self.filtered(lambda v: not v.website_id or v.website_id.id == website_id).sorted(key=lambda p: not p.website_id)
+        print(rec_sorted.mapped(lambda x: (x.website_id, x.key)))
+
+        return rec_sorted and rec_sorted[0] or self.browse()

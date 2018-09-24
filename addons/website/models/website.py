@@ -41,6 +41,20 @@ class Website(models.Model):
     def website_domain(self, website_id=False):
         return [('website_id', 'in', (False, website_id or self.id))]
 
+    @api.model
+    def ref(self, key, raise_if_not_found=True):
+        View = self.env['ir.ui.view']
+        res_id = False
+        try:
+            res_id = View.with_context(website_id=self.id, active_test=False).get_view_id(key)
+        except Exception:
+            if raise_if_not_found:
+                raise
+        return res_id and View.browse(res_id)
+
+
+
+
     def _active_languages(self):
         return self.env['res.lang'].search([]).ids
 
