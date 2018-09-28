@@ -76,9 +76,9 @@ class IrUiView(models.Model):
 
         vals = {
             'inherit_id': self.id,
-            'name': '{} ({})'.format(self.name, el.get('id')),
+            'name': '%s (%s)' % (self.name, el.get('id')),
             'arch': self._pretty_arch(arch),
-            'key': '{}_{}'.format(self.key, el.get('id')),
+            'key': '%s_%s' % (self.key, el.get('id')),
             'type': 'qweb',
         }
         vals.update(self._save_oe_structure_hook())
@@ -117,7 +117,7 @@ class IrUiView(models.Model):
             return False
         if len(arch1) != len(arch2):
             return False
-        return all(self._are_archs_equal(arch1, arch2) for arch1, arch2 in zip(arch1, arch2))
+        return all(self._are_archs_equal(arch1, arch2) for arch1, arch2 in pycompat.izip(arch1, arch2))
 
     @api.multi
     def replace_arch_section(self, section_xpath, replacement, replace_tail=False):
@@ -194,7 +194,7 @@ class IrUiView(models.Model):
         new_arch = self.replace_arch_section(xpath, arch_section)
         old_arch = etree.fromstring(self.arch.encode('utf-8'))
         if not self._are_archs_equal(old_arch, new_arch):
-            # self.sudo().model_data_id.write({'noupdate': True})
+            self.sudo().model_data_id.write({'noupdate': True})
             self.write({'arch': self._pretty_arch(new_arch)})
 
     @api.model
