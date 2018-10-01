@@ -92,6 +92,11 @@ class LandedCost(models.Model):
         if not self._check_sum():
             raise UserError(_('Cost and adjustments lines do not match. You should maybe recompute the landed costs.'))
 
+        avg_price = {}
+        avg_qty = {}
+        add_to_product = defaultdict(lambda: 0.0)
+        product_set = self.env['product.product']
+
         for cost in self:
             move = self.env['account.move']
             move_vals = {
@@ -100,7 +105,7 @@ class LandedCost(models.Model):
                 'ref': cost.name,
                 'line_ids': [],
             }
-            for line in cost.valuation_adjustment_lines.filtered(lambda line: line.move_id):
+            for line in cost.valuation_adjustment_lines.filtered(lambda line: line.move_id and line.move_id.product_id.cost_method == 'fifo'):
                 # Prorate the value at what's still in stock
                 cost_to_add = (line.move_id.remaining_qty / line.move_id.product_qty) * line.additional_landed_cost
 
@@ -119,6 +124,33 @@ class LandedCost(models.Model):
                 elif line.move_id._is_out():
                     qty_out = line.move_id.product_qty
                 move_vals['line_ids'] += line._create_accounting_entries(move, qty_out)
+
+            for line in cost.valuation_adjustment_lines.filtered(lambda line: line.move_id and line.move_id.product_id.cost_method == 'average'):
+                # Prorate the value at what's still in stock
+                cost_to_add = (line.move_id.remaining_qty / line.move_id.product_qty) * line.additional_landed_cost
+
+                avg_price.setdefault(line.move_id.product_id.id, line.move_id.product_id.standard_price)
+                qty = avg_qty.setdefault(line.move_id.product_id.id, line.move_id.product_id.qty_available)
+                add_to_product[line.move_id.product_id.id] += line.additional_landed_cost
+                product_set |= line.move_id.product_id
+
+                new_landed_cost_value = line.move_id.landed_cost_value + line.additional_landed_cost
+                line.move_id.write({
+                    'landed_cost_value': new_landed_cost_value,
+                    'value': line.move_id.value + cost_to_add,
+                    'price_unit': (line.move_id.value + cost_to_add) / line.move_id.product_qty,
+                })
+                # `remaining_qty` is negative if the move is out and delivered proudcts that were not
+                # in stock.
+                qty_out = 0
+                if qty <= 0:
+                    qty_out = line.move_id.product_qty
+                move_vals['line_ids'] += line._create_accounting_entries(move, qty_out)
+
+            # /!\ NOTE: Recomputing all Product Averages in one batch
+            for product in product_set:
+                if avg_qty[product.id] > 0:
+                    product.write({'standard_price': (avg_price[product.id] * avg_qty[product.id] + add_to_product[product.id]) / avg_qty[product.id]})
 
             move = move.create(move_vals)
             cost.write({'state': 'done', 'account_move_id': move.id})
@@ -147,7 +179,7 @@ class LandedCost(models.Model):
 
         for move in self.mapped('picking_ids').mapped('move_lines'):
             # it doesn't make sense to make a landed cost for a product that isn't set as being valuated in real time at real cost
-            if move.product_id.valuation != 'real_time' or move.product_id.cost_method != 'fifo':
+            if move.product_id.valuation != 'real_time' or move.product_id.cost_method not in ('fifo', 'average'):
                 continue
             vals = {
                 'product_id': move.product_id.id,
