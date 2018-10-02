@@ -96,6 +96,8 @@ class LandedCost(models.Model):
         avg_qty = {}
         add_to_product = defaultdict(lambda: 0.0)
         product_set = self.env['product.product']
+        move_set = self.env['stock.move']
+        new_landed = {}
 
         for cost in self:
             move = self.env['account.move']
@@ -134,18 +136,33 @@ class LandedCost(models.Model):
                 add_to_product[line.move_id.product_id.id] += line.additional_landed_cost
                 product_set |= line.move_id.product_id
 
-                new_landed_cost_value = line.move_id.landed_cost_value + line.additional_landed_cost
-                line.move_id.write({
-                    'landed_cost_value': new_landed_cost_value,
-                    'value': line.move_id.value + cost_to_add,
-                    'price_unit': (line.move_id.value + cost_to_add) / line.move_id.product_qty,
-                })
+                # On Landed Costs with several costs to add and several stock
+                # moves to apply for writing several time on the same stock
+                # moves could be a huge CPU cost
+                move_set |= line.move_id
+                new_landed.setdefault(line.move_id.id, line.move_id.landed_cost_value)
+                new_landed[line.move_id.id] += line.additional_landed_cost
+
                 # `remaining_qty` is negative if the move is out and delivered proudcts that were not
                 # in stock.
                 qty_out = 0
                 if qty <= 0:
                     qty_out = line.move_id.product_qty
                 move_vals['line_ids'] += line._create_accounting_entries(move, qty_out)
+
+            # /!\ NOTE: Writing Stock Moves once in one batch
+            for stock_move in move_set:
+                stock_move.write({
+                    'landed_cost_value': new_landed[stock_move.id],
+                    # /|\ NOTE: Do changing this values affect somehow
+                    # computation of stock.move.line
+                    # 'value': line.move_id.value + cost_to_add,
+                    # 'remaining_value': line.move_id.remaining_value + cost_to_add,
+                    # /|\ NOTE: Let us keep the price_unit the same for the sake of
+                    # traceability. For me @hbto this value shall not be
+                    # changed as it can be used later for audition
+                    # 'price_unit': (line.move_id.value + cost_to_add) / line.move_id.product_qty,
+                })
 
             # /!\ NOTE: Recomputing all Product Averages in one batch
             for product in product_set:
