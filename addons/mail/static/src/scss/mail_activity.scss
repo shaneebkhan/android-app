@@ -164,6 +164,12 @@
             min-width: 290px;
             padding: 0px 0px;
 
+            @include media-breakpoint-down(sm) {
+                .dropdown-header {
+                    color: $o-main-text-color;
+                }
+            }
+
             .o_activity_log_container {
                 max-height: 300px;
                 overflow-y: auto;
