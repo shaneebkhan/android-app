@@ -1009,7 +1009,17 @@ ListRenderer.include({
             return;
         }
 
-        this.unselectRow();
+        var def = this.unselectRow();
+        if (def.state() === 'pending') {
+            // use case: the user clicks on another tab while editing a row in the
+            // o2m
+            // prob: if there is a pending onchange, we get into this if and thus
+            // cancel the tab click
+            // could be better: if the user is asked to discard changes or
+            // continue, and choose to discard, it would be nice to switch tab
+            event.preventDefault();
+            event.stopPropagation();
+        }
     },
 });
 
