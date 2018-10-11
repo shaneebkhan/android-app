@@ -51,6 +51,8 @@ class MrpProductProduce(models.TransientModel):
     @api.multi
     def do_produce(self):
         # Nothing to do for lots since values are created using default data (stock.move.lots)
+        if self.env.context.get('debug'):
+            import pudb; pudb.set_trace()
         quantity = self.product_qty
         if float_compare(quantity, 0, precision_rounding=self.product_uom_id.rounding) <= 0:
             raise UserError(_("The production order for '%s' has no quantity specified.") % self.product_id.display_name)

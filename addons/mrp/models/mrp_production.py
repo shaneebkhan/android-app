@@ -388,7 +388,7 @@ class MrpProduction(models.Model):
             production.move_raw_ids._action_confirm()
         return True
 
-    def _generate_finished_moves(self):
+    def _generate_finished_moves(self, product_qty=None):
         move = self.env['stock.move'].create({
             'name': self.name,
             'date': self.date_planned_start,
@@ -396,7 +396,7 @@ class MrpProduction(models.Model):
             'picking_type_id': self.picking_type_id.id,
             'product_id': self.product_id.id,
             'product_uom': self.product_uom_id.id,
-            'product_uom_qty': self.product_qty,
+            'product_uom_qty': product_qty or self.product_qty,
             'location_id': self.product_id.property_stock_production.id,
             'location_dest_id': self.location_dest_id.id,
             'company_id': self.company_id.id,
@@ -476,26 +476,6 @@ class MrpProduction(models.Model):
             elif not pull: # If there is no make_to_stock rule either
                 if mto_route and mto_route.id in [x.id for x in routes]:
                     move.procure_method = 'make_to_order'
-
-    @api.multi
-    def _update_raw_move(self, bom_line, line_data):
-        """ :returns update_move, old_quantity, new_quantity """
-        quantity = line_data['qty']
-        self.ensure_one()
-        move = self.move_raw_ids.filtered(lambda x: x.bom_line_id.id == bom_line.id and x.state not in ('done', 'cancel'))
-        if move:
-            old_qty = move[0].product_uom_qty
-            if quantity > 0:
-                move[0].write({'product_uom_qty': quantity})
-            elif quantity < 0:  # Do not remove 0 lines
-                if move[0].quantity_done > 0:
-                    raise UserError(_('Lines need to be deleted, but can not as you still have some quantities to consume in them. '))
-                move[0]._action_cancel()
-                move[0].unlink()
-            return move[0], old_qty, quantity
-        else:
-            move = self._generate_raw_move(bom_line, line_data)
-            return move, 0, quantity
 
     @api.multi
     def action_assign(self):
@@ -642,8 +622,11 @@ class MrpProduction(models.Model):
         for order in self:
             moves_not_to_do = order.move_raw_ids.filtered(lambda x: x.state == 'done')
             moves_to_do = order.move_raw_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
-            for move in moves_to_do.filtered(lambda m: m.product_qty == 0.0 and m.quantity_done > 0):
-                move.product_uom_qty = move.quantity_done
+#            for move in moves_to_do.filtered(lambda m: m.product_qty == 0.0 and m.quantity_done > 0):
+#                move.product_uom_qty = move.quantity_done
+
+            if self.env.context.get('debug'):
+                import pudb; pudb.set_trace()
             moves_to_do._action_done()
             moves_to_do = order.move_raw_ids.filtered(lambda x: x.state == 'done') - moves_not_to_do
             order._cal_price(moves_to_do)
