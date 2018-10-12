@@ -708,7 +708,7 @@ class MailThread(models.AbstractModel):
                 bounced_record = self.env[bounced_model].sudo().browse(bounced_res_id).exists()
 
             bl_models = self.env['ir.model'].sudo().search(['&', ('is_mail_blacklist', '=', True), ('model', '!=', 'mail.thread.blacklist')])
-            for model in bl_models:
+            for model in [bl_model for bl_model in bl_models if bl_model.model in self.env]:  # transient test mode
                 rec_bounce_w_email = self.env[model.model].sudo().search([('email_normalized', '=', bounced_email)])
                 rec_bounce_w_email._message_receive_bounce(bounced_email, bounced_partner)
                 bounced_record_done = bool(bounced_record and model.model == bounced_model and bounced_record in rec_bounce_w_email)
@@ -823,6 +823,22 @@ class MailThread(models.AbstractModel):
         return (model, thread_id, route[2], route[3], route[4])
 
     @api.model
+    def _routing_reset_bounce(self, email_message, message_dict):
+        """Called by ``message_process`` when a new mail is received from an email address.
+        If the email is related to a partner, we consider that the number of message_bounce
+        is not relevant anymore as the email is valid - as we received an email from this
+        address. The model is here hardcoded because we cannot know with which model the
+        incomming mail match. We consider that if a mail arrives, we have to clear bounce for
+        each model having bounce count.
+
+        :param email_from: email address that sent the incoming email."""
+        valid_email = message_dict['email_from']
+        if valid_email:
+            bl_models = self.env['ir.model'].sudo().search(['&', ('is_mail_blacklist', '=', True), ('model', '!=', 'mail.thread.blacklist')])
+            for model in [bl_model for bl_model in bl_models if bl_model.model in self.env]:  # transient test mode
+                self.env[model.model].sudo().search([('email_normalized', '=', valid_email)])._message_reset_bounce(valid_email)
+
+    @api.model
     def message_route(self, message, message_dict, model=None, thread_id=None, custom_values=None):
         """ Attempt to figure out the correct target model, thread_id,
         custom_values and user_id to use for an incoming message.
@@ -890,6 +906,7 @@ class MailThread(models.AbstractModel):
         #       See http://datatracker.ietf.org/doc/rfc3462/?include_text=1
         #        As all MTA does not respect this RFC (googlemail is one of them),
         #       we also need to verify if the message come from "mailer-daemon"
+        #    If not a bounce: reset bounce information
         if bounce_alias and bounce_alias in email_to_localpart:
             bounce_re = re.compile("%s\+(\d+)-?([\w.]+)?-?(\d+)?" % re.escape(bounce_alias), re.UNICODE)
             bounce_match = bounce_re.search(email_to)
@@ -899,6 +916,7 @@ class MailThread(models.AbstractModel):
         if message.get_content_type() == 'multipart/report' or email_from_localpart == 'mailer-daemon':
             self._routing_handle_bounce(message, message_dict)
             return []
+        self._routing_reset_bounce(message, message_dict)
 
         # 1. Handle reply
         #    if destination = alias with different model -> consider it is a forward and not a reply
@@ -1158,6 +1176,17 @@ class MailThread(models.AbstractModel):
         :param mail_id: ID of the sent email that bounced. It may not exist anymore
                         but it could be useful if the information was kept. This is
                         used notably in mass mailing;
+        """
+        pass
+
+    @api.multi
+    def _message_reset_bounce(self, email):
+        """Called by ``message_process`` when an email is considered as not being
+        a bounce. The default behavior is to do nothing. This method is meant to
+        be overridden in various modules to add some specific behavior like
+        blacklist management.
+
+        :param string email: email for which to reset bounce information
         """
         pass
 
