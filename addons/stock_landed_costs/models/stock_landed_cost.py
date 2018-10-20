@@ -19,6 +19,7 @@ class LandedCost(models.Model):
     _name = 'stock.landed.cost'
     _description = 'Stock Landed Cost'
     _inherit = 'mail.thread'
+    _order = "id desc"
 
     name = fields.Char(
         'Name', default=lambda self: _('New'),
@@ -101,7 +102,7 @@ class LandedCost(models.Model):
                 'line_ids': [],
             }
             for line in cost.valuation_adjustment_lines.filtered(lambda line: line.move_id):
-                # Prorate the value at what's still in stock
+
                 cost_to_add = (line.move_id.remaining_qty / line.move_id.product_qty) * line.additional_landed_cost
 
                 new_landed_cost_value = line.move_id.landed_cost_value + line.additional_landed_cost
@@ -119,6 +120,8 @@ class LandedCost(models.Model):
                 elif line.move_id._is_out():
                     qty_out = line.move_id.product_qty
                 move_vals['line_ids'] += line._create_accounting_entries(move, qty_out)
+                if (line.product_id.cost_method == 'average') and (line.product_id.qty_available>0.01):
+                    line.product_id.standard_price += cost_to_add / line.product_id.qty_available
 
             move = move.create(move_vals)
             cost.write({'state': 'done', 'account_move_id': move.id})
@@ -147,7 +150,7 @@ class LandedCost(models.Model):
 
         for move in self.mapped('picking_ids').mapped('move_lines'):
             # it doesn't make sense to make a landed cost for a product that isn't set as being valuated in real time at real cost
-            if move.product_id.valuation != 'real_time' or move.product_id.cost_method != 'fifo':
+            if move.product_id.valuation != 'real_time' or (move.product_id.cost_method not in ('fifo','average')):
                 continue
             vals = {
                 'product_id': move.product_id.id,
