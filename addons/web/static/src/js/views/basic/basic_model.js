@@ -2048,14 +2048,12 @@ var BasicModel = AbstractModel.extend({
 
         // We don't do it now because it's not an important case.
         // However, we can for sure increment by 1 if we are on the last page.
-
         var handleFieldValue = computedList.data[index].data[handleField];
         if (position === 'top') {
             handleFieldValue--;
         } else if (list.count <= list.offset + list.limit - (list.tempLimitIncrement || 0)) {
             handleFieldValue++;
         }
-
         return {
             field: handleField,
             value: handleFieldValue,
