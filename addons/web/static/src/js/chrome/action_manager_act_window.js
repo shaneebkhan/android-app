@@ -12,7 +12,7 @@ var Context = require('web.Context');
 var core = require('web.core');
 var data = require('web.data'); // this will be removed at some point
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.OldSearchView');
+var SearchView = require('web.SearchView');
 var view_registry = require('web.view_registry');
 
 var _t = core._t;
@@ -154,17 +154,38 @@ ActionManager.include({
                 searchDefaults[match[1]] = value;
             }
         });
-        var searchView = new SearchView(this, dataset, action.searchFieldsView, {
-            $buttons: $('<div>'),
-            action: action,
-            disable_custom_filters: action.flags.disableCustomFilters,
-            search_defaults: searchDefaults,
-        });
 
-        return searchView.appendTo(document.createDocumentFragment()).then(function () {
-            action.searchView = searchView;
-            return searchView;
+        var viewInfo = {
+            arch: action.searchFieldsView.arch,
+            fields: action.searchFieldsView.fields,
+            fieldsInfo: action.searchFieldsView.viewFields,
+        };
+
+        var params = {
+            modelName: action.searchFieldsView.model,
+            context: action.context,
+            domain: action.domain,
+
+        };
+        var searchView = new SearchView(viewInfo, params);
+
+        return searchView.getController().then(function (controller) {
+            return controller.appendTo(document.createDocumentFragment()).then(function () {
+                action.searchView = controller;
+                return controller;
+            });
         });
+        // var searchView = new SearchView(this, dataset, action.searchFieldsView, {
+        //     $buttons: $('<div>'),
+        //     action: action,
+        //     disable_custom_filters: action.flags.disableCustomFilters,
+        //     search_defaults: searchDefaults,
+        // });
+
+        // return searchView.appendTo(document.createDocumentFragment()).then(function () {
+            // action.searchView = searchView;
+            // return searchView;
+        // });
     },
     /**
      * Instantiates the controller for a given action and view type, and adds it
@@ -326,10 +347,13 @@ ActionManager.include({
 
             var def;
             if (action.flags.hasSearchView) {
-                def = self._createSearchView(action).then(function (searchView) {
-                    // udpate domain, context and groupby in the env
-                    var searchData = searchView.build_search_data();
-                    _.extend(action.env, self._processSearchData(action, searchData));
+                def = self._createSearchView(action).then(function (searchController) {
+                    var searchState = searchController.getSearchState();
+                    _.extend(action.env, searchState);
+
+                    // // udpate domain, context and groupby in the env
+                    // var searchData = searchView.build_search_data();
+                    // _.extend(action.env, self._processSearchData(action, searchData));
                 });
             }
             return $.when(def).then(function () {

@@ -237,17 +237,17 @@ var ControlPanelRenderer = AbstractRenderer.extend({
      *   (only relevant if searchview is visible)
      */
     _updateSearchView: function (searchview, isHidden, groupable, enableTimeRangeMenu) {
-        if (searchview) {
-            searchview.toggle_visibility(!isHidden);
-            if (groupable !== undefined){
-                searchview.groupby_menu.do_toggle(groupable);
-            }
-            if (enableTimeRangeMenu !== undefined){
-                searchview.displayTimeRangeMenu(enableTimeRangeMenu);
-            }
-        }
-        this.nodes.$searchview.toggle(!isHidden);
-        this.$el.toggleClass('o_breadcrumb_full', !!isHidden);
+        // if (searchview) {
+        //     searchview.toggle_visibility(!isHidden);
+        //     if (groupable !== undefined){
+        //         searchview.groupby_menu.do_toggle(groupable);
+        //     }
+        //     if (enableTimeRangeMenu !== undefined){
+        //         searchview.displayTimeRangeMenu(enableTimeRangeMenu);
+        //     }
+        // }
+        // this.nodes.$searchview.toggle(!isHidden);
+        // this.$el.toggleClass('o_breadcrumb_full', !!isHidden);
     },
     /**
      * Removes active class on all switch-buttons and adds it to the one of the

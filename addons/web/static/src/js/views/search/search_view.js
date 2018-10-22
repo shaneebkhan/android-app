@@ -12,6 +12,18 @@ var SearchView = AbstractView.extend({
         Controller: SearchController,
         Renderer: SearchRenderer,
     },
+
+    init: function (viewInfo, params) {
+    	this._super.apply(this, arguments);
+
+    	// don't forget to compute and rename:
+    	//  - groupable
+    	//  - enableTimeRangeMenu
+    	//  - search view visibility
+    	//  - space available for breadcrumb (depends on visibility of search view and mobile mode)
+    },
+
+
 });
 
 return SearchView;
