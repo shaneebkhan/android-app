@@ -12,7 +12,7 @@ var Context = require('web.Context');
 var core = require('web.core');
 var data = require('web.data'); // this will be removed at some point
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 var view_registry = require('web.view_registry');
 
 var _t = core._t;

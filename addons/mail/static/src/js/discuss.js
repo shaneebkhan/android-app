@@ -13,7 +13,7 @@ var data = require('web.data');
 var Dialog = require('web.Dialog');
 var dom = require('web.dom');
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 var session = require('web.session');
 
 var QWeb = core.qweb;

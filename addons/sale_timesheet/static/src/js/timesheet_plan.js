@@ -6,7 +6,7 @@ var ControlPanelMixin = require('web.ControlPanelMixin');
 var core = require('web.core');
 var data = require('web.data');
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 
 var _t = core._t;
 var QWeb = core.qweb;

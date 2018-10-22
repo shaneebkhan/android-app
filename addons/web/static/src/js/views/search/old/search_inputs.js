@@ -523,7 +523,7 @@ var FilterGroup = Input.extend(/** @lends instance.web.search.FilterGroup# */{
      * @extends instance.web.search.Input
      *
      * @param {Array<instance.web.search.Filter>} filters elements of the group
-     * @param {instance.web.SearchView} parent parent in which the filters are contained
+     * @param {instance.web.OldSearchView} parent parent in which the filters are contained
      * @param {Object} intervalMapping, a key is a field name and the corresponding value
      *                   is the current interval used
      *                   (necessarily the field is of type 'date' or 'datetime')
@@ -812,7 +812,7 @@ var Filter = Input.extend(/** @lends instance.web.search.Filter# */{
 });
 
 /**
- * Registry of search fields, called by :js:class:`instance.web.SearchView` to
+ * Registry of search fields, called by :js:class:`instance.web.OldSearchView` to
  * find and instantiate its field widgets.
  */
 

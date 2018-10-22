@@ -5,7 +5,7 @@ var Discuss = require('mail.Discuss');
 var mailTestUtils = require('mail.testUtils');
 
 var concurrency = require('web.concurrency');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 var testUtils = require('web.test_utils');
 
 var createDiscuss = mailTestUtils.createDiscuss;

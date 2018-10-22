@@ -1,7 +1,7 @@
 odoo.define('web.search_tests', function (require) {
 "use strict";
 
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 
 QUnit.module('chrome', {}, function () {
 

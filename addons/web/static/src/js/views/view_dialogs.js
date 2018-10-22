@@ -9,7 +9,7 @@ var dom = require('web.dom');
 var ListController = require('web.ListController');
 var ListView = require('web.ListView');
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 var view_registry = require('web.view_registry');
 
 var _t = core._t;

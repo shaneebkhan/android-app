@@ -1,4 +1,4 @@
-odoo.define('web.SearchView', function (require) {
+odoo.define('web.OldSearchView', function (require) {
 "use strict";
 
 var AutoComplete = require('web.AutoComplete');
@@ -500,10 +500,10 @@ var SearchView = Widget.extend({
      * Performs the search view collection of widget data.
      *
      * If the collection went well (all fields are valid), then triggers
-     * :js:func:`instance.web.SearchView.on_search`.
+     * :js:func:`instance.web.OldSearchView.on_search`.
      *
      * If at least one field failed its validation, triggers
-     * :js:func:`instance.web.SearchView.on_invalid` instead.
+     * :js:func:`instance.web.OldSearchView.on_invalid` instead.
      *
      * @param [_query]
      * @param {Object} [options]

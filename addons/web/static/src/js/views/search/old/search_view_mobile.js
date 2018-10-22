@@ -1,8 +1,8 @@
- odoo.define('web.SearchViewMobile', function (require) {
+ odoo.define('web.OldSearchViewMobile', function (require) {
 "use strict";
 
 var config = require('web.config');
-var SearchView = require('web.SearchView');
+var SearchView = require('web.OldSearchView');
 
 if (!config.device.isMobile) {
     return;
