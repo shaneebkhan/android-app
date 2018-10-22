@@ -237,6 +237,11 @@
         <script type="text/javascript" src="/web/static/src/js/chrome/user_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/chrome/menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/chrome/apps_menu.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/search/search_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/search/search_controller.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/search/search_model.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/search/search_renderer.js"></script>
+
         <script type="text/javascript" src="/web/static/src/js/views/search/old/search_view.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/old/search_view_mobile.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/old/search_filters.js"></script>
