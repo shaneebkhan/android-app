@@ -1069,6 +1069,8 @@
     </t>
 </div>
 
+
+
 <t t-name="DropdownMenu.MenuItems">
     <t t-if="widget.items.length !== 0">
         <t t-set="group" t-value="0"/>
@@ -1207,7 +1209,6 @@
         </div>
     </div>
 </div>
-
 
 <div t-name="SearchView" class="o_searchview" role="search" aria-autocomplete="list">
     <span class="o_searchview_more fa" title="Advanced Search..." role="img" aria-label="Advanced Search..."/>
