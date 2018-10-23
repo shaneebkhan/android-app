@@ -1069,6 +1069,34 @@
     </t>
 </div>
 
+<t t-name="DropdownMenu.MenuItems">
+    <t t-if="widget.items.length !== 0">
+        <t t-set="group" t-value="0"/>
+        <t t-foreach="widget.items" t-as="item">
+            <div t-if="group !== item.groupId" class="dropdown-divider" data-removable="1"/>
+            <div class="o_menu_item"
+                t-att-data-id="item.itemId">
+                <a href="#" t-attf-class="dropdown-item#{item.isActive ? ' selected ' : ''}">
+                    <t t-esc="item.description"/>
+                    <span t-if="item.isRemovable" t-att-data-id="item.itemId" class="o_trash_button" > <span class="fa fa-trash-o"></span> </span>
+                    <span t-if="item.hasOptions" t-att-data-id="item.itemId" class="o_submenu_switcher">
+                        <span t-att-class="item.isOpen ? 'fa fa-caret-down' : 'fa fa-caret-right'"></span>
+                    </span>
+                </a>
+            </div>
+            <t t-set="group" t-value="item.groupId"/>
+        </t>
+    </t>
+</t>
+
+<div t-name="web.DropdownMenu" t-att-class="widget.dropdownStyle.el.class" t-att="widget.dropdownStyle.el.attrs">
+    <button t-att-class="widget.dropdownStyle.mainButton.class" data-toggle="dropdown" aria-expanded="false" tabindex="-1">
+        <span t-att-class="widget.dropdownIcon"/> <t t-esc="widget.dropdownTitle"/> <span t-if="widget.dropdownSymbol" t-att-class="widget.dropdownSymbol"/>
+    </button>
+    <div class="dropdown-menu o_dropdown_menu" role="menu">
+        <t t-call="DropdownMenu.MenuItems"/>
+    </div>
+</div>
 
 
 <t t-name="OldDropdownMenu.MenuItems">

@@ -6,12 +6,17 @@ var AbstractController = require('web.AbstractController');
 
 var SearchController = AbstractController.extend({
 
+    start: function () {
+        this._super.apply(this, arguments);
+        this.$buttons = this._getSubMenus();
+    },
+
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
 
     /**
-     * Compute the search related values that will be 
+     * Compute the search related values that will be
      *
      * @returns {Object} object with keys 'context', 'domain', 'groupBy'
      */
@@ -21,7 +26,16 @@ var SearchController = AbstractController.extend({
             context: {},
             groupBy: [],
         };
-    }
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    _getSubMenus: function () {
+        return this.renderer.$subMenus;
+    },
+
 });
 
 return SearchController;

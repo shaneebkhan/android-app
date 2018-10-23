@@ -169,7 +169,7 @@ ActionManager.include({
         };
         var searchView = new SearchView(viewInfo, params);
 
-        return searchView.getController().then(function (controller) {
+        return searchView.getController(this).then(function (controller) {
             return controller.appendTo(document.createDocumentFragment()).then(function () {
                 action.searchView = controller;
                 return controller;

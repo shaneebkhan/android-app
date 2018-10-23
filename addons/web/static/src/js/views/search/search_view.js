@@ -55,7 +55,7 @@ var SearchView = AbstractView.extend({
     	if (this.arch.tag === 'control_panel') {
     		info = this._processControlPanelArch(this.arch);
     	}
-		_.extend(this.loadParams, {groups: info.groups, filters: info.filters});
+        _.extend(this.loadParams, {groups: info.groups, filters: info.filters});
     },
 
     _processControlPanelArch: function (arch) {

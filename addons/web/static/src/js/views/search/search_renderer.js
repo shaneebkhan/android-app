@@ -3,6 +3,7 @@ odoo.define('web.SearchRenderer', function (require) {
 
 var AbstractRenderer = require('web.AbstractRenderer');
 var AutoComplete = require('web.AutoComplete');
+var FiltersMenu = require('web.FiltersMenu');
 
 var SearchRenderer = AbstractRenderer.extend({
 	template: 'SearchView',
@@ -12,9 +13,19 @@ var SearchRenderer = AbstractRenderer.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    _setupFiltersMenu: function () {
+        var filters = this.state.filters.filter(function (filter) {
+            return filter.type === 'filter';
+        });
+        this.filtersMenu = new FiltersMenu(this, filters);
+        return this.filtersMenu.appendTo(this.$subMenus);
+    },
+
     _render: function () {
+        this.$subMenus = document.createDocumentFragment();
     	var defs = [];
     	defs.push(this._setupAutoCompletion());
+        defs.push(this._setupFiltersMenu());
     	return $.when(this, defs);
     },
     /**
