@@ -1,4 +1,4 @@
-odoo.define('web.FiltersMenu', function (require) {
+odoo.define('web.OldFiltersMenu', function (require) {
 "use strict";
 
 var config = require('web.config');
@@ -16,7 +16,7 @@ var PERIOD_OPTIONS = TimeRangeMenuOptions.PeriodOptions;
 
 var DEFAULT_PERIOD = 'this_month';
 
-var FiltersMenu = DropdownMenu.extend({
+var OldFiltersMenu = DropdownMenu.extend({
     custom_events: {
         remove_proposition: '_onRemoveProposition',
         confirm_proposition: '_onConfirmProposition',
@@ -80,7 +80,7 @@ var FiltersMenu = DropdownMenu.extend({
     start: function () {
         this.$menu = this.$('.o_dropdown_menu');
         this.$menu.addClass('o_filters_menu');
-        var generatorMenu = QWeb.render('FiltersMenuGenerator', {widget: this});
+        var generatorMenu = QWeb.render('OldFiltersMenuGenerator', {widget: this});
         this.$menu.append(generatorMenu);
         this.$addCustomFilter = this.$menu.find('.o_add_custom_filter');
         this.$addFilterMenu = this.$menu.find('.o_add_filter_menu');
@@ -248,6 +248,6 @@ var FiltersMenu = DropdownMenu.extend({
     },
 });
 
-return FiltersMenu;
+return OldFiltersMenu;
 
 });

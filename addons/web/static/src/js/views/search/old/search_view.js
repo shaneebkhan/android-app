@@ -6,7 +6,7 @@ var config = require('web.config');
 var core = require('web.core');
 var Domain = require('web.Domain');
 var FavoriteMenu = require('web.FavoriteMenu');
-var FiltersMenu = require('web.FiltersMenu');
+var OldFiltersMenu = require('web.OldFiltersMenu');
 var GroupByMenu = require('web.GroupByMenu');
 var pyUtils = require('web.py_utils');
 var search_inputs = require('web.search_inputs');
@@ -926,7 +926,7 @@ var SearchView = Widget.extend({
             self.groupsMapping.push({groupId: groupId, group: group, category: 'Filters'});
         });
 
-        return new FiltersMenu(self, filters, self.fields);
+        return new OldFiltersMenu(self, filters, self.fields);
     },
 
     /**
