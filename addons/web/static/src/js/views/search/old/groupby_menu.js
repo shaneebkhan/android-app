@@ -3,7 +3,7 @@ odoo.define('web.GroupByMenu', function (require) {
 
 var config = require('web.config');
 var core = require('web.core');
-var DropdownMenu = require('web.DropdownMenu');
+var OldDropdownMenu = require('web.OldDropdownMenu');
 
 var QWeb = core.qweb;
 var _t = core._t;
@@ -12,8 +12,8 @@ var GROUPABLE_TYPES = ['many2one', 'char', 'boolean', 'selection', 'date', 'date
 
 var DEFAULT_INTERVAL = 'month';
 
-var GroupByMenu = DropdownMenu.extend({
-    events: _.extend({}, DropdownMenu.prototype.events,
+var GroupByMenu = OldDropdownMenu.extend({
+    events: _.extend({}, OldDropdownMenu.prototype.events,
     {
         'click .o_add_custom_group': '_onAddCustomGroupClick',
         'click button.o_apply_group': '_onButtonApplyClick',

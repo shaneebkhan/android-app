@@ -251,7 +251,7 @@
         <script type="text/javascript" src="/web/static/src/js/views/search/old/time_range_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/old/time_range_menu_options.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/old/groupby_menu_interface_mixin.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/widgets/dropdown_menu.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/widgets/old/dropdown_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/pie_chart.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/old/filters_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/apps.js"></script>

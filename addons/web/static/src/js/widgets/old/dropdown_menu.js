@@ -1,4 +1,4 @@
-odoo.define('web.DropdownMenu', function (require) {
+odoo.define('web.OldDropdownMenu', function (require) {
 "use strict";
 
 var core = require('web.core');
@@ -8,8 +8,8 @@ var QWeb = core.qweb;
 
 
 
-var DropdownMenu = Widget.extend({
-    template: 'web.DropdownMenu',
+var OldDropdownMenu = Widget.extend({
+    template: 'web.OldDropdownMenu',
     events: {
         'click .o_menu_item': '_onItemClick',
         'click .o_item_option': '_onOptionClick',
@@ -108,7 +108,7 @@ var DropdownMenu = Widget.extend({
      * @private
      */
     _renderMenuItems: function () {
-        var newMenuItems = QWeb.render('DropdownMenu.MenuItems', {widget: this});
+        var newMenuItems = QWeb.render('OldDropdownMenu.MenuItems', {widget: this});
         this.$el.find('.o_menu_item, .dropdown-divider[data-removable="1"]').remove();
         this.$('.o_dropdown_menu').prepend($(newMenuItems));
     },
@@ -231,6 +231,6 @@ var DropdownMenu = Widget.extend({
     },
 });
 
-return DropdownMenu;
+return OldDropdownMenu;
 
 });

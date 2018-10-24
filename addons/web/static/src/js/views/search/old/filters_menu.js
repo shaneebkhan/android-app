@@ -4,7 +4,7 @@ odoo.define('web.OldFiltersMenu', function (require) {
 var config = require('web.config');
 var core = require('web.core');
 var Domain = require('web.Domain');
-var DropdownMenu = require('web.DropdownMenu');
+var OldDropdownMenu = require('web.OldDropdownMenu');
 var search_filters = require('web.search_filters');
 var time = require('web.time');
 var TimeRangeMenuOptions = require('web.TimeRangeMenuOptions');
@@ -16,12 +16,12 @@ var PERIOD_OPTIONS = TimeRangeMenuOptions.PeriodOptions;
 
 var DEFAULT_PERIOD = 'this_month';
 
-var OldFiltersMenu = DropdownMenu.extend({
+var OldFiltersMenu = OldDropdownMenu.extend({
     custom_events: {
         remove_proposition: '_onRemoveProposition',
         confirm_proposition: '_onConfirmProposition',
     },
-    events: _.extend({}, DropdownMenu.prototype.events, {
+    events: _.extend({}, OldDropdownMenu.prototype.events, {
         'click .o_add_custom_filter': '_onAddCustomFilterClick',
         'click .o_add_condition': '_appendProposition',
         'click .o_apply_filter': '_onApplyClick',
