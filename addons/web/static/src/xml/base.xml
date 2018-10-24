@@ -1075,14 +1075,25 @@
         <t t-foreach="widget.items" t-as="item">
             <div t-if="group !== item.groupId" class="dropdown-divider" data-removable="1"/>
             <div class="o_menu_item"
-                t-att-data-id="item.itemId">
+                t-att-data-id="item.id">
                 <a href="#" t-attf-class="dropdown-item#{item.isActive ? ' selected ' : ''}">
                     <t t-esc="item.description"/>
-                    <span t-if="item.isRemovable" t-att-data-id="item.itemId" class="o_trash_button" > <span class="fa fa-trash-o"></span> </span>
-                    <span t-if="item.hasOptions" t-att-data-id="item.itemId" class="o_submenu_switcher">
+                    <span t-if="item.isRemovable" t-att-data-id="item.id" class="o_trash_button" > <span class="fa fa-trash-o"></span> </span>
+                    <span t-if="item.hasOptions" t-att-data-id="item.id" class="o_submenu_switcher">
                         <span t-att-class="item.isOpen ? 'fa fa-caret-down' : 'fa fa-caret-right'"></span>
                     </span>
                 </a>
+                <ul t-if="item.hasOptions &amp;&amp; item.isOpen" class="list-unstyled">
+                    <t t-set="subgroup" t-value="0"/>
+                    <t t-foreach="_.values(item.options)" t-as="option">
+                        <li t-if="subgroup !== option.groupId" class="dropdown-divider" data-removable="1"/>
+                        <li class="o_item_option"
+                            t-att-data-item_id="item.id" t-att-data-option_id="option.optionId">
+                            <a href="#" t-attf-class="dropdown-item#{item.currentOptionId === option.optionId ? ' selected': ''} pl-5"><t t-esc="option.description"/></a>
+                        </li>
+                        <t t-set="subgroup" t-value="option.groupId"/>
+                    </t>
+                </ul>
             </div>
             <t t-set="group" t-value="item.groupId"/>
         </t>

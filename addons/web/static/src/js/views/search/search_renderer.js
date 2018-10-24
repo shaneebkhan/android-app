@@ -17,15 +17,27 @@ var SearchRenderer = AbstractRenderer.extend({
         var filters = this.state.filters.filter(function (filter) {
             return filter.type === 'filter';
         });
+        //  !!! No information on active/unactiv yet
         this.filtersMenu = new FiltersMenu(this, filters);
         return this.filtersMenu.appendTo(this.$subMenus);
     },
 
     _render: function () {
-        this.$subMenus = document.createDocumentFragment();
     	var defs = [];
-    	defs.push(this._setupAutoCompletion());
-        defs.push(this._setupFiltersMenu());
+        // approx inDom
+        if (this.$subMenus) {
+            if (this.filtersMenu) {
+                var filters = this.state.filters.filter(function (filter) {
+                    return filter.type === 'filter';
+                });
+                //  !!! No information on active/unactiv yet
+                this.filtersMenu.update(filters);
+            }
+        } else {
+            this.$subMenus = document.createDocumentFragment();
+        	defs.push(this._setupAutoCompletion());
+            defs.push(this._setupFiltersMenu());
+        }
     	return $.when(this, defs);
     },
     /**

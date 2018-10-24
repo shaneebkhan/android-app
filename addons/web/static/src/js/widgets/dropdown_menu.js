@@ -1,10 +1,17 @@
 odoo.define('web.DropdownMenu', function (require) {
 "use strict";
 
+var core = require('web.core');
 var Widget = require('web.Widget');
+
+var QWeb = core.qweb;
 
 var DropdownMenu = Widget.extend({
     template: 'web.DropdownMenu',
+
+    events: {
+        'click .o_menu_item': '_onItemClick',
+    },
 
     init: function (parent, dropdownHeader, items) {
         this._super(parent);
@@ -26,15 +33,39 @@ var DropdownMenu = Widget.extend({
     // Public
     //--------------------------------------------------------------------------
 
+    update: function (items) {
+        this.items = items;
+        this._renderMenuItems();
+    },
 
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     */
+    _renderMenuItems: function () {
+        var newMenuItems = QWeb.render('DropdownMenu.MenuItems', {widget: this});
+        this.$el.find('.o_menu_item, .dropdown-divider[data-removable="1"]').remove();
+        this.$('.o_dropdown_menu').prepend(newMenuItems);
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {MouseEvent} event
+     */
+    _onItemClick: function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const id = $(event.currentTarget).data('id');
+        this.trigger_up('menu_item_clicked', {id: id});
+    },
+
 
 });
 

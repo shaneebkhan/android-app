@@ -58,6 +58,15 @@ var SearchView = AbstractView.extend({
         _.extend(this.loadParams, {groups: info.groups, filters: info.filters});
     },
 
+    _extractAttributes: function (filter) {
+        if (filter.type === 'filter') {
+            filter.description = filter.attrs.string;
+            if (filter.attrs.date) {
+                filter.hasOptions = true;
+            }
+        }
+    },
+
     _processControlPanelArch: function (arch) {
     	var groups = [];
         var filters = [];
@@ -93,6 +102,7 @@ var SearchView = AbstractView.extend({
         		currentTag = preFilter.tag;
         		currentGroup = {
 					id: _.uniqueId('__group__'),
+                    activeFilterIds: [],
 				};
         	}
         	if (preFilter.tag !== 'separator') {
@@ -107,6 +117,7 @@ var SearchView = AbstractView.extend({
             		attrs: preFilter.attrs,
             		groupId: currentGroup.id
             	};
+                self._extractAttributes(filter);
             	filters.push(filter);
         	}
         });
