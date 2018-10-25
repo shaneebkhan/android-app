@@ -63,7 +63,14 @@ var DropdownMenu = Widget.extend({
         event.preventDefault();
         event.stopPropagation();
         const id = $(event.currentTarget).data('id');
-        this.trigger_up('menu_item_clicked', {id: id});
+        var item = this.items.find(function (item) {
+            return item.id === id;
+        });
+        if (item.hasOptions) {
+            // filter.isOpen
+        } else {
+            this.trigger_up('menu_item_clicked', {id: id});
+        }
     },
 
 

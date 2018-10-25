@@ -15,11 +15,15 @@ var SearchModel = AbstractModel.extend({
 	load: function (params) {
 		this.groups = params.groups;
 		this.filters = params.filters;
+		return $.when();
 	},
 
 	// handle is empty here and does not make sense
 	reload: function (handle, params) {
 		if (params.itemClickedId) {
+			// var filter = this.filters[params.itemClickedId];
+			// var group = this.groups[filter.groupId];
+			// var index = group.activeFilterIds.indexOf(filter.id);
 			var filter = this.filters.find(function (f) {
 				return f.id === params.itemClickedId;
 			});
@@ -39,7 +43,20 @@ var SearchModel = AbstractModel.extend({
 	},
 
 	get: function () {
-		return {groups: this.groups, filters: this.filters};
+		var activeFilterIds = this.groups.reduce(
+			function (acc, group) {
+				acc = acc.concat(group.activeFilterIds);
+				return acc;
+			},
+			[]
+		);
+		var filters = this.filters.map(function (filter) {
+			filter.isActive = !!activeFilterIds.find(function (id) {
+				return id === filter.id;
+			});
+			return filter;
+		});
+		return {filters: filters};
 	},
 
 	getQuery: function () {
@@ -49,6 +66,8 @@ var SearchModel = AbstractModel.extend({
 			userContext
 		);
 		return {
+			// for now action manager wants domains and contexts I would prefer
+			// to use domain and context.
 			domains: [domain],
             contexts: {},
             groupbys: {},
@@ -74,7 +93,6 @@ var SearchModel = AbstractModel.extend({
 			return self._getGroupDomain(group);
 		});
 		return pyUtils.assembleDomains(domains, 'AND');
-
     },
 
 	_getFilterDomain: function (filter) {
@@ -92,6 +110,10 @@ var SearchModel = AbstractModel.extend({
 
 	_getGroupDomain: function (group) {
 		var self = this;
+		// var domains = group.activeFilterIds.map(function (id) {
+		// 	var filter = self.filters[id];
+		// 	return self._getFilterDomain(filter);
+		// });
 		var domains = this.filters.filter(
 			function (filter) {
 				var inGroup = filter.groupId === group.id;

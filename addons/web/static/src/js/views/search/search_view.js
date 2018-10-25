@@ -8,6 +8,9 @@ var SearchModel = require('web.SearchModel');
 var SearchRenderer = require('web.SearchRenderer');
 var pyUtils = require('web.py_utils');
 
+var SearchViewParameters = require('web.SearchViewParameters');
+
+var DEFAULT_PERIOD = SearchViewParameters.DEFAULT_PERIOD;
 
 var SearchView = AbstractView.extend({
     config: {
@@ -60,9 +63,18 @@ var SearchView = AbstractView.extend({
 
     _extractAttributes: function (filter) {
         if (filter.type === 'filter') {
-            filter.description = filter.attrs.string;
+            filter.description = filter.attrs.string ||
+                                    filter.attrs.help ||
+                                    filter.attrs.name ||
+                                    filter.attrs.domain ||
+                                    'Ω';
             if (filter.attrs.date) {
                 filter.hasOptions = true;
+                // we should declare list of options per date filter
+                // (request of POs)
+                filter.fieldName = filter.attrs.date;
+                filter.attrs.type = this.fields[filter.attrs.date].type;
+                filter.defaultPeriod = filter.attrs.default_period || DEFAULT_PERIOD;
             }
         }
     },

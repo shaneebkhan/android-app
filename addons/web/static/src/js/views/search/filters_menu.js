@@ -9,6 +9,7 @@ var _t = core._t;
 var FiltersMenu = DropdownMenu.extend({
 
     init: function (parent, filters) {
+    	// this.category = ..., ... plus propre
     	var dropdownHeader = {
             category: 'filterCategory',
             title: _t('Filters'),
