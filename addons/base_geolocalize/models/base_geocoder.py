@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-import json
-import urllib2
+import requests
 import logging
 
 from odoo import api, models, tools, _
@@ -17,6 +16,11 @@ class GeoCoder(models.AbstractModel):
     into GPS coordinates.
     """
     _name = "base.geocoder"
+    _description = "Geo Coder"
+
+    @api.model
+    def _get_provider(self):
+        return self.env['ir.config_parameter'].sudo().get_param('base_geolocalize.provider', 'openstreetmap')
 
     @api.model
     def geo_query_address(self, street=None, zip=None, city=None, state=None, country=None):
@@ -29,18 +33,13 @@ class GeoCoder(models.AbstractModel):
         :param country: country
         :return: formatted string
         """
-        provider = self.env['ir.config_parameter'].get_param('base_geolocalize.provider', 'openstreetmap')
+        provider = self._get_provider()
         if hasattr(self, '_geo_query_address_' + provider):
             # Makes the transformation defined for provider
-            service = getattr(self, '_geo_query_address_' + provider)
-            return service(street, zip, city, state, country)
+            return getattr(self, '_geo_query_address_' + provider)(street, zip, city, state, country)
         else:
             # By default, join the non-empty parameters
-            return tools.ustr(', '.join(filter(None, [
-                street,
-                ("%s %s" % (zip or '', city or '')).strip(),
-                state,
-                country])))
+            return self._geo_query_address_default(street=street, zip=zip, city=city, state=state, country=country)
 
     @api.model
     def geo_find(self, addr):
@@ -49,8 +48,7 @@ class GeoCoder(models.AbstractModel):
         :param addr: Address string passed to API
         :return: (latitude, longitude) or None if not found
         """
-        provider = self.env['ir.config_parameter'].get_param(
-            'base_geolocalize.provider', 'openstreetmap')
+        provider = self._get_provider()
         try:
             service = getattr(self, '_call_' + provider)
             result = service(addr)
@@ -60,7 +58,7 @@ class GeoCoder(models.AbstractModel):
             ) % provider)
         except UserError:
             raise
-        except:
+        except Exception:
             _logger.debug('Geolocalize call failed', exc_info=True)
             result = None
         return result
@@ -74,13 +72,12 @@ class GeoCoder(models.AbstractModel):
         if not addr:
             _logger.info('invalid address given')
             return None
-        url = 'https://nominatim.openstreetmap.org/search?format=json&q='
-        url += urllib2.quote(addr.encode('utf8'))
+        url = 'https://nominatim.openstreetmap.org/search'
         try:
             _logger.info('openstreetmap nominatim service called')
-            result = json.load(urllib2.urlopen(url))
+            result = requests.get(url, {'format': 'json', 'q': addr}).json()
         except Exception as e:
-            self._raise_internet_access_error(e)
+            self._raise_query_error(e)
         geo = result[0]
         return float(geo['lat']), float(geo['lon'])
 
@@ -89,19 +86,17 @@ class GeoCoder(models.AbstractModel):
         """ Use google maps API. It won't work without a valid API key.
         :return: (latitude, longitude) or None if not found
         """
-        apikey = self.env['ir.config_parameter'].sudo().get_param(
-            'google.api_key_geocode')
+        apikey = self.env['ir.config_parameter'].sudo().get_param('google.api_key_geocode')
         if not apikey:
             raise UserError(_(
                 "API key for GeoCoding (Places) required.\n"
                 "Save this key in System Parameters with key: google.api_key_geocode, value: <your api key> Visit https://developers.google.com/maps/documentation/geocoding/get-api-key for more information."
             ))
-        url = 'https://maps.googleapis.com/maps/api/geocode/json?key=%s&sensor=false&address=' % apikey
-        url += urllib2.quote(addr.encode('utf8'))
+        url = "https://maps.googleapis.com/maps/api/geocode/json"
         try:
-            result = json.load(urllib2.urlopen(url))
+            result = requests.get(url, params={'sensor': 'false', 'address': addr, 'key': apikey}).json()
         except Exception as e:
-            self._raise_internet_access_error(e)
+            self._raise_query_error(e)
 
         try:
             if result['status'] != 'OK':
@@ -115,22 +110,22 @@ class GeoCoder(models.AbstractModel):
             return None
 
     @api.model
-    def _geo_query_address_google(self, street=None, zip=None, city=None,
-                                   state=None, country=None):
-        # This may be useful if using GMaps API.
-        # put country qualifier in front, otherwise GMap gives wrong
-        # results, e.g. 'Congo, Democratic Republic of the' =>
-        # 'Democratic Republic of the Congo'
-        if country and ',' in country and (
-                country.endswith(' of') or country.endswith(' of the')):
-            country = '{1} {0}'.format(*country.split(',', 1))
+    def _geo_query_address_default(self, street=None, zip=None, city=None, state=None, country=None):
         return tools.ustr(', '.join(filter(None, [
             street,
             ("%s %s" % (zip or '', city or '')).strip(),
             state,
-            country])))
+            country]))
+        )
 
-    def _raise_internet_access_error(self, error):
-        raise UserError(_(
-            'Cannot contact geolocation servers. Please make sure that your Internet connection is up and running (%s).'
-        ) % error)
+    @api.model
+    def _geo_query_address_google(self, street=None, zip=None, city=None, state=None, country=None):
+        # put country qualifier in front, otherwise GMap gives wrong# results
+        #  e.g. 'Congo, Democratic Republic of the' =>  'Democratic Republic of the Congo'
+        if country and ',' in country and (
+                country.endswith(' of') or country.endswith(' of the')):
+            country = '{1} {0}'.format(*country.split(',', 1))
+        return self._geo_query_address_default(street=street, zip=zip, city=city, state=state, country=country)
+
+    def _raise_query_error(self, error):
+        raise UserError(_('Error with geolocation server:') + ' %s' % error)

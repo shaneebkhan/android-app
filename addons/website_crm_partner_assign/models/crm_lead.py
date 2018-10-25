@@ -4,8 +4,8 @@
 import random
 
 from odoo import api, fields, models, _
-from odoo.addons.base_geolocalize.models.res_partner import geo_find, geo_query_address
 from odoo.exceptions import AccessDenied
+
 
 class CrmLead(models.Model):
     _inherit = "crm.lead"
@@ -81,25 +81,16 @@ class CrmLead(models.Model):
                 'partner_longitude': longitude
             })
             return True
-        geo_obj = self.env['base.geocoder']
+
         # Don't pass context to browse()! We need country name in english below
         for lead in self:
             if lead.partner_latitude and lead.partner_longitude:
                 continue
             if lead.country_id:
-                result = geo_obj.geo_find(geo_obj.geo_query_address(
-                    street=lead.street,
-                    zip=lead.zip,
-                    city=lead.city,
-                    state=lead.state_id.name,
-                    country=lead.country_id.name))
-
-                if result is None:
-                    result = geo_obj.geo_find(geo_obj.geo_query_address(
-                        city=lead.city,
-                        state=lead.state_id.name,
-                        country=lead.country_id.name
-                    ))
+                result = self.env['res.partner']._geo_localize(
+                    lead.street, lead.zip, lead.city,
+                    lead.state_id.name, lead.country_id.name
+                )
 
                 if result:
                     lead.write({
