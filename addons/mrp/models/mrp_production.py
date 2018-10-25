@@ -140,6 +140,9 @@ class MrpProduction(models.Model):
     consumed_less_than_planned = fields.Boolean(
         compute='_compute_consumed_less_than_planned',
         help='Technical field used to see if we have to display a warning or not when confirming an order.')
+    change_prod_qty_visible = fields.Boolean(
+        compute='_compute_change_prod_qty_visible',
+        help='Technical field used to see if we should allow the user to update the quantity to produce.')
 
     user_id = fields.Many2one('res.users', 'Responsible', default=lambda self: self._uid)
     company_id = fields.Many2one(
@@ -279,6 +282,13 @@ class MrpProduction(models.Model):
                                            move.product_uom_qty,
                                            precision_rounding=move.product_uom.rounding) == -1)
             )
+
+    def _compute_change_prod_qty_visible(self):
+        for order in self:
+            bom = order.bom_id
+            bom_lines = bom.explode(order.product_id, 1)[1]
+            bom_dates = [bom.write_date] + [bom_line[0].write_date for bom_line in bom_lines]
+            order.change_prod_qty_visible = all(bom_date < order.create_date for bom_date in bom_dates)
 
     @api.multi
     @api.depends('workorder_ids.state', 'move_finished_ids', 'is_locked')

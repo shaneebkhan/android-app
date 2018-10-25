@@ -89,9 +89,10 @@
                             <div class="o_row">
                                 <field name="product_qty" attrs="{'readonly': [('has_moves', '=', True)]}"/>
                                 <field name="product_uom_id" options="{'no_open':True,'no_create':True}" groups="uom.group_uom" attrs="{'readonly': [('has_moves', '=', True)]}"/>
+                                <field name="change_prod_qty_visible" invisible="1"/>
                                 <button type="action"
                                     name="%(mrp.action_change_production_qty)d"
-                                    string="Update" class="oe_link" attrs="{'invisible': ['|', ('state', 'in', ('done','cancel')), ('id', '=', False)]}"/>
+                                    string="Update" class="oe_link" attrs="{'invisible': ['|', '|', ('state', 'in', ('done','cancel')), ('id', '=', False), ('change_prod_qty_visible', '=', False)]}"/>
                             </div>
                             <field name="bom_id"
                                 domain="['&amp;', '|',
