@@ -526,10 +526,10 @@ class TestRobustness(TransactionCase):
             'active_model': 'mrp.production',
             'active_id': self.opened_mo.id,
         }).create({})
-        change_product_qty_wiz.change_prod_qty()
         change_product_qty_wiz.product_qty = 2
+        change_product_qty_wiz.with_context(debug=True).change_prod_qty()
 
-        self.assertEqual(self.opened_mo.move_raw_ids.mapped('product_qty'), [2.0, 2.0])
+        self.assertEqual(self.opened_mo.move_raw_ids.mapped('product_qty'), [1.0, 1.0, 1.0, 1.0])
         self.assertEqual(self.opened_mo.product_qty, 2)
         self.assertEqual(self.opened_mo.move_finished_ids.filtered(lambda m: m.state == 'done').quantity_done, 1)
         self.assertEqual(self.opened_mo.move_finished_ids.filtered(lambda m: m.state == 'done').product_qty, 1)

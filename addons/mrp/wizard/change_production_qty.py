@@ -30,6 +30,7 @@ class ChangeProductionQty(models.TransientModel):
         precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
         for wizard in self:
             production = wizard.mo_id
+            raw_moves = production.move_raw_ids
 
             # Get the quantity already produced while taking care of ignoring the byproducts. If
             # the new quantity to produce is lower than the quantity already produced, raise.
@@ -45,16 +46,19 @@ class ChangeProductionQty(models.TransientModel):
 
             # Update the raw move, take care of creating a new one if it is/ they are done or
             # cancelled. Afterwards, try to reserve them.
-            bom_line_ids = production.move_raw_ids.mapped('bom_line_id')
-            for bom_line_id in bom_line_ids:
-                raw_move = production.move_raw_ids.filtered(lambda m: m.state not in ['done', 'cancel'] and m.bom_line_id == bom_line_id)
-                if raw_move:
-                    raw_move = raw_move[0]
-                    raw_move.write({'product_uom_qty': raw_move.product_uom_qty + raw_move.unit_factor * qty_difference})
+            if self.env.context.get('debug'):
+                import pudb; pudb.set_trace()
+            for bom_line_id in raw_moves.mapped('bom_line_id'):
+                raw_move_orig = raw_moves.filtered(lambda m: m.bom_line_id == bom_line_id)[0]
+                qty_to_add = raw_move_orig.unit_factor * qty_difference
+                if raw_move_orig.state not in ['done', 'cancel']:
+                    raw_move_orig.write({'product_uom_qty': raw_move_orig.product_uom_qty + qty_to_add})
                 else:
-                    outdated_raw_move = production.move_raw_ids.filtered(lambda m: m.bom_line_id == bom_line_id)[0]
-                    raw_move2 = outdated_raw_move.copy(default={'product_uom_qty': outdated_raw_move.unit_factor * qty_difference, 'production_id': production.id})
-                    raw_move2._action_confirm()
+                    defaults = {
+                        'product_uom_qty': qty_to_add,
+                        'production_id': production.id,
+                    }
+                    raw_move_orig.copy(default=defaults)._action_confirm()
             production.move_raw_ids.filtered(lambda m: m.state not in ['done', 'cancel'])._action_assign()
 
             # Update the finished move, take care of creating a new one if it is/they are done or
