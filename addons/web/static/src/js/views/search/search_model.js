@@ -3,8 +3,14 @@ odoo.define('web.SearchModel', function (require) {
 
 var AbstractModel = require('web.AbstractModel');
 var Domain = require('web.Domain');
+var pyUtils = require('web.py_utils');
 
 var SearchModel = AbstractModel.extend({
+
+
+	//--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
 
 	load: function (params) {
 		this.groups = params.groups;
@@ -23,7 +29,7 @@ var SearchModel = AbstractModel.extend({
 			var index = group.activeFilterIds.findIndex(function (id) {
 				return id === filter.id;
 			});
-			if (index !== 1) {
+			if (index === -1) {
 				group.activeFilterIds.push(filter.id);
 			} else {
 				group.activeFilterIds.splice(index, 1);
@@ -36,41 +42,14 @@ var SearchModel = AbstractModel.extend({
 		return {groups: this.groups, filters: this.filters};
 	},
 
-	getEvaluatedDomain: function (filter) {
-        var userContext = this.getSession().user_context;
-		var domain = [];
-		if (filter.type === 'filter') {
-			if (filter.attrs.domain) {
-				domain = Domain.prototype.stringToArray(domain, userContext);
-			}
-		}
-		return domain;
-	},
-
 	getQuery: function () {
-		var self = this;
-		var activeFilterIds = this.groups.reduce(
-			function (activeFilterIds, group) {
-				return activeFilterIds.concat(group.activeFilterIds);
-			},
-			[]
+		var userContext = this.getSession().user_context;
+		var domain = Domain.prototype.stringToArray(
+			this._getDomain(),
+			userContext
 		);
-		var domains = [];
-		var index;
-		// false !!! We should combine domains with AND and OR!!!!
-		this.filters.forEach(function (filter) {
-			if (activeFilterIds.length) {
-				index = activeFilterIds.findIndex(function (id) {
-					return filter.id === id;
-				});
-				if (index !== -1) {
-					activeFilterIds.splice(index, 1);
-					domains.push(self.getEvaluatedDomain(filter));
-				}
-			}
-		});
 		return {
-			domains: domains,
+			domains: [domain],
             contexts: {},
             groupbys: {},
 		};
@@ -78,6 +57,58 @@ var SearchModel = AbstractModel.extend({
 
 	// save favorites should call this method. Here no evaluation of domains,...
 	saveQuery: function () {
+		return {
+			domains: this._getDomain(),
+			contexts: {},
+			groupbys: {},
+		};
+	},
+
+	//--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    _getDomain: function () {
+    	var self = this;
+		var domains = this.groups.map(function (group) {
+			return self._getGroupDomain(group);
+		});
+		return pyUtils.assembleDomains(domains, 'AND');
+
+    },
+
+	_getFilterDomain: function (filter) {
+		var domain = "[]";
+		if (filter.type === 'filter') {
+			if (filter.attrs.domain) {
+				domain = filter.attrs.domain;
+			}
+			if (filter.attrs.date) {
+				// code case date
+			}
+		}
+		return domain;
+	},
+
+	_getGroupDomain: function (group) {
+		var self = this;
+		var domains = this.filters.filter(
+			function (filter) {
+				var inGroup = filter.groupId === group.id;
+				if (inGroup) {
+					var activeInGroup = group.activeFilterIds.find(function (id) {
+						return filter.id === id;
+					});
+					return activeInGroup;
+				} else {
+					return false;
+				}
+			}
+		).map(function (filter) {
+			return self._getFilterDomain(filter);
+		});
+
+		return pyUtils.assembleDomains(domains, 'OR');
 	},
 
 });

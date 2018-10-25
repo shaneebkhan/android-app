@@ -106,6 +106,7 @@ var ControlPanelRenderer = AbstractRenderer.extend({
                 new_cp_content = _.omit(new_cp_content, '$searchview');
             }
             if (options.clear) {
+                toDetach = _.omit(toDetach, '$searchview_buttons');
                 this._detachContent(toDetach);
                 // Show the searchview buttons area, which might have been hidden by
                 // the searchview, as client actions may insert elements into it
