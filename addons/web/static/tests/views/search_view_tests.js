@@ -1020,5 +1020,30 @@ QUnit.module('Search View', {
         assert.strictEqual(searchView.loadParams.filters[0].groupId, searchView.loadParams.groups[0].id);
         assert.strictEqual(searchView.loadParams.filters[1].groupId, searchView.loadParams.groups[1].id);
     });
+    // change structure and modify test
+
+    // QUnit.test('parse two field tags', function (assert) {
+    //     assert.expect(2);
+    //     var arch = "<search>" +
+    //                     "<field name=\"field_1\"/>" +
+    //                     "<field name=\"field_2\"/>" +
+    //                 "</search>";
+    //     var viewInfo = {arch:  arch};
+
+    //     var searchView = new SearchView(viewInfo, {context: {}});
+    //     assert.deepEqual(
+    //         searchView.loadParams.filters.map(function (filter) {
+    //             return _.omit(filter, 'id', 'groupId');
+    //         }),
+    //         [{attrs: {domain: "[]", name: "filter_1", string: "Hello One"}, type: "filter"},
+    //             {attrs: {domain: "[('user_id', '=', 3)]", name: "filter_2", string: "Hello Two"}, type: "filter"}]
+    //     );
+    //     assert.deepEqual(
+    //         searchView.loadParams.groups.map(function (group) {
+    //             return _.omit(group, 'id');
+    //         }),
+    //         [{}]
+    //     );
+    // });
 });
 });
