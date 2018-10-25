@@ -70,13 +70,14 @@ var SearchView = AbstractView.extend({
                                     'Ω';
             filter.domain = attrs.domain;
             if (attrs.date) {
-                filter.hasOptions = true;
-                // we should declare list of options per date filter
-                // (request of POs)
-                filter.periodOptions = searchViewParameters.periodOptions;
                 filter.fieldName = attrs.date;
                 filter.fieldType = this.fields[attrs.date].type;
-                filter.defaultPeriod = attrs.default_period || DEFAULT_PERIOD;
+                // we should be able to declare list of options per date filter
+                // (request of POs) (same remark for groupbys)
+                filter.hasOptions = true;
+                filter.options = searchViewParameters.periodOptions;
+                filter.defaultOptionId = attrs.default_period || DEFAULT_PERIOD;
+                filter.currentOptionId = false;
             }
         }
     },

@@ -13,19 +13,25 @@ var DropdownMenu = Widget.extend({
         'click .o_menu_item': '_onItemClick',
     },
 
-    init: function (parent, dropdownHeader, items) {
+    init: function (parent, items) {
         this._super(parent);
-        this.dropdownCategory = dropdownHeader.category;
-        this.dropdownTitle = dropdownHeader.title;
-        this.dropdownIcon = dropdownHeader.icon;
-        this.dropdownSymbol = dropdownHeader.symbol || false;
+        // should be specified
+        this.dropdownCategory = null;
+        this.dropdownTitle = null;
+        this.dropdownIcon = null;
+        this.dropdownSymbol = false;
         // this parameter fixes the menu style. By default,
         // the style used is the one used in the search view
-        this.dropdownStyle = dropdownHeader.style || {
+        this.dropdownStyle = {
                 el: {class: 'btn-group o_dropdown', attrs: {}},
-                mainButton: {class: 'o_filters_menu_button o_dropdown_toggler_btn btn btn-secondary dropdown-toggle' + (this.dropdownSymbol ? ' o-no-caret' : '')},
-            };
+                mainButton: {
+                    class: 'o_dropdown_toggler_btn btn btn-secondary ' +
+                        'dropdown-toggle ' +
+                        (this.dropdownSymbol ? 'o-no-caret' : '')
+                },
+        };
         this.items = items;
+        this.isOpen = {};
     },
 
 
@@ -62,12 +68,14 @@ var DropdownMenu = Widget.extend({
     _onItemClick: function (event) {
         event.preventDefault();
         event.stopPropagation();
-        const id = $(event.currentTarget).data('id');
+        var id = $(event.currentTarget).data('id');
         var item = this.items.find(function (item) {
             return item.id === id;
         });
         if (item.hasOptions) {
-            // filter.isOpen
+            this.isOpen[id] = !this.isOpen[id];
+            item.isOpen = this.isOpen[id];
+            this._renderMenuItems();
         } else {
             this.trigger_up('menu_item_clicked', {id: id});
         }

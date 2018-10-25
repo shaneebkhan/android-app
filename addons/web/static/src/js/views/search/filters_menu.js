@@ -9,14 +9,15 @@ var _t = core._t;
 var FiltersMenu = DropdownMenu.extend({
 
     init: function (parent, filters) {
-    	// this.category = ..., ... plus propre
-    	var dropdownHeader = {
-            category: 'filterCategory',
-            title: _t('Filters'),
-            icon: 'fa fa-filter',
-            symbol: this.isMobile ? 'fa fa-chevron-right float-right mt4' : false,
-        };
-        this._super(parent, dropdownHeader, filters);
+        this._super(parent, filters);
+        this.dropdownCategory = 'filter';
+        this.dropdownTitle = _t('Filters');
+        this.dropdownIcon = 'fa fa-filter';
+        this.dropdownSymbol = this.isMobile ?
+                                'fa fa-chevron-right float-right mt4' :
+                                false;
+        this.dropdownStyle.mainButton.class = 'o_filters_menu_button ' +
+                                                this.dropdownStyle.mainButton.class;
     },
 });
 
