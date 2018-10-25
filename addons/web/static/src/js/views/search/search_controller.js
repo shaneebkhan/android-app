@@ -46,7 +46,7 @@ var SearchController = AbstractController.extend({
 
     _onMenuItemClicked: function (event) {
         var self = this;
-        return this.update({itemClickedId: event.data.id}).then(function () {
+        return this.update({filterToggledId: event.data.id}).then(function () {
             self._reportNewQuery();
         });
     },

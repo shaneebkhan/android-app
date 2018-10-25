@@ -8,9 +8,9 @@ var SearchModel = require('web.SearchModel');
 var SearchRenderer = require('web.SearchRenderer');
 var pyUtils = require('web.py_utils');
 
-var SearchViewParameters = require('web.SearchViewParameters');
+var searchViewParameters = require('web.searchViewParameters');
 
-var DEFAULT_PERIOD = SearchViewParameters.DEFAULT_PERIOD;
+var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
 
 var SearchView = AbstractView.extend({
     config: {
@@ -61,36 +61,36 @@ var SearchView = AbstractView.extend({
         _.extend(this.loadParams, {groups: info.groups, filters: info.filters});
     },
 
-    _extractAttributes: function (filter) {
+    _extractAttributes: function (filter, attrs) {
         if (filter.type === 'filter') {
-            filter.description = filter.attrs.string ||
-                                    filter.attrs.help ||
-                                    filter.attrs.name ||
-                                    filter.attrs.domain ||
+            filter.description = attrs.string ||
+                                    attrs.help ||
+                                    attrs.name ||
+                                    attrs.domain ||
                                     'Ω';
-            if (filter.attrs.date) {
+            filter.domain = attrs.domain;
+            if (attrs.date) {
                 filter.hasOptions = true;
                 // we should declare list of options per date filter
                 // (request of POs)
-                filter.fieldName = filter.attrs.date;
-                filter.attrs.type = this.fields[filter.attrs.date].type;
-                filter.defaultPeriod = filter.attrs.default_period || DEFAULT_PERIOD;
+                filter.periodOptions = searchViewParameters.periodOptions;
+                filter.fieldName = attrs.date;
+                filter.fieldType = this.fields[attrs.date].type;
+                filter.defaultPeriod = attrs.default_period || DEFAULT_PERIOD;
             }
         }
     },
 
     _processControlPanelArch: function (arch) {
     	var groups = [];
-        var filters = [];
         // TO DO after having specified new grammar
-    	return {groups: groups, filters: filters};
+    	return {groups: groups};
     },
 
     _processSearchArch: function (arch) {
         var self = this;
         var groups = [];
-        var filters = [];
-        var preFilters = [].concat.apply([], _.map(arch.children, function (child) {
+        var preFilters = _.flatten(arch.children.map(function (child) {
             return child.tag !== 'group' ?
             		self._evalArchChild(child) :
             		child.children.map(self._evalArchChild);
@@ -102,38 +102,29 @@ var SearchView = AbstractView.extend({
         var currentGroup;
 
         _.each(preFilters, function (preFilter) {
-        	if (preFilter.tag !== currentTag || _.contains(['separator, field'], preFilter.tag)) {
+        	if (preFilter.tag !== currentTag || _.contains(['separator', 'field'], preFilter.tag)) {
         		if (currentGroup) {
-        			var hasFilter = filters.find(function (filter) {
-        				return filter.groupId === currentGroup.id;
-        			});
-        			if (hasFilter) {
+        			if (currentGroup.length) {
 	        			groups.push(currentGroup);
         			}
         		}
         		currentTag = preFilter.tag;
-        		currentGroup = {
-					id: _.uniqueId('__group__'),
-                    activeFilterIds: [],
-				};
+        		currentGroup = [];
         	}
         	if (preFilter.tag !== 'separator') {
         		filter = {
-            		id: _.uniqueId('__filter__'),
             		type: preFilter.tag,
             		// we need to codify here what we want to keep from attrs
             		// and how, for now I put everything.
             		// In some sence, some filter are active (totally determined, given)
             		// and others are passive (require input(s) to become determined)
             		// What is the right place to process the attrs?
-            		attrs: preFilter.attrs,
-            		groupId: currentGroup.id
             	};
-                self._extractAttributes(filter);
-            	filters.push(filter);
+                self._extractAttributes(filter, preFilter.attrs);
+            	currentGroup.push(filter);
         	}
         });
-        return {groups: groups, filters: filters};
+        return {groups: groups};
     }
 });
 
