@@ -8,6 +8,7 @@ var SearchController = AbstractController.extend({
     custom_events: {
         menu_item_clicked: '_onMenuItemClicked',
         item_option_clicked: '_onItemOptionClicked',
+        new_filters: '_onNewFilters',
     },
 
     start: function () {
@@ -52,11 +53,14 @@ var SearchController = AbstractController.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    _onItemOptionClicked: function (event) {
+        return this.update({toggleOption: event.data});
+    },
     _onMenuItemClicked: function (event) {
         return this.update({toggleFilter: event.data});
     },
-    _onItemOptionClicked: function (event) {
-        return this.update({toggleOption: event.data});
+    _onNewFilters: function (event) {
+        return this.update({newFilters: event.data});
     },
 });
 

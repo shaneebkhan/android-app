@@ -12,6 +12,7 @@ var SearchModel = AbstractModel.extend({
 		this.filters = {};
 		this.groups = {};
 		this.query = [];
+		this.fields = {};
 	},
 
 	//--------------------------------------------------------------------------
@@ -20,30 +21,19 @@ var SearchModel = AbstractModel.extend({
 
 	load: function (params) {
 		var self = this;
+		this.fields = params.fields;
 		// determine data structure used by model
 		// we should also determine here what are the favorites and what are the
 		// default filters
 		params.groups.forEach(function (group) {
-			var type;
-			var groupId = _.uniqueId('__group__');
-			group.forEach(function (filter) {
-				var id = _.uniqueId('__filter__');
-				filter.id = id;
-				filter.groupId = groupId;
-				type = filter.type;
-				self.filters[id] = filter;
-			});
-			self.groups[groupId] = {
-				id: groupId,
-				type: type,
-				activeFilterIds: [],
-			};
+			self._createGroupOfFilters(group);
 		});
 		return $.when();
 	},
 
 	// handle is empty here and does not make sense
 	reload: function (handle, params) {
+		var self = this;
 		if (params.toggleFilter) {
 			this._toggleFilter(params.toggleFilter.id);
 		}
@@ -54,6 +44,14 @@ var SearchModel = AbstractModel.extend({
 				params.toggleOption.optionId
 			);
 		}
+		if (params.newFilters) {
+			var newFilters = params.newFilters.filters;
+			this._createGroupOfFilters(newFilters);
+			newFilters.forEach(function (filter) {
+				self._toggleFilter(filter.id);
+			});
+
+		}
 		return this._super.apply(this, arguments);
 	},
 
@@ -62,9 +60,9 @@ var SearchModel = AbstractModel.extend({
 		// we maintain a unique source activeFilterIds that contain information
 		// on active filters. But the renderer can have more information since
 		// it does not change that.
-		// deepcopy this.filters;
+		// copy this.filters;
 		// we want to give a different structure to renderer.
-		// filters are filters of filter type only!
+		// filters are filters of filter type only, groupbys are groupbys,...!
 		var filters = [];
 		Object.keys(this.filters).forEach(function (filterId) {
 			var filter = _.extend({}, self.filters[filterId]);
@@ -74,7 +72,7 @@ var SearchModel = AbstractModel.extend({
 				filters.push(filter);
 			}
 		});
-		return {filters: filters, groups: this.groups, query: this.query};
+		return {filters: filters, groups: this.groups, query: this.query, fields: this.fields};
 	},
 
 	getQuery: function () {
@@ -104,6 +102,25 @@ var SearchModel = AbstractModel.extend({
 	//--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    // group is a list of (pre) filter
+	_createGroupOfFilters: function (group) {
+		var self= this;
+		var type;
+		var groupId = _.uniqueId('__group__');
+		group.forEach(function (filter) {
+			var id = _.uniqueId('__filter__');
+			filter.id = id;
+			filter.groupId = groupId;
+			type = filter.type;
+			self.filters[id] = filter;
+		});
+		this.groups[groupId] = {
+			id: groupId,
+			type: type,
+			activeFilterIds: [],
+		};
+	},
 
     _getDomain: function () {
     	var self = this;

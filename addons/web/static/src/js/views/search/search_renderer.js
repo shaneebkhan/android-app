@@ -14,11 +14,7 @@ var SearchRenderer = AbstractRenderer.extend({
     //--------------------------------------------------------------------------
 
     _setupFiltersMenu: function () {
-        var filters = this.state.filters.filter(function (filter) {
-            return filter.type === 'filter';
-        });
-        //  !!! No information on active/unactiv yet
-        this.filtersMenu = new FiltersMenu(this, filters);
+        this.filtersMenu = new FiltersMenu(this, this.state.filters, this.state.fields);
         return this.filtersMenu.appendTo(this.$subMenus);
     },
 
@@ -27,11 +23,7 @@ var SearchRenderer = AbstractRenderer.extend({
         // approx inDom
         if (this.$subMenus) {
             if (this.filtersMenu) {
-                var filters = this.state.filters.filter(function (filter) {
-                    return filter.type === 'filter';
-                });
-                //  !!! No information on active/unactiv yet
-                this.filtersMenu.update(filters);
+                this.filtersMenu.update(this.state.filters);
             }
         } else {
             this.$subMenus = document.createDocumentFragment();

@@ -21,6 +21,7 @@ var SearchView = AbstractView.extend({
 
     init: function (viewInfo, params) {
     	this._super.apply(this, arguments);
+        this.loadParams.fields = this.fields;
     	this._processArch();
 
     	// don't forget to compute and rename:
