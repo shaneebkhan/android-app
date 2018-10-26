@@ -44,15 +44,15 @@ var SearchModel = AbstractModel.extend({
 
 	// handle is empty here and does not make sense
 	reload: function (handle, params) {
-		if (params.filterToggledId) {
-			var filter = this.filters[params.filterToggledId];
-			var group = this.groups[filter.groupId];
-			var index = group.activeFilterIds.indexOf(filter.id);
-			if (index === -1) {
-				group.activeFilterIds.push(filter.id);
-			} else {
-				group.activeFilterIds.splice(index, 1);
-			}
+		if (params.toggleFilter) {
+			this._toggleFilter(params.toggleFilter.id);
+		}
+		if (params.toggleOption) {
+			this._toggleFilterWithOptions(
+				// id is a filter id
+				params.toggleOption.id,
+				params.toggleOption.optionId
+			);
 		}
 		return this._super.apply(this, arguments);
 	},
@@ -63,19 +63,18 @@ var SearchModel = AbstractModel.extend({
 		// on active filters. But the renderer can have more information since
 		// it does not change that.
 		// deepcopy this.filters;
-		var filtersCopy = JSON.parse(JSON.stringify(this.filters));
 		// we want to give a different structure to renderer.
 		// filters are filters of filter type only!
 		var filters = [];
-		for (var filterId in filtersCopy) {
-			var filter = filtersCopy[filterId];
+		Object.keys(this.filters).forEach(function (filterId) {
+			var filter = _.extend({}, self.filters[filterId]);
 			var group = self.groups[filter.groupId];
 			filter.isActive = group.activeFilterIds.indexOf(filterId) !== -1;
 			if (filter.type === 'filter') {
 				filters.push(filter);
 			}
-		}
-		return {filters: filters, groups: this.groups};
+		});
+		return {filters: filters, groups: this.groups, query: this.query};
 	},
 
 	getQuery: function () {
@@ -119,8 +118,12 @@ var SearchModel = AbstractModel.extend({
 		var domain = "[]";
 		if (filter.type === 'filter') {
 			domain = filter.domain;
-			if (!filter.domain) {
-				// code using constructDomain?
+			if (filter.domain === undefined) {
+				domain = Domain.prototype.constructDomain(
+					filter.fieldName,
+					filter.currentOptionId,
+					filter.fieldType
+				);
 			}
 		}
 		return domain;
@@ -135,6 +138,52 @@ var SearchModel = AbstractModel.extend({
 		return pyUtils.assembleDomains(domains, 'OR');
 	},
 
+	// This method could work in batch and take a list of ids as args.
+	// (it would be useful for initialization and deletion of a facet/group)
+	_toggleFilter: function (filterId) {
+		var filter = this.filters[filterId];
+		var group = this.groups[filter.groupId];
+		var index = group.activeFilterIds.indexOf(filterId);
+		var initiaLength = group.activeFilterIds.length;
+		if (index === -1) {
+			group.activeFilterIds.push(filterId);
+			// we need to empty the query when activating a favorite
+			if (filter.type === 'favorite') {
+				this.query = [];
+			}
+			// if initiaLength is 0, the group was not active.
+			if (initiaLength === 0) {
+				this.query.push(group.id);
+			}
+		} else {
+			group.activeFilterIds.splice(index, 1);
+			// if initiaLength is 1, the group is now inactive.
+			if (initiaLength === 1) {
+				this.query.splice(this.query.indexOf(group.id), 1);
+			}
+		}
+	},
+	// This method should work in batch too
+	// TO DO: accept selection of multiple options?
+	// for now: activate an option forces the deactivation of the others
+	// optionId optional: the method could be used at initialization...
+	// --> one falls back on defautlOptionId.
+	_toggleFilterWithOptions: function (filterId, optionId) {
+		var filter = this.filters[filterId];
+		var group = this.groups[filter.groupId];
+		var alreadyActive = group.activeFilterIds.indexOf(filterId) !== -1;
+		if (alreadyActive) {
+			if (filter.currentOptionId === optionId) {
+				this._toggleFilter(filterId);
+				filter.currentOptionId = false;
+			} else {
+				filter.currentOptionId = optionId || filter.defautlOptionId;
+			}
+		} else {
+			this._toggleFilter(filterId);
+			filter.currentOptionId = optionId || filter.defautlOptionId;
+		}
+	},
 });
 
 return SearchModel;

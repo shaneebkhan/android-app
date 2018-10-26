@@ -7,6 +7,7 @@ var AbstractController = require('web.AbstractController');
 var SearchController = AbstractController.extend({
     custom_events: {
         menu_item_clicked: '_onMenuItemClicked',
+        item_option_clicked: '_onItemOptionClicked',
     },
 
     start: function () {
@@ -28,6 +29,13 @@ var SearchController = AbstractController.extend({
         return this.model.getQuery();
     },
 
+    update: function () {
+        var self = this;
+        return this._super.apply(this, arguments).then(function () {
+            self._reportNewQuery();
+        });
+    },
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -45,10 +53,10 @@ var SearchController = AbstractController.extend({
     //--------------------------------------------------------------------------
 
     _onMenuItemClicked: function (event) {
-        var self = this;
-        return this.update({filterToggledId: event.data.id}).then(function () {
-            self._reportNewQuery();
-        });
+        return this.update({toggleFilter: event.data});
+    },
+    _onItemOptionClicked: function (event) {
+        return this.update({toggleOption: event.data});
     },
 });
 

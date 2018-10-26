@@ -11,6 +11,8 @@ var DropdownMenu = Widget.extend({
 
     events: {
         'click .o_menu_item': '_onItemClick',
+        'click .o_item_option': '_onOptionClick',
+        'hidden.bs.dropdown': '_onBootstrapClose',
     },
 
     init: function (parent, items) {
@@ -31,7 +33,7 @@ var DropdownMenu = Widget.extend({
                 },
         };
         this.items = items;
-        this.isOpen = {};
+        this.openItems = {};
     },
 
 
@@ -62,6 +64,17 @@ var DropdownMenu = Widget.extend({
     //--------------------------------------------------------------------------
 
     /**
+     * This method is called when Bootstrap trigger a 'close' event (for example
+     * when the user clicks outside the dropdown menu).
+     *
+     * @private
+     * @param {jQueryEvent} event
+     */
+    _onBootstrapClose: function () {
+        this.openItems = {};
+        this._renderMenuItems();
+    },
+    /**
      * @private
      * @param {MouseEvent} event
      */
@@ -73,15 +86,23 @@ var DropdownMenu = Widget.extend({
             return item.id === id;
         });
         if (item.hasOptions) {
-            this.isOpen[id] = !this.isOpen[id];
-            item.isOpen = this.isOpen[id];
+            this.openItems[id] = !this.openItems[id];
             this._renderMenuItems();
         } else {
             this.trigger_up('menu_item_clicked', {id: id});
         }
     },
-
-
+    /**
+     * @private
+     * @param {MouseEvent} event
+     */
+    _onOptionClick: function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        var optionId = $(event.currentTarget).data('option_id');
+        var id = $(event.currentTarget).data('item_id');
+        this.trigger_up('item_option_clicked', {id: id, optionId: optionId});
+    },
 });
 
 return DropdownMenu;
