@@ -7,7 +7,7 @@ var core = require('web.core');
 var Domain = require('web.Domain');
 var FavoriteMenu = require('web.FavoriteMenu');
 var OldFiltersMenu = require('web.OldFiltersMenu');
-var GroupByMenu = require('web.GroupByMenu');
+var OldGroupByMenu = require('web.OldGroupByMenu');
 var pyUtils = require('web.py_utils');
 var search_inputs = require('web.search_inputs');
 var TimeRangeMenu = require('web.TimeRangeMenu');
@@ -968,7 +968,7 @@ var SearchView = Widget.extend({
             self.groupsMapping.push({groupId: groupId, group: group, category: 'Group By'});
             group.updateIntervalMapping(self.intervalMapping);
         });
-        return new GroupByMenu(this, groupbys, this.fields);
+        return new OldGroupByMenu(this, groupbys, this.fields);
     },
     /**
      * Create a time range menu.

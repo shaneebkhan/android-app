@@ -1,4 +1,4 @@
-odoo.define('web.GroupByMenu', function (require) {
+odoo.define('web.OldGroupByMenu', function (require) {
 "use strict";
 
 var config = require('web.config');
@@ -12,7 +12,7 @@ var GROUPABLE_TYPES = ['many2one', 'char', 'boolean', 'selection', 'date', 'date
 
 var DEFAULT_INTERVAL = 'month';
 
-var GroupByMenu = OldDropdownMenu.extend({
+var OldGroupByMenu = OldDropdownMenu.extend({
     events: _.extend({}, OldDropdownMenu.prototype.events,
     {
         'click .o_add_custom_group': '_onAddCustomGroupClick',
@@ -102,7 +102,7 @@ var GroupByMenu = OldDropdownMenu.extend({
     start: function () {
         this.$menu = this.$('.o_dropdown_menu');
         this.$menu.addClass('o_group_by_menu');
-        var $generatorMenu = QWeb.render('GroupbyMenuGenerator', {widget: this});
+        var $generatorMenu = QWeb.render('OldGroupbyMenuGenerator', {widget: this});
         this.$menu.append($generatorMenu);
         this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
     },
@@ -166,7 +166,7 @@ var GroupByMenu = OldDropdownMenu.extend({
      */
     _renderGeneratorMenu: function () {
         this.$el.find('.o_generator_menu').remove();
-        var $generatorMenu = QWeb.render('GroupbyMenuGenerator', {widget: this});
+        var $generatorMenu = QWeb.render('OldGroupbyMenuGenerator', {widget: this});
         this.$menu.append($generatorMenu);
         this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
         this.$groupSelector = this.$menu.find('.o_group_selector');
@@ -227,6 +227,6 @@ var GroupByMenu = OldDropdownMenu.extend({
     },
 });
 
-return GroupByMenu;
+return OldGroupByMenu;
 
 });

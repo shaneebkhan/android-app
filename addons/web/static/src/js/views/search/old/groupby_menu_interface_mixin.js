@@ -1,7 +1,7 @@
-odoo.define('web.GroupByMenuInterfaceMixin', function (require) {
+odoo.define('web.OldGroupByMenuInterfaceMixin', function (require) {
 "use strict";
 
-var GroupByMenu = require('web.GroupByMenu');
+var OldGroupByMenu = require('web.OldGroupByMenu');
 
 /**
  * The aim of this mixin is to facilitate the interaction between
@@ -10,9 +10,9 @@ var GroupByMenu = require('web.GroupByMenu');
  * understand the current implementation of this mixin
  *
  * @mixin
- * @name GroupByMenuInterfaceMixin
+ * @name OldGroupByMenuInterfaceMixin
  */
-var GroupByMenuInterfaceMixin = {
+var OldGroupByMenuInterfaceMixin = {
 
     init: function () {
         this.custom_events = _.extend({}, this.custom_events, {
@@ -25,7 +25,7 @@ var GroupByMenuInterfaceMixin = {
     //--------------------------------------------------------------------------
 
     /**
-     * this function instantiate a widget GroupByMenu and
+     * this function instantiate a widget OldGroupByMenu and
      * incorporate it to the control panel of the graph view.
      * This is used for instance in the dashboard view in enterprise
      * where there is no Group by menu in the search view because it
@@ -36,7 +36,7 @@ var GroupByMenuInterfaceMixin = {
      * private
      * @param {jQuery} $node
      */
-    _addGroupByMenu: function ($node, groupableFields) {
+    _addOldGroupByMenu: function ($node, groupableFields) {
         var groupbys = [];
         var activeGroupbys = [];
         _.each(this.model.get().groupedBy, function (groupby) {
@@ -55,8 +55,8 @@ var GroupByMenuInterfaceMixin = {
             });
         });
         groupbys = _.sortBy(groupbys, 'description');
-        var groupByMenu = new GroupByMenu(this, groupbys, groupableFields, {headerStyle: 'primary'});
-        groupByMenu.insertAfter($node.find('div:first'));
+        var OldgroupByMenu = new OldGroupByMenu(this, groupbys, groupableFields, {headerStyle: 'primary'});
+        OldgroupByMenu.insertAfter($node.find('div:first'));
     },
 
     /**
@@ -112,6 +112,6 @@ var GroupByMenuInterfaceMixin = {
      },
 };
 
-return GroupByMenuInterfaceMixin;
+return OldGroupByMenuInterfaceMixin;
 
 });

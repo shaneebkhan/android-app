@@ -6,11 +6,11 @@ odoo.define('web.GraphController', function (require) {
 
 var core = require('web.core');
 var AbstractController = require('web.AbstractController');
-var GroupByMenuInterfaceMixin = require('web.GroupByMenuInterfaceMixin');
+var OldGroupByMenuInterfaceMixin = require('web.OldGroupByMenuInterfaceMixin');
 
 var qweb = core.qweb;
 
-var GraphController = AbstractController.extend(GroupByMenuInterfaceMixin,{
+var GraphController = AbstractController.extend(OldGroupByMenuInterfaceMixin,{
     className: 'o_graph',
 
     /**
@@ -24,7 +24,7 @@ var GraphController = AbstractController.extend(GroupByMenuInterfaceMixin,{
      * @param {string[]} params.groupableFields,
      */
     init: function (parent, model, renderer, params) {
-        GroupByMenuInterfaceMixin.init.call(this);
+        OldGroupByMenuInterfaceMixin.init.call(this);
         this._super.apply(this, arguments);
         this.measures = params.measures;
         // this parameter condition the appearance of a 'Group By'
