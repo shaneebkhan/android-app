@@ -11,6 +11,7 @@ var pyUtils = require('web.py_utils');
 var searchViewParameters = require('web.searchViewParameters');
 
 var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
+var DEFAULT_INTERVAL = searchViewParameters.DEFAULT_INTERVAL;
 
 var SearchView = AbstractView.extend({
     config: {
@@ -77,7 +78,24 @@ var SearchView = AbstractView.extend({
                 // (request of POs) (same remark for groupbys)
                 filter.hasOptions = true;
                 filter.options = searchViewParameters.periodOptions;
-                filter.defaultOptionId = attrs.default_period || DEFAULT_PERIOD;
+                filter.defaultOptionId = attrs.default_period ||
+                                            DEFAULT_PERIOD;
+                filter.currentOptionId = false;
+            }
+        }
+        if (filter.type === 'groupBy') {
+            filter.description = attrs.string ||
+                                    attrs.help ||
+                                    attrs.name ||
+                                    attrs.fieldName ||
+                                    'Ω';
+            filter.fieldName = attrs.fieldName;
+            filter.fieldType = this.fields[attrs.fieldName].type;
+            if (_.contains(['date', 'datetime'], filter.fieldType)) {
+                filter.hasOptions = true;
+                filter.options = searchViewParameters.intervalOptions;
+                filter.defaultOptionId = attrs.defaultInterval ||
+                                            DEFAULT_INTERVAL;
                 filter.currentOptionId = false;
             }
         }

@@ -550,16 +550,16 @@ ActionManager.include({
     _processSearchData: function (action, searchData) {
         var contexts = searchData.contexts;
         var domains = searchData.domains;
-        var groupbys = searchData.groupbys;
+        // horrible! we should change that!
+        var groupBys = searchData.groupBys;
         var action_context = action.context || {};
         var results = pyUtils.eval_domains_and_contexts({
             domains: [action.domain || []].concat(domains || []),
             contexts: [action_context].concat(contexts || []),
-            group_by_seq: groupbys || [],
             eval_context: this.userContext,
         });
-        var groupBy = results.group_by.length ?
-                        results.group_by :
+        var groupBy = groupBys.length ?
+                        groupBys :
                         (action.context.group_by || []);
         groupBy = (typeof groupBy === 'string') ? [groupBy] : groupBy;
 

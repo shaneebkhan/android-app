@@ -64,6 +64,7 @@ var SearchModel = AbstractModel.extend({
 		// we want to give a different structure to renderer.
 		// filters are filters of filter type only, groupbys are groupbys,...!
 		var filters = [];
+		var groupBys = [];
 		Object.keys(this.filters).forEach(function (filterId) {
 			var filter = _.extend({}, self.filters[filterId]);
 			var group = self.groups[filter.groupId];
@@ -71,8 +72,16 @@ var SearchModel = AbstractModel.extend({
 			if (filter.type === 'filter') {
 				filters.push(filter);
 			}
+			if (filter.type === 'groupBy') {
+				groupBys.push(filter);
+			}
 		});
-		return {filters: filters, groups: this.groups, query: this.query, fields: this.fields};
+		return {
+			filters: filters,
+			groupBys: groupBys,
+			groups: this.groups,
+			query: this.query,
+			fields: this.fields};
 	},
 
 	getQuery: function () {
@@ -81,12 +90,13 @@ var SearchModel = AbstractModel.extend({
 			this._getDomain(),
 			userContext
 		);
+		var groupBys = this._getGroupBys();
 		return {
 			// for now action manager wants domains and contexts I would prefer
 			// to use domain and context.
 			domains: [domain],
             contexts: {},
-            groupbys: {},
+            groupBys: groupBys,
 		};
 	},
 
@@ -94,8 +104,8 @@ var SearchModel = AbstractModel.extend({
 	saveQuery: function () {
 		return {
 			domains: this._getDomain(),
+			// groupbys in context for ir.filter.
 			contexts: {},
-			groupbys: {},
 		};
 	},
 
@@ -124,7 +134,7 @@ var SearchModel = AbstractModel.extend({
 
     _getDomain: function () {
     	var self = this;
-		var domains = Object.keys(this.groups).map(function (groupId) {
+		var domains = this.query.map(function (groupId) {
 			var group = self.groups[groupId];
 			return self._getGroupDomain(group);
 		});
@@ -146,6 +156,29 @@ var SearchModel = AbstractModel.extend({
 		return domain;
 	},
 
+	_getFilterGroupBy: function (filter) {
+		var groupBy;
+		if (filter.type === 'groupBy') {
+			groupBy = filter.fieldName;
+			if (filter.currentOptionId) {
+				groupBy = groupBy + ':' + filter.currentOptionId;
+			}
+		}
+		return groupBy;
+	},
+
+	_getGroupBys: function () {
+		var self = this;
+		var groupBys = this.query.reduce(
+			function (acc, groupId) {
+				var group = self.groups[groupId];
+				return acc.concat(self._getGroupGroupbys(group));
+			},
+			[]
+		);
+		return groupBys;
+	},
+
 	_getGroupDomain: function (group) {
 		var self = this;
 		var domains = group.activeFilterIds.map(function (filterId) {
@@ -153,6 +186,15 @@ var SearchModel = AbstractModel.extend({
 			return self._getFilterDomain(filter);
 		});
 		return pyUtils.assembleDomains(domains, 'OR');
+	},
+
+	_getGroupGroupbys: function (group) {
+		var self = this;
+		var groupBys = group.activeFilterIds.map(function (filterId) {
+			var filter = self.filters[filterId];
+			return self._getFilterGroupBy(filter);
+		});
+		return _.compact(groupBys);
 	},
 
 	// This method could work in batch and take a list of ids as args.

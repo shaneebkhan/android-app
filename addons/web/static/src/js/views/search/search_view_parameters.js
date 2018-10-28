@@ -5,6 +5,7 @@ var core = require('web.core');
 var _lt = core._lt;
 
 var DEFAULT_PERIOD = 'this_month';
+var DEFAULT_INTERVAL = 'month';
 
 var periodOptions = [
     {description: _lt('Last 7 Days'), optionId: 'last_7_days', groupId: 1},
@@ -21,6 +22,13 @@ var periodOptions = [
     {description: _lt('Last Quarter'), optionId: 'last_quarter', groupId: 3},
     {description: _lt('Last Year'), optionId: 'last_year', groupId: 3},
 ];
+var intervalOptions = [
+        {description: 'Day', optionId: 'day', groupId: 1},
+        {description: 'Week', optionId: 'week', groupId: 1},
+        {description: 'Month', optionId: 'month', groupId: 1},
+        {description: 'Quarter', optionId: 'quarter', groupId: 1},
+        {description: 'Year', optionId: 'year', groupId: 1},
+    ];
 
 var comparisonOptions =  [
     {description: _lt('Previous Period'), optionId: 'previous_period'},
@@ -29,7 +37,9 @@ var comparisonOptions =  [
 
 return {
     DEFAULT_PERIOD: DEFAULT_PERIOD,
+    DEFAULT_INTERVAL: DEFAULT_INTERVAL,
     periodOptions: periodOptions,
+    intervalOptions: intervalOptions,
     comparisonOptions: comparisonOptions,
 };
 
