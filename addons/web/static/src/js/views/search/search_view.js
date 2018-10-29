@@ -119,17 +119,22 @@ var SearchView = AbstractView.extend({
 
         var filter;
         var currentTag;
-        var currentGroup;
+        var currentGroup = [];
+        var groupOfGroupBys = [];
+        var groupNumber = 1;
 
         _.each(preFilters, function (preFilter) {
         	if (preFilter.tag !== currentTag || _.contains(['separator', 'field'], preFilter.tag)) {
-        		if (currentGroup) {
-        			if (currentGroup.length) {
-	        			groups.push(currentGroup);
-        			}
-        		}
-        		currentTag = preFilter.tag;
+        		if (currentGroup.length) {
+                    if (currentTag === 'groupBy') {
+                        groupOfGroupBys = groupOfGroupBys.concat(currentGroup);
+                    } else {
+        			    groups.push(currentGroup);
+                    }
+                }
+                currentTag = preFilter.tag;
         		currentGroup = [];
+                groupNumber++;
         	}
         	if (preFilter.tag !== 'separator') {
         		filter = {
@@ -140,10 +145,14 @@ var SearchView = AbstractView.extend({
             		// and others are passive (require input(s) to become determined)
             		// What is the right place to process the attrs?
             	};
+                if (filter.type === 'filter' || filter.type === 'groupBy') {
+                    filter.groupNumber = groupNumber;
+                }
                 self._extractAttributes(filter, preFilter.attrs);
             	currentGroup.push(filter);
         	}
         });
+        groups.push(groupOfGroupBys);
         return {groups: groups};
     }
 });
