@@ -86,6 +86,8 @@ class LandedCost(models.Model):
 
     @api.multi
     def button_validate(self):
+        self.env['stock.move']._run_fifo_vacuum()
+
         if any(cost.state != 'draft' for cost in self):
             raise UserError(_('Only draft landed costs can be validated'))
         if any(not cost.valuation_adjustment_lines for cost in self):
