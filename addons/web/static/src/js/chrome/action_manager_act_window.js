@@ -162,6 +162,7 @@ ActionManager.include({
         };
 
         var params = {
+            actionId: action.id,
             modelName: action.searchFieldsView.model,
             context: action.context,
             domain: action.domain,

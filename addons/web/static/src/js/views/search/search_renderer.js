@@ -3,6 +3,7 @@ odoo.define('web.SearchRenderer', function (require) {
 
 var AbstractRenderer = require('web.AbstractRenderer');
 // var AutoComplete = require('web.AutoComplete');
+var FavoritesMenu = require('web.FavoritesMenu');
 var FiltersMenu = require('web.FiltersMenu');
 var GroupByMenu = require('web.GroupByMenu');
 
@@ -22,6 +23,11 @@ var SearchRenderer = AbstractRenderer.extend({
         this.groupByMenu = new GroupByMenu(this, this.state.groupBys, this.state.fields);
         return this.groupByMenu.appendTo(this.$subMenus);
     },
+    _setupFavoritesMenu: function () {
+        // this.favoritesMenu = new FavoritesMenu(this, this.state.favorites, this.state.fields);
+        // return this.favoritesMenu.appendTo(this.$subMenus);
+        return $.when();
+    },
 
     _render: function () {
     	var defs = [];
@@ -33,11 +39,15 @@ var SearchRenderer = AbstractRenderer.extend({
             if (this.groupByMenu) {
                 this.groupByMenu.update(this.state.groupBys);
             }
+            // if (this.favoritesMenu) {
+            //     this.favoritesMenu.update(this.state.favorites);
+            // }
         } else {
             this.$subMenus = document.createDocumentFragment();
         	// defs.push(this._setupAutoCompletion());
             defs.push(this._setupFiltersMenu());
             defs.push(this._setupGroupByMenu());
+            defs.push(this._setupFavoritesMenu());
         }
     	return $.when(this, defs);
     },

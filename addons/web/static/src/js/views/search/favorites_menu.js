@@ -1,22 +1,23 @@
-odoo.define('web.OldFavoritesMenu', function (require) {
+odoo.define('web.FavoritesMenu', function (require) {
 "use strict";
 
-var config = require('web.config');
-var core = require('web.core');
-var data_manager = require('web.data_manager');
-var Domain = require('web.Domain');
-var pyUtils = require('web.py_utils');
-var session = require('web.session');
-var Widget = require('web.Widget');
+// var config = require('web.config');
+// var core = require('web.core');
+// var data_manager = require('web.data_manager');
+// var Domain = require('web.Domain');
+// var pyUtils = require('web.py_utils');
+// var session = require('web.session');
+// var Widget = require('web.Widget');
+var DropdownMenu = require('web.DropdownMenu');
 
-var _t = core._t;
+// var _t = core._t;
 
 
 // Don't forget to chang what is needed in file that make an include!!!!
 
 
-var FavoritesMenu = Widget.extend({
-    // template: 'SearchView.OldFavoritesMenu',
+var FavoritesMenu = DropdownMenu.extend({
+    // template: 'SearchView.FavoritesMenu',
     // events: {
     //     'click .dropdown-item': function (ev) {
     //         ev.preventDefault();
@@ -33,17 +34,17 @@ var FavoritesMenu = Widget.extend({
     //         }
     //     },
     // },
-    // init: function (parent, query, target_model, action, filters) {
-    //     this._super.apply(this,arguments);
-    //     this.searchview = parent;
-    //     this.query = query;
-    //     this.target_model = target_model;
-    //     this.action = action;
-    //     this.action_id = action.id;
-    //     this.filters = {};
-    //     this.isMobile = config.device.isMobile;
-    //     _.each(filters, this.add_filter.bind(this));
-    // },
+    init: function (parent, favorites, fields) {
+        this._super.apply(parent, favorites || []);
+        // this.searchview = parent;
+        // this.query = query;
+        // this.target_model = target_model;
+        // this.action = action;
+        // this.action_id = action.id;
+        // this.filters = {};
+        // this.isMobile = config.device.isMobile;
+        // _.each(filters, this.add_filter.bind(this));
+    },
     // start: function () {
     //     var self = this;
     //     this.$filters = {};

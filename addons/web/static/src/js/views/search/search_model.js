@@ -13,6 +13,7 @@ var SearchModel = AbstractModel.extend({
 		this.groups = {};
 		this.query = [];
 		this.fields = {};
+		this.actionId;
 	},
 
 	//--------------------------------------------------------------------------
@@ -21,14 +22,26 @@ var SearchModel = AbstractModel.extend({
 
 	load: function (params) {
 		var self = this;
+		var groups = params.groups;
 		this.fields = params.fields;
-		// determine data structure used by model
-		// we should also determine here what are the favorites and what are the
-		// default filters
-		params.groups.forEach(function (group) {
-			self._createGroupOfFilters(group);
-		});
-		return $.when();
+		this.modelName = params.modelName;
+		this.actionId = params.actionId;
+		var def = this._rpc({
+                args: [this.modelName, this.actionId],
+                model: 'ir.filters',
+                method: 'get_filters',
+        }).then(function (favorites) {
+            debugger
+            // add groups!
+            groups = groups;
+            groups.forEach(function (group) {
+			// determine data structure used by model
+			// we should also determine here what are the favorites and what are the
+			// default filters
+				self._createGroupOfFilters(group);
+			});
+    	});
+		return def;
 	},
 
 	// handle is empty here and does not make sense
