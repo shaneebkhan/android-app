@@ -2869,6 +2869,49 @@ class TestStockValuation(TransactionCase):
         self.assertEqual(move7.value, 100.0)
         self.assertEqual(self.product1.standard_price, 10)
 
+    def test_average_vacuum_1(self):
+        self.product1.product_tmpl_id.cost_method = 'average'
+        self.product1.standard_price = 10.0
+
+        move1 = self.env['stock.move'].create({
+            'name': 'send 1',
+            'location_id': self.stock_location.id,
+            'location_dest_id': self.customer_location.id,
+            'product_id': self.product1.id,
+            'product_uom': self.uom_unit.id,
+            'product_uom_qty': 1.0,
+            'move_line_ids': [(0, 0, {
+                'product_id': self.product1.id,
+                'location_id': self.stock_location.id,
+                'location_dest_id': self.customer_location.id,
+                'product_uom_id': self.uom_unit.id,
+                'qty_done': 1.0,
+            })]
+        })
+        move1._action_confirm()
+        move1._action_done()
+
+        move2 = self.env['stock.move'].create({
+            'name': 'receive 2 @15',
+            'location_id': self.supplier_location.id,
+            'location_dest_id': self.stock_location.id,
+            'product_id': self.product1.id,
+            'product_uom': self.uom_unit.id,
+            'product_uom_qty': 2.0,
+            'price_unit': 15,
+            'picking_type_id': self.env.ref('stock.picking_type_in').id,
+        })
+        move2._action_confirm()
+        move2._action_assign()
+        move2.move_line_ids.qty_done = 2.0
+        move2._action_done()
+
+        self.assertEqual(self.product1.standard_price, 20)
+
+        self.env['stock.move'].with_context(debug=True)._run_fifo_vacuum()
+
+        self.assertEqual(self.product1.standard_price, 15)
+
     def test_average_manual_1(self):
         ''' Set owner on incoming move => no valuation '''
         self.product1.product_tmpl_id.cost_method = 'average'

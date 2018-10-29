@@ -461,6 +461,9 @@ class StockMove(models.Model):
                 if not corrected_value:
                     continue
 
+                rounding = move.product_id.uom_id.rounding
+                qty_available = not float_is_zero(move.product_id.qty_available, precision_rounding=rounding)
+
                 if move._is_in():
                     # If we just compensated an IN move that has a negative remaining
                     # quantity, it means the move has returned more items than it received.
@@ -468,21 +471,17 @@ class StockMove(models.Model):
                     # will post the natural values for an IN move (credit IN account, debit
                     # OUT one), we inverse the sign to create the correct entries.
                     move.with_context(force_valuation_amount=-corrected_value, forced_quantity=0)._account_entry_move()
+                    if move.product_id.cost_method == 'average' and qty_available:
+                        move.product_id.standard_price += (corrected_value/move.product_id.qty_available)
                 else:
                     move.with_context(force_valuation_amount=corrected_value, forced_quantity=0)._account_entry_move()
+                    if move.product_id.cost_method == 'average' and qty_available:
+                        move.product_id.standard_price -= (corrected_value/move.product_id.qty_available)
 
     @api.model
     def _run_fifo_vacuum(self):
         # Call `_fifo_vacuum` on concerned moves
-        fifo_valued_products = self.env['product.product']
-        fifo_valued_products |= self.env['product.template'].search([('property_cost_method', '=', 'fifo')]).mapped(
-            'product_variant_ids')
-        fifo_valued_categories = self.env['product.category'].search([('property_cost_method', '=', 'fifo')])
-        fifo_valued_products |= self.env['product.product'].search([('categ_id', 'child_of', fifo_valued_categories.ids)])
-        moves_to_vacuum = self.env['stock.move']
-        for product in fifo_valued_products:
-            moves_to_vacuum |= self.search(
-                [('product_id', '=', product.id), ('remaining_qty', '<', 0)] + self._get_all_base_domain())
+        moves_to_vacuum = self.search([('remaining_qty', '<', 0)] + self._get_all_base_domain())
         moves_to_vacuum._fifo_vacuum()
 
     @api.multi
