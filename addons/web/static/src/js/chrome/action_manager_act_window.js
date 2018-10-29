@@ -549,12 +549,12 @@ ActionManager.include({
      */
     _processSearchData: function (action, searchData) {
         var contexts = searchData.contexts;
-        var domains = searchData.domains;
+        var domain = searchData.domain;
         // horrible! we should change that!
         var groupBys = searchData.groupBys;
         var action_context = action.context || {};
         var results = pyUtils.eval_domains_and_contexts({
-            domains: [action.domain || []].concat(domains || []),
+            domains: [action.domain || []].concat([domain] || []),
             contexts: [action_context].concat(contexts || []),
             eval_context: this.userContext,
         });

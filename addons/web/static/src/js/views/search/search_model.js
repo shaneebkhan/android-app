@@ -94,7 +94,7 @@ var SearchModel = AbstractModel.extend({
 		return {
 			// for now action manager wants domains and contexts I would prefer
 			// to use domain and context.
-			domains: [domain],
+			domain: domain,
             contexts: {},
             groupBys: groupBys,
 		};
