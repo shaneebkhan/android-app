@@ -243,6 +243,7 @@
         <script type="text/javascript" src="/web/static/src/js/views/search/search_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/filters_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/groupby_menu.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/search/favorites_menu.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/search/search_view_parameters.js"></script>
 
         <script type="text/javascript" src="/web/static/src/js/views/search/old/search_view.js"></script>
