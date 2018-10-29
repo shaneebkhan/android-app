@@ -17,6 +17,14 @@ var SearchController = AbstractController.extend({
         this.$buttons = this._getSubMenus();
     },
 
+    destroy: function () {
+        // delete reference to this.$buttons, to prevent crash.  Note that
+        // the $buttons is actually a part of this.renderer, which should be
+        // destroyed by the renderer anyway
+        delete this.$buttons;
+        this._super.apply(this, arguments);
+    },
+
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
