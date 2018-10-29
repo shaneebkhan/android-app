@@ -1150,9 +1150,9 @@
     </div>
 </div>
 
-<t t-name="GroupbyMenuGenerator">
-    <div t-if="Object.keys(widget.presentedFields).length !== 0 &amp;&amp; widget.items.length !== 0" class="dropdown-divider o_generator_menu"/>
-    <button t-if="Object.keys(widget.presentedFields).length !== 0" type="button" class="dropdown-item o_generator_menu o_add_custom_group">Add Custom Group</button>
+<t t-name="GroupByMenuGenerator">
+    <div t-if="widget.presentedFields.length !== 0 &amp;&amp; widget.items.length !== 0" class="dropdown-divider o_generator_menu"/>
+    <button t-if="widget.presentedFields.length !== 0" type="button" class="dropdown-item o_generator_menu o_add_custom_group">Add Custom Group</button>
     <div t-if="widget.generatorMenuIsOpen" class="dropdown-item-text o_generator_menu">
         <select class="w-auto o_input o_group_selector o_add_group">
             <t t-foreach="widget.presentedFields" t-as="field">

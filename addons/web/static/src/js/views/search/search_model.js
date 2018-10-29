@@ -52,6 +52,15 @@ var SearchModel = AbstractModel.extend({
 			});
 
 		}
+		if (params.newGroupBy) {
+			var newGroupBy = params.newGroupBy.groupBy;
+			this._createGroupOfFilters([newGroupBy]);
+			if (_.contains(['date', 'datetime'], newGroupBy.fieldType)) {
+				this._toggleFilterWithOptions(newGroupBy.id);
+			} else {
+				this._toggleFilter(newGroupBy.id);
+			}
+		}
 		return this._super.apply(this, arguments);
 	},
 
@@ -236,11 +245,11 @@ var SearchModel = AbstractModel.extend({
 				this._toggleFilter(filterId);
 				filter.currentOptionId = false;
 			} else {
-				filter.currentOptionId = optionId || filter.defautlOptionId;
+				filter.currentOptionId = optionId || filter.defaultOptionId;
 			}
 		} else {
 			this._toggleFilter(filterId);
-			filter.currentOptionId = optionId || filter.defautlOptionId;
+			filter.currentOptionId = optionId || filter.defaultOptionId;
 		}
 	},
 });

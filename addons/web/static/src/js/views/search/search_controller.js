@@ -9,6 +9,7 @@ var SearchController = AbstractController.extend({
         menu_item_clicked: '_onMenuItemClicked',
         item_option_clicked: '_onItemOptionClicked',
         new_filters: '_onNewFilters',
+        new_groupBy: '_onNewGroupBy',
     },
 
     start: function () {
@@ -70,6 +71,9 @@ var SearchController = AbstractController.extend({
     _onNewFilters: function (event) {
         return this.update({newFilters: event.data});
     },
+    _onNewGroupBy: function (event) {
+        return this.update({newGroupBy: event.data});
+    }
 });
 
 return SearchController;

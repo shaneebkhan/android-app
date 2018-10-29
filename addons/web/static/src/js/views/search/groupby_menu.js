@@ -4,14 +4,21 @@ odoo.define('web.GroupByMenu', function (require) {
 var config = require('web.config');
 var core = require('web.core');
 var DropdownMenu = require('web.DropdownMenu');
+var searchViewParameters = require('web.searchViewParameters');
 
 var QWeb = core.qweb;
 var _t = core._t;
 
-var GROUPABLE_TYPES = ['many2one', 'char', 'boolean', 'selection', 'date', 'datetime'];
+var DEFAULT_INTERVAL =searchViewParameters.DEFAULT_INTERVAL;
+var GROUPABLE_TYPES = searchViewParameters.GROUPABLE_TYPES;
 
 var GroupByMenu = DropdownMenu.extend({
-
+    events: _.extend({}, DropdownMenu.prototype.events,
+    {
+        'click .o_add_custom_group': '_onAddCustomGroupClick',
+        'click button.o_apply_group': '_onButtonApplyClick',
+        'click .o_group_selector': '_onGroupSelectorClick',
+    }),
     /**
      * @override
      * @param {Widget} parent
@@ -21,12 +28,10 @@ var GroupByMenu = DropdownMenu.extend({
      *      fieldName: string; field name without interval!
      *      description: string; label printed on screen
      *      groupId: string;
-     *      isDate: boolean;
      *      isActive: boolean; (optional) determines if the groupby is considered active
-     *      isOpen: boolean; (optional) in case there are options the submenu presenting the options
      *                                is opened or closed according to isOpen
-     *      isRemovable: boolean; (optional) can be removed from menu
      *      options: array of objects with 'optionId' and 'description' keys; (optional)
+     *      defaultOptionId: string refers to an optionId that should be activated by default
      *      currentOptionId: string refers to an optionId that is activated if item is active (optional)
      *   }
      * @param {Object} fields 'field_get' of a model: mapping from field name
@@ -35,28 +40,28 @@ var GroupByMenu = DropdownMenu.extend({
      * @param {string} options.headerStyle conditions the style of the main button
      */
     init: function (parent, groupbys, fields, options) {
+        var self = this;
         this._super(parent, groupbys);
-        // this.fields = fields;
+        this.fields = fields;
         // determines when the 'Add custom groupby' submenu is open
-        // this.generatorMenuIsOpen = false;
-        // // determines list of options used by groupbys of type 'date'
-        // this.groupableFields = [];
-        // _.each(fields, function (field, name) {
-        //     if (field.sortable && _.contains(GROUPABLE_TYPES, field.type)) {
-        //         self.groupableFields.push(_.extend({}, field, {
-        //             name: name,
-        //             isDate: _.contains(['date', 'datetime'], field.type),
-        //         }));
-        //     }
-        // });
-        // this.groupableFields = _.sortBy(this.groupableFields, 'string');
-        // _.each(groupbys, this._prepareItem.bind(this));
-        // // determines the list of field names that can be added to the menu
-        // // via the 'Add Custom Groupby' menu
-        // this.presentedFields = _.filter(this.groupableFields, function (field) {
-        //     var groupByFields = _.pluck(groupbys, 'fieldName');
-        //     return !_.contains(groupByFields, field.name);
-        // });
+        this.generatorMenuIsOpen = false;
+        // determines list of options used by groupbys of type 'date'
+        this.groupableFields = [];
+        _.each(fields, function (field, name) {
+            if (field.sortable && _.contains(GROUPABLE_TYPES, field.type)) {
+                self.groupableFields.push(_.extend({}, field, {
+                    name: name,
+                    // isDate: _.contains(['date', 'datetime'], field.type),
+                }));
+            }
+        });
+        this.groupableFields = _.sortBy(this.groupableFields, 'string');
+        // determines the list of field names that can be added to the menu
+        // via the 'Add Custom Groupby' menu
+        this.presentedFields = this.groupableFields.filter(function (field) {
+            var groupByFields = _.pluck(groupbys, 'fieldName');
+            return !_.contains(groupByFields, field.name);
+        });
 
         // determines where the filter menu is displayed and partly its style
         this.isMobile = config.device.isMobile;
@@ -80,13 +85,13 @@ var GroupByMenu = DropdownMenu.extend({
     //  *
     //  * @private
     //  */
-    // start: function () {
-    //     this.$menu = this.$('.o_dropdown_menu');
-    //     this.$menu.addClass('o_group_by_menu');
-    //     var $generatorMenu = QWeb.render('GroupbyMenuGenerator', {widget: this});
-    //     this.$menu.append($generatorMenu);
-    //     this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
-    // },
+    start: function () {
+        this.$menu = this.$('.o_dropdown_menu');
+        this.$menu.addClass('o_group_by_menu');
+        var $generatorMenu = QWeb.render('GroupByMenuGenerator', {widget: this});
+        this.$menu.append($generatorMenu);
+        this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
+    },
 
     //--------------------------------------------------------------------------
     // Private
@@ -101,89 +106,92 @@ var GroupByMenu = DropdownMenu.extend({
      * @private
      * @param {string} fieldName
      */
-    // _addGroupby: function (fieldName) {
-    //     var field = _.findWhere(this.groupableFields, {name: fieldName});
-    //     var groupbyName = _.uniqueId('__groupby__');
-    //     var groupby = {
-    //         itemId: groupbyName,
-    //         description: field.string,
-    //         fieldName: fieldName,
-    //         groupId: _.uniqueId('__group__'),
-    //         isActive: true,
-    //     };
-    //     var eventData = _.clone(groupby);
-    //     this._prepareItem(groupby);
-    //     this.items.push(groupby);
-    //     var fieldIndex = this.presentedFields.indexOf(field);
-    //     this.presentedFields.splice(fieldIndex, 1);
-    //     this._renderGeneratorMenu();
-    //     this._renderMenuItems();
-    //     this.trigger_up('new_groupby', eventData);
-    // },
-    // /**
-    //  * @private
-    //  */
-    // _renderGeneratorMenu: function () {
-    //     this.$el.find('.o_generator_menu').remove();
-    //     var $generatorMenu = QWeb.render('GroupbyMenuGenerator', {widget: this});
-    //     this.$menu.append($generatorMenu);
-    //     this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
-    //     this.$groupSelector = this.$menu.find('.o_group_selector');
-    // },
-    // /**
-    //  * @private
-    //  */
-    // _toggleCustomGroupMenu: function () {
-    //     this.generatorMenuIsOpen = !this.generatorMenuIsOpen;
-    //     this._renderGeneratorMenu();
-    //     if (this.generatorMenuIsOpen) {
-    //         this.$groupSelector.focus();
-    //     }
-    // },
+    _addGroupby: function (fieldName) {
+        var field = this.presentedFields.find(function (field) {
+            return field.name === fieldName;
+        });
+        var groupBy = {
+            type: 'groupBy',
+            description: field.string,
+            fieldName: fieldName,
+            fieldType: field.type,
+        };
+        if (_.contains(['date', 'datetime'], field.type)) {
+            groupBy.hasOptions = true;
+            groupBy.options = searchViewParameters.intervalOptions;
+            groupBy.defaultOptionId = DEFAULT_INTERVAL;
+            groupBy.currentOptionId = false;
+        }
+        var fieldIndex = this.presentedFields.indexOf(field);
+        this.presentedFields.splice(fieldIndex, 1);
+        this._renderGeneratorMenu();
+        this._renderMenuItems();
+        this.trigger_up('new_groupBy', {groupBy: groupBy});
+    },
+    /**
+     * @private
+     */
+    _renderGeneratorMenu: function () {
+        this.$el.find('.o_generator_menu').remove();
+        var $generatorMenu = QWeb.render('GroupByMenuGenerator', {widget: this});
+        this.$menu.append($generatorMenu);
+        this.$addCustomGroup = this.$menu.find('.o_add_custom_group');
+        this.$groupSelector = this.$menu.find('.o_group_selector');
+    },
+    /**
+     * @private
+     */
+    _toggleCustomGroupMenu: function () {
+        this.generatorMenuIsOpen = !this.generatorMenuIsOpen;
+        this._renderGeneratorMenu();
+        if (this.generatorMenuIsOpen) {
+            this.$groupSelector.focus();
+        }
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
 
-    // /**
-    //  * toggle the 'Add Custom Group'
-    //  *
-    //  * @private
-    //  * @param {MouseEvent} event
-    //  */
-    // _onAddCustomGroupClick: function (event) {
-    //     event.preventDefault();
-    //     event.stopPropagation();
-    //     this._toggleCustomGroupMenu();
-    // },
-    // /*
-    //  * override
-    //  *
-    //  * @private
-    //  * @param {jQueryEvent} event
-    //  */
-    // _onBootstrapClose: function () {
-    //     this._super.apply(this, arguments);
-    //     this.generatorMenuIsOpen = false;
-    //     this._renderGeneratorMenu();
-    // },
-    // /**
-    //  * @private
-    //  * @param {MouseEvent} event
-    //  */
-    // _onButtonApplyClick: function (event) {
-    //     event.stopPropagation();
-    //     var fieldName = this.$groupSelector.val();
-    //     this._addGroupby(fieldName);
-    //     this._toggleCustomGroupMenu();
-    // },
-    // /**
-    //  * @private
-    //  * @param {MouseEvent} event
-    //  */
-    // _onGroupSelectorClick: function (event) {
-    //     event.stopPropagation();
-    // },
+    /**
+     * toggle the 'Add Custom Group'
+     *
+     * @private
+     * @param {MouseEvent} event
+     */
+    _onAddCustomGroupClick: function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this._toggleCustomGroupMenu();
+    },
+    /*
+     * override
+     *
+     * @private
+     * @param {jQueryEvent} event
+     */
+    _onBootstrapClose: function () {
+        this._super.apply(this, arguments);
+        this.generatorMenuIsOpen = false;
+        this._renderGeneratorMenu();
+    },
+    /**
+     * @private
+     * @param {MouseEvent} event
+     */
+    _onButtonApplyClick: function (event) {
+        event.stopPropagation();
+        var fieldName = this.$groupSelector.val();
+        this._addGroupby(fieldName);
+        this._toggleCustomGroupMenu();
+    },
+    /**
+     * @private
+     * @param {MouseEvent} event
+     */
+    _onGroupSelectorClick: function (event) {
+        event.stopPropagation();
+    },
 });
 
 return GroupByMenu;

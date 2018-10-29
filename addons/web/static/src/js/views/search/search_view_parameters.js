@@ -7,6 +7,8 @@ var _lt = core._lt;
 var DEFAULT_PERIOD = 'this_month';
 var DEFAULT_INTERVAL = 'month';
 
+var GROUPABLE_TYPES = ['many2one', 'char', 'boolean', 'selection', 'date', 'datetime'];
+
 var periodOptions = [
     {description: _lt('Last 7 Days'), optionId: 'last_7_days', groupId: 1},
     {description: _lt('Last 30 Days'), optionId: 'last_30_days', groupId: 1},
@@ -38,6 +40,7 @@ var comparisonOptions =  [
 return {
     DEFAULT_PERIOD: DEFAULT_PERIOD,
     DEFAULT_INTERVAL: DEFAULT_INTERVAL,
+    GROUPABLE_TYPES: GROUPABLE_TYPES,
     periodOptions: periodOptions,
     intervalOptions: intervalOptions,
     comparisonOptions: comparisonOptions,
