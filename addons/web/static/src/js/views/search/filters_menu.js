@@ -133,9 +133,9 @@ var FiltersMenu = DropdownMenu.extend({
      *
      * @private
      */
-    _toggleCustomFilterMenu: function () {
+    _toggleCustomFilterMenu: function (open) {
         var self = this;
-        this.generatorMenuIsOpen = !this.generatorMenuIsOpen;
+        this.generatorMenuIsOpen = open || !this.generatorMenuIsOpen;
         var def;
         if (this.generatorMenuIsOpen && !this.propositions.length) {
             def = this._appendProposition();
@@ -178,6 +178,16 @@ var FiltersMenu = DropdownMenu.extend({
     _onApplyClick: function (event) {
         event.stopPropagation();
         this._commitSearch();
+    },
+    /*
+     * override
+     *
+     * @private
+     * @param {jQueryEvent} event
+     */
+    _onBootstrapClose: function () {
+        this._super.apply(this, arguments);
+        this._toggleCustomFilterMenu(false);
     },
     /**
      * @private
