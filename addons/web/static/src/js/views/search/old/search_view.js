@@ -5,7 +5,7 @@ var AutoComplete = require('web.AutoComplete');
 var config = require('web.config');
 var core = require('web.core');
 var Domain = require('web.Domain');
-var FavoriteMenu = require('web.FavoriteMenu');
+var OldFavoritesMenu = require('web.OldFavoritesMenu');
 var OldFiltersMenu = require('web.OldFiltersMenu');
 var OldGroupByMenu = require('web.OldGroupByMenu');
 var pyUtils = require('web.py_utils');
@@ -434,7 +434,7 @@ var SearchView = Widget.extend({
         var $buttons = this._getButtonsElement();
         if ($buttons) {
             if (!this.options.disable_favorites) {
-                this.favorite_menu = new FavoriteMenu(this, this.query, this.dataset.model, this.action, this.favorite_filters);
+                this.favorite_menu = new OldFavoritesMenu(this, this.query, this.dataset.model, this.action, this.favorite_filters);
                 def = this.favorite_menu.appendTo($buttons);
             }
         }

@@ -5,13 +5,13 @@ var ActionManager = require('web.ActionManager');
 var Context = require('web.Context');
 var core = require('web.core');
 var Domain = require('web.Domain');
-var FavoriteMenu = require('web.FavoriteMenu');
+var OldFavoritesMenu = require('web.OldFavoritesMenu');
 var pyUtils = require('web.py_utils');
 
 var _t = core._t;
 var QWeb = core.qweb;
 
-FavoriteMenu.include({
+OldFavoritesMenu.include({
     /**
      * We manually add the 'add to dashboard' feature in the searchview.
      *

@@ -5,12 +5,12 @@ var ActionManager = require('web.ActionManager');
 var core = require('web.core');
 var data = require('web.data');
 var Domain = require('web.Domain');
-var FavoriteMenu = require('web.FavoriteMenu');
+var OldFavoritesMenu = require('web.OldFavoritesMenu');
 var pyUtils = require('web.py_utils');
 
 var QWeb = core.qweb;
 
-FavoriteMenu.include({
+OldFavoritesMenu.include({
     start: function () {
         this._super();
         if (this.action.type === 'ir.actions.act_window') {

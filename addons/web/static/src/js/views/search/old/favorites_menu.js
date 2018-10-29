@@ -1,4 +1,4 @@
-odoo.define('web.FavoriteMenu', function (require) {
+odoo.define('web.OldFavoritesMenu', function (require) {
 "use strict";
 
 var config = require('web.config');
@@ -12,7 +12,7 @@ var Widget = require('web.Widget');
 var _t = core._t;
 
 return Widget.extend({
-    template: 'SearchView.FavoriteMenu',
+    template: 'SearchView.OldFavoritesMenu',
     events: {
         'click .dropdown-item': function (ev) {
             ev.preventDefault();
