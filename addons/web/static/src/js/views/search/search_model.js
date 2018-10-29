@@ -27,9 +27,9 @@ var SearchModel = AbstractModel.extend({
 		this.modelName = params.modelName;
 		this.actionId = params.actionId;
 		var def = this._rpc({
-                args: [this.modelName, this.actionId],
-                model: 'ir.filters',
-                method: 'get_filters',
+            args: [this.modelName, this.actionId],
+            model: 'ir.filters',
+            method: 'get_filters',
         }).then(function (favorites) {
             debugger
             // add groups!
@@ -67,7 +67,12 @@ var SearchModel = AbstractModel.extend({
 		}
 		if (params.newGroupBy) {
 			var newGroupBy = params.newGroupBy.groupBy;
-			this._createGroupOfFilters([newGroupBy]);
+			var id = _.uniqueId('__filter__');
+			newGroupBy.id = id;
+			newGroupBy.groupId = Object.keys(this.groups).find(function (groupId) {
+				return self.groups[groupId].type === 'groupBy';
+			});
+			this.filters[id] = newGroupBy;
 			if (_.contains(['date', 'datetime'], newGroupBy.fieldType)) {
 				this._toggleFilterWithOptions(newGroupBy.id);
 			} else {
