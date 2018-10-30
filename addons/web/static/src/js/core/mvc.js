@@ -156,12 +156,14 @@ var Factory = Class.extend({
      *
      * @private
      * @param {Widget} parent the parent of the model
-     * @returns {Promise<*>} a promise that resolves to whatever the model
-     *   decides to return
+     * @returns {Promise<*>} a promise that resolves to the value returned by
+     *   the get method from the model
      */
     _loadData: function (parent) {
         var model = this.getModel(parent);
-        return model.load(this.loadParams);
+        return model.load(this.loadParams).then(function () {
+            return model.get.apply(model, arguments);
+        });
     },
 });
 
