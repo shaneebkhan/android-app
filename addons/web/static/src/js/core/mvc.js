@@ -1,6 +1,10 @@
 odoo.define('web.mvc', function (require) {
 "use strict";
 
+/**
+ * TODO: doc (explain why mrc)
+ */
+
 var ajax = require('web.ajax');
 var Class = require('web.Class');
 var mixins = require('web.mixins');
@@ -20,7 +24,7 @@ var Model = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
     //--------------------------------------------------------------------------
 
     /**
-     * This method should return the complete state necessary for the view
+     * This method should return the complete state necessary for the renderer
      * to display the current data.
      *
      * @returns {*}
@@ -41,7 +45,7 @@ var Model = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
     },
 });
 
-var View = Widget.extend({
+var Renderer = Widget.extend({
     init: function (parent, state, params) {
         this._super(parent);
         this.state = state;
@@ -53,13 +57,13 @@ var Controller = Widget.extend({
      * @constructor
      * @param {Widget} parent
      * @param {Model} model
-     * @param {View} view
+     * @param {Renderer} renderer
      * @param {Object} params
      */
-    init: function (parent, model, view, params) {
+    init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
         this.model = model;
-        this.view = view;
+        this.renderer = renderer;
     },
     /**
      * @returns {Promise}
@@ -67,7 +71,7 @@ var Controller = Widget.extend({
     start: function () {
         return $.when(
             this._super.apply(this, arguments),
-            this.view.appendTo(this.$el)
+            this.renderer.appendTo(this.$el)
         );
     },
 });
@@ -75,11 +79,11 @@ var Controller = Widget.extend({
 var Factory = Class.extend({
     config: {
         Model: Model,
-        View: View,
+        Renderer: Renderer,
         Controller: Controller,
     },
     init: function () {
-        this.viewParams = {};
+        this.rendererParams = {};
         this.controllerParams = {};
         this.loadParams = {};
     },
@@ -93,47 +97,47 @@ var Factory = Class.extend({
      * data and libraries are loaded.
      *
      * There is a unusual thing going in this method with parents: we create
-     * view/model with parent as parent, then we have to reassign them at
+     * renderer/model with parent as parent, then we have to reassign them at
      * the end to make sure that we have the proper relationships.  This is
-     * necessary to solve the problem that the controller need the model and the
-     * view to be instantiated, but the model need a parent to be able to
-     * load itself, and the view needs the data in its constructor.
+     * necessary to solve the problem that the controller needs the model and
+     * the renderer to be instantiated, but the model need a parent to be able
+     * to load itself, and the renderer needs the data in its constructor.
      *
-     * @param {Widget} parent The parent of the resulting Controller (most
+     * @param {Widget} parent the parent of the resulting Controller (most
      *      likely an action manager)
-     * @returns {Promise} The deferred resolves to a controller
+     * @returns {Promise<Controller>}
      */
     getController: function (parent) {
         var self = this;
         return $.when(this._loadData(parent), ajax.loadLibs(this)).then(function () {
             var state = self.model.get(arguments[0]);
-            var view = self.getView(parent, state);
+            var renderer = self.getRenderer(parent, state);
             var Controller = self.Controller || self.config.Controller;
-            var controller = new Controller(parent, self.model, view, self.controllerParams);
-            view.setParent(controller);
+            var controller = new Controller(parent, self.model, renderer, self.controllerParams);
+            renderer.setParent(controller);
             return controller;
         });
     },
     /**
-     * Returns the view model or create an instance of it if none
+     * Returns a new model instance
      *
-     * @param {Widget} parent the parent of the model, if it has to be created
-     * @returns {Object} instance of the view model
+     * @param {Widget} parent the parent of the model
+     * @returns {Model} instance of the model
      */
     getModel: function (parent) {
         var Model = this.config.Model;
         this.model = new Model(parent);
     },
     /**
-     * Returns the a new view instance
+     * Returns a new renderer instance
      *
-     * @param {Widget} parent the parent of the model, if it has to be created
-     * @param {Object} state the information related to the rendered view
-     * @returns {Object} instance of the view
+     * @param {Widget} parent the parent of the renderer
+     * @param {Object} state the information related to the rendered data
+     * @returns {Renderer} instance of the renderer
      */
-    getView: function (parent, state) {
-        var View = this.config.View;
-        return new View(parent, state, this.viewParams);
+    getRenderer: function (parent, state) {
+        var Renderer = this.config.Renderer;
+        return new Renderer(parent, state, this.rendererParams);
     },
 
     //--------------------------------------------------------------------------
@@ -141,12 +145,12 @@ var Factory = Class.extend({
     //--------------------------------------------------------------------------
 
     /**
-     * Load initial data from the model
+     * Loads initial data from the model
      *
      * @private
      * @param {Widget} parent the parent of the model
      * @returns {Promise<*>} a promise that resolves to whatever the model
-     *   decide to return
+     *   decides to return
      */
     _loadData: function (parent) {
         var model = this.getModel(parent);
@@ -158,7 +162,7 @@ var Factory = Class.extend({
 return {
     Factory: Factory,
     Model: Model,
-    View: View,
+    Renderer: Renderer,
     Controller: Controller,
 };
 
