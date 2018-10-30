@@ -26,6 +26,15 @@ var SearchBar = Widget.extend({
         defs.push(this._renderInput());
         return $.when.apply($, defs);
     },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
     _renderFacet: function (facet) {
         var searchFacet = new SearchFacet(this, facet);
         return searchFacet.appendTo(this.$el);
@@ -50,6 +59,11 @@ var SearchBar = Widget.extend({
     //     });
     //     return this.autoComplete.appendTo(this.$('.o_searchview_input_container'));
     // },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
 });
 
 return SearchBar;

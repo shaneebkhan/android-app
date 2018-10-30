@@ -64,8 +64,11 @@ var SearchController = AbstractController.extend({
     //--------------------------------------------------------------------------
 
     _onFacetRemoved: function (ev) {
-        // TODO: could be something else than a filter in the facet?
-        this.update({removeGroup: ev.data});
+        var group = ev.data.group;
+        if (!group) {
+            group = this.renderer.getLastFacet();
+        }
+        this.update({removeGroup: group});
     },
     _onItemOptionClicked: function (event) {
         return this.update({toggleOption: event.data});

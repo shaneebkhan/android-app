@@ -12,6 +12,7 @@ var SearchFacet = Widget.extend({
     }),
     events: _.extend({}, Widget.prototype.events, {
         'click .o_facet_remove': '_onFacetRemove',
+        'keydown': '_onKeydown',
     }),
     init: function (parent, facet) {
         this._super.apply(this, arguments);
@@ -62,8 +63,15 @@ var SearchFacet = Widget.extend({
     // Handlers
     //--------------------------------------------------------------------------
 
+    _onKeydown: function (e) {
+        switch (e.which) {
+            case $.ui.keyCode.BACKSPACE:
+                this.trigger_up('facet_removed', {group: this.facet});
+                break;
+        }
+    },
     _onFacetRemove: function () {
-        this.trigger_up('facet_removed', this.facet);
+        this.trigger_up('facet_removed', {group: this.facet});
     },
 });
 

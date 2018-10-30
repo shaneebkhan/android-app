@@ -20,6 +20,16 @@ var SearchRenderer = AbstractRenderer.extend({
         this.displayMore = false;
     },
 
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @returns {Object}
+     */
+    getLastFacet: function () {
+        return this.state.facets.slice(-1)[0];
+    },
 
     //--------------------------------------------------------------------------
     // Private
