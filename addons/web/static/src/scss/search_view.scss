@@ -196,7 +196,6 @@
     max-height: calc(100vh - 125px);
     overflow: auto;
 
-    .dropdown-divider {display: none;} // hide the divider by default (no favorite)
     .o-searchview-custom-private, .o-searchview-custom-public {
         .o-remove-filter {
             @include o-position-absolute(50%, 12px);

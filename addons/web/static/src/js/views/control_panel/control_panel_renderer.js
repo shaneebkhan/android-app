@@ -249,9 +249,8 @@ var ControlPanelRenderer = Renderer.extend({
         return this.groupByMenu.appendTo(this.$subMenus);
     },
     _setupFavoritesMenu: function () {
-        this.favoritesMenu = new FavoritesMenu(this, this.state.favorites, this.state.fields);
+        this.favoritesMenu = new FavoritesMenu(this, this.state.favorites);
         return this.favoritesMenu.appendTo(this.$subMenus);
-        return $.when();
     },
 
     _render: function () {

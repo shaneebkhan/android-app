@@ -13,7 +13,7 @@ var ControlPanelModel = mvc.Model.extend({
         this.query = [];
         this.fields = {};
         this.actionId = null;
-        this.groupOfGroupBysId;
+        this.groupOfGroupBysId = null;
     },
 
     //--------------------------------------------------------------------------
@@ -25,24 +25,19 @@ var ControlPanelModel = mvc.Model.extend({
         this.fields = params.fields;
         this.modelName = params.modelName;
         this.actionId = params.actionId;
-        var def = this._rpc({
-            args: [this.modelName, this.actionId],
-            model: 'ir.filters',
-            method: 'get_filters',
-        }).then(function (favorites) {
-            // add groups!
-            params.groups.forEach(function (group) {
-            // determine data structure used by model
-            // we should also determine here what are the favorites and what are the
-            // default filters
-                self._createGroupOfFilters(group);
-            });
+        params.groups.forEach(function (group) {
+        // determine data structure used by model
+        // we should also determine here what are the favorites and what are the
+        // default filters
+            self._createGroupOfFilters(group);
         });
-        return def;
+        return this._loadFavorites();
     },
 
     reload: function (params) {
         var self = this;
+        var _super = this._super;
+        var def;
         if (params.toggleFilter) {
             this._toggleFilter(params.toggleFilter.id);
         }
@@ -76,6 +71,22 @@ var ControlPanelModel = mvc.Model.extend({
                 this._toggleFilter(newGroupBy.id);
             }
         }
+        if (params.newFavorite) {
+            var newFavorite = params.newFavorite;
+            def = this._saveQuery(_.pick(
+                newFavorite,
+                ['description', 'isDefault', 'isShared', 'type']
+            )).then(function () {
+                newFavorite.on_success();
+            });
+        }
+        if (params.trashItem) {
+            var id = params.trashItem.id;
+            def = this._deleteFilter(id);
+        }
+        return $.when(def).then(function () {
+            _super.apply(self, arguments);
+        });
     },
 
     get: function () {
@@ -112,6 +123,7 @@ var ControlPanelModel = mvc.Model.extend({
                 return self.filters[filterID] || self.groups[filterID];
             });
         });
+        favorites = _.sortBy(favorites, 'groupNumber');
         return {
             facets: facets,
             filters: filters,
@@ -129,22 +141,14 @@ var ControlPanelModel = mvc.Model.extend({
             this._getDomain(),
             userContext
         );
+        var context = pyUtils.eval('contexts', this._getQueryContext(), userContext);
         var groupBys = this._getGroupBys();
         return {
             // for now action manager wants domains and contexts I would prefer
             // to use domain and context.
             domain: domain,
-            contexts: {},
+            context: context,
             groupBys: groupBys,
-        };
-    },
-
-    // save favorites should call this method. Here no evaluation of domains,...
-    saveQuery: function () {
-        return {
-            domains: this._getDomain(),
-            // groupbys in context for ir.filter.
-            contexts: {},
         };
     },
 
@@ -152,6 +156,14 @@ var ControlPanelModel = mvc.Model.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    // if _saveQuery succeed we create a new favorite and activate it
+    _addNewFavorite: function (favorite) {
+        var id = _.uniqueId('__filter__');
+        favorite.id = id;
+        favorite.groupId = this.groupOfFavoritesId;
+        this.filters[id] = favorite;
+        this._toggleFilter(favorite.id);
+    },
     // group is a list of (pre) filters
     _createGroupOfFilters: function (group) {
         var self= this;
@@ -173,7 +185,44 @@ var ControlPanelModel = mvc.Model.extend({
             this.groupOfGroupBysId = groupId;
         }
     },
-
+    _createIrFilter: function (irFilter) {
+        var def = $.Deferred();
+        this.trigger_up('create_filter', {
+            filter: irFilter,
+            on_success: def.resolve.bind(def),
+        });
+        return def;
+    },
+    _deleteFilter: function (filterId) {
+        var self = this;
+        var filter = this.filters[filterId];
+        var def = this._rpc({
+                args: [filter.serverSideId],
+                model: 'ir.filters',
+                method: 'unlink',
+        }).then(function () {
+            var activeFavoriteId = self.groups[filter.groupId].activeFilterIds[0];
+            var isActive = activeFavoriteId === filterId;
+            if (isActive) {
+                self._toggleFilter(filterId);
+            }
+            delete self.filters[filterId];
+        });
+        return def;
+    },
+    // get context (without controller context (this is usefull only for favorite))
+    _getQueryContext: function () {
+        var self = this;
+        var contexts = this.query.reduce(
+            function (acc, groupId) {
+                var group = self.groups[groupId];
+                acc = acc.concat(self._getGroupContexts(group));
+                return acc;
+            },
+            []
+        );
+        return _.compact(contexts);
+    },
     _getDomain: function () {
         var self = this;
         var domains = this.query.map(function (groupId) {
@@ -182,9 +231,15 @@ var ControlPanelModel = mvc.Model.extend({
         });
         return pyUtils.assembleDomains(domains, 'AND');
     },
-
+    _getFilterContext: function (filter) {
+        var context;
+        if (filter.type === 'favorite') {
+            context = filter.context;
+        }
+        return context;
+    },
     _getFilterDomain: function (filter) {
-        var domain = "[]";
+        var domain;
         if (filter.type === 'filter') {
             domain = filter.domain;
             if (filter.domain === undefined) {
@@ -195,18 +250,25 @@ var ControlPanelModel = mvc.Model.extend({
                 );
             }
         }
+        if (filter.type === 'favorite') {
+            domain = filter.domain;
+        }
         return domain;
     },
-
-    _getFilterGroupBy: function (filter) {
-        var groupBy;
+    // should send back a list
+    _getFilterGroupBys: function (filter) {
+        var groupBys;
         if (filter.type === 'groupBy') {
-            groupBy = filter.fieldName;
+            var groupBy = filter.fieldName;
             if (filter.currentOptionId) {
                 groupBy = groupBy + ':' + filter.currentOptionId;
             }
+            groupBys = [groupBy];
         }
-        return groupBy;
+        if (filter.type === 'favorite') {
+            groupBys = filter.groupBys;
+        }
+        return groupBys;
     },
 
     _getGroupBys: function () {
@@ -220,25 +282,139 @@ var ControlPanelModel = mvc.Model.extend({
         );
         return groupBys;
     },
-
+    _getGroupContexts: function (group) {
+        var self = this;
+        var contexts = group.activeFilterIds.map(function (filterId) {
+            var filter = self.filters[filterId];
+            return self._getFilterContext(filter);
+        });
+        return _.compact(contexts);
+    },
     _getGroupDomain: function (group) {
         var self = this;
         var domains = group.activeFilterIds.map(function (filterId) {
             var filter = self.filters[filterId];
             return self._getFilterDomain(filter);
         });
-        return pyUtils.assembleDomains(domains, 'OR');
+        return pyUtils.assembleDomains(_.compact(domains), 'OR');
     },
 
     _getGroupGroupbys: function (group) {
         var self = this;
-        var groupBys = group.activeFilterIds.map(function (filterId) {
-            var filter = self.filters[filterId];
-            return self._getFilterGroupBy(filter);
-        });
+        var groupBys = group.activeFilterIds.reduce(
+            function (acc, filterId) {
+                var filter = self.filters[filterId];
+                acc = acc.concat(self._getFilterGroupBys(filter));
+                return acc;
+            },
+            []
+        );
         return _.compact(groupBys);
     },
-
+    _loadFavorites: function () {
+        var self = this;
+        var def = this._rpc({
+            args: [this.modelName, this.actionId],
+            model: 'ir.filters',
+            method: 'get_filters',
+        }).then(function (favorites) {
+            if (favorites.length) {
+                favorites = favorites.map(function (favorite) {
+                    var userId = favorite.user_id ? favorite.user_id[0] : false;
+                    var groupNumber = userId ? 1 : 2;
+                    var context = pyUtils.eval('context', favorite.context, self.getSession().user_context);
+                    var groupBys = [];
+                    if (context.group_by) {
+                        groupBys = context.group_by;
+                        delete context.group_by;
+                    }
+                    return {
+                        type: 'favorite',
+                        description: favorite.name,
+                        isRemovable: true,
+                        groupNumber: groupNumber,
+                        isDefault: favorite.is_default,
+                        domain: favorite.domain,
+                        groupBys: groupBys,
+                        context: context,
+                        sort: favorite.sort,
+                        userId: userId,
+                        serverSideId: favorite.id,
+                    };
+                });
+                self._createGroupOfFilters(favorites);
+                var defaultFavoriteId = Object.keys(self.filters).find(function (filterId) {
+                    var filter = self.filters[filterId];
+                    return filter.type === 'favorite' && filter.isDefault;
+                });
+                if (defaultFavoriteId) {
+                    self._toggleFilter(defaultFavoriteId);
+                }
+                self.groupOfFavoritesId = Object.keys(self.groups).find(function (groupId) {
+                    var group = self.groups[groupId];
+                    return group.type === 'favorite';
+                });
+            } else {
+                // create empty favorite group
+                var groupId = _.uniqueId('__group__');
+                self.groups[groupId] = {
+                    id: groupId,
+                    type: 'favorite',
+                    activeFilterIds: [],
+                };
+                self.groupOfFavoritesId = groupId;
+            }
+        });
+        return def;
+    },
+    // save favorites should call this method. Here no evaluation of domains,...
+    _saveQuery: function (favorite) {
+        var self = this;
+        var userContext = this.getSession().user_context;
+        var controllerContext;
+        this.trigger_up('get_controller_context', {
+            callback: function (context) {
+                controllerContext = context;
+            },
+        });
+         // var ctx = results.context;
+        // _(_.keys(session.user_context)).each(function (key) {
+        //     delete ctx[key];
+        // });
+        var queryContext = this._getQueryContext();
+        var context = pyUtils.eval('contexts',[userContext, controllerContext].concat(queryContext));
+        context = _.omit(context, Object.keys(userContext));
+        var groupBys = this._getGroupBys();
+        if (groupBys.length) {
+            context.group_by = groupBys;
+        }
+        // we need to remove keys in session.userContext from context.
+        var domain = this._getDomain();
+        var userId = favorite.isShared ? false : this.getSession().uid;
+        var irFilter = {
+            name: favorite.description,
+            context: context,
+            domain: domain,
+            is_default: favorite.isDefault,
+            user_id: userId,
+            model_id: this.modelName,
+            action_id: this.actionId,
+        };
+        // we don't want the groupBys to be located in the context in search view
+        delete context.group_by;
+        return this._createIrFilter(irFilter).then(function (serverSideId) {
+            favorite.isRemovable = true;
+            favorite.groupNumber = userId ? 1 : 2;
+            favorite.context = context;
+            favorite.groupBys = groupBys;
+            favorite.domain = domain;
+            favorite.sort = [];
+            // not sure keys are usefull
+            favorite.userId = userId;
+            favorite.serverSideId = serverSideId;
+            self._addNewFavorite(favorite);
+        });
+    },
     // This method could work in batch and take a list of ids as args.
     // (it would be useful for initialization and deletion of a facet/group)
     _toggleFilter: function (filterId) {

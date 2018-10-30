@@ -1433,7 +1433,7 @@
 </t>
 
 <t t-name="FavoritesMenuGenerator">
-    <div class="dropdown-divider"/>
+    <div t-if="widget.items.length !== 0" class="dropdown-divider o_generator_menu"/>
     <button type="button" class="dropdown-item o_generator_menu o_add_favorite">Save Current Search</button>
     <div t-if="widget.generatorMenuIsOpen" class="dropdown-item-text o_generator_menu">
         <div role="menuitem" class="dropdown-item-text o_favorite_name">

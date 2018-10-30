@@ -8,7 +8,9 @@ var ControlPanelController = mvc.Controller.extend({
         button_clicked: '_onButtonClicked',
         facet_removed: '_onFacetRemoved',
         item_option_clicked: '_onItemOptionClicked',
+        item_trashed: '_onItemTrashed',
         menu_item_clicked: '_onMenuItemClicked',
+        new_favorite: '_onNewFavorite',
         new_filters: '_onNewFilters',
         new_groupBy: '_onNewGroupBy',
     },
@@ -116,15 +118,21 @@ var ControlPanelController = mvc.Controller.extend({
     _onItemOptionClicked: function (event) {
         return this.update2({toggleOption: event.data});
     },
+    _onItemTrashed: function (event) {
+        return this.update2({trashItem: event.data});
+    },
     _onMenuItemClicked: function (event) {
         return this.update2({toggleFilter: event.data});
+    },
+    _onNewFavorite: function (event) {
+        return this.update2({newFavorite: event.data});
     },
     _onNewFilters: function (event) {
         return this.update2({newFilters: event.data});
     },
     _onNewGroupBy: function (event) {
         return this.update2({newGroupBy: event.data});
-    }
+    },
 });
 
 return ControlPanelController;

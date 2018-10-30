@@ -477,14 +477,14 @@ ActionManager.include({
      * @returns {Object} an object with keys 'context', 'domain', 'groupBy'
      */
     _processSearchData: function (action, searchData) {
-        var contexts = searchData.contexts;
+        var context = searchData.context;
         var domain = searchData.domain;
         // horrible! we should change that!
         var groupBys = searchData.groupBys;
         var action_context = action.context || {};
         var results = pyUtils.eval_domains_and_contexts({
             domains: [action.domain || []].concat([domain] || []),
-            contexts: [action_context].concat(contexts || []),
+            contexts: [action_context].concat(context || []),
             eval_context: this.userContext,
         });
         var groupBy = groupBys.length ?

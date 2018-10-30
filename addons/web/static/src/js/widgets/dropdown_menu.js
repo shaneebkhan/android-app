@@ -12,6 +12,7 @@ var DropdownMenu = Widget.extend({
     events: {
         'click .o_menu_item': '_onItemClick',
         'click .o_item_option': '_onOptionClick',
+        'click span.o_trash_button': '_onTrashButtonClick',
         'hidden.bs.dropdown': '_onBootstrapClose',
     },
 
@@ -103,6 +104,14 @@ var DropdownMenu = Widget.extend({
         var id = $(event.currentTarget).data('item_id');
         this.trigger_up('item_option_clicked', {id: id, optionId: optionId});
     },
+    /**
+     * @private
+     * @param {MouseEvent} event
+     *
+     * To implement in child
+     */
+     _onTrashButtonClick: function (event) {
+     },
 });
 
 return DropdownMenu;
