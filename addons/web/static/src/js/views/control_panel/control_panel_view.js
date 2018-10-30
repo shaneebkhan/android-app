@@ -62,29 +62,36 @@ return ControlPanelMixin;
 odoo.define('web.ControlPanelView', function (require) {
 "use strict";
 
-var AbstractView = require('web.AbstractView');
 var ControlPanelController = require('web.ControlPanelController');
 var ControlPanelModel = require('web.ControlPanelModel');
 var ControlPanelRenderer = require('web.ControlPanelRenderer');
+var mvc = require('web.mvc');
+var viewUtils = require('web.viewUtils');
 
-var ControlPanelView = AbstractView.extend({
-    config: {
+var Factory = mvc.Factory;
+
+var ControlPanelView = Factory.extend({
+    config: _.extend({}, Factory.prototype.config, {
         Controller: ControlPanelController,
         Model: ControlPanelModel,
         Renderer: ControlPanelRenderer,
-    },
+    }),
     viewType: 'controlpanel',
 
     /**
      * @override
+     * @param {Object} [params]
+     * @param {Object} [params.viewInfo] a controlpanel (or search) fieldsview
+     * @param {string} [params.viewInfo.arch]
      * @param {string} [params.template] the QWeb template to render
      */
-    init: function (viewInfo, params) {
-        viewInfo = viewInfo || {arch: {attrs: {}}, fields: {}};
+    init: function (params) {
+        this._super();
         params = params || {};
-        params.context = {};
-        this._super(viewInfo, params);
+        var viewInfo = params.viewInfo || {arch: '<controlpanel/>', fields: {}};
 
+        this.arch = viewUtils.parseArch(viewInfo.arch);
+        this.fields = viewInfo.fields;
         if (this.arch.tag === 'controlpanel') {
             this._parseControlPanelArch();
         } else {

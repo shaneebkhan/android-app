@@ -1,9 +1,9 @@
 odoo.define('web.ControlPanelController', function (require) {
 "use strict";
 
-var AbstractController = require('web.AbstractController');
+var mvc = require('web.mvc');
 
-var ControlPanelController = AbstractController.extend({
+var ControlPanelController = mvc.Controller.extend({
     custom_events: {
         button_clicked: '_onButtonClicked',
     },

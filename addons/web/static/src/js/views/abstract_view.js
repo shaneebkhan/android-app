@@ -28,9 +28,11 @@ var AbstractModel = require('web.AbstractModel');
 var AbstractRenderer = require('web.AbstractRenderer');
 var AbstractController = require('web.AbstractController');
 var mvc = require('web.mvc');
-var utils = require('web.utils');
+var viewUtils = require('web.viewUtils');
 
-var AbstractView = mvc.Factory.extend({
+var Factory = mvc.Factory;
+
+var AbstractView = Factory.extend({
     // name displayed in view switchers
     display_name: '',
     // indicates whether or not the view is mobile-friendly
@@ -51,11 +53,11 @@ var AbstractView = mvc.Factory.extend({
     // grouping data.
     groupable: true,
     enableTimeRangeMenu: false,
-    config: {
+    config: _.extend({}, Factory.prototype.config, {
         Model: AbstractModel,
         Renderer: AbstractRenderer,
         Controller: AbstractController,
-    },
+    }),
 
     /**
      * The constructor function is supposed to set 3 variables: rendererParams,
@@ -250,9 +252,7 @@ var AbstractView = mvc.Factory.extend({
      */
     _processFieldsView: function (fieldsView) {
         var fv = _.extend({}, fieldsView);
-        var doc = $.parseXML(fv.arch).documentElement;
-        var stripWhitespaces = doc.nodeName.toLowerCase() !== 'kanban';
-        fv.arch = utils.xml_to_json(doc, stripWhitespaces);
+        fv.arch = viewUtils.parseArch(fv.arch);
         fv.viewFields = _.defaults({}, fv.viewFields, fv.fields);
         return fv;
     },

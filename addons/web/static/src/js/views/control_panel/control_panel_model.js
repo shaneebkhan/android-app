@@ -1,9 +1,9 @@
 odoo.define('web.ControlPanelModel', function (require) {
 "use strict";
 
-var AbstractModel = require('web.AbstractModel');
+var mvc = require('web.mvc');
 
-var ControlPanelModel = AbstractModel.extend({
+var ControlPanelModel = mvc.Model.extend({
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------

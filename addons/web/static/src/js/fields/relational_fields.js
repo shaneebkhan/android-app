@@ -1029,7 +1029,7 @@ var FieldX2Many = AbstractField.extend({
         }
         var self = this;
         var defs = [];
-        var controlPanelView = new ControlPanelView(null, {
+        var controlPanelView = new ControlPanelView({
             template: 'X2ManyControlPanel',
         });
         var cpDef = controlPanelView.getController(this).then(function (controlPanel) {

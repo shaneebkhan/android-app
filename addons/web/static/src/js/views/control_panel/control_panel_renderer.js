@@ -1,13 +1,15 @@
 odoo.define('web.ControlPanelRenderer', function (require) {
 "use strict";
 
-var AbstractRenderer = require('web.AbstractRenderer');
 var data = require('web.data');
+var mvc = require('web.mvc');
 var viewUtils = require('web.viewUtils');
 
-var ControlPanelRenderer = AbstractRenderer.extend({
+var Renderer = mvc.Renderer;
+
+var ControlPanelRenderer = Renderer.extend({
     template: 'ControlPanel',
-    events: _.extend({}, AbstractRenderer.prototype.events, {
+    events: _.extend({}, Renderer.prototype.events, {
         'click.bs.dropdown .o_search_options .dropdown-menu': '_onDropdownClicked',
     }),
 

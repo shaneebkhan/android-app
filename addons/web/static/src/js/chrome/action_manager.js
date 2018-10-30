@@ -300,14 +300,8 @@ var ActionManager = Widget.extend({
         }
 
         var action = this.actions[controller.actionID];
-        var params = {
-            actionId: action.id,
-            context: action.context,
-            domain: action.domain,
-            modelName: action.res_model, // FIXME: act_window specific
-        };
-        var viewInfo = action.searchFieldsView; // FIXME: act_window specific
-        var controlPanelView = new ControlPanelView(viewInfo, params);
+        var params = this._getControlPanelParams(action);
+        var controlPanelView = new ControlPanelView(params);
         return controlPanelView.getController(this).then(function (controlPanel) {
             action.controlPanel = controlPanel;
             // set the ControlPanel on the controller to allow it to update it
@@ -663,6 +657,19 @@ var ActionManager = Widget.extend({
             }
         }
         return state;
+    },
+    /**
+     * Given an action, returns the params to instantiate the ControlPanel.
+     *
+     * @private
+     * @param {Object} action
+     * @returns {Object}
+     */
+    _getControlPanelParams: function (action) {
+        return {
+            actionId: action.id,
+            context: action.context,
+        };
     },
     /**
      * Returns the current horizontal and vertical scroll positions.

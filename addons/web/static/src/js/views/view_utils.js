@@ -2,8 +2,9 @@ odoo.define('web.viewUtils', function (require) {
 "use strict";
 
 var dom = require('web.dom');
+var utils = require('web.utils');
 
-var utils = {
+var viewUtils = {
     /**
      * Returns the value of a group dataPoint, i.e. the value of the groupBy
      * field for the records in that group.
@@ -43,6 +44,15 @@ var utils = {
         return true;
     },
     /**
+     * @param {string} arch view arch
+     * @returns {Object} parsed arch
+     */
+    parseArch: function (arch) {
+        var doc = $.parseXML(arch).documentElement;
+        var stripWhitespaces = doc.nodeName.toLowerCase() !== 'kanban';
+        return utils.xml_to_json(doc, stripWhitespaces);
+    },
+    /**
      * Renders a button according to a given arch node element.
      *
      * @param {Object} node
@@ -72,6 +82,6 @@ var utils = {
     },
 };
 
-return utils;
+return viewUtils;
 
 });

@@ -489,6 +489,21 @@ ActionManager.include({
      * @override
      * @private
      */
+    _getControlPanelParams: function (action) {
+        var params = this._super.apply(this, arguments);
+        if (action.type === 'ir.actions.act_window') {
+            params.domain = action.domain;
+            params.modelName = action.res_model;
+            params.viewInfo = action.searchFieldsView;
+        }
+        return params;
+    },
+    /**
+     * Overrides to handle the 'ir.actions.act_window' actions.
+     *
+     * @override
+     * @private
+     */
     _handleAction: function (action, options) {
         if (action.type === 'ir.actions.act_window') {
             return this._executeWindowAction(action, options);
