@@ -262,12 +262,12 @@
         <script type="text/javascript" src="/web/static/src/js/fields/special_fields.js"></script>
         <script type="text/javascript" src="/web/static/src/js/fields/upgrade_fields.js"></script>
 
-        <script type="text/javascript" src="/web/static/src/js/views/abstract_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/abstract_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/abstract_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/abstract_model.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/abstract_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/basic/basic_model.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/basic/basic_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/basic/basic_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/basic/basic_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/basic/basic_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/field_manager_mixin.js"></script>
@@ -277,11 +277,11 @@
         <script type="text/javascript" src="/web/static/src/js/views/view_utils.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/form/form_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/form/form_controller.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/form/form_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/form/form_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/graph/graph_model.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/graph/graph_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/graph/graph_renderer.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/graph/graph_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/graph/graph_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_column.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_column_progressbar.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_column_quick_create.js"></script>
@@ -292,22 +292,22 @@
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_record_quick_create.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_renderer_mobile.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/kanban/kanban_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/kanban/quick_create_form_view.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/list/list_editable_renderer.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/list/list_renderer.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/list/list_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/list/list_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/list/list_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/pivot/pivot_model.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/pivot/pivot_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/pivot/pivot_renderer.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/pivot/pivot_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/pivot/pivot_factory.js"></script>
 
         <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_controller.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_model.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_quick_create.js"></script>
         <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_renderer.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_view.js"></script>
+        <script type="text/javascript" src="/web/static/src/js/views/calendar/calendar_factory.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/attach_document.js"></script>
 
         <script type="text/javascript" src="/web/static/src/js/report/utils.js"/>
