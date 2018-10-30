@@ -1,8 +1,8 @@
-odoo.define('web.BasicView', function (require) {
+odoo.define('web.BasicFactory', function (require) {
 "use strict";
 
 /**
- * The BasicView is an abstract class designed to share code between views that
+ * The BasicFactory is an abstract class designed to share code between views that
  * want to use a basicModel.  As of now, it is the form view, the list view and
  * the kanban view.
  *
@@ -10,7 +10,7 @@ odoo.define('web.BasicView', function (require) {
  * attributes, as well as some other useful informations.
  */
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var BasicController = require('web.BasicController');
 var BasicModel = require('web.BasicModel');
 var config = require('web.config');
@@ -18,8 +18,8 @@ var fieldRegistry = require('web.field_registry');
 var pyUtils = require('web.py_utils');
 var utils = require('web.utils');
 
-var BasicView = AbstractView.extend({
-    config: _.extend({}, AbstractView.prototype.config, {
+var BasicFactory = AbstractFactory.extend({
+    config: _.extend({}, AbstractFactory.prototype.config, {
         Model: BasicModel,
         Controller: BasicController,
     }),
@@ -427,6 +427,6 @@ var BasicView = AbstractView.extend({
     },
 });
 
-return BasicView;
+return BasicFactory;
 
 });

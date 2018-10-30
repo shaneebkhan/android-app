@@ -1,7 +1,7 @@
 odoo.define('web.FormView', function (require) {
 "use strict";
 
-var BasicView = require('web.BasicView');
+var BasicFactory = require('web.BasicFactory');
 var config = require('web.config');
 var Context = require('web.Context');
 var core = require('web.core');
@@ -10,8 +10,8 @@ var FormRenderer = require('web.FormRenderer');
 
 var _lt = core._lt;
 
-var FormView = BasicView.extend({
-    config: _.extend({}, BasicView.prototype.config, {
+var FormView = BasicFactory.extend({
+    config: _.extend({}, BasicFactory.prototype.config, {
         Renderer: FormRenderer,
         Controller: FormController,
     }),

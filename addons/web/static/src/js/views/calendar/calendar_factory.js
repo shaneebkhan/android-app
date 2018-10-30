@@ -1,7 +1,7 @@
-odoo.define('web.CalendarView', function (require) {
+odoo.define('web.CalendarFactory', function (require) {
 "use strict";
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var CalendarModel = require('web.CalendarModel');
 var CalendarController = require('web.CalendarController');
 var CalendarRenderer = require('web.CalendarRenderer');
@@ -18,7 +18,7 @@ var fieldsToGather = [
     "all_day",
 ];
 
-var CalendarView = AbstractView.extend({
+var CalendarFactory = AbstractFactory.extend({
     display_name: _lt('Calendar'),
     icon: 'fa-calendar',
     jsLibs: ['/web/static/lib/fullcalendar/js/fullcalendar.js'],
@@ -157,6 +157,6 @@ var CalendarView = AbstractView.extend({
     },
 });
 
-return CalendarView;
+return CalendarFactory;
 
 });

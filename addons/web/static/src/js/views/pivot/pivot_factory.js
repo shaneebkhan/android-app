@@ -1,4 +1,4 @@
-odoo.define('web.PivotView', function (require) {
+odoo.define('web.PivotFactory', function (require) {
 "use strict";
 
 /**
@@ -7,7 +7,7 @@ odoo.define('web.PivotView', function (require) {
  * 'zoom in' data.
  */
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var core = require('web.core');
 var PivotModel = require('web.PivotModel');
 var PivotController = require('web.PivotController');
@@ -19,7 +19,7 @@ var _lt = core._lt;
 var GROUPABLE_TYPES =
     ['many2one', 'char', 'boolean', 'selection', 'date', 'datetime'];
 
-var PivotView = AbstractView.extend({
+var PivotFactory = AbstractFactory.extend({
     display_name: _lt('Pivot'),
     icon: 'fa-table',
     config: {
@@ -123,6 +123,6 @@ var PivotView = AbstractView.extend({
     },
 });
 
-return PivotView;
+return PivotFactory;
 
 });

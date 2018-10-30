@@ -153,23 +153,23 @@ highlight the steps that will probably need to be done (in no particular order):
 
 
 - creating the four main pieces which makes a view (in JavaScript):
-    we need a view (a subclass of ``AbstractView``, this is the factory), a
-    renderer (from ``AbstractRenderer``), a controller (from ``AbstractController``)
-    and a model (from ``AbstractModel``).  I suggest starting by simply
-    extending the superclasses:
+    we need a factory (a subclass of ``AbstractFactory``), a renderer (from
+    ``AbstractRenderer``), a controller (from ``AbstractController``) and a
+    model (from ``AbstractModel``).  I suggest starting by simply extending the
+    superclasses:
 
     .. code-block:: javascript
 
         var AbstractController = require('web.AbstractController');
         var AbstractModel = require('web.AbstractModel');
         var AbstractRenderer = require('web.AbstractRenderer');
-        var AbstractView = require('web.AbstractView');
+        var AbstractFactory = require('web.AbstractFactory');
 
         var MapController = AbstractController.extend({});
         var MapRenderer = AbstractRenderer.extend({});
         var MapModel = AbstractModel.extend({});
 
-        var MapView = AbstractView.extend({
+        var MapFactory = AbstractFactory.extend({
             config: {
                 Model: MapModel,
                 Controller: MapController,
@@ -185,7 +185,7 @@ highlight the steps that will probably need to be done (in no particular order):
 
         var viewRegistry = require('web.view_registry');
 
-        viewRegistry.add('map', MapView);
+        viewRegistry.add('map', MapFactory);
 
 - implementing the four main classes:
     The ``View`` class needs to parse the ``arch`` field and setup the other

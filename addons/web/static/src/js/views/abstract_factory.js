@@ -1,4 +1,4 @@
-odoo.define('web.AbstractView', function (require) {
+odoo.define('web.AbstractFactory', function (require) {
 "use strict";
 
 /**
@@ -30,7 +30,7 @@ var AbstractRenderer = require('web.AbstractRenderer');
 var AbstractController = require('web.AbstractController');
 var utils = require('web.utils');
 
-var AbstractView = Class.extend({
+var AbstractFactory = Class.extend({
     // name displayed in view switchers
     display_name: '',
     // indicates whether or not the view is mobile-friendly
@@ -62,7 +62,7 @@ var AbstractView = Class.extend({
      * controllerParams and loadParams.  These values will be used to initialize
      * the model, renderer and controllers.
      *
-     * @constructs AbstractView
+     * @constructs AbstractFactory
      *
      * @param {Object} viewInfo
      * @param {Object} viewInfo.arch
@@ -305,6 +305,6 @@ var AbstractView = Class.extend({
     },
 });
 
-return AbstractView;
+return AbstractFactory;
 
 });

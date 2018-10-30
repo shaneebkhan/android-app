@@ -1,7 +1,7 @@
 odoo.define('web.notification_tests', function (require) {
 "use strict";
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var Notification = require('web.Notification');
 var NotificationService = require('web.NotificationService');
 
@@ -16,7 +16,7 @@ QUnit.module('Services', {
             _animationDelay: 0,
         });
         this.viewParams = {
-            View: AbstractView,
+            View: AbstractFactory,
             arch: '<fake/>',
             data: {
             fake_model: {

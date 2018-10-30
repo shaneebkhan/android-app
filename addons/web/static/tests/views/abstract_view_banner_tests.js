@@ -2,7 +2,7 @@ odoo.define('web.abstract_view_banner_tests', function (require) {
 "use strict";
 
 var AbstractRenderer = require('web.AbstractRenderer');
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 
 var testUtils = require('web.test_utils');
 var createAsyncView = testUtils.createAsyncView;
@@ -14,9 +14,9 @@ var TestRenderer = AbstractRenderer.extend({
     },
 });
 
-var TestView = AbstractView.extend({
+var TestView = AbstractFactory.extend({
     type: 'test',
-    config: _.extend({}, AbstractView.prototype.config, {
+    config: _.extend({}, AbstractFactory.prototype.config, {
         Renderer: TestRenderer
     }),
 });

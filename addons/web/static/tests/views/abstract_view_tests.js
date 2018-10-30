@@ -1,7 +1,7 @@
 odoo.define('web.abstract_view_tests', function (require) {
 "use strict";
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var ajax = require('web.ajax');
 var testUtils = require('web.test_utils');
 
@@ -18,7 +18,7 @@ QUnit.module('Views', {
     },
 }, function () {
 
-    QUnit.module('AbstractView');
+    QUnit.module('AbstractFactory');
 
     QUnit.test('lazy loading of js libs (in parallel)', function (assert) {
         var done = assert.async();
@@ -33,7 +33,7 @@ QUnit.module('Views', {
             });
         };
 
-        var View = AbstractView.extend({
+        var View = AbstractFactory.extend({
             jsLibs: [['a', 'b']],
         });
         createAsyncView({
@@ -71,7 +71,7 @@ QUnit.module('Views', {
             });
         };
 
-        var View = AbstractView.extend({
+        var View = AbstractFactory.extend({
             jsLibs: [
                 ['a', 'b'],
                 'c',

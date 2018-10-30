@@ -1,11 +1,11 @@
-odoo.define('mail.BasicView', function (require) {
+odoo.define('mail.BasicFactory', function (require) {
 "use strict";
 
-var BasicView = require('web.BasicView');
+var BasicFactory = require('web.BasicFactory');
 
 var mailWidgets = ['mail_followers', 'mail_thread', 'mail_activity', 'kanban_activity'];
 
-BasicView.include({
+BasicFactory.include({
     init: function () {
         this._super.apply(this, arguments);
         this.mailFields = {};

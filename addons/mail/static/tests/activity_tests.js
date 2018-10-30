@@ -1,7 +1,7 @@
 odoo.define('mail.activity_view_tests', function (require) {
 'use strict';
 
-var ActivityView = require('mail.ActivityView');
+var ActivityFactory = require('mail.ActivityFactory');
 var testUtils = require('web.test_utils');
 
 var createActionManager = testUtils.createActionManager;
@@ -160,7 +160,7 @@ QUnit.module('activity view', {
 QUnit.test('activity view: simple activity rendering', function (assert) {
     assert.expect(7);
     var activity = createView({
-        View: ActivityView,
+        View: ActivityFactory,
         model: 'task',
         data: this.data,
         arch: '<activity string="Task"/>',
@@ -192,7 +192,7 @@ QUnit.test('activity view: simple activity rendering', function (assert) {
 QUnit.test('activity view: no content rendering', function (assert) {
     assert.expect(2);
     var activity = createView({
-        View: ActivityView,
+        View: ActivityFactory,
         model: 'task',
         data: this.data,
         arch: '<activity string="Task"/>',
@@ -216,7 +216,7 @@ QUnit.test('activity view: no content rendering', function (assert) {
 QUnit.test('activity view: batch send mail on activity', function (assert) {
     assert.expect(6);
     var activity = createView({
-        View: ActivityView,
+        View: ActivityFactory,
         model: 'task',
         data: this.data,
         arch: '<activity string="Task"/>',
@@ -255,7 +255,7 @@ QUnit.test('activity view: batch send mail on activity', function (assert) {
 QUnit.test('activity view: activity widget', function (assert) {
     assert.expect(16);
     var activity = createView({
-        View: ActivityView,
+        View: ActivityFactory,
         model: 'task',
         data: this.data,
         arch: '<activity string="Task"/>',

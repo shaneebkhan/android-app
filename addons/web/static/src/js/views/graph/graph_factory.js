@@ -1,4 +1,4 @@
-odoo.define('web.GraphView', function (require) {
+odoo.define('web.GraphFactory', function (require) {
 "use strict";
 
 /**
@@ -7,7 +7,7 @@ odoo.define('web.GraphView', function (require) {
  * display data in three types of chart: bar chart, line chart and pie chart.
  */
 
-var AbstractView = require('web.AbstractView');
+var AbstractFactory = require('web.AbstractFactory');
 var core = require('web.core');
 var GraphModel = require('web.GraphModel');
 var Controller = require('web.GraphController');
@@ -19,7 +19,7 @@ var _lt = core._lt;
 var GROUPABLE_TYPES =
     ['many2one', 'char', 'boolean', 'selection', 'date', 'datetime'];
 
-var GraphView = AbstractView.extend({
+var GraphFactory = AbstractFactory.extend({
     display_name: _lt('Graph'),
     icon: 'fa-bar-chart',
     cssLibs: [
@@ -92,6 +92,6 @@ var GraphView = AbstractView.extend({
     },
 });
 
-return GraphView;
+return GraphFactory;
 
 });
