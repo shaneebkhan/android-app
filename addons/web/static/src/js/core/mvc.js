@@ -19,6 +19,7 @@ var Model = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
         mixins.EventDispatcherMixin.init.call(this);
         this.setParent(parent);
     },
+
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
@@ -46,6 +47,11 @@ var Model = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
 });
 
 var Renderer = Widget.extend({
+    /**
+     * @override
+     * @param {any} state
+     * @param {Object} params
+     */
     init: function (parent, state, params) {
         this._super(parent);
         this.state = state;
@@ -54,8 +60,7 @@ var Renderer = Widget.extend({
 
 var Controller = Widget.extend({
     /**
-     * @constructor
-     * @param {Widget} parent
+     * @override
      * @param {Model} model
      * @param {Renderer} renderer
      * @param {Object} params
@@ -127,6 +132,7 @@ var Factory = Class.extend({
     getModel: function (parent) {
         var Model = this.config.Model;
         this.model = new Model(parent);
+        return this.model;
     },
     /**
      * Returns a new renderer instance

@@ -14,15 +14,11 @@ var Widget = require('web.Widget');
  */
 return Widget.extend({
     /**
-     * @constructor
-     * @param {Widget} parent
-     * @param {any} state
-     * @param {Object} params
+     * @override
      * @param {string} [params.noContentHelp]
      */
     init: function (parent, state, params) {
         this._super(parent);
-        this.state = state;
         this.arch = params.arch;
         this.noContentHelp = params.noContentHelp;
     },

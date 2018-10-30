@@ -17,49 +17,21 @@ odoo.define('web.AbstractModel', function (require) {
 var Class = require('web.Class');
 var fieldUtils = require('web.field_utils');
 var mixins = require('web.mixins');
+var mvc = require('web.mvc');
 var ServicesMixin = require('web.ServicesMixin');
 
-var AbstractModel = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
-    /**
-     * @param {Widget} parent
-     */
-    init: function (parent) {
-        mixins.EventDispatcherMixin.init.call(this);
-        this.setParent(parent);
-    },
-
+var AbstractModel = mvc.Model.extend({
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
 
-    /**
-     * This method should return the complete state necessary for the renderer
-     * to display the currently viewed data.
-     *
-     * @returns {*}
-     */
-    get: function () {
-    },
-    /**
-     * The load method is called once in a model, when we load the data for the
-     * first time.  The method returns (a deferred that resolves to) some kind
-     * of token/handle.  The handle can then be used with the get method to
-     * access a representation of the data.
-     *
-     * @param {Object} params
-     * @param {string} params.modelName the name of the model
-     * @returns {Deferred} The deferred resolves to some kind of handle
-     */
-    load: function (params) {
-        return $.when();
-    },
     /**
      * When something changes, the data may need to be refetched.  This is the
      * job for this method: reloading (only if necessary) all the data and
      * making sure that they are ready to be redisplayed.
      *
      * @param {Object} params
-     * @returns {Deferred}
+     * @returns {Promise}
      */
     reload: function (params) {
         return $.when();

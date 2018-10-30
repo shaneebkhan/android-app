@@ -12,16 +12,17 @@ odoo.define('web.AbstractController', function (require) {
  * reading localstorage, ...) has to go through the controller.
  */
 
-var AbstractAction = require('web.AbstractAction');
+var ActionMixin = require('web.ActionMixin');
 var ajax = require('web.ajax');
 var concurrency = require('web.concurrency');
 var config = require('web.config');
 var ControlPanelMixin = require('web.ControlPanelMixin');
 var core = require('web.core');
+var mvc = require('web.mvc');
 
 var QWeb = core.qweb;
 
-var AbstractController = AbstractAction.extend(ControlPanelMixin, {
+var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
     custom_events: {
         open_record: '_onOpenRecord',
         switch_view: '_onSwitchView',
@@ -31,11 +32,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
     },
 
     /**
-     * @constructor
-     * @param {Widget} parent
-     * @param {AbstractModel} model
-     * @param {AbstractRenderer} renderer
-     * @param {object} params
+     * @override
      * @param {string} params.modelName
      * @param {string} [params.controllerID] an id to ease the communication
      *   with upstream components
@@ -49,8 +46,6 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
      */
     init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
-        this.model = model;
-        this.renderer = renderer;
         this.modelName = params.modelName;
         this.handle = params.handle;
         this.activeActions = params.activeActions;
@@ -89,10 +84,7 @@ var AbstractController = AbstractAction.extend(ControlPanelMixin, {
         // render the ControlPanel elements (buttons, pager, sidebar...)
         this.controlPanelElements = this._renderControlPanelElements();
 
-        return $.when(
-            this._super.apply(this, arguments),
-            this.renderer.appendTo(this.$el)
-        ).then(function () {
+        return this._super.apply(this, arguments).then(function () {
             return self._update(self.initialState);
         });
     },
