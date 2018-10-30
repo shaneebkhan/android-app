@@ -9,7 +9,7 @@
                 <script type="text/javascript" src="/web_diagram/static/src/js/diagram_model.js"></script>
                 <script type="text/javascript" src="/web_diagram/static/src/js/diagram_controller.js"></script>
                 <script type="text/javascript" src="/web_diagram/static/src/js/diagram_renderer.js"></script>
-                <script type="text/javascript" src="/web_diagram/static/src/js/diagram_view.js"></script>
+                <script type="text/javascript" src="/web_diagram/static/src/js/diagram_factory.js"></script>
                 <script type="text/javascript" src="/web_diagram/static/src/js/view_registry.js"></script>
             </xpath>
         </template>
