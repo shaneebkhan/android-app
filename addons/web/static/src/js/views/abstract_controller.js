@@ -37,7 +37,6 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
      * @param {string} [params.controllerID] an id to ease the communication
      *   with upstream components
      * @param {any} [params.handle] a handle that will be given to the model (some id)
-     * @param {any} params.initialState the initialState
      * @param {boolean} params.isMultiRecord
      * @param {Object[]} params.actionViews
      * @param {string} params.viewType
@@ -47,7 +46,6 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
     init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
         this.modelName = params.modelName;
-        this.handle = params.handle;
         this.activeActions = params.activeActions;
         this.controllerID = params.controllerID;
         this.initialState = params.initialState;

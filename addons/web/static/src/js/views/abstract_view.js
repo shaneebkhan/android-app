@@ -202,12 +202,12 @@ var AbstractView = mvc.Factory.extend({
     /**
      * @override
      */
-    getController: function () {
+    getController: function (parent) {
         var self = this;
         // check if a model already exists, as if not, one will be created and
         // we'll have to set the controller as its parent
         var alreadyHasModel = !!this.model;
-        return this._super.apply(this, arguments).done(function () {
+        return this._super.apply(this, arguments).done(function (controller) {
             if (!alreadyHasModel) {
                 // if we have a model, it already has a parent. Otherwise, we
                 // set the controller, so the rpcs from the model actually work
@@ -222,7 +222,7 @@ var AbstractView = mvc.Factory.extend({
      */
     getModel: function () {
         if (!this.model) {
-            return this._super.apply(this, arguments);
+            this.model = this._super.apply(this, arguments);
         }
         return this.model;
     },

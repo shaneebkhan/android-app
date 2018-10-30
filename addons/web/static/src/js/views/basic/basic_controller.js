@@ -36,8 +36,8 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         this.confirmOnDelete = params.confirmOnDelete;
         this.hasButtons = params.hasButtons;
         FieldManagerMixin.init.call(this, this.model);
-        this.handle = params.initialState.id;
         this.mode = params.mode || 'readonly';
+        this.handle = this.initialState.id;
     },
     /**
      * @override

@@ -114,11 +114,13 @@ var Factory = Class.extend({
      */
     getController: function (parent) {
         var self = this;
-        return $.when(this._loadData(parent), ajax.loadLibs(this)).then(function () {
-            var state = self.model.get(arguments[0]);
+        return $.when(this._loadData(parent), ajax.loadLibs(this)).then(function (state) {
             var renderer = self.getRenderer(parent, state);
             var Controller = self.Controller || self.config.Controller;
-            var controller = new Controller(parent, self.model, renderer, self.controllerParams);
+            var controllerParams = _.extend({
+                initialState: state,
+            }, self.controllerParams);
+            var controller = new Controller(parent, self.model, renderer, controllerParams);
             renderer.setParent(controller);
             return controller;
         });
@@ -131,8 +133,7 @@ var Factory = Class.extend({
      */
     getModel: function (parent) {
         var Model = this.config.Model;
-        this.model = new Model(parent);
-        return this.model;
+        return new Model(parent);
     },
     /**
      * Returns a new renderer instance

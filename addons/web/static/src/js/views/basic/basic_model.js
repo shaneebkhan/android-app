@@ -727,6 +727,7 @@ var BasicModel = AbstractModel.extend({
      * @returns {Deferred<string>} resolves to a local id, or handle
      */
     load: function (params) {
+        var self = this;
         params.type = params.type || (params.res_id !== undefined ? 'record' : 'list');
         // FIXME: the following seems only to be used by the basic_model_tests
         // so it should probably be removed and the tests should be adapted
@@ -746,7 +747,7 @@ var BasicModel = AbstractModel.extend({
         }
         var dataPoint = this._makeDataPoint(params);
         return this._load(dataPoint).then(function () {
-            return dataPoint.id;
+            return self.get(dataPoint.id);
         });
     },
     /**
