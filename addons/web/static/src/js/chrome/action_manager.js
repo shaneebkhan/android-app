@@ -301,7 +301,9 @@ var ActionManager = Widget.extend({
 
         var action = this.actions[controller.actionID];
         var params = {
+            actionId: action.id,
             context: action.context,
+            domain: action.domain,
             modelName: action.res_model, // FIXME: act_window specific
         };
         var viewInfo = action.searchFieldsView; // FIXME: act_window specific

@@ -10,7 +10,6 @@ var ActionManager = require('web.ActionManager');
 var config = require('web.config');
 var Context = require('web.Context');
 var core = require('web.core');
-var data = require('web.data'); // this will be removed at some point
 var pyUtils = require('web.py_utils');
 var SearchView = require('web.SearchView');
 var view_registry = require('web.view_registry');
@@ -124,36 +123,30 @@ ActionManager.include({
     _createSearchView: function (action) {
         // if requested, keep the searchview of the current action instead of
         // creating a new one
-        if (action._keepSearchView) {
-            var currentAction = this.getCurrentAction();
-            if (currentAction) {
-                action.searchView = currentAction.searchView;
-                action.env = currentAction.env; // make those actions share the same env
-                return $.when(currentAction.searchView);
-            } else {
-                // there is not searchview to keep, so reset the flag to false
-                // to ensure that the one that will be created will be correctly
-                // destroyed
-                action._keepSearchView = false;
-            }
-        }
-
-        // AAB: temporarily create a dataset, until the SearchView is refactored
-        // and stops using it
-        var dataset = new data.DataSetSearch(this, action.res_model, action.context, action.domain);
-        if (action.res_id) {
-            dataset.ids.push(action.res_id);
-            dataset.index = 0;
-        }
+        // FIXME: this shouldn't be useful anymore (serialization)
+        // if (action._keepSearchView) {
+        //     var currentAction = this.getCurrentAction();
+        //     if (currentAction) {
+        //         action.searchView = currentAction.searchView;
+        //         action.env = currentAction.env; // make those actions share the same env
+        //         return $.when(currentAction.searchView);
+        //     } else {
+        //         // there is not searchview to keep, so reset the flag to false
+        //         // to ensure that the one that will be created will be correctly
+        //         // destroyed
+        //         action._keepSearchView = false;
+        //     }
+        // }
 
         // find 'search_default_*' keys in actions's context
-        var searchDefaults = {};
-        _.each(action.context, function (value, key) {
-            var match = /^search_default_(.*)$/.exec(key);
-            if (match) {
-                searchDefaults[match[1]] = value;
-            }
-        });
+        // FIXME: move into CPView
+        // var searchDefaults = {};
+        // _.each(action.context, function (value, key) {
+        //     var match = /^search_default_(.*)$/.exec(key);
+        //     if (match) {
+        //         searchDefaults[match[1]] = value;
+        //     }
+        // });
 
         var viewInfo = {
             arch: action.searchFieldsView.arch,
@@ -176,6 +169,8 @@ ActionManager.include({
                 return controller;
             });
         });
+
+        // FIXME: options?
         // var searchView = new SearchView(this, dataset, action.searchFieldsView, {
         //     $buttons: $('<div>'),
         //     action: action,
@@ -347,16 +342,13 @@ ActionManager.include({
             }
 
             var def;
-            if (action.flags.hasSearchView) {
-                def = self._createSearchView(action).then(function (searchController) {
-                    var searchState = searchController.getSearchState();
-                    _.extend(action.env, searchState);
-
-                    // // udpate domain, context and groupby in the env
-                    // var searchData = searchView.build_search_data();
-                    // _.extend(action.env, self._processSearchData(action, searchData));
-                });
-            }
+            // FIXME: flag to use in CPView
+            // if (action.flags.hasSearchView) {
+            //     def = self._createSearchView(action).then(function (searchController) {
+            //         var searchState = searchController.getSearchState();
+            //         _.extend(action.env, searchState);
+            //     });
+            // }
             return $.when(def).then(function () {
                 var defs = [];
                 defs.push(self._createViewController(action, firstView.type));
