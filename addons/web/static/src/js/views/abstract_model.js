@@ -14,11 +14,8 @@ odoo.define('web.AbstractModel', function (require) {
  * in order to be able to notify its parent by bubbling events up.
  */
 
-var Class = require('web.Class');
 var fieldUtils = require('web.field_utils');
-var mixins = require('web.mixins');
 var mvc = require('web.mvc');
-var ServicesMixin = require('web.ServicesMixin');
 
 var AbstractModel = mvc.Model.extend({
     //--------------------------------------------------------------------------
