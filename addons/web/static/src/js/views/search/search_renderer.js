@@ -6,9 +6,19 @@ var AbstractRenderer = require('web.AbstractRenderer');
 var FavoritesMenu = require('web.FavoritesMenu');
 var FiltersMenu = require('web.FiltersMenu');
 var GroupByMenu = require('web.GroupByMenu');
+var SearchBar = require('web.SearchBar');
 
 var SearchRenderer = AbstractRenderer.extend({
 	template: 'SearchView',
+    events: _.extend({}, AbstractRenderer.prototype.events, {
+        'click .o_searchview_more': '_onMore',
+    }),
+    init: function () {
+        this._super.apply(this, arguments);
+
+        // TODO
+        this.displayMore = false;
+    },
 
 
     //--------------------------------------------------------------------------
@@ -31,6 +41,7 @@ var SearchRenderer = AbstractRenderer.extend({
 
     _render: function () {
     	var defs = [];
+
         // approx inDom
         if (this.$subMenus) {
             if (this.filtersMenu) {
@@ -44,29 +55,36 @@ var SearchRenderer = AbstractRenderer.extend({
             // }
         } else {
             this.$subMenus = document.createDocumentFragment();
-        	// defs.push(this._setupAutoCompletion());
             defs.push(this._setupFiltersMenu());
             defs.push(this._setupGroupByMenu());
             defs.push(this._setupFavoritesMenu());
         }
+        defs.push(this._renderSearchBar());
+
+        this.$('.o_searchview_more')
+            .toggleClass('fa-search-plus', this.displayMore)
+            .toggleClass('fa-search-minus', !this.displayMore);
+
     	return $.when(this, defs);
     },
-    // /**
-    //  * instantiate auto-completion widget
-    //  */
-    // _setupAutoCompletion: function () {
-    //     this.autoComplete = new AutoComplete(this, {
-    //     	// the widget should be changed
-    //     	// I have changed source and select for now because I don't want to
-    //     	// break things
-    //         source: function () {},
-    //         select: function () {},
-    //         get_search_string: function () {
-    //             return this.$('.o_searchview_input').val().trim();
-    //         },
-    //     });
-    //     return this.autoComplete.appendTo(this.$('.o_searchview_input_container'));
-    // },
+    _renderSearchBar: function () {
+        // TODO: might need a reload instead of a destroy/instatiate
+        var oldSearchBar = this.searchBar;
+        this.searchBar = new SearchBar(this, this.state.facets);
+        return this.searchBar.appendTo(this.$el).then(function () {
+            if (oldSearchBar) {
+                oldSearchBar.destroy();
+            }
+        });
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    _onMore: function () {
+        // TODO
+    },
 });
 
 return SearchRenderer;

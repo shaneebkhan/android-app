@@ -10,6 +10,7 @@ var SearchController = AbstractController.extend({
         item_option_clicked: '_onItemOptionClicked',
         new_filters: '_onNewFilters',
         new_groupBy: '_onNewGroupBy',
+        facet_removed: '_onFacetRemoved',
     },
 
     start: function () {
@@ -62,6 +63,10 @@ var SearchController = AbstractController.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    _onFacetRemoved: function (ev) {
+        // TODO: could be something else than a filter in the facet?
+        this.update({removeGroup: ev.data});
+    },
     _onItemOptionClicked: function (event) {
         return this.update({toggleOption: event.data});
     },

@@ -31,7 +31,6 @@ var SearchModel = AbstractModel.extend({
             model: 'ir.filters',
             method: 'get_filters',
         }).then(function (favorites) {
-            debugger
             // add groups!
             groups = groups;
             groups.forEach(function (group) {
@@ -49,6 +48,9 @@ var SearchModel = AbstractModel.extend({
 		var self = this;
 		if (params.toggleFilter) {
 			this._toggleFilter(params.toggleFilter.id);
+		}
+		if (params.removeGroup) {
+			this._removeGroup(params.removeGroup.id);
 		}
 		if (params.toggleOption) {
 			this._toggleFilterWithOptions(
@@ -103,7 +105,17 @@ var SearchModel = AbstractModel.extend({
 				groupBys.push(filter);
 			}
 		});
+		// TODO: correctly compute facets
+		var facets = _.filter(this.groups, function (group) {
+			return group.activeFilterIds.length;
+		});
+		_.each(facets, function (facet) {
+			facet.values = _.map(facet.activeFilterIds, function (filterID) {
+				return self.filters[filterID] || self.groups[filterID];
+			});
+		});
 		return {
+			facets: facets,
 			filters: filters,
 			groupBys: groupBys,
 			groups: this.groups,
@@ -248,6 +260,17 @@ var SearchModel = AbstractModel.extend({
 				this.query.splice(this.query.indexOf(group.id), 1);
 			}
 		}
+	},
+	/**
+	 * Remove the group from the query.
+	 *
+	 * @private
+	 * @param {string} groupID
+	 */
+	_removeGroup: function (groupID) {
+		var group = this.groups[groupID];
+		group.activeFilterIds = [];
+		this.query.splice(this.query.indexOf(groupID), 1);
 	},
 	// This method should work in batch too
 	// TO DO: accept selection of multiple options?
