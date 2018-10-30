@@ -2,23 +2,27 @@ odoo.define('web.FavoritesMenu', function (require) {
 "use strict";
 
 // var config = require('web.config');
-// var core = require('web.core');
+var core = require('web.core');
 // var data_manager = require('web.data_manager');
 // var Domain = require('web.Domain');
 // var pyUtils = require('web.py_utils');
 // var session = require('web.session');
 // var Widget = require('web.Widget');
+var config = require('web.config');
 var DropdownMenu = require('web.DropdownMenu');
 
-// var _t = core._t;
+
+var QWeb = core.qweb;
+var _t = core._t;
 
 
 // Don't forget to chang what is needed in file that make an include!!!!
 
 
 var FavoritesMenu = DropdownMenu.extend({
-    // template: 'SearchView.FavoritesMenu',
-    // events: {
+    events: {
+        'click .o_add_favorite': '_onAddFavoriteClick',
+        'click .o_save_favorite': '_onSaveFavoriteClick',
     //     'click .dropdown-item': function (ev) {
     //         ev.preventDefault();
     //     },
@@ -33,9 +37,17 @@ var FavoritesMenu = DropdownMenu.extend({
     //             this.save_favorite();
     //         }
     //     },
-    // },
+    },
     init: function (parent, favorites, fields) {
-        this._super.apply(parent, favorites || []);
+        this._super(parent, favorites || []);
+        this.generatorMenuIsOpen = false;
+        this.isMobile = config.device.isMobile;
+        this.dropdownCategory = 'favorite';
+        this.dropdownTitle = _t('Favorites');
+        this.dropdownIcon = 'fa fa-star';
+        this.dropdownSymbol = this.isMobile ? 'fa fa-chevron-right float-right mt4' : false;
+        this.dropdownStyle.mainButton.class = 'o_favorites_menu_button ' +
+                                                this.dropdownStyle.mainButton.class;
         // this.searchview = parent;
         // this.query = query;
         // this.target_model = target_model;
@@ -45,6 +57,132 @@ var FavoritesMenu = DropdownMenu.extend({
         // this.isMobile = config.device.isMobile;
         // _.each(filters, this.add_filter.bind(this));
     },
+    /**
+     * render the template used to register a new favorite and append it
+     * to the basic dropdown menu
+     *
+     * @private
+     */
+    start: function () {
+        this.$menu = this.$('.o_dropdown_menu');
+        this.$menu.addClass('o_favorites_menu');
+        var generatorMenu = QWeb.render('FavoritesMenuGenerator', {widget: this});
+        this.$menu.append(generatorMenu);
+        this.$favoriteName = this.$('.o_favorite_name');
+    },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    _renderGeneratorMenu: function () {
+        this.$el.find('.o_generator_menu').remove();
+        var $generatorMenu = QWeb.render('FavoritesMenuGenerator', {widget: this});
+        this.$menu.append($generatorMenu);
+        this.$favoriteName = this.$('.o_favorite_name');
+    },
+    /**
+     * @private
+     */
+    _saveFavorite: function () {
+        var self = this;
+        var description = this.$inputs[0].value;
+        var defaultFilter = this.$inputs[1].checked;
+        var sharedFilter = this.$inputs[2].checked;
+        if (!description.length){
+            this.do_warn(_t("Error"), _t("Filter name is required."));
+            this.$inputs.first().focus();
+            return;
+        }
+        var descriptionAlreadyExists = this.favorites.find(function (favorite) {
+            return favorite.description === description;
+        });
+        if (descriptionAlreadyExists) {
+            this.do_warn(_t("Error"), _t("Filter with same name already exists."));
+            this.$inputs.first().focus();
+            return;
+        }
+
+        // Search query parameter of favorites menu updated/ computed each time?
+
+        // this.trigger_up('get_search_query')
+        // get search params with domains not evaluated
+        // var search = this.searchview.build_search_data(true);
+
+        // var controllerContext;
+        // this.trigger_up('get_controller_context', {
+        //     callback: function (ctx) {
+        //         controllerContext = ctx;
+        //     },
+        // });
+        // var results = pyUtils.eval_domains_and_contexts({
+        //         domains: [],
+        //         contexts: [user_context].concat(search.contexts.concat(controllerContext || [])),
+        //         group_by_seq: search.groupbys || [],
+        //     });
+        // if (!_.isEmpty(results.group_by)) {
+        //     results.context.group_by = results.group_by;
+        // }
+        // // Don't save user_context keys in the custom filter, otherwise end
+        // // up with e.g. wrong uid or lang stored *and used in subsequent
+        // // reqs*
+        // var ctx = results.context;
+        // _(_.keys(session.user_context)).each(function (key) {
+        //     delete ctx[key];
+        // });
+        // var filter = {
+        //     name: filter_name,
+        //     user_id: shared_filter ? false : session.uid,
+        //     model_id: this.target_model,
+        //     context: results.context,
+        //     domain: domain,
+        //     sort: JSON.stringify(this.searchview.dataset._sort),
+        //     is_default: default_filter,
+        //     action_id: this.action_id,
+        // };
+        // return this._createFilter(filter).then(function (id) {
+        //     filter.id = id;
+        //     self.toggle_save_menu(false);
+        //     self.$save_name.find('input').val('').prop('checked', false);
+        //     self.add_filter(filter);
+        //     self.append_filter(filter);
+        //     self.toggle_filter(filter, true);
+        // });
+    },
+    /**
+     * @private
+     */
+    _toggleAddFavoriteMenu: function () {
+        this.generatorMenuIsOpen = !this.generatorMenuIsOpen;
+        this._renderGeneratorMenu();
+        if (this.generatorMenuIsOpen) {
+            this.$favoriteName.focus();
+        }
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    _onAddFavoriteClick: function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this._toggleAddFavoriteMenu();
+    },
+
+    _onSaveFavoriteClick: function (event) {
+        this._saveFavorite();
+        this._toggleAddFavoriteMenu();
+    }
+
     // start: function () {
     //     var self = this;
     //     this.$filters = {};
@@ -83,67 +221,7 @@ var FavoritesMenu = DropdownMenu.extend({
     // _closeMenus: function () {
     //     this.toggle_save_menu(false);
     // },
-    // save_favorite: function () {
-    //     var self = this,
-    //         filter_name = this.$inputs[0].value,
-    //         default_filter = this.$inputs[1].checked,
-    //         shared_filter = this.$inputs[2].checked;
-    //     if (!filter_name.length){
-    //         this.do_warn(_t("Error"), _t("Filter name is required."));
-    //         this.$inputs.first().focus();
-    //         return;
-    //     }
-    //     if (_.chain(this.filters)
-    //             .pluck('name')
-    //             .contains(filter_name).value()) {
-    //         this.do_warn(_t("Error"), _t("Filter with same name already exists."));
-    //         this.$inputs.first().focus();
-    //         return;
-    //     }
-    //     var user_context = this.getSession().user_context;
-    //     // get search params with domains not evaluated
-    //     var search = this.searchview.build_search_data(true);
-    //     var domain = pyUtils.assembleDomains(search.domains, 'AND');
-    //     var controllerContext;
-    //     this.trigger_up('get_controller_context', {
-    //         callback: function (ctx) {
-    //             controllerContext = ctx;
-    //         },
-    //     });
-    //     var results = pyUtils.eval_domains_and_contexts({
-    //             domains: [],
-    //             contexts: [user_context].concat(search.contexts.concat(controllerContext || [])),
-    //             group_by_seq: search.groupbys || [],
-    //         });
-    //     if (!_.isEmpty(results.group_by)) {
-    //         results.context.group_by = results.group_by;
-    //     }
-    //     // Don't save user_context keys in the custom filter, otherwise end
-    //     // up with e.g. wrong uid or lang stored *and used in subsequent
-    //     // reqs*
-    //     var ctx = results.context;
-    //     _(_.keys(session.user_context)).each(function (key) {
-    //         delete ctx[key];
-    //     });
-    //     var filter = {
-    //         name: filter_name,
-    //         user_id: shared_filter ? false : session.uid,
-    //         model_id: this.target_model,
-    //         context: results.context,
-    //         domain: domain,
-    //         sort: JSON.stringify(this.searchview.dataset._sort),
-    //         is_default: default_filter,
-    //         action_id: this.action_id,
-    //     };
-    //     return this._createFilter(filter).then(function (id) {
-    //         filter.id = id;
-    //         self.toggle_save_menu(false);
-    //         self.$save_name.find('input').val('').prop('checked', false);
-    //         self.add_filter(filter);
-    //         self.append_filter(filter);
-    //         self.toggle_filter(filter, true);
-    //     });
-    // },
+
     // get_default_filter: function () {
     //     var personal_filter = _.find(this.filters, function (filter) {
     //         return filter.user_id && filter.is_default;

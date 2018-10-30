@@ -249,8 +249,8 @@ var ControlPanelRenderer = Renderer.extend({
         return this.groupByMenu.appendTo(this.$subMenus);
     },
     _setupFavoritesMenu: function () {
-        // this.favoritesMenu = new FavoritesMenu(this, this.state.favorites, this.state.fields);
-        // return this.favoritesMenu.appendTo(this.$subMenus);
+        this.favoritesMenu = new FavoritesMenu(this, this.state.favorites, this.state.fields);
+        return this.favoritesMenu.appendTo(this.$subMenus);
         return $.when();
     },
 
@@ -265,9 +265,9 @@ var ControlPanelRenderer = Renderer.extend({
             if (this.groupByMenu) {
                 this.groupByMenu.update(this.state.groupBys);
             }
-            // if (this.favoritesMenu) {
-            //     this.favoritesMenu.update(this.state.favorites);
-            // }
+            if (this.favoritesMenu) {
+                this.favoritesMenu.update(this.state.favorites);
+            }
         } else {
             this.$subMenus = this.$('.o_search_options');
             defs.push(this._setupFiltersMenu());

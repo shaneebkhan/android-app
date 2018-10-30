@@ -73,7 +73,7 @@ var GroupByMenu = DropdownMenu.extend({
         // the default style of the groupby menu can be changed here using the options key 'headerStyle'
         if (options && options.headerStyle === 'primary') {
             this.dropdownStyle = {
-                el: {class: 'btn-group o_graph_groupbys_menu o_dropdown', attrs: {'role': 'group'}},
+                el: {class: 'btn-group o_group_by_menu o_dropdown', attrs: {'role': 'group'}},
                 mainButton: {class: 'btn btn-primary dropdown-toggle'},
             };
         }

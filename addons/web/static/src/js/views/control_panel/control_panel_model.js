@@ -13,6 +13,7 @@ var ControlPanelModel = mvc.Model.extend({
         this.query = [];
         this.fields = {};
         this.actionId = null;
+        this.groupOfGroupBysId;
     },
 
     //--------------------------------------------------------------------------
@@ -67,9 +68,7 @@ var ControlPanelModel = mvc.Model.extend({
             var newGroupBy = params.newGroupBy.groupBy;
             var id = _.uniqueId('__filter__');
             newGroupBy.id = id;
-            newGroupBy.groupId = Object.keys(this.groups).find(function (groupId) {
-                return self.groups[groupId].type === 'groupBy';
-            });
+            newGroupBy.groupId = this.groupOfGroupBysId;
             this.filters[id] = newGroupBy;
             if (_.contains(['date', 'datetime'], newGroupBy.fieldType)) {
                 this._toggleFilterWithOptions(newGroupBy.id);
@@ -89,6 +88,7 @@ var ControlPanelModel = mvc.Model.extend({
         // filters are filters of filter type only, groupbys are groupbys,...!
         var filters = [];
         var groupBys = [];
+        var favorites = [];
         Object.keys(this.filters).forEach(function (filterId) {
             var filter = _.extend({}, self.filters[filterId]);
             var group = self.groups[filter.groupId];
@@ -98,6 +98,9 @@ var ControlPanelModel = mvc.Model.extend({
             }
             if (filter.type === 'groupBy') {
                 groupBys.push(filter);
+            }
+            if (filter.type === 'favorite') {
+                favorites.push(filter);
             }
         });
         // TODO: correctly compute facets
@@ -113,9 +116,11 @@ var ControlPanelModel = mvc.Model.extend({
             facets: facets,
             filters: filters,
             groupBys: groupBys,
+            favorites: favorites,
             groups: this.groups,
             query: this.query,
-            fields: this.fields};
+            fields: this.fields,
+        };
     },
 
     getQuery: function () {
@@ -147,7 +152,7 @@ var ControlPanelModel = mvc.Model.extend({
     // Private
     //--------------------------------------------------------------------------
 
-    // group is a list of (pre) filter
+    // group is a list of (pre) filters
     _createGroupOfFilters: function (group) {
         var self= this;
         var type;
@@ -164,6 +169,9 @@ var ControlPanelModel = mvc.Model.extend({
             type: type,
             activeFilterIds: [],
         };
+        if (type === 'groupBy') {
+            this.groupOfGroupBysId = groupId;
+        }
     },
 
     _getDomain: function () {
@@ -234,16 +242,20 @@ var ControlPanelModel = mvc.Model.extend({
     // This method could work in batch and take a list of ids as args.
     // (it would be useful for initialization and deletion of a facet/group)
     _toggleFilter: function (filterId) {
+        var self = this;
         var filter = this.filters[filterId];
         var group = this.groups[filter.groupId];
         var index = group.activeFilterIds.indexOf(filterId);
         var initiaLength = group.activeFilterIds.length;
         if (index === -1) {
-            group.activeFilterIds.push(filterId);
-            // we need to empty the query when activating a favorite
+            // we need to deactivate all groups when activating a favorite
             if (filter.type === 'favorite') {
+                this.query.forEach(function (groupId) {
+                    self.groups[groupId].activeFilterIds = [];
+                });
                 this.query = [];
             }
+            group.activeFilterIds.push(filterId);
             // if initiaLength is 0, the group was not active.
             if (initiaLength === 0) {
                 this.query.push(group.id);
@@ -251,7 +263,7 @@ var ControlPanelModel = mvc.Model.extend({
         } else {
             group.activeFilterIds.splice(index, 1);
             // if initiaLength is 1, the group is now inactive.
-            if (initiaLength === 1) {
+            if (filter.type === 'favorite' || initiaLength === 0) {
                 this.query.splice(this.query.indexOf(group.id), 1);
             }
         }

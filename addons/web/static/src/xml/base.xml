@@ -1432,6 +1432,27 @@
     </select>
 </t>
 
+<t t-name="FavoritesMenuGenerator">
+    <div class="dropdown-divider"/>
+    <button type="button" class="dropdown-item o_generator_menu o_add_favorite">Save Current Search</button>
+    <div t-if="widget.generatorMenuIsOpen" class="dropdown-item-text o_generator_menu">
+        <div role="menuitem" class="dropdown-item-text o_favorite_name">
+            <input type="text" class="o_input"></input>
+        </div>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" id="o_favorite_use_by_default" class="custom-control-input"/>
+            <label for="o_favorite_use_by_default" class="custom-control-label">Use by default</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" id="o_favorite_share_all_users" class="custom-control-input"/>
+            <label for="o_favorite_share_all_users" class="custom-control-label">Share with all users <span class="fa fa-users" role="img" aria-label="Users" title="Users"/></label>
+        </div>
+        <div class="dropdown-item-text o_save_favorite">
+            <button role="menuitem" type="button" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+</t>
+
 <div t-name="SearchView.OldFavoritesMenu" class="btn-group o_dropdown">
     <button t-attf-class="o_dropdown_toggler_btn btn btn-secondary dropdown-toggle#{widget.isMobile ? ' o-no-caret' : ''}" data-toggle="dropdown" aria-expanded="false" tabindex="-1" aria-label="Favorites" title="Favorites">
         <span class="fa fa-star"/> Favorites <span t-if="widget.isMobile" class="fa fa-chevron-right float-right mt4"/>
