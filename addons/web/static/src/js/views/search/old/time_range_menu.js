@@ -4,12 +4,12 @@ odoo.define('web.OldTimeRangeMenu', function (require) {
 var config = require('web.config');
 var core = require('web.core');
 var Domain = require('web.Domain');
-var OldTimeRangeMenuOptions = require('web.OldTimeRangeMenuOptions');
+var oldTimeRangeMenuOptions = require('web.oldTimeRangeMenuOptions');
 var Widget = require('web.Widget');
 
 var _t = core._t;
-var ComparisonOptions = OldTimeRangeMenuOptions.ComparisonOptions;
-var PeriodOptions = OldTimeRangeMenuOptions.PeriodOptions;
+var ComparisonOptions = oldTimeRangeMenuOptions.ComparisonOptions;
+var PeriodOptions = oldTimeRangeMenuOptions.PeriodOptions;
 
 var OldTimeRangeMenu = Widget.extend({
     template: 'web.OldTimeRangeMenu',
