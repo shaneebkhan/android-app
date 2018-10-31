@@ -10,14 +10,14 @@ var OldFiltersMenu = require('web.OldFiltersMenu');
 var OldGroupByMenu = require('web.OldGroupByMenu');
 var pyUtils = require('web.py_utils');
 var search_inputs = require('web.search_inputs');
-var TimeRangeMenu = require('web.TimeRangeMenu');
-var TimeRangeMenuOptions = require('web.TimeRangeMenuOptions');
+var OldTimeRangeMenu = require('web.OldTimeRangeMenu');
+var OldTimeRangeMenuOptions = require('web.OldTimeRangeMenuOptions');
 var utils = require('web.utils');
 var Widget = require('web.Widget');
 
 var _t = core._t;
-var ComparisonOptions = TimeRangeMenuOptions.ComparisonOptions;
-var PeriodOptions = TimeRangeMenuOptions.PeriodOptions;
+var ComparisonOptions = OldTimeRangeMenuOptions.ComparisonOptions;
+var PeriodOptions = OldTimeRangeMenuOptions.PeriodOptions;
 
 var Backbone = window.Backbone;
 
@@ -442,9 +442,9 @@ var SearchView = Widget.extend({
             .then(this.set_default_filters.bind(this))
             .then(function ()  {
                 var menu_defs = [];
-                self.timeRangeMenu = self._createTimeRangeMenu();
-                menu_defs.push(self.timeRangeMenu.prependTo($buttons));
-                self.timeRangeMenu.do_hide();
+                self.OldtimeRangeMenu = self._createTimeRangeMenu();
+                menu_defs.push(self.OldtimeRangeMenu.prependTo($buttons));
+                self.OldtimeRangeMenu.do_hide();
                 self.displayedTimeRangeMenu = self.options.disableTimeRangeMenu !== undefined &&
                     !self.options.disableTimeRangeMenu;
                 self.displayTimeRangeMenu(self.displayedTimeRangeMenu);
@@ -465,9 +465,9 @@ var SearchView = Widget.extend({
      */
     displayTimeRangeMenu: function (b) {
         if (!b || this.noDateFields) {
-            this.timeRangeMenu.do_hide();
+            this.OldtimeRangeMenu.do_hide();
         } else {
-            this.timeRangeMenu.do_show();
+            this.OldtimeRangeMenu.do_show();
         }
     },
     on_attach_callback: function () {
@@ -737,7 +737,7 @@ var SearchView = Widget.extend({
             if (self.filters_menu) {
                 self.filters_menu.updateItemsStatus(activeItemIds.filterCategory);            }
             if (self.displayedTimeRangeMenu && !timeRangeMenuIsActive) {
-                self.timeRangeMenu.deactivate();
+                self.OldtimeRangeMenu.deactivate();
             }
         });
     },
@@ -1212,7 +1212,7 @@ var SearchView = Widget.extend({
      * @param {JQueryEvent} event
      */
     _onTimeRangeModified: function () {
-        var facet = this.timeRangeMenu.facetFor();
+        var facet = this.OldtimeRangeMenu.facetFor();
         var current = this.query.find(function (facet) {
             return facet.get('cat') === 'timeRangeCategory';
         });

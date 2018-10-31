@@ -1206,7 +1206,7 @@
     </div>
 </t>
 
-<div t-name="web.TimeRangeMenu" class="btn-group o_dropdown">
+<div t-name="web.OldTimeRangeMenu" class="btn-group o_dropdown">
     <button t-att-class="'o_dropdown_toggler_btn btn btn-secondary dropdown-toggle o_time_range_menu_button' + (widget.isMobile ? ' o-no-caret' : '')" data-toggle="dropdown"
         aria-expanded="false" tabindex="-1">
         <span class="fa fa-calendar"/> Time Ranges <span t-att-class="widget.symbol"/>

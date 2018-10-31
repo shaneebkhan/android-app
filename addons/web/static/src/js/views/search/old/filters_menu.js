@@ -7,12 +7,12 @@ var Domain = require('web.Domain');
 var OldDropdownMenu = require('web.OldDropdownMenu');
 var search_filters = require('web.search_filters');
 var time = require('web.time');
-var TimeRangeMenuOptions = require('web.TimeRangeMenuOptions');
+var OldTimeRangeMenuOptions = require('web.OldTimeRangeMenuOptions');
 
 var QWeb = core.qweb;
 var _t = core._t;
 
-var PERIOD_OPTIONS = TimeRangeMenuOptions.PeriodOptions;
+var PERIOD_OPTIONS = OldTimeRangeMenuOptions.PeriodOptions;
 
 var DEFAULT_PERIOD = 'this_month';
 

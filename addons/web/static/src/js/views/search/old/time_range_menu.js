@@ -1,18 +1,18 @@
-odoo.define('web.TimeRangeMenu', function (require) {
+odoo.define('web.OldTimeRangeMenu', function (require) {
 "use strict";
 
 var config = require('web.config');
 var core = require('web.core');
 var Domain = require('web.Domain');
-var TimeRangeMenuOptions = require('web.TimeRangeMenuOptions');
+var OldTimeRangeMenuOptions = require('web.OldTimeRangeMenuOptions');
 var Widget = require('web.Widget');
 
 var _t = core._t;
-var ComparisonOptions = TimeRangeMenuOptions.ComparisonOptions;
-var PeriodOptions = TimeRangeMenuOptions.PeriodOptions;
+var ComparisonOptions = OldTimeRangeMenuOptions.ComparisonOptions;
+var PeriodOptions = OldTimeRangeMenuOptions.PeriodOptions;
 
-var TimeRangeMenu = Widget.extend({
-    template: 'web.TimeRangeMenu',
+var OldTimeRangeMenu = Widget.extend({
+    template: 'web.OldTimeRangeMenu',
     events: {
         'click .o_apply_range': '_onApplyButtonClick',
         'click .o_comparison_checkbox': '_onCheckBoxClick',
@@ -193,6 +193,6 @@ var TimeRangeMenu = Widget.extend({
     }
 });
 
-return TimeRangeMenu;
+return OldTimeRangeMenu;
 
 });

@@ -1,4 +1,4 @@
-odoo.define('web.TimeRangeMenuOptions', function (require) {
+odoo.define('web.OldTimeRangeMenuOptions', function (require) {
 "use strict";
 
 var core = require('web.core');
