@@ -88,12 +88,25 @@ var ControlPanelView = Factory.extend({
      * @param {Object} [params]
      * @param {Object} [params.viewInfo] a controlpanel (or search) fieldsview
      * @param {string} [params.viewInfo.arch]
+     * @param {string} [params.context={}]
      * @param {string} [params.template] the QWeb template to render
      */
     init: function (params) {
         this._super();
         params = params || {};
         var viewInfo = params.viewInfo || {arch: '<controlpanel/>', fields: {}};
+
+        // TODO: use this where necessary
+        // var context = params.context || {};
+        // var searchDefaults = {};
+        // for (var key in context) {
+        //     var match = /^search_default_(.*)$/.exec(key);
+        //     if (match) {
+        //         searchDefaults[match[1]] = context[key];
+        //     }
+        // }
+        // var disableCustomFilters = context.search_disable_custom_filters;
+        // var hasSearchView = params.hasSearchView;
 
         this.controllerParams.controllerID = params.controllerID;
         this.controllerParams.modelName = params.modelName;

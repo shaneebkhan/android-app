@@ -111,77 +111,6 @@ ActionManager.include({
     // Private
     //--------------------------------------------------------------------------
 
-    // /**
-    //  * Instantiates a search view for a given action, and starts it so that it
-    //  * is ready to be appended to the DOM.
-    //  *
-    //  * @private
-    //  * @param {Object} action
-    //  * @returns {Deferred} resolved with the search view when it is ready
-    //  */
-    // _createSearchView: function (action) {
-    //     // if requested, keep the searchview of the current action instead of
-    //     // creating a new one
-    //     // FIXME: this shouldn't be useful anymore (serialization)
-    //     // if (action._keepSearchView) {
-    //     //     var currentAction = this.getCurrentAction();
-    //     //     if (currentAction) {
-    //     //         action.searchView = currentAction.searchView;
-    //     //         action.env = currentAction.env; // make those actions share the same env
-    //     //         return $.when(currentAction.searchView);
-    //     //     } else {
-    //     //         // there is not searchview to keep, so reset the flag to false
-    //     //         // to ensure that the one that will be created will be correctly
-    //     //         // destroyed
-    //     //         action._keepSearchView = false;
-    //     //     }
-    //     // }
-
-    //     // find 'search_default_*' keys in actions's context
-    //     // FIXME: move into CPView
-    //     // var searchDefaults = {};
-    //     // _.each(action.context, function (value, key) {
-    //     //     var match = /^search_default_(.*)$/.exec(key);
-    //     //     if (match) {
-    //     //         searchDefaults[match[1]] = value;
-    //     //     }
-    //     // });
-
-    //     var viewInfo = {
-    //         arch: action.searchFieldsView.arch,
-    //         fields: action.searchFieldsView.fields,
-    //         fieldsInfo: action.searchFieldsView.viewFields,
-    //     };
-
-    //     var params = {
-    //         actionId: action.id,
-    //         modelName: action.searchFieldsView.model,
-    //         context: action.context,
-    //         domain: action.domain,
-
-    //     };
-    //     var searchView = new SearchView(viewInfo, params);
-
-    //     return searchView.getController(this).then(function (controller) {
-    //         return controller.appendTo(document.createDocumentFragment()).then(function () {
-    //             action.searchView = controller;
-    //             return controller;
-    //         });
-    //     });
-
-    //     // FIXME: options?
-    //     // var searchView = new SearchView(this, dataset, action.searchFieldsView, {
-    //     //     $buttons: $('<div>'),
-    //     //     action: action,
-    //     //     disable_custom_filters: action.flags.disableCustomFilters,
-    //     //     search_defaults: searchDefaults,
-    //     // });
-
-    //     // return searchView.appendTo(document.createDocumentFragment()).then(function () {
-    //         // action.searchView = searchView;
-    //         // return searchView;
-    //     // });
-    // },
     /**
      * Instantiates the controller for a given action and view type, and adds it
      * to the list of controllers in the action.
@@ -341,13 +270,6 @@ ActionManager.include({
             }
 
             var def;
-            // FIXME: flag to use in CPView
-            // if (action.flags.hasSearchView) {
-            //     def = self._createSearchView(action).then(function (searchController) {
-            //         var searchState = searchController.getSearchState();
-            //         _.extend(action.env, searchState);
-            //     });
-            // }
             return $.when(def).then(function () {
                 var defs = [];
                 defs.push(self._createViewController(action, firstView.type));
@@ -421,7 +343,6 @@ ActionManager.include({
         var inline = action.target === 'inline';
         var form = action.views[0][1] === 'form';
         return _.defaults({}, action.flags, {
-            disableCustomFilters: action.context && action.context.search_disable_custom_filters,
             footerToButtons: popup,
             hasSearchView: !(popup && form) && !inline,
             hasSidebar: !popup && !inline,
@@ -492,6 +413,7 @@ ActionManager.include({
         var params = this._super.apply(this, arguments);
         if (action.type === 'ir.actions.act_window') {
             params.domain = action.domain;
+            params.hasSearchView = action.flags.hasSearchView;
             params.modelName = action.res_model;
             params.viewInfo = action.searchFieldsView;
         }
