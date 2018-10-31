@@ -49,7 +49,7 @@ var TimeRangeMenu = Widget.extend({
             []
         );
 
-        this.comparisonOptions = ComparisonOptions;
+        this.COMPARISON_TIME_RANGE_OPTIONS = ComparisonOptions;
 
         // Following steps determine initial configuration
         this.isActive = false;
@@ -117,7 +117,7 @@ var TimeRangeMenu = Widget.extend({
                     this.comparisonTimeRangeId
                 );
                 comparisonTimeRangeDescription = _.findWhere(
-                    this.comparisonOptions,
+                    this.COMPARISON_TIME_RANGE_OPTIONS,
                     {optionId: this.comparisonTimeRangeId}
                 ).description;
             }

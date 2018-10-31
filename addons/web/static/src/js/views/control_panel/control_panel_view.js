@@ -70,8 +70,14 @@ var pyUtils = require('web.py_utils');
 var searchViewParameters = require('web.searchViewParameters');
 var viewUtils = require('web.viewUtils');
 
-var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
+var COMPARISON_TIME_RANGE_OPTIONS = searchViewParameters.COMPARISON_TIME_RANGE_OPTIONS;
+var DEFAULT_COMPARISON_TIME_RANGE = searchViewParameters.DEFAULT_COMPARISON_TIME_RANGE;
 var DEFAULT_INTERVAL = searchViewParameters.DEFAULT_INTERVAL;
+var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
+var DEFAULT_TIMERANGE = searchViewParameters.DEFAULT_TIMERANGE;
+var INTERVAL_OPTIONS = searchViewParameters.INTERVAL_OPTIONS;
+var PERIOD_OPTIONS = searchViewParameters.PERIOD_OPTIONS;
+var TIME_RANGE_OPTIONS = searchViewParameters.TIME_RANGE_OPTIONS;
 
 var Factory = mvc.Factory;
 
@@ -125,7 +131,7 @@ var ControlPanelView = Factory.extend({
         } else {
             this._parseSearchArch();
         }
-
+        this._createGroupOfTimeRanges();
 
         // don't forget to compute and rename:
         //  - groupable
@@ -137,6 +143,33 @@ var ControlPanelView = Factory.extend({
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
+
+    _createGroupOfTimeRanges: function () {
+        var self = this;
+        var timeRanges = [];
+        Object.keys(this.fields).forEach(function (fieldName) {
+            var field = self.fields[fieldName];
+            var fieldType = field.type;
+            if (_.contains(['date', 'datetime'], fieldType) && field.sortable) {
+                timeRanges.push({
+                    type: 'timeRange',
+                    description: field.string || field.help || field.name,
+                    fieldName : fieldName,
+                    fieldType: fieldType,
+                    hasOptions: true,
+                    timeRangeOptions: TIME_RANGE_OPTIONS,
+                    comparisonTimeRangeOptions: COMPARISON_TIME_RANGE_OPTIONS,
+                    timeRange: false,
+                    comparisonTimeRange: false,
+                    defaultTimeRange: DEFAULT_TIMERANGE,
+                    defaultComparisonTimeRange: DEFAULT_COMPARISON_TIME_RANGE,
+                });
+            }
+        });
+        if (timeRanges.length) {
+            this.loadParams.groups.push(timeRanges);
+        }
+    },
 
     /**
      * @private
@@ -177,7 +210,7 @@ var ControlPanelView = Factory.extend({
                 // we should be able to declare list of options per date filter
                 // (request of POs) (same remark for groupbys)
                 filter.hasOptions = true;
-                filter.options = searchViewParameters.periodOptions;
+                filter.options = PERIOD_OPTIONS;
                 filter.defaultOptionId = attrs.default_period ||
                                             DEFAULT_PERIOD;
                 filter.currentOptionId = false;
@@ -193,7 +226,7 @@ var ControlPanelView = Factory.extend({
             filter.fieldType = this.fields[attrs.fieldName].type;
             if (_.contains(['date', 'datetime'], filter.fieldType)) {
                 filter.hasOptions = true;
-                filter.options = searchViewParameters.intervalOptions;
+                filter.options = INTERVAL_OPTIONS;
                 filter.defaultOptionId = attrs.defaultInterval ||
                                             DEFAULT_INTERVAL;
                 filter.currentOptionId = false;

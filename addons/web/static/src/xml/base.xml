@@ -1258,7 +1258,7 @@
                 <label for="comparison_checkbox" class="custom-control-label">Compare To</label>
             </div>
             <select t-att-class="'o_input o_comparison_time_range_selector' + (widget.comparisonIsSelected ? '' : ' o_hidden')">
-                <t t-foreach="widget.comparisonOptions" t-as="option">
+                <t t-foreach="widget.COMPARISON_TIME_RANGE_OPTIONS" t-as="option">
                     <t t-if="widget.comparisonTimeRangeId === option.optionId">
                         <option t-att-value="option.optionId" selected="selected">
                             <t t-esc="option.description"/>

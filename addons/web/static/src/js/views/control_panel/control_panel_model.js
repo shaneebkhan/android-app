@@ -31,14 +31,13 @@ var ControlPanelModel = mvc.Model.extend({
         // default filters
             self._createGroupOfFilters(group);
         });
-        this._createGroupOfTimeRanges();
         return this._loadFavorites();
     },
 
     reload: function (params) {
         var self = this;
-        var _super = this._super;
         var def;
+        var id;
         if (params.toggleFilter) {
             this._toggleFilter(params.toggleFilter.id);
         }
@@ -62,7 +61,7 @@ var ControlPanelModel = mvc.Model.extend({
         }
         if (params.newGroupBy) {
             var newGroupBy = params.newGroupBy.groupBy;
-            var id = _.uniqueId('__filter__');
+            id = _.uniqueId('__filter__');
             newGroupBy.id = id;
             newGroupBy.groupId = this.groupOfGroupBysId;
             this.filters[id] = newGroupBy;
@@ -82,7 +81,7 @@ var ControlPanelModel = mvc.Model.extend({
             });
         }
         if (params.trashItem) {
-            var id = params.trashItem.id;
+            id = params.trashItem.id;
             def = this._deleteFilter(id);
         }
         return $.when(def);
@@ -183,9 +182,6 @@ var ControlPanelModel = mvc.Model.extend({
         if (type === 'groupBy') {
             this.groupOfGroupBysId = groupId;
         }
-    },
-    _createGroupOfTimeRanges: function () {
-
     },
     _createIrFilter: function (irFilter) {
         var def = $.Deferred();
