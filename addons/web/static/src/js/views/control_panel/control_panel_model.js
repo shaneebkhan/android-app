@@ -31,6 +31,7 @@ var ControlPanelModel = mvc.Model.extend({
         // default filters
             self._createGroupOfFilters(group);
         });
+        this._createGroupOfTimeRanges();
         return this._loadFavorites();
     },
 
@@ -184,6 +185,9 @@ var ControlPanelModel = mvc.Model.extend({
         if (type === 'groupBy') {
             this.groupOfGroupBysId = groupId;
         }
+    },
+    _createGroupOfTimeRanges: function () {
+
     },
     _createIrFilter: function (irFilter) {
         var def = $.Deferred();
