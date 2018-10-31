@@ -11,7 +11,6 @@ var config = require('web.config');
 var Context = require('web.Context');
 var core = require('web.core');
 var pyUtils = require('web.py_utils');
-var SearchView = require('web.SearchView');
 var view_registry = require('web.view_registry');
 
 var _t = core._t;
@@ -112,77 +111,77 @@ ActionManager.include({
     // Private
     //--------------------------------------------------------------------------
 
-    /**
-     * Instantiates a search view for a given action, and starts it so that it
-     * is ready to be appended to the DOM.
-     *
-     * @private
-     * @param {Object} action
-     * @returns {Deferred} resolved with the search view when it is ready
-     */
-    _createSearchView: function (action) {
-        // if requested, keep the searchview of the current action instead of
-        // creating a new one
-        // FIXME: this shouldn't be useful anymore (serialization)
-        // if (action._keepSearchView) {
-        //     var currentAction = this.getCurrentAction();
-        //     if (currentAction) {
-        //         action.searchView = currentAction.searchView;
-        //         action.env = currentAction.env; // make those actions share the same env
-        //         return $.when(currentAction.searchView);
-        //     } else {
-        //         // there is not searchview to keep, so reset the flag to false
-        //         // to ensure that the one that will be created will be correctly
-        //         // destroyed
-        //         action._keepSearchView = false;
-        //     }
-        // }
+    // /**
+    //  * Instantiates a search view for a given action, and starts it so that it
+    //  * is ready to be appended to the DOM.
+    //  *
+    //  * @private
+    //  * @param {Object} action
+    //  * @returns {Deferred} resolved with the search view when it is ready
+    //  */
+    // _createSearchView: function (action) {
+    //     // if requested, keep the searchview of the current action instead of
+    //     // creating a new one
+    //     // FIXME: this shouldn't be useful anymore (serialization)
+    //     // if (action._keepSearchView) {
+    //     //     var currentAction = this.getCurrentAction();
+    //     //     if (currentAction) {
+    //     //         action.searchView = currentAction.searchView;
+    //     //         action.env = currentAction.env; // make those actions share the same env
+    //     //         return $.when(currentAction.searchView);
+    //     //     } else {
+    //     //         // there is not searchview to keep, so reset the flag to false
+    //     //         // to ensure that the one that will be created will be correctly
+    //     //         // destroyed
+    //     //         action._keepSearchView = false;
+    //     //     }
+    //     // }
 
-        // find 'search_default_*' keys in actions's context
-        // FIXME: move into CPView
-        // var searchDefaults = {};
-        // _.each(action.context, function (value, key) {
-        //     var match = /^search_default_(.*)$/.exec(key);
-        //     if (match) {
-        //         searchDefaults[match[1]] = value;
-        //     }
-        // });
+    //     // find 'search_default_*' keys in actions's context
+    //     // FIXME: move into CPView
+    //     // var searchDefaults = {};
+    //     // _.each(action.context, function (value, key) {
+    //     //     var match = /^search_default_(.*)$/.exec(key);
+    //     //     if (match) {
+    //     //         searchDefaults[match[1]] = value;
+    //     //     }
+    //     // });
 
-        var viewInfo = {
-            arch: action.searchFieldsView.arch,
-            fields: action.searchFieldsView.fields,
-            fieldsInfo: action.searchFieldsView.viewFields,
-        };
+    //     var viewInfo = {
+    //         arch: action.searchFieldsView.arch,
+    //         fields: action.searchFieldsView.fields,
+    //         fieldsInfo: action.searchFieldsView.viewFields,
+    //     };
 
-        var params = {
-            actionId: action.id,
-            modelName: action.searchFieldsView.model,
-            context: action.context,
-            domain: action.domain,
+    //     var params = {
+    //         actionId: action.id,
+    //         modelName: action.searchFieldsView.model,
+    //         context: action.context,
+    //         domain: action.domain,
 
-        };
-        var searchView = new SearchView(viewInfo, params);
+    //     };
+    //     var searchView = new SearchView(viewInfo, params);
 
-        return searchView.getController(this).then(function (controller) {
-            return controller.appendTo(document.createDocumentFragment()).then(function () {
-                action.searchView = controller;
-                return controller;
-            });
-        });
+    //     return searchView.getController(this).then(function (controller) {
+    //         return controller.appendTo(document.createDocumentFragment()).then(function () {
+    //             action.searchView = controller;
+    //             return controller;
+    //         });
+    //     });
 
-        // FIXME: options?
-        // var searchView = new SearchView(this, dataset, action.searchFieldsView, {
-        //     $buttons: $('<div>'),
-        //     action: action,
-        //     disable_custom_filters: action.flags.disableCustomFilters,
-        //     search_defaults: searchDefaults,
-        // });
+    //     // FIXME: options?
+    //     // var searchView = new SearchView(this, dataset, action.searchFieldsView, {
+    //     //     $buttons: $('<div>'),
+    //     //     action: action,
+    //     //     disable_custom_filters: action.flags.disableCustomFilters,
+    //     //     search_defaults: searchDefaults,
+    //     // });
 
-        // return searchView.appendTo(document.createDocumentFragment()).then(function () {
-            // action.searchView = searchView;
-            // return searchView;
-        // });
-    },
+    //     // return searchView.appendTo(document.createDocumentFragment()).then(function () {
+    //         // action.searchView = searchView;
+    //         // return searchView;
+    //     // });
+    // },
     /**
      * Instantiates the controller for a given action and view type, and adds it
      * to the list of controllers in the action.
@@ -711,6 +710,11 @@ ActionManager.include({
                 // same action and if they both are mono record
                 index = self.controllerStack.length - 1;
             }
+            // update the controllerID of the controlPanel s.t. the correct
+            // controller is updated when the user interacts with the searchview
+            // note: this will be removed as soon as the ControlPanel will be
+            // instantiated by the controllers themselves
+            action.controlPanel.setControllerID(controller.jsID);
             return self._pushController(controller, {index: index});
         });
     },
@@ -894,14 +898,15 @@ ActionManager.include({
      *
      * @private
      * @param {OdooEvent} ev
+     * @param {string} ev.data.controllerID
+     * @param {Object} ev.data.query
      */
     _onSearch: function (ev) {
         ev.stopPropagation();
-        // AAB: the id of the correct controller should be given in data
-        var currentController = this.getCurrentController();
-        var action = this.actions[currentController.actionID];
-        _.extend(action.env, this._processSearchData(action, ev.data));
-        currentController.widget.reload(_.extend({offset: 0}, action.env));
+        var controller = this.controllers[ev.data.controllerID];
+        var action = this.actions[controller.actionID];
+        _.extend(action.env, this._processSearchData(action, ev.data.query));
+        controller.widget.reload(_.extend({offset: 0}, action.env));
     },
     /**
      * @private

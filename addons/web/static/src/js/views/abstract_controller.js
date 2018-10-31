@@ -406,20 +406,10 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
     _update: function (state) {
         // AAB: update the control panel -> this will be moved elsewhere at some point
         var cpContent = _.extend({}, this.controlPanelElements);
-        if (this.searchView) {
-            _.extend(cpContent, {
-                $searchview: this.searchView.$el,
-                $searchview_buttons: this.searchView.$buttons,
-            });
-        }
         this.update_control_panel({
             active_view_selector: '.o_cp_switch_' + this.viewType,
             cp_content: cpContent,
             hidden: !this.withControlPanel,
-            searchview: this.searchView,
-            search_view_hidden: !this.searchable || this.searchviewHidden,
-            groupable: this.groupable,
-            enableTimeRangeMenu: this.enableTimeRangeMenu,
         });
 
         this._pushState();

@@ -2,7 +2,11 @@ odoo.define('web.ControlPanelRenderer', function (require) {
 "use strict";
 
 var data = require('web.data');
+var FavoritesMenu = require('web.FavoritesMenu');
+var FiltersMenu = require('web.FiltersMenu');
+var GroupByMenu = require('web.GroupByMenu');
 var mvc = require('web.mvc');
+var SearchBar = require('web.SearchBar');
 var viewUtils = require('web.viewUtils');
 
 var Renderer = mvc.Renderer;
@@ -11,6 +15,7 @@ var ControlPanelRenderer = Renderer.extend({
     template: 'ControlPanel',
     events: _.extend({}, Renderer.prototype.events, {
         'click.bs.dropdown .o_search_options .dropdown-menu': '_onDropdownClicked',
+        'click .o_searchview_more': '_onMore',
     }),
 
     /**
@@ -26,6 +31,9 @@ var ControlPanelRenderer = Renderer.extend({
         if (params.template) {
             this.template = params.template;
         }
+
+        // TODO
+        this.displayMore = false;
     },
     /**
      * Renders the control panel and creates a dictionnary of its exposed
@@ -40,8 +48,6 @@ var ControlPanelRenderer = Renderer.extend({
         this.nodes = {
             $buttons: this.$('.o_cp_buttons'),
             $pager: this.$('.o_cp_pager'),
-            $searchview: this.$('.o_cp_searchview'),
-            $searchview_buttons: this.$('.o_search_options'),
             $sidebar: this.$('.o_cp_sidebar'),
             $switch_buttons: this.$('.o_cp_switch_buttons'),
         };
@@ -59,15 +65,19 @@ var ControlPanelRenderer = Renderer.extend({
                                   // bottom row to take 5px height due to padding
         }
 
-        this.render({});
-
-        return this._super.apply(this, arguments);
+        return $.when(this._super.apply(this, arguments), this._render());
     },
 
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
 
+    /**
+     * @returns {Object}
+     */
+    getLastFacet: function () {
+        return this.state.facets.slice(-1)[0];
+    },
     /**
      * @param {Object} [status.active_view] the current active view
      * @param {Array} [status.breadcrumbs] the breadcrumbs to display (see _render_breadcrumbs() for
@@ -101,30 +111,12 @@ var ControlPanelRenderer = Renderer.extend({
 
             // Detach control_panel old content and attach new elements
             var toDetach = this.nodes;
-            if (status.searchview && this.searchview === status.searchview) {
-                // If the searchview is the same as before, don't detach it s.t.
-                // we don't loose any floating content, nor the focus
-                toDetach = _.omit(toDetach, '$searchview');
-                new_cp_content = _.omit(new_cp_content, '$searchview');
-            }
             if (options.clear) {
-                toDetach = _.omit(toDetach, '$searchview_buttons');
                 this._detachContent(toDetach);
-                // Show the searchview buttons area, which might have been hidden by
-                // the searchview, as client actions may insert elements into it
-                this.nodes.$searchview_buttons.show();
             } else {
                 this._detachContent(_.pick(toDetach, _.keys(new_cp_content)));
             }
             this._attachContent(new_cp_content);
-            if (options.clear || status.searchview) {
-                this.searchview = status.searchview;
-            }
-
-            // Update the searchview and switch buttons
-            if (status.searchview || options.clear) {
-                this._updateSearchView(status.searchview, status.search_view_hidden, status.groupable, status.enableTimeRangeMenu);
-            }
             if (status.active_view_selector) {
                 this._updateSwitchButtons(status.active_view_selector);
             }
@@ -228,31 +220,6 @@ var ControlPanelRenderer = Renderer.extend({
         }
     },
     /**
-     * Updates the SearchView's visibility and extends the breadcrumbs area if
-     * the SearchView is not visible
-     *
-     * @private
-     * @param {SearchView} searchview a SearchView instance
-     * @param {boolean} isHidden visibility of the searchview
-     * @param {boolean} groupable visibility of the groupable menu (only
-     *   relevant if searchview is visible)
-     * @param {boolean} enableTimeRangeMenu visibility of the time range menu
-     *   (only relevant if searchview is visible)
-     */
-    _updateSearchView: function (searchview, isHidden, groupable, enableTimeRangeMenu) {
-        // if (searchview) {
-        //     searchview.toggle_visibility(!isHidden);
-        //     if (groupable !== undefined){
-        //         searchview.groupby_menu.do_toggle(groupable);
-        //     }
-        //     if (enableTimeRangeMenu !== undefined){
-        //         searchview.displayTimeRangeMenu(enableTimeRangeMenu);
-        //     }
-        // }
-        // this.nodes.$searchview.toggle(!isHidden);
-        // this.$el.toggleClass('o_breadcrumb_full', !!isHidden);
-    },
-    /**
      * Removes active class on all switch-buttons and adds it to the one of the
      * active view
      *
@@ -262,6 +229,64 @@ var ControlPanelRenderer = Renderer.extend({
     _updateSwitchButtons: function (selector) {
         this.nodes.$switch_buttons.find('button').removeClass('active');
         this.$(selector).addClass('active');
+    },
+
+
+
+
+    _setupFiltersMenu: function () {
+        this.filtersMenu = new FiltersMenu(this, this.state.filters, this.state.fields);
+        return this.filtersMenu.appendTo(this.$subMenus);
+    },
+    _setupGroupByMenu: function () {
+        this.groupByMenu = new GroupByMenu(this, this.state.groupBys, this.state.fields);
+        return this.groupByMenu.appendTo(this.$subMenus);
+    },
+    _setupFavoritesMenu: function () {
+        // this.favoritesMenu = new FavoritesMenu(this, this.state.favorites, this.state.fields);
+        // return this.favoritesMenu.appendTo(this.$subMenus);
+        return $.when();
+    },
+
+    _render: function () {
+        var defs = [];
+
+        // approx inDom
+        if (this.$subMenus) {
+            if (this.filtersMenu) {
+                this.filtersMenu.update(this.state.filters);
+            }
+            if (this.groupByMenu) {
+                this.groupByMenu.update(this.state.groupBys);
+            }
+            // if (this.favoritesMenu) {
+            //     this.favoritesMenu.update(this.state.favorites);
+            // }
+        } else {
+            this.$subMenus = this.$('.o_search_options');
+            defs.push(this._setupFiltersMenu());
+            defs.push(this._setupGroupByMenu());
+            defs.push(this._setupFavoritesMenu());
+        }
+        defs.push(this._renderSearchBar());
+
+        this.$('.o_searchview_more')
+            .toggleClass('fa-search-plus', this.displayMore)
+            .toggleClass('fa-search-minus', !this.displayMore);
+
+        this.render({});
+
+        return $.when(this, defs);
+    },
+    _renderSearchBar: function () {
+        // TODO: might need a reload instead of a destroy/instatiate
+        var oldSearchBar = this.searchBar;
+        this.searchBar = new SearchBar(this, this.state.facets);
+        return this.searchBar.appendTo(this.$('.o_search_view')).then(function () {
+            if (oldSearchBar) {
+                oldSearchBar.destroy();
+            }
+        });
     },
 
     //--------------------------------------------------------------------------
@@ -283,6 +308,9 @@ var ControlPanelRenderer = Renderer.extend({
      */
     _onDropdownClicked: function (ev) {
         ev.stopPropagation();
+    },
+    _onMore: function () {
+        // TODO
     },
 });
 

@@ -183,7 +183,9 @@
 <t t-name="ControlPanel">
     <div class="o_control_panel">
         <ol class="breadcrumb" role="navigation"/>
-        <div class="o_cp_searchview" role="search"/>
+        <div class="o_cp_searchview" role="search">
+            <t t-call="SearchView"/>
+        </div>
         <div class="o_cp_left">
             <div class="o_cp_buttons" role="toolbar" aria-label="Control panel toolbar"/>
             <aside class="o_cp_sidebar"/>

@@ -114,13 +114,14 @@ var Factory = Class.extend({
      */
     getController: function (parent) {
         var self = this;
-        return $.when(this._loadData(parent), ajax.loadLibs(this)).then(function (state) {
+        var model = this.getModel(parent);
+        return $.when(this._loadData(model), ajax.loadLibs(this)).then(function (state) {
             var renderer = self.getRenderer(parent, state);
             var Controller = self.Controller || self.config.Controller;
             var controllerParams = _.extend({
                 initialState: state,
             }, self.controllerParams);
-            var controller = new Controller(parent, self.model, renderer, controllerParams);
+            var controller = new Controller(parent, model, renderer, controllerParams);
             renderer.setParent(controller);
             return controller;
         });
@@ -155,12 +156,11 @@ var Factory = Class.extend({
      * Loads initial data from the model
      *
      * @private
-     * @param {Widget} parent the parent of the model
+     * @param {Model} model a Model instance
      * @returns {Promise<*>} a promise that resolves to the value returned by
      *   the get method from the model
      */
-    _loadData: function (parent) {
-        var model = this.getModel(parent);
+    _loadData: function (model) {
         return model.load(this.loadParams).then(function () {
             return model.get.apply(model, arguments);
         });

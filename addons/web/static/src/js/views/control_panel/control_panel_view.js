@@ -66,7 +66,12 @@ var ControlPanelController = require('web.ControlPanelController');
 var ControlPanelModel = require('web.ControlPanelModel');
 var ControlPanelRenderer = require('web.ControlPanelRenderer');
 var mvc = require('web.mvc');
+var pyUtils = require('web.py_utils');
+var searchViewParameters = require('web.searchViewParameters');
 var viewUtils = require('web.viewUtils');
+
+var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
+var DEFAULT_INTERVAL = searchViewParameters.DEFAULT_INTERVAL;
 
 var Factory = mvc.Factory;
 
@@ -90,6 +95,16 @@ var ControlPanelView = Factory.extend({
         params = params || {};
         var viewInfo = params.viewInfo || {arch: '<controlpanel/>', fields: {}};
 
+        this.controllerParams.controllerID = params.controllerID;
+        this.controllerParams.modelName = params.modelName;
+
+        this.rendererParams.template = params.template;
+
+        this.loadParams.actionId = params.actionId;
+        this.loadParams.fields = this.fields;
+        this.loadParams.groups = [];
+        this.loadParams.modelName = params.modelName;
+
         this.arch = viewUtils.parseArch(viewInfo.arch);
         this.fields = viewInfo.fields;
         if (this.arch.tag === 'controlpanel') {
@@ -98,14 +113,80 @@ var ControlPanelView = Factory.extend({
             this._parseSearchArch();
         }
 
-        this.rendererParams.controls = this.controls;
-        this.rendererParams.template = params.template;
+
+        // don't forget to compute and rename:
+        //  - groupable
+        //  - enableTimeRangeMenu
+        //  - search view visibility
+        //  - space available for breadcrumb (depends on visibility of search view and mobile mode)
     },
 
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {Object} child parsed arch node
+     * @returns {Object}
+     */
+    _evalArchChild: function (child) {
+        if (child.attrs.context) {
+            try {
+                var context = pyUtils.eval('context', child.attrs.context);
+                if (context.group_by) {
+                    // let us extract basic data since we just evaluated context
+                    // and use a correct tag!
+                    child.tag = 'groupBy';
+                    child.attrs.fieldName = context.group_by.split(':')[0];
+                    child.attrs.defaultInterval = context.group_by.split(':')[1];
+                }
+            } catch (e) {}
+        }
+        return child;
+    },
+    /**
+     * @private
+     * @param {Object} filter
+     * @param {Object} attrs
+     */
+    _extractAttributes: function (filter, attrs) {
+        if (filter.type === 'filter') {
+            filter.description = attrs.string ||
+                                    attrs.help ||
+                                    attrs.name ||
+                                    attrs.domain ||
+                                    'Ω';
+            filter.domain = attrs.domain;
+            if (attrs.date) {
+                filter.fieldName = attrs.date;
+                filter.fieldType = this.fields[attrs.date].type;
+                // we should be able to declare list of options per date filter
+                // (request of POs) (same remark for groupbys)
+                filter.hasOptions = true;
+                filter.options = searchViewParameters.periodOptions;
+                filter.defaultOptionId = attrs.default_period ||
+                                            DEFAULT_PERIOD;
+                filter.currentOptionId = false;
+            }
+        }
+        if (filter.type === 'groupBy') {
+            filter.description = attrs.string ||
+                                    attrs.help ||
+                                    attrs.name ||
+                                    attrs.fieldName ||
+                                    'Ω';
+            filter.fieldName = attrs.fieldName;
+            filter.fieldType = this.fields[attrs.fieldName].type;
+            if (_.contains(['date', 'datetime'], filter.fieldType)) {
+                filter.hasOptions = true;
+                filter.options = searchViewParameters.intervalOptions;
+                filter.defaultOptionId = attrs.defaultInterval ||
+                                            DEFAULT_INTERVAL;
+                filter.currentOptionId = false;
+            }
+        }
+    },
     /**
      * Executed when the given arch has root node <controlpanel>.
      *
@@ -120,18 +201,61 @@ var ControlPanelView = Factory.extend({
                 });
             }
         });
-        this.controls = controls;
+        this.rendererParams.controls = controls;
     },
     /**
      * Executed when the given arch has root node <search>, for backward
      * compatibility with former 'search' view.
      *
-     * @todo: put dam and ged's branch code of SearchView here
-     *
      * @private
      */
     _parseSearchArch: function () {
+        var self = this;
+        var groups = [];
+        var preFilters = _.flatten(this.arch.children.map(function (child) {
+            return child.tag !== 'group' ?
+                    self._evalArchChild(child) :
+                    child.children.map(self._evalArchChild);
+        }));
+        preFilters.push({tag: 'separator'});
 
+        var filter;
+        var currentTag;
+        var currentGroup = [];
+        var groupOfGroupBys = [];
+        var groupNumber = 1;
+
+        _.each(preFilters, function (preFilter) {
+            if (preFilter.tag !== currentTag || _.contains(['separator', 'field'], preFilter.tag)) {
+                if (currentGroup.length) {
+                    if (currentTag === 'groupBy') {
+                        groupOfGroupBys = groupOfGroupBys.concat(currentGroup);
+                    } else {
+                        groups.push(currentGroup);
+                    }
+                }
+                currentTag = preFilter.tag;
+                currentGroup = [];
+                groupNumber++;
+            }
+            if (preFilter.tag !== 'separator') {
+                filter = {
+                    type: preFilter.tag,
+                    // we need to codify here what we want to keep from attrs
+                    // and how, for now I put everything.
+                    // In some sence, some filter are active (totally determined, given)
+                    // and others are passive (require input(s) to become determined)
+                    // What is the right place to process the attrs?
+                };
+                if (filter.type === 'filter' || filter.type === 'groupBy') {
+                    filter.groupNumber = groupNumber;
+                }
+                self._extractAttributes(filter, preFilter.attrs);
+                currentGroup.push(filter);
+            }
+        });
+        groups.push(groupOfGroupBys);
+        this.loadParams.groups = groups;
     },
 });
 

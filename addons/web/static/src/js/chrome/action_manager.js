@@ -301,6 +301,7 @@ var ActionManager = Widget.extend({
 
         var action = this.actions[controller.actionID];
         var params = this._getControlPanelParams(action);
+        params.controllerID = controller.jsID;
         var controlPanelView = new ControlPanelView(params);
         return controlPanelView.getController(this).then(function (controlPanel) {
             action.controlPanel = controlPanel;

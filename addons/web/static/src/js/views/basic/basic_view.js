@@ -96,19 +96,19 @@ var BasicView = AbstractView.extend({
      * @private
      * @returns {Deferred}
      */
-    _loadData: function () {
+    _loadData: function (model) {
         if (this.recordID) {
             var self = this;
 
             // Add the fieldsInfo of the current view to the given recordID,
             // as it will be shared between two views, and it must be able to
             // handle changes on fields that are only on this view.
-            this.model.addFieldsInfo(this.recordID, {
+            model.addFieldsInfo(this.recordID, {
                 fields: this.fields,
                 fieldsInfo: this.fieldsInfo,
             });
 
-            var record = this.model.get(this.recordID);
+            var record = model.get(this.recordID);
             var viewType = this.viewType;
             var viewFields = Object.keys(record.fieldsInfo[viewType]);
             var fieldNames = _.difference(viewFields, Object.keys(record.data));
@@ -160,14 +160,14 @@ var BasicView = AbstractView.extend({
                 // onchange RPCs), that we haven't been able to process earlier
                 // (because those fields were unknow at that time). So we ask
                 // the model to process them.
-                def = this.model.applyRawChanges(record.id, viewType).then(function () {
-                    if (self.model.isNew(record.id)) {
-                        return self.model.applyDefaultValues(record.id, {}, {
+                def = model.applyRawChanges(record.id, viewType).then(function () {
+                    if (model.isNew(record.id)) {
+                        return model.applyDefaultValues(record.id, {}, {
                             fieldNames: fieldNames,
                             viewType: viewType,
                         });
                     } else {
-                        return self.model.reload(record.id, {
+                        return model.reload(record.id, {
                             fieldNames: fieldNames,
                             keepChanges: true,
                             viewType: viewType,
