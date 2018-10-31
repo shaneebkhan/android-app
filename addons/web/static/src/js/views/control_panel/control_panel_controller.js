@@ -27,16 +27,6 @@ var ControlPanelController = mvc.Controller.extend({
         // the updateIndex is used to prevent concurrent updates of the control
         // panel depending on asynchronous code to be executed in the wrong order
         this.updateIndex = 0;
-
-        // see control panel that looks for "searchview.$buttons"
-        this.$buttons = this._getSubMenus();
-    },
-    destroy: function () {
-        // delete reference to this.$buttons, to prevent crash.  Note that
-        // the $buttons is actually a part of this.renderer, which should be
-        // destroyed by the renderer anyway
-        delete this.$buttons;
-        this._super.apply(this, arguments);
     },
 
     //--------------------------------------------------------------------------
