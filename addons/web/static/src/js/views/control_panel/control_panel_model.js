@@ -85,9 +85,7 @@ var ControlPanelModel = mvc.Model.extend({
             var id = params.trashItem.id;
             def = this._deleteFilter(id);
         }
-        return $.when(def).then(function () {
-            _super.apply(self, arguments);
-        });
+        return $.when(def);
     },
 
     get: function () {
