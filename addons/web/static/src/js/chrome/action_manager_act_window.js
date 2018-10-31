@@ -284,7 +284,7 @@ ActionManager.include({
                         // controller should be placed just before the current one
                         var index = self.controllerStack.length - 1;
                         self.controllerStack.splice(index, 0, lazyLoadedController.jsID);
-                        action.controlPanel.update({
+                        action.controlPanel.updateContents({
                             breadcrumbs: self._getBreadcrumbs(),
                         }, {clear: false});
                     }
@@ -550,7 +550,7 @@ ActionManager.include({
                 // keepSearchView option pass (we fool the controlPanel by
                 // updating it with nothing, s.t. it detaches the searchView
                 // from the other instance and attaches in the current one)
-                action.controlPanel.update({
+                action.controlPanel.updateContents({
                     cp_content: {$searchview: action.searchView && action.searchView.$el},
                     searchview: undefined,
                 }, {clear: false});

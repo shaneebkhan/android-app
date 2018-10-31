@@ -258,7 +258,7 @@ var ActionManager = Widget.extend({
 
         var action = this.actions[controller.actionID];
         if (action.controlPanel) {
-            action.controlPanel.update({
+            action.controlPanel.updateContents({
                 breadcrumbs: this._getBreadcrumbs(),
             }, {clear: false});
             action.controlPanel.$el.insertBefore(this.$el); // TODO: use dom utils
@@ -913,7 +913,7 @@ var ActionManager = Widget.extend({
             var action = self.actions[controller.actionID];
             if (!action.flags || !action.flags.headless) {
                 var breadcrumbs = self._getBreadcrumbs();
-                action.controlPanel.update({breadcrumbs: breadcrumbs}, {clear: false});
+                action.controlPanel.updateContents({breadcrumbs: breadcrumbs}, {clear: false});
             }
         });
         return controller.widget.appendTo(fragment).then(function () {

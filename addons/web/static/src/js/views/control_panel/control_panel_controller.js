@@ -41,20 +41,20 @@ var ControlPanelController = mvc.Controller.extend({
     getSearchState: function () {
         return this.model.getQuery();
     },
+    update: function (params) {
+        this.model.reload(params);
+        this._reportNewQuery();
+        var state = this.model.get();
+        return this.renderer.updateState(state);
+    },
     /**
      * Updates the content and displays the ControlPanel
      *
      * @see  ControlPanelRenderer (update)
      */
-    update: function (status, options) {
+    updateContents: function (status, options) {
         this.updateIndex++;
         this.renderer.render(status, options);
-    },
-    update2: function (params) {
-        this.model.reload(params);
-        this._reportNewQuery();
-        var state = this.model.get();
-        return this.renderer.updateState(state);
     },
     /**
      * Called at each switch view. This is required until the control panel is
@@ -103,25 +103,25 @@ var ControlPanelController = mvc.Controller.extend({
         if (!group) {
             group = this.renderer.getLastFacet();
         }
-        this.update2({removeGroup: group});
+        this.update({removeGroup: group});
     },
     _onItemOptionClicked: function (event) {
-        return this.update2({toggleOption: event.data});
+        return this.update({toggleOption: event.data});
     },
     _onItemTrashed: function (event) {
-        return this.update2({trashItem: event.data});
+        return this.update({trashItem: event.data});
     },
     _onMenuItemClicked: function (event) {
-        return this.update2({toggleFilter: event.data});
+        return this.update({toggleFilter: event.data});
     },
     _onNewFavorite: function (event) {
-        return this.update2({newFavorite: event.data});
+        return this.update({newFavorite: event.data});
     },
     _onNewFilters: function (event) {
-        return this.update2({newFilters: event.data});
+        return this.update({newFilters: event.data});
     },
     _onNewGroupBy: function (event) {
-        return this.update2({newGroupBy: event.data});
+        return this.update({newGroupBy: event.data});
     },
 });
 

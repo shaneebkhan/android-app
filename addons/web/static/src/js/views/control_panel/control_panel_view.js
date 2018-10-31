@@ -45,12 +45,12 @@ var ControlPanelMixin = {
         this._controlPanel = cp;
     },
     /**
-     * @param {Object} [cp_status] see web.ControlPanel.update() for a description
-     * @param {Object} [options] see web.ControlPanel.update() for a description
+     * @param {Object} [cp_status] see web.ControlPanel.updateContents() for a description
+     * @param {Object} [options] see web.ControlPanel.updateContents() for a description
      */
     update_control_panel: function (cp_status, options) {
         if (this._controlPanel) {
-            this._controlPanel.update(cp_status || {}, options || {});
+            this._controlPanel.updateContents(cp_status || {}, options || {});
         }
     },
 };
