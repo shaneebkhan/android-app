@@ -36,6 +36,10 @@ var SearchFacet = Widget.extend({
             icon = 'fa-filter';
         } else if (this.facet.type === 'groupBy') {
             icon = 'fa-bars';
+        } else if (this.facet.type === 'favorite') {
+            icon = 'fa-star';
+        } else if (this.facet.type === 'timeRange') {
+            icon = 'fa-calendar';
         }
         return icon;
     },
@@ -56,7 +60,18 @@ var SearchFacet = Widget.extend({
             });
             description += ': ' + optionValue.description;
         }
-        // TO DO: description for time range (see facetFor method in OldTimeRangeMenu)
+        if (atom.type === 'timeRange') {
+            var timeRangeValue =_.findWhere(atom.timeRangeOptions, {
+                optionId: atom.timeRangeId,
+            });
+            description += ': ' + timeRangeValue.description;
+            if (atom.comparisonTimeRangeId) {
+                var comparisonTimeRangeValue =_.findWhere(atom.comparisonTimeRangeOptions, {
+                    optionId: atom.comparisonTimeRangeId,
+                });
+                description += ' / ' + comparisonTimeRangeValue.description;
+            }
+        }
         return description;
     },
 
