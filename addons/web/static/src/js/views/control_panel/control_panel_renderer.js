@@ -86,7 +86,7 @@ var ControlPanelRenderer = Renderer.extend({
      * precise description)
      * @param {Object} [status.cp_content] dictionnary containing the new ControlPanel jQuery elements
      * @param {Boolean} [status.hidden] true if the ControlPanel should be hidden
-     * @param {Boolean} [status.searchViewHidden] true if the searchview is hidden, false otherwise
+     * @param {Boolean} [status.search_view_hidden] true if the searchview is hidden, false otherwise
      * @param {Boolean} [options.clear] set to true to clear from control panel
      * elements that are not in status.cp_content
      */
@@ -110,8 +110,8 @@ var ControlPanelRenderer = Renderer.extend({
                 this.$('.breadcrumb').html(this._renderBreadcrumbs(status.breadcrumbs));
             }
 
-            if ('searchViewHidden' in status) {
-                if (status.searchViewHidden) {
+            if ('search_view_hidden' in status) {
+                if (status.search_view_hidden) {
                     this.$('.o_searchview').hide();
                     this.$('.o_search_options').hide();
                 } else {

@@ -410,7 +410,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
             active_view_selector: '.o_cp_switch_' + this.viewType,
             cp_content: cpContent,
             hidden: !this.withControlPanel,
-            searchViewHidden: !this.searchable || this.searchviewHidden,
+            search_view_hidden: !this.searchable || this.searchviewHidden,
         });
 
         this._pushState();
