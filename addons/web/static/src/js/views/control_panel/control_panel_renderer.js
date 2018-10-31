@@ -65,6 +65,8 @@ var ControlPanelRenderer = Renderer.extend({
                                   // bottom row to take 5px height due to padding
         }
 
+        this.render({});
+
         return $.when(this._super.apply(this, arguments), this._render());
     },
 
@@ -124,6 +126,10 @@ var ControlPanelRenderer = Renderer.extend({
             // Attach special controls
             this.$controls.prependTo(this.nodes.$buttons);
         }
+    },
+    updateState: function (state) {
+        this.state = state;
+        return this._render();
     },
 
     //--------------------------------------------------------------------------
@@ -274,15 +280,13 @@ var ControlPanelRenderer = Renderer.extend({
             .toggleClass('fa-search-plus', this.displayMore)
             .toggleClass('fa-search-minus', !this.displayMore);
 
-        this.render({});
-
         return $.when(this, defs);
     },
     _renderSearchBar: function () {
         // TODO: might need a reload instead of a destroy/instatiate
         var oldSearchBar = this.searchBar;
         this.searchBar = new SearchBar(this, this.state.facets);
-        return this.searchBar.appendTo(this.$('.o_search_view')).then(function () {
+        return this.searchBar.appendTo(this.$('.o_searchview')).then(function () {
             if (oldSearchBar) {
                 oldSearchBar.destroy();
             }

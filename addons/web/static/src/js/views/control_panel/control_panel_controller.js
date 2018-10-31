@@ -61,6 +61,8 @@ var ControlPanelController = mvc.Controller.extend({
     update2: function (params) {
         this.model.reload(params);
         this._reportNewQuery();
+        var state = this.model.get();
+        return this.renderer.updateState(state);
     },
     /**
      * Called at each switch view. This is required until the control panel is
