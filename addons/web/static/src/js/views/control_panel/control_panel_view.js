@@ -70,13 +70,10 @@ var pyUtils = require('web.py_utils');
 var searchViewParameters = require('web.searchViewParameters');
 var viewUtils = require('web.viewUtils');
 
-var COMPARISON_TIME_RANGE_OPTIONS = searchViewParameters.COMPARISON_TIME_RANGE_OPTIONS;
 var DEFAULT_INTERVAL = searchViewParameters.DEFAULT_INTERVAL;
 var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
-var DEFAULT_TIMERANGE = searchViewParameters.DEFAULT_TIMERANGE;
 var INTERVAL_OPTIONS = searchViewParameters.INTERVAL_OPTIONS;
 var PERIOD_OPTIONS = searchViewParameters.PERIOD_OPTIONS;
-var TIME_RANGE_OPTIONS = searchViewParameters.TIME_RANGE_OPTIONS;
 
 var Factory = mvc.Factory;
 
@@ -113,6 +110,9 @@ var ControlPanelView = Factory.extend({
         // var disableCustomFilters = context.search_disable_custom_filters;
         // var hasSearchView = params.hasSearchView;
 
+
+        this.arch = viewUtils.parseArch(viewInfo.arch);
+        this.fields = viewInfo.fields;
         this.controllerParams.controllerID = params.controllerID;
         this.controllerParams.modelName = params.modelName;
 
@@ -122,15 +122,11 @@ var ControlPanelView = Factory.extend({
         this.loadParams.fields = this.fields;
         this.loadParams.groups = [];
         this.loadParams.modelName = params.modelName;
-
-        this.arch = viewUtils.parseArch(viewInfo.arch);
-        this.fields = viewInfo.fields;
         if (this.arch.tag === 'controlpanel') {
             this._parseControlPanelArch();
         } else {
             this._parseSearchArch();
         }
-        this._createGroupOfTimeRanges();
 
         // don't forget to compute and rename:
         //  - groupable
@@ -142,31 +138,6 @@ var ControlPanelView = Factory.extend({
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
-
-    _createGroupOfTimeRanges: function () {
-        var self = this;
-        var timeRanges = [];
-        Object.keys(this.fields).forEach(function (fieldName) {
-            var field = self.fields[fieldName];
-            var fieldType = field.type;
-            if (_.contains(['date', 'datetime'], fieldType) && field.sortable) {
-                timeRanges.push({
-                    type: 'timeRange',
-                    description: field.string,
-                    fieldName : fieldName,
-                    fieldType: fieldType,
-                    timeRangeId: false,
-                    comparisonTimeRangeId: false,
-                    defaultTimeRangeId: DEFAULT_TIMERANGE,
-                    timeRangeOptions: TIME_RANGE_OPTIONS,
-                    comparisonTimeRangeOptions: COMPARISON_TIME_RANGE_OPTIONS
-                });
-            }
-        });
-        if (timeRanges.length) {
-            this.loadParams.groups.push(timeRanges);
-        }
-    },
 
     /**
      * @private

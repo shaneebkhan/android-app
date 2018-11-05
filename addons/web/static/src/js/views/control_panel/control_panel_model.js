@@ -4,6 +4,11 @@ odoo.define('web.ControlPanelModel', function (require) {
 var Domain = require('web.Domain');
 var mvc = require('web.mvc');
 var pyUtils = require('web.py_utils');
+var searchViewParameters = require('web.searchViewParameters');
+
+var DEFAULT_TIMERANGE = searchViewParameters.DEFAULT_TIMERANGE;
+var TIME_RANGE_OPTIONS = searchViewParameters.TIME_RANGE_OPTIONS;
+var COMPARISON_TIME_RANGE_OPTIONS = searchViewParameters.COMPARISON_TIME_RANGE_OPTIONS;
 
 var ControlPanelModel = mvc.Model.extend({
     init: function (parent) {
@@ -15,6 +20,8 @@ var ControlPanelModel = mvc.Model.extend({
         this.modelName = null;
         this.actionId = null;
         this.groupOfGroupBysId = null;
+        this.groupOfFavoritesId = null;
+        this.groupOfTimeRangesId = null;
     },
 
     //--------------------------------------------------------------------------
@@ -27,11 +34,9 @@ var ControlPanelModel = mvc.Model.extend({
         this.modelName = params.modelName;
         this.actionId = params.actionId;
         params.groups.forEach(function (group) {
-        // determine data structure used by model
-        // we should also determine here what are the favorites and what are the
-        // default filters
             self._createGroupOfFilters(group);
         });
+        this._createGroupOfTimeRanges();
         return this._loadFavorites();
     },
 
@@ -128,7 +133,7 @@ var ControlPanelModel = mvc.Model.extend({
         });
         var facets = {};
         // resolve active filters for facets
-        _.each(this.query, function (groupID) {
+        this.query.forEach(function (groupID) {
             var group = self.groups[groupID];
             var facet = _.extend({}, group);
             facet.filters = facet.activeFilterIds.map(function (filterID) {
@@ -215,6 +220,43 @@ var ControlPanelModel = mvc.Model.extend({
             this.groupOfGroupBysId = groupId;
         }
     },
+    _createGroupOfTimeRanges: function () {
+        var self = this;
+        var timeRanges = [];
+        Object.keys(this.fields).forEach(function (fieldName) {
+            var field = self.fields[fieldName];
+            var fieldType = field.type;
+            if (_.contains(['date', 'datetime'], fieldType) && field.sortable) {
+                timeRanges.push({
+                    type: 'timeRange',
+                    description: field.string,
+                    fieldName : fieldName,
+                    fieldType: fieldType,
+                    timeRangeId: false,
+                    comparisonTimeRangeId: false,
+                    defaultTimeRangeId: DEFAULT_TIMERANGE,
+                    timeRangeOptions: TIME_RANGE_OPTIONS,
+                    comparisonTimeRangeOptions: COMPARISON_TIME_RANGE_OPTIONS
+                });
+            }
+        });
+        if (timeRanges.length) {
+            this._createGroupOfFilters(timeRanges);
+            this.groupOfTimeRangesId = Object.keys(self.groups).find(function (groupId) {
+                    var group = self.groups[groupId];
+                    return group.type === 'timeRange';
+                });
+        } else {
+            // create empty favorite group
+            var groupId = _.uniqueId('__group__');
+            self.groups[groupId] = {
+                id: groupId,
+                type: 'timeRange',
+                activeFilterIds: [],
+            };
+            self.groupOfTimeRangesId = groupId;
+        }
+    },
     _deleteFilter: function (filterId) {
         var self = this;
         var filter = this.filters[filterId];
@@ -289,6 +331,8 @@ var ControlPanelModel = mvc.Model.extend({
         return groupBys;
     },
 
+// Group "method"
+
     _getGroupBys: function () {
         var self = this;
         var groupBys = this.query.reduce(
@@ -330,13 +374,9 @@ var ControlPanelModel = mvc.Model.extend({
         return _.compact(groupBys);
     },
     _getTimeRangeMenuData: function (evaluation) {
-        var self = this;
         var context = {};
 
-        var groupOfTimeRangesId = Object.keys(this.groups).find(function (groupId) {
-            return self.groups[groupId].type === 'timeRange';
-        });
-        var groupOfTimeRanges = this.groups[groupOfTimeRangesId];
+        var groupOfTimeRanges = this.groups[this.groupOfTimeRangesId];
         if (groupOfTimeRanges.activeFilterIds.length) {
             var filter = this.filters[groupOfTimeRanges.activeFilterIds[0]];
 
@@ -348,10 +388,9 @@ var ControlPanelModel = mvc.Model.extend({
                     filter.timeRangeId,
                     filter.fieldType
                 );
-            var timeRangeDescription = _.findWhere(
-                    filter.timeRangeOptions,
-                    {optionId: filter.timeRangeId}
-                ).description.toString();
+            var timeRangeDescription = filter.timeRangeOptions.find(function (option) {
+                return option.optionId === filter.timeRangeId;
+            }).description.toString();
             if (filter.comparisonTimeRangeId) {
                 comparisonTimeRange = Domain.prototype.constructDomain(
                     filter.fieldName,
@@ -360,10 +399,9 @@ var ControlPanelModel = mvc.Model.extend({
                     null,
                     filter.comparisonTimeRangeId
                 );
-                comparisonTimeRangeDescription = _.findWhere(
-                    filter.comparisonTimeRangeOptions,
-                    {optionId: filter.comparisonTimeRangeId}
-                ).description.toString();
+                comparisonTimeRangeDescription = filter.comparisonTimeRangeOptions.find(function (comparisonOption) {
+                    return comparisonOption.optionId === filter.comparisonTimeRangeId;
+                }).description.toString();
             }
             if (evaluation) {
                 timeRange = Domain.prototype.stringToArray(timeRange);
@@ -475,8 +513,8 @@ var ControlPanelModel = mvc.Model.extend({
             action_id: this.actionId,
         };
         // we don't want the groupBys to be located in the context in search view
-        delete context.group_by;
         return this.createFilter(irFilter).then(function (serverSideId) {
+            delete context.group_by;
             favorite.isRemovable = true;
             favorite.groupNumber = userId ? 1 : 2;
             favorite.context = context;
@@ -522,18 +560,25 @@ var ControlPanelModel = mvc.Model.extend({
      * Remove the group from the query.
      *
      * @private
-     * @param {string} groupID
+     * @param {string} groupId
      */
-    _removeGroup: function (groupID) {
-        var group = this.groups[groupID];
+    _removeGroup: function (groupId) {
+        var group = this.groups[groupId];
         group.activeFilterIds = [];
-        this.query.splice(this.query.indexOf(groupID), 1);
+        this.query.splice(this.query.indexOf(groupId), 1);
     },
     // This method should work in batch too
     // TO DO: accept selection of multiple options?
     // for now: activate an option forces the deactivation of the others
     // optionId optional: the method could be used at initialization...
     // --> one falls back on defautlOptionId.
+    /**
+     * Used to toggle a given filter(Id) that has options with a given option(Id).
+     *
+     * @private
+     * @param {string} filterId
+     * @param {string} optionId
+     */
     _toggleFilterWithOptions: function (filterId, optionId) {
         var filter = this.filters[filterId];
         var group = this.groups[filter.groupId];
