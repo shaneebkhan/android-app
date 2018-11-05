@@ -56,6 +56,7 @@ var SearchFacet = Widget.extend({
             });
             description += ': ' + optionValue.description;
         }
+        // TO DO: description for time range (see facetFor method in OldTimeRangeMenu)
         return description;
     },
 

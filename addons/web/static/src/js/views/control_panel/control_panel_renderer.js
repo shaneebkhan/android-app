@@ -5,6 +5,7 @@ var data = require('web.data');
 var FavoritesMenu = require('web.FavoritesMenu');
 var FiltersMenu = require('web.FiltersMenu');
 var GroupByMenu = require('web.GroupByMenu');
+var TimeRangeMenu = require('web.TimeRangeMenu');
 var mvc = require('web.mvc');
 var SearchBar = require('web.SearchBar');
 var viewUtils = require('web.viewUtils');
@@ -261,6 +262,10 @@ var ControlPanelRenderer = Renderer.extend({
         this.favoritesMenu = new FavoritesMenu(this, this.state.favorites);
         return this.favoritesMenu.appendTo(this.$subMenus);
     },
+    _setupTimeRangeMenu: function () {
+        this.timeRangeMenu = new TimeRangeMenu(this, this.state.timeRanges);
+        return this.timeRangeMenu.appendTo(this.$subMenus);
+    },
 
     _render: function () {
         var defs = [];
@@ -276,10 +281,14 @@ var ControlPanelRenderer = Renderer.extend({
             if (this.favoritesMenu) {
                 this.favoritesMenu.update(this.state.favorites);
             }
+            if (this.timeRangeMenu) {
+                this.timeRangeMenu.update(this.state.timeRanges);
+            }
         } else {
             this.$subMenus = this.$('.o_search_options');
             defs.push(this._setupFiltersMenu());
             defs.push(this._setupGroupByMenu());
+            defs.push(this._setupTimeRangeMenu());
             defs.push(this._setupFavoritesMenu());
         }
         defs.push(this._renderSearchBar());

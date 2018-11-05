@@ -51,6 +51,13 @@ var ControlPanelModel = mvc.Model.extend({
                 params.toggleOption.optionId
             );
         }
+        if (params.activateTimeRange) {
+            this._activateTimeRange(
+                params.activateTimeRange.id,
+                params.activateTimeRange.timeRangeId,
+                params.activateTimeRange.comparisonTimeRangeId
+            );
+        }
         if (params.newFilters) {
             var newFilters = params.newFilters.filters;
             this._createGroupOfFilters(newFilters);
@@ -78,6 +85,8 @@ var ControlPanelModel = mvc.Model.extend({
                 ['description', 'isDefault', 'isShared', 'type']
             )).then(function () {
                 newFavorite.on_success();
+            }).fail(function () {
+                return $.when();
             });
         }
         if (params.trashItem) {
@@ -97,6 +106,7 @@ var ControlPanelModel = mvc.Model.extend({
         // filters are filters of filter type only, groupbys are groupbys,...!
         var filters = [];
         var groupBys = [];
+        var timeRanges = [];
         var favorites = [];
         Object.keys(this.filters).forEach(function (filterId) {
             var filter = _.extend({}, self.filters[filterId]);
@@ -111,8 +121,13 @@ var ControlPanelModel = mvc.Model.extend({
             if (filter.type === 'favorite') {
                 favorites.push(filter);
             }
+            if (filter.type === 'timeRange') {
+                timeRanges.push(filter);
+            }
         });
         // TODO: correctly compute facets
+        // TODO: solve problem: values should not be put in groups themselves,
+        // only in copy of them
         var facets = _.filter(this.groups, function (group) {
             return group.activeFilterIds.length;
         });
@@ -126,6 +141,7 @@ var ControlPanelModel = mvc.Model.extend({
             facets: facets,
             filters: filters,
             groupBys: groupBys,
+            timeRanges: timeRanges,
             favorites: favorites,
             groups: this.groups,
             query: this.query,
@@ -139,7 +155,11 @@ var ControlPanelModel = mvc.Model.extend({
             this._getDomain(),
             userContext
         );
-        var context = pyUtils.eval('contexts', this._getQueryContext(), userContext);
+        var domainsEvaluation = true;
+        var context = _.extend(
+            pyUtils.eval('contexts', this._getQueryContext(), userContext),
+            this._getTimeRangeMenuData(domainsEvaluation)
+        );
         var groupBys = this._getGroupBys();
         return {
             // for now action manager wants domains and contexts I would prefer
@@ -154,6 +174,18 @@ var ControlPanelModel = mvc.Model.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    _activateTimeRange: function (filterId, timeRangeId, comparisonTimeRangeId) {
+        var filter = this.filters[filterId];
+        filter.timeRangeId = timeRangeId || filter.defaultTimeRangeId;
+        filter.comparisonTimeRangeId = comparisonTimeRangeId;
+        var group = this.groups[filter.groupId];
+        var groupActive = group.activeFilterIds.length;
+        if (groupActive) {
+            group.activeFilterIds = [filterId];
+        } else {
+            this._toggleFilter(filterId);
+        }
+    },
     // if _saveQuery succeed we create a new favorite and activate it
     _addNewFavorite: function (favorite) {
         var id = _.uniqueId('__filter__');
@@ -309,6 +341,58 @@ var ControlPanelModel = mvc.Model.extend({
         );
         return _.compact(groupBys);
     },
+    _getTimeRangeMenuData: function (evaluation) {
+        var self = this;
+        var context = {};
+
+        var groupOfTimeRangesId = Object.keys(this.groups).find(function (groupId) {
+            return self.groups[groupId].type === 'timeRange';
+        });
+        var groupOfTimeRanges = this.groups[groupOfTimeRangesId];
+        if (groupOfTimeRanges.activeFilterIds.length) {
+            var filter = this.filters[groupOfTimeRanges.activeFilterIds[0]];
+
+            var comparisonTimeRange = "[]";
+            var comparisonTimeRangeDescription;
+
+            var timeRange = Domain.prototype.constructDomain(
+                    filter.fieldName,
+                    filter.timeRangeId,
+                    filter.fieldType
+                );
+            var timeRangeDescription = _.findWhere(
+                    filter.timeRangeOptions,
+                    {optionId: filter.timeRangeId}
+                ).description.toString();
+            if (filter.comparisonTimeRangeId) {
+                comparisonTimeRange = Domain.prototype.constructDomain(
+                    filter.fieldName,
+                    filter.timeRangeId,
+                    filter.fieldType,
+                    null,
+                    filter.comparisonTimeRangeId
+                );
+                comparisonTimeRangeDescription = _.findWhere(
+                    filter.comparisonTimeRangeOptions,
+                    {optionId: filter.comparisonTimeRangeId}
+                ).description.toString();
+            }
+            if (evaluation) {
+                timeRange = Domain.prototype.stringToArray(timeRange);
+                comparisonTimeRange = Domain.prototype.stringToArray(comparisonTimeRange);
+            }
+            context = {
+                timeRangeMenuData: {
+                    timeRange: timeRange,
+                    timeRangeDescription: timeRangeDescription,
+                    comparisonTimeRange: comparisonTimeRange,
+                    comparisonTimeRangeDescription: comparisonTimeRangeDescription,
+                }
+            };
+        }
+        return context;
+
+    },
     _loadFavorites: function () {
         var self = this;
         var def = this._rpc({
@@ -334,7 +418,8 @@ var ControlPanelModel = mvc.Model.extend({
                         isDefault: favorite.is_default,
                         domain: favorite.domain,
                         groupBys: groupBys,
-                        context: context,
+                        // we want to keep strings as long as possible
+                        context: favorite.context,
                         sort: favorite.sort,
                         userId: userId,
                         serverSideId: favorite.id,
@@ -380,7 +465,14 @@ var ControlPanelModel = mvc.Model.extend({
         //     delete ctx[key];
         // });
         var queryContext = this._getQueryContext();
-        var context = pyUtils.eval('contexts',[userContext, controllerContext].concat(queryContext));
+        // TO DO: find a way to compose context as string without evaluate them (like for domains)
+        // Or we could encode in favorite the timeRange menu data as fieldName, timeRangeId,...
+        // or better in a separated key.
+        var timeRangeMenuInfo = this._getTimeRangeMenuData(false);
+        var context = pyUtils.eval(
+            'contexts',
+            [userContext, controllerContext, timeRangeMenuInfo].concat(queryContext)
+        );
         context = _.omit(context, Object.keys(userContext));
         var groupBys = this._getGroupBys();
         if (groupBys.length) {
@@ -431,13 +523,13 @@ var ControlPanelModel = mvc.Model.extend({
             }
             group.activeFilterIds.push(filterId);
             // if initiaLength is 0, the group was not active.
-            if (initiaLength === 0) {
+            if (filter.type === 'favorite' || initiaLength === 0) {
                 this.query.push(group.id);
             }
         } else {
             group.activeFilterIds.splice(index, 1);
             // if initiaLength is 1, the group is now inactive.
-            if (filter.type === 'favorite' || initiaLength === 0) {
+            if (initiaLength === 1) {
                 this.query.splice(this.query.indexOf(group.id), 1);
             }
         }

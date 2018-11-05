@@ -71,7 +71,6 @@ var searchViewParameters = require('web.searchViewParameters');
 var viewUtils = require('web.viewUtils');
 
 var COMPARISON_TIME_RANGE_OPTIONS = searchViewParameters.COMPARISON_TIME_RANGE_OPTIONS;
-var DEFAULT_COMPARISON_TIME_RANGE = searchViewParameters.DEFAULT_COMPARISON_TIME_RANGE;
 var DEFAULT_INTERVAL = searchViewParameters.DEFAULT_INTERVAL;
 var DEFAULT_PERIOD = searchViewParameters.DEFAULT_PERIOD;
 var DEFAULT_TIMERANGE = searchViewParameters.DEFAULT_TIMERANGE;
@@ -153,16 +152,14 @@ var ControlPanelView = Factory.extend({
             if (_.contains(['date', 'datetime'], fieldType) && field.sortable) {
                 timeRanges.push({
                     type: 'timeRange',
-                    description: field.string || field.help || field.name,
+                    description: field.string,
                     fieldName : fieldName,
                     fieldType: fieldType,
-                    hasOptions: true,
+                    timeRangeId: false,
+                    comparisonTimeRangeId: false,
+                    defaultTimeRangeId: DEFAULT_TIMERANGE,
                     timeRangeOptions: TIME_RANGE_OPTIONS,
-                    comparisonTimeRangeOptions: COMPARISON_TIME_RANGE_OPTIONS,
-                    timeRange: false,
-                    comparisonTimeRange: false,
-                    defaultTimeRange: DEFAULT_TIMERANGE,
-                    defaultComparisonTimeRange: DEFAULT_COMPARISON_TIME_RANGE,
+                    comparisonTimeRangeOptions: COMPARISON_TIME_RANGE_OPTIONS
                 });
             }
         });

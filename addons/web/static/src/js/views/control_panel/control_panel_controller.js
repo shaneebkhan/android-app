@@ -13,6 +13,7 @@ var ControlPanelController = mvc.Controller.extend({
         new_favorite: '_onNewFavorite',
         new_filters: '_onNewFilters',
         new_groupBy: '_onNewGroupBy',
+        activate_time_range: '_onActivateTimeRange',
     },
 
     /**
@@ -42,10 +43,12 @@ var ControlPanelController = mvc.Controller.extend({
         return this.model.getQuery();
     },
     update: function (params) {
-        this.model.reload(params);
-        this._reportNewQuery();
-        var state = this.model.get();
-        return this.renderer.updateState(state);
+        var self = this;
+        return this.model.reload(params).then(function () {
+            self._reportNewQuery();
+            var state = self.model.get();
+            return self.renderer.updateState(state);
+        });
     },
     /**
      * Updates the content and displays the ControlPanel
@@ -123,6 +126,9 @@ var ControlPanelController = mvc.Controller.extend({
     _onNewGroupBy: function (event) {
         return this.update({newGroupBy: event.data});
     },
+    _onActivateTimeRange: function (event) {
+        return this.update({activateTimeRange: event.data});
+    }
 });
 
 return ControlPanelController;
