@@ -60,10 +60,11 @@ var AbstractWebClient = Widget.extend(ServiceProviderMixin, KeyboardNavigationMi
         },
         load_filters: function (event) {
             return data_manager
-                .load_filters(event.data.dataset, event.data.action_id)
+                .load_filters(event.data)
                 .then(event.data.on_success);
         },
         create_filter: '_onCreateFilter',
+        delete_filter: '_onDeleteFilter',
         push_state: '_onPushState',
         show_effect: '_onShowEffect',
         // session
@@ -365,6 +366,18 @@ var AbstractWebClient = Widget.extend(ServiceProviderMixin, KeyboardNavigationMi
     _onCreateFilter: function (e) {
         data_manager
             .create_filter(e.data.filter)
+            .then(e.data.on_success);
+    },
+    /**
+     * @private
+     * @param {OdooEvent} e
+     * @param {Object} e.data.filter the filter description
+     * @param {function} e.data.on_success called when the RPC succeeds with its
+     *   returned value as argument
+     */
+    _onDeleteFilter: function (e) {
+        data_manager
+            .delete_filter(e.data.filterId)
             .then(e.data.on_success);
     },
     /**

@@ -12,6 +12,7 @@ var ControlPanelModel = mvc.Model.extend({
         this.groups = {};
         this.query = [];
         this.fields = {};
+        this.modelName = null;
         this.actionId = null;
         this.groupOfGroupBysId = null;
     },
@@ -215,22 +216,10 @@ var ControlPanelModel = mvc.Model.extend({
             this.groupOfGroupBysId = groupId;
         }
     },
-    _createIrFilter: function (irFilter) {
-        var def = $.Deferred();
-        this.trigger_up('create_filter', {
-            filter: irFilter,
-            on_success: def.resolve.bind(def),
-        });
-        return def;
-    },
     _deleteFilter: function (filterId) {
         var self = this;
         var filter = this.filters[filterId];
-        var def = this._rpc({
-                args: [filter.serverSideId],
-                model: 'ir.filters',
-                method: 'unlink',
-        }).then(function () {
+        var def = this.deleteFilter(filter.serverSideId).then(function () {
             var activeFavoriteId = self.groups[filter.groupId].activeFilterIds[0];
             var isActive = activeFavoriteId === filterId;
             if (isActive) {
@@ -395,11 +384,7 @@ var ControlPanelModel = mvc.Model.extend({
     },
     _loadFavorites: function () {
         var self = this;
-        var def = this._rpc({
-            args: [this.modelName, this.actionId],
-            model: 'ir.filters',
-            method: 'get_filters',
-        }).then(function (favorites) {
+        var def = this.loadFilters(this.modelName,this.actionId).then(function (favorites) {
             if (favorites.length) {
                 favorites = favorites.map(function (favorite) {
                     var userId = favorite.user_id ? favorite.user_id[0] : false;
@@ -492,7 +477,7 @@ var ControlPanelModel = mvc.Model.extend({
         };
         // we don't want the groupBys to be located in the context in search view
         delete context.group_by;
-        return this._createIrFilter(irFilter).then(function (serverSideId) {
+        return this.createFilter(irFilter).then(function (serverSideId) {
             favorite.isRemovable = true;
             favorite.groupNumber = userId ? 1 : 2;
             favorite.context = context;

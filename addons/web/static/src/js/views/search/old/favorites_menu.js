@@ -275,7 +275,7 @@ return Widget.extend({
             return;
         }
         return data_manager
-            .delete_filter(filter)
+            .delete_filter(filter.id)
             .done(function () {
                 $filter.remove();
                 delete self.$filters[key];
