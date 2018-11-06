@@ -13485,13 +13485,12 @@ QUnit.module('relational_fields', {
                             '<field name="datetime"/>' +
                             '<field name="display_name"/>' +
                         '</tree>' +
+                        '<form>' +
+                            '<field name="display_name"/>' +
+                        '</form>' +
                     '</field>' +
                 '</form>',
             res_id: 1,
-            archs: {
-                'partner,false,form': '<form>' +
-                                        '<field name="display_name"/>' +
-                                    '</form>'},
             mockRPC: function(route, args) {
                 if (route === '/web/dataset/call_kw/partner/write') {
                     args.args[1].p[0][2].datetime = '2018-04-05 12:00:00';

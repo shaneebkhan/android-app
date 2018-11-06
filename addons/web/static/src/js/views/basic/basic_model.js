@@ -3587,27 +3587,19 @@ var BasicModel = AbstractModel.extend({
     _makeDefaultRecord: function (modelName, params) {
         var self = this;
 
-        var determineExtraFields = function () {
-            // Fields that are present in the originating view, that need to be initialized
-            // Hence preventing their value to crash when getting back to the originating view
-            var parentRecord = self.localData[params.parentID];
-
-            var originView =  parentRecord && parentRecord.fieldsInfo;
-            if (!originView || !originView[parentRecord.viewType])
-                return [];
-
-            var fieldsFromOrigin = _.filter(Object.keys(originView[parentRecord.viewType]),
-                function (fieldname) {
-                    return params.fields[fieldname] !== undefined;
-                });
-
-            return fieldsFromOrigin;
-        };
-
-        var fieldNames = Object.keys(params.fieldsInfo[params.viewType]);
+        var fields = params.fields;
+        var fieldsInfo = params.fieldsInfo;
+        var fieldNames = Object.keys(fieldsInfo[params.viewType]);
         var fields_key = _.without(fieldNames, '__last_update');
 
-        var extraFields = determineExtraFields();
+        // Fields that are present in the originating view, that need to be initialized
+        // Hence preventing their value to crash when getting back to the originating view
+        var parentRecord = self.localData[params.parentID];
+        if (parentRecord) {
+            fieldNames = _.union(fieldNames, Object.keys(parentRecord.fieldsInfo[parentRecord.viewType]));
+            fieldsInfo = _.defaults({}, fieldsInfo, parentRecord.fieldsInfo);
+            fields = _.extend({}, fields, parentRecord.fields);
+        }
 
         return this._rpc({
                 model: modelName,
@@ -3616,11 +3608,10 @@ var BasicModel = AbstractModel.extend({
                 context: params.context,
             })
             .then(function (result) {
-
                 var record = self._makeDataPoint({
                     modelName: modelName,
-                    fields: params.fields,
-                    fieldsInfo: params.fieldsInfo,
+                    fields: fields,
+                    fieldsInfo: fieldsInfo,
                     context: params.context,
                     parentID: params.parentID,
                     res_ids: params.res_ids,
@@ -3641,7 +3632,7 @@ var BasicModel = AbstractModel.extend({
                     result[overrideDefaultFields.field] = overrideDefaultFields.value;
                 }
 
-                return self.applyDefaultValues(record.id, result, {fieldNames: _.union(fieldNames, extraFields)})
+                return self.applyDefaultValues(record.id, result, {fieldNames: fieldNames})
                     .then(function () {
                         var def = $.Deferred();
                         self._performOnChange(record, fields_key).always(function () {
