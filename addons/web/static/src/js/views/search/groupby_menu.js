@@ -109,11 +109,18 @@ var GroupByMenu = DropdownMenu.extend({
         var field = this.presentedFields.find(function (field) {
             return field.name === fieldName;
         });
+        var groupNumber =  1 + this.items.reduce(
+            function (max, filter) {
+                return Math.max(max, filter.groupNumber);
+            },
+            0
+        );
         var groupBy = {
             type: 'groupBy',
             description: field.string,
             fieldName: fieldName,
             fieldType: field.type,
+            groupNumber: groupNumber,
         };
         if (_.contains(['date', 'datetime'], field.type)) {
             groupBy.hasOptions = true;

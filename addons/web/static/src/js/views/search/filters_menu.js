@@ -82,11 +82,18 @@ var FiltersMenu = DropdownMenu.extend({
      * @private
      */
     _commitSearch: function () {
+        var groupNumber =  1 + this.items.reduce(
+            function (max, filter) {
+                return Math.max(max, filter.groupNumber);
+            },
+            0
+        );
         var filters = _.invoke(this.propositions, 'get_filter').map(function (preFilter) {
             return {
                 type: 'filter',
                 description: preFilter.attrs.string,
-                domain: Domain.prototype.arrayToString(preFilter.attrs.domain)
+                domain: Domain.prototype.arrayToString(preFilter.attrs.domain),
+                groupNumber: groupNumber
             };
         });
         // TO DO intercepts 'new_filters' and decide what to do whith filters
