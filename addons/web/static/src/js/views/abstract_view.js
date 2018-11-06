@@ -206,16 +206,28 @@ var AbstractView = Factory.extend({
      */
     getController: function (parent) {
         var self = this;
-        // check if a model already exists, as if not, one will be created and
-        // we'll have to set the controller as its parent
-        var alreadyHasModel = !!this.model;
-        return this._super.apply(this, arguments).done(function (controller) {
-            if (!alreadyHasModel) {
-                // if we have a model, it already has a parent. Otherwise, we
-                // set the controller, so the rpcs from the model actually work
-                self.model.setParent(controller);
-            }
+
+        // var def;
+        // if (config.needControlPanel) {
+        //     vr controlPanel = new ...();
+        //     def = controlPanel.getController();
+        // }
+
+        return $.when(def).then(function (CP) {
+            // check if a model already exists, as if not, one will be created and
+            // we'll have to set the controller as its parent
+            var alreadyHasModel = !!this.model;
+            return this._super.apply(this, arguments).done(function (controller) {
+                if (!alreadyHasModel) {
+                    // if we have a model, it already has a parent. Otherwise, we
+                    // set the controller, so the rpcs from the model actually work
+                    self.model.setParent(controller);
+                }
+            });
+
         });
+
+
     },
     /**
      * Ensures that only one instance of AbstractModel is created

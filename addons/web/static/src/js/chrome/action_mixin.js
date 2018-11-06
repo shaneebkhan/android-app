@@ -20,8 +20,19 @@ odoo.define('web.ActionMixin', function (require) {
  * @module web.ActionMixin
  */
 
-var ActionMixin = {
+var core = require('web.core');
 
+var qweb = core.qweb;
+
+var ActionMixin = {
+    template: 'Action',
+
+    renderElement: function () {
+        this._super.apply(this, arguments);
+        if (this.contentTemplate) {
+            this.$('.o_content').append(core.qweb.render(this.contentTemplate, {widget: this}));
+        }
+    },
     /**
      * Called each time the action is attached into the DOM.
      */
@@ -69,6 +80,12 @@ var ActionMixin = {
      * @param {jQuery Node} $node
      */
     renderButtons: function ($node) {
+    },
+    // TMP
+    updateControlPanel: function (status, options) {
+        if (this._controlPanel) {
+            this._controlPanel.updateContents(status || {}, options || {});
+        }
     },
 };
 

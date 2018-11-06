@@ -180,6 +180,11 @@
     </div>
 </form>
 
+<div t-name="Action" class="o_action">
+    <!-- CP -->
+    <div class="o_content"/>
+</div>
+
 <t t-name="ControlPanel">
     <div class="o_control_panel">
         <ol class="breadcrumb" role="navigation"/>

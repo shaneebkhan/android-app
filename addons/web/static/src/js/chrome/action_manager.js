@@ -351,9 +351,9 @@ var ActionManager = Widget.extend({
 
         var controller = self.controllers[action.controllerID];
         return this.clearUncommittedChanges()
-            .then(function () {
-                return self.dp.add(self._createControlPanel(controller));
-            })
+            // .then(function () {
+            //     return self.dp.add(self._createControlPanel(controller));
+            // })
             .then(function () {
                 return self.dp.add(self._startController(controller));
             })
@@ -481,7 +481,7 @@ var ActionManager = Widget.extend({
         }
 
         var controllerID = _.uniqueId('controller_');
-        options.controllerID = controllerID;
+        // options.controllerID = controllerID;
         var controller = {
             actionID: action.jsID,
             jsID: controllerID,
