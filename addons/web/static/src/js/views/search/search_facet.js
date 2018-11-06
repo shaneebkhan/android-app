@@ -19,8 +19,8 @@ var SearchFacet = Widget.extend({
 
         var self = this;
         this.facet = facet;
-        this.facetValues = _.map(this.facet.filters, function (atom) {
-            return self._getAtomDescription(atom);
+        this.facetValues = _.map(this.facet.filters, function (filter) {
+            return self._getFilterDescription(filter);
         });
         this.separator = this._getSeparator();
         this.icon = this._getIcon();
@@ -52,22 +52,22 @@ var SearchFacet = Widget.extend({
         }
         return separator;
     },
-    _getAtomDescription: function (atom) {
-        var description = atom.description;
-        if (atom.hasOptions) {
-            var optionValue =_.findWhere(atom.options, {
-                optionId: atom.currentOptionId,
+    _getFilterDescription: function (filter) {
+        var description = filter.description;
+        if (filter.hasOptions) {
+            var optionValue =_.findWhere(filter.options, {
+                optionId: filter.currentOptionId,
             });
             description += ': ' + optionValue.description;
         }
-        if (atom.type === 'timeRange') {
-            var timeRangeValue =_.findWhere(atom.timeRangeOptions, {
-                optionId: atom.timeRangeId,
+        if (filter.type === 'timeRange') {
+            var timeRangeValue =_.findWhere(filter.timeRangeOptions, {
+                optionId: filter.timeRangeId,
             });
             description += ': ' + timeRangeValue.description;
-            if (atom.comparisonTimeRangeId) {
-                var comparisonTimeRangeValue =_.findWhere(atom.comparisonTimeRangeOptions, {
-                    optionId: atom.comparisonTimeRangeId,
+            if (filter.comparisonTimeRangeId) {
+                var comparisonTimeRangeValue =_.findWhere(filter.comparisonTimeRangeOptions, {
+                    optionId: filter.comparisonTimeRangeId,
                 });
                 description += ' / ' + comparisonTimeRangeValue.description;
             }
