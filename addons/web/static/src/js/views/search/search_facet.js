@@ -19,7 +19,7 @@ var SearchFacet = Widget.extend({
 
         var self = this;
         this.facet = facet;
-        this.facetValues = _.map(this.facet.values, function (atom) {
+        this.facetValues = _.map(this.facet.filters, function (atom) {
             return self._getAtomDescription(atom);
         });
         this.separator = this._getSeparator();

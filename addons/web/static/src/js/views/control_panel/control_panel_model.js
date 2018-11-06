@@ -126,16 +126,15 @@ var ControlPanelModel = mvc.Model.extend({
                 timeRanges.push(filter);
             }
         });
-        // TODO: correctly compute facets
-        // TODO: solve problem: values should not be put in groups themselves,
-        // only in copy of them
-        var facets = _.filter(this.groups, function (group) {
-            return group.activeFilterIds.length;
-        });
-        _.each(facets, function (facet) {
-            facet.values = _.map(facet.activeFilterIds, function (filterID) {
-                return self.filters[filterID] || self.groups[filterID];
+        var facets = {};
+        // resolve active filters for facets
+        _.each(this.query, function (groupID) {
+            var group = self.groups[groupID];
+            var facet = _.extend({}, group);
+            facet.filters = facet.activeFilterIds.map(function (filterID) {
+                return self.filters[filterID];
             });
+            facets[groupID] = facet;
         });
         favorites = _.sortBy(favorites, 'groupNumber');
         return {
