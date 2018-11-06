@@ -28,8 +28,8 @@ var GroupByMenu = DropdownMenu.extend({
      *      fieldName: string; field name without interval!
      *      description: string; label printed on screen
      *      groupId: string;
-     *      isActive: boolean; (optional) determines if the groupby is considered active
-     *                                is opened or closed according to isOpen
+     *      isActive: boolean; determines if the groupby is considered active
+     *      hasOptions: boolean; true when the groupBy has fieldType 'date' or 'datetime' (optional)
      *      options: array of objects with 'optionId' and 'description' keys; (optional)
      *      defaultOptionId: string refers to an optionId that should be activated by default
      *      currentOptionId: string refers to an optionId that is activated if item is active (optional)
@@ -51,7 +51,6 @@ var GroupByMenu = DropdownMenu.extend({
             if (field.sortable && _.contains(GROUPABLE_TYPES, field.type)) {
                 self.groupableFields.push(_.extend({}, field, {
                     name: name,
-                    // isDate: _.contains(['date', 'datetime'], field.type),
                 }));
             }
         });
@@ -118,7 +117,7 @@ var GroupByMenu = DropdownMenu.extend({
         };
         if (_.contains(['date', 'datetime'], field.type)) {
             groupBy.hasOptions = true;
-            groupBy.options = searchViewParameters.intervalOptions;
+            groupBy.options = searchViewParameters.INTERVAL_OPTIONS;
             groupBy.defaultOptionId = DEFAULT_INTERVAL;
             groupBy.currentOptionId = false;
         }

@@ -3,11 +3,14 @@ odoo.define('web.search_groupby_menu_tests', function (require) {
 
 var GroupByMenu = require('web.GroupByMenu');
 var testUtils = require('web.test_utils');
+var searchViewParameters = require('web.searchViewParameters');
 
-function createGroupByMenu(groupbys, fields, params) {
+
+
+function createGroupByMenu(groupBys, fields, params) {
     params = params || {};
     var target = params.debug ? document.body :  $('#qunit-fixture');
-    var menu = new GroupByMenu(null, groupbys, fields);
+    var menu = new GroupByMenu(null, groupBys, fields);
     testUtils.addMockEnvironment(menu, params);
     menu.appendTo(target);
     return menu;
@@ -15,38 +18,42 @@ function createGroupByMenu(groupbys, fields, params) {
 
 QUnit.module('GroupByMenu', {
     beforeEach: function () {
-        this.groupbys = [
+        this.groupBys = [
             {
-                isActive: false,
                 description: 'some group by',
-                fieldName: 'fieldname',
-                itemId: 'red',
-                groupId: 1,
+                groupNumber: 1,
+                isActive: false,
             },
         ];
         this.fields = {
-            fieldname: {sortable: true, string: 'Super Date', type: 'date', isDate: true}
+            fieldName: {sortable: true, string: 'Super Date', type: 'date'}
         };
     },
 }, function () {
-
-    QUnit.test('simple rendering', function (assert) {
-        assert.expect(2);
-
-        var groupByMenu = createGroupByMenu(this.groupbys, this.fields);
-        groupByMenu.$('button:first').click();
-        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').length, 2, 'should have 2 elements');
-        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').eq(1).text().trim(), 'some group by',
-            'should have proper filter name');
-        groupByMenu.destroy();
-    });
 
     QUnit.test('simple rendering with no filter and no field', function (assert) {
         assert.expect(1);
 
         var groupByMenu = createGroupByMenu([], {});
+        // open groupBy menu
         groupByMenu.$('button:first').click();
-        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').length, 0, 'should have 0 element');
+        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').length, 0,
+            'should have 0 element');
+
+        groupByMenu.destroy();
+    });
+
+    QUnit.test('simple rendering', function (assert) {
+        assert.expect(2);
+
+        var groupByMenu = createGroupByMenu(this.groupBys, this.fields, {debug: true});
+        // open groupBy menu
+        groupByMenu.$('button:first').click();
+        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item').length, 4,
+            'should have 2 elements');
+        assert.strictEqual(groupByMenu.$('.o_menu_item').text().trim(), 'some group by',
+            'should have proper filter name');
+
         groupByMenu.destroy();
     });
 
@@ -55,99 +62,122 @@ QUnit.module('GroupByMenu', {
 
         var groupByMenu = createGroupByMenu(
             [],
-            {fieldname: {sortable: true, string: 'Super Date', type: 'date', isDate: true}}
+            {fieldName: {sortable: true, string: 'Super Date', type: 'date'}}
             );
+        // open groupBy menu
         groupByMenu.$('button:first').click();
-        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').length, 1, 'should have 1 element');
+        assert.strictEqual(groupByMenu.$('.dropdown-divider, .dropdown-item, .dropdown-item-text').length, 1,
+            'should have 1 element');
+
         groupByMenu.destroy();
     });
 
     QUnit.test('click on add custom group toggle group selector', function (assert) {
         assert.expect(2);
 
-        var groupByMenu = createGroupByMenu([], {fieldname: {sortable: true, string: 'Super Date', type: 'date', isDate: true}});
+        var groupByMenu = createGroupByMenu([],
+            {fieldName: {sortable: true, string: 'Super Date', type: 'date'}}
+        );
         groupByMenu.$('button:first').click();
         var selector = groupByMenu.$('select.o_group_selector');
         assert.ok(!selector.is(":visible"), 'should be invisible');
         groupByMenu.$('.o_add_custom_group').click();
         selector = groupByMenu.$('select.o_group_selector');
         assert.ok(selector.is(":visible"), 'should be visible');
+
         groupByMenu.destroy();
     });
 
-    QUnit.test('select a group using the group selector add properly add that group to menu', function (assert) {
-        assert.expect(2);
+    QUnit.test('select a groupBy of no date type in Add Custom Group menu add properly that groupBy to menu', function (assert) {
+        assert.expect(7);
 
         var groupByMenu = createGroupByMenu(
             [],
             {
                 fieldName: {sortable: true, name: 'candlelight', string: 'Candlelight', type: 'boolean'},
+            },
+            {
+                intercepts: {
+                    new_groupBy: function (ev) {
+                        assert.strictEqual(ev.data.groupBy.description, 'Candlelight');
+                        assert.strictEqual(ev.data.groupBy.fieldName, 'fieldName');
+                        assert.strictEqual(ev.data.groupBy.fieldType, 'boolean');
+                        assert.strictEqual(ev.data.groupBy.type, 'groupBy');
+                        groupByMenu.update([{
+                            description: 'Candlelight',
+                            groupNumber: 1,
+                            isActive: true,
+                        }]);
+                    },
+                },
             }
         );
+        // open groupBy menu
         groupByMenu.$('button:first').click();
+        // open Add Custom Group submenu
         groupByMenu.$('.o_add_custom_group').click();
+        // select fieldName
         assert.strictEqual(groupByMenu.$('select').val(), 'fieldName',
             'the select value should be "fieldName"');
+        // create new groupBy
         groupByMenu.$('button.o_apply_group').click();
-        assert.strictEqual(groupByMenu.$('.o_menu_item > .dropdown-item.selected').length, 1, 'there should be a groupby selected');
+        assert.strictEqual(groupByMenu.$('.o_menu_item > .dropdown-item.selected').length, 1,
+            'there should be a groupby selected');
+        assert.strictEqual(groupByMenu.$('.o_menu_item > .o_submenu_switcher').length, 0,
+            'there should be no options available');
+
         groupByMenu.destroy();
     });
 
-    QUnit.test('click on a groupby filter (not of date type) should activate it', function (assert) {
-        assert.expect(5);
+    QUnit.test('select a groupBy of date type in Add Custom Group menu add properly that groupBy to menu', function (assert) {
+        assert.expect(13);
 
-        this.groupbys = [{
-            isActive: false,
-            description: 'another group by',
-            fieldName: 'float_field',
-            itemId: 'green',
-            groupId: 1,
-        }];
-        this.fields = {float_field: {sortable: true, string: 'Super Float', type: 'float'}};
-
-        var groupByMenu = createGroupByMenu(this.groupbys, this.fields, {
-            intercepts: {
-                menu_item_toggled: function (ev) {
-                    assert.strictEqual(ev.data.itemId, 'green');
-                    assert.strictEqual(ev.data.isActive, true);
+        var groupByMenu = createGroupByMenu(
+            [],
+            this.fields,
+            {
+                intercepts: {
+                    new_groupBy: function (ev) {
+                        var groupBy = ev.data.groupBy;
+                        assert.strictEqual(groupBy.description, 'Super Date');
+                        assert.strictEqual(groupBy.fieldName, 'fieldName');
+                        assert.strictEqual(groupBy.fieldType, 'date');
+                        assert.strictEqual(groupBy.type, 'groupBy');
+                        assert.strictEqual(groupBy.hasOptions, true);
+                        assert.strictEqual(groupBy.options, searchViewParameters.INTERVAL_OPTIONS);
+                        assert.strictEqual(groupBy.defaultOptionId, searchViewParameters.DEFAULT_INTERVAL);
+                        assert.strictEqual(groupBy.currentOptionId, false);
+                        groupByMenu.update([{
+                            description: 'Super Date',
+                            groupNumber: 1,
+                            isActive: true,
+                            hasOptions: true,
+                            options: searchViewParameters.INTERVAL_OPTIONS,
+                            currentOptionId: searchViewParameters.DEFAULT_INTERVAL,
+                        }]);
+                    },
                 },
-            },
-        });
-        groupByMenu.$('button:first').click();
-        assert.ok(!groupByMenu.$('.o_menu_item:first > .dropdown-item').hasClass('selected'));
-        groupByMenu.$('.o_menu_item a').first().click();
-        assert.ok(groupByMenu.$('.o_menu_item:first > .dropdown-item').hasClass('selected'));
-        assert.ok(groupByMenu.$('.o_menu_item:first').is(':visible'),
-            'group by filter should still be visible');
-        groupByMenu.destroy();
-    });
-
-    QUnit.test('click on a groupby filter of date type should open menu option', function (assert) {
-        assert.expect(4);
-
-        var groupByMenu = createGroupByMenu(this.groupbys,
-            {fieldname: {sortable: true, string: 'Super Date', type: 'date', isDate: true}});
-        groupByMenu.$('button:first').click();
-        assert.ok(!groupByMenu.$('.o_menu_item:first > .dropdown-item').hasClass('selected'));
-        groupByMenu.$('.o_menu_item a').first().click();
-        assert.ok(!groupByMenu.$('.o_menu_item:first > .dropdown-item').hasClass('selected'));
-        assert.ok(groupByMenu.$('.o_menu_item:first').is(':visible'),
-            'group by filter should still be visible');
-        assert.ok(groupByMenu.$('.o_item_option').length, 5);
-        groupByMenu.destroy();
-    });
-
-    QUnit.test('click on groupby filter should not change url', function (assert) {
-        assert.expect(0);
-
-        var groupByMenu = createGroupByMenu(this.groupbys,
-            {fieldname: {sortable: true, string: 'Super Date', type: 'date', isDate: true}}
+            }
         );
-        groupByMenu.$el.click(function (event) {
-            // we do not want a click to get out and change the url, for example
-            throw new Error('No click should get out of the groupby menu');
-        });
-        groupByMenu.$('.o_menu_item a').first().click();
+        // open groupBy menu
+        groupByMenu.$('button:first').click();
+        // open Add Custom Group submenu
+        groupByMenu.$('.o_add_custom_group').click();
+        // select fieldName
+        assert.strictEqual(groupByMenu.$('select').val(), 'fieldName',
+            'the select value should be "fieldName"');
+        // create new groupBy of type date
+        groupByMenu.$('button.o_apply_group').click();
+        assert.strictEqual(groupByMenu.$('.o_menu_item > .dropdown-item.selected').length, 1,
+            'there should be a groupby selected');
+        assert.strictEqual(groupByMenu.$('.o_menu_item .o_submenu_switcher').length, 1,
+            'there should be options available');
+        // open options submenu
+        groupByMenu.$('.o_menu_item .o_submenu_switcher').click();
+        assert.strictEqual(groupByMenu.$('.o_item_option').length, 5,
+            'there should be five options available');
+        assert.strictEqual(groupByMenu.$('.o_add_custom_group').length, 0,
+            'there should be no more a Add Custome Group submenu');
 
         groupByMenu.destroy();
     });
