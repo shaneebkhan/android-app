@@ -106,7 +106,7 @@ var ControlPanelController = mvc.Controller.extend({
         if (!group) {
             group = this.renderer.getLastFacet();
         }
-        this.update({removeGroup: group});
+        this.update({deactivateGroup: group});
     },
     _onItemOptionClicked: function (event) {
         return this.update({toggleOption: event.data});

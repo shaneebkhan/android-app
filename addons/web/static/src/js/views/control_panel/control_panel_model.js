@@ -19,6 +19,7 @@ var ControlPanelModel = mvc.Model.extend({
         this.fields = {};
         this.modelName = null;
         this.actionId = null;
+        this.groupOfFiltersIds = [];
         this.groupOfGroupBysId = null;
         this.groupOfFavoritesId = null;
         this.groupOfTimeRangesId = null;
@@ -36,6 +37,12 @@ var ControlPanelModel = mvc.Model.extend({
         params.groups.forEach(function (group) {
             self._createGroupOfFilters(group);
         });
+        if (this.groupOfFiltersIds.length === 0) {
+            this._createEmptyGroup('filter');
+        }
+        if (this.groupOfGroupBysId === null) {
+            this._createEmptyGroup('groupBy');
+        }
         this._createGroupOfTimeRanges();
         return this._loadFavorites();
     },
@@ -47,8 +54,8 @@ var ControlPanelModel = mvc.Model.extend({
         if (params.toggleFilter) {
             this._toggleFilter(params.toggleFilter.id);
         }
-        if (params.removeGroup) {
-            this._removeGroup(params.removeGroup.id);
+        if (params.deactivateGroup) {
+            this._deactivateGroup(params.deactivateGroup.id);
         }
         if (params.toggleOption) {
             this._toggleFilterWithOptions(
@@ -199,6 +206,16 @@ var ControlPanelModel = mvc.Model.extend({
         this.filters[id] = favorite;
         this._toggleFilter(favorite.id);
     },
+    // create empty group of a specific type
+    _createEmptyGroup: function (type) {
+        var id = _.uniqueId('__group__');
+        this.groups[id] = {
+            id: id,
+            type: type,
+            activeFilterIds: [],
+        };
+        this._memorizeGroupId(id, type);
+    },
     // group is a list of (pre) filters
     _createGroupOfFilters: function (group) {
         var self= this;
@@ -216,9 +233,7 @@ var ControlPanelModel = mvc.Model.extend({
             type: type,
             activeFilterIds: [],
         };
-        if (type === 'groupBy') {
-            this.groupOfGroupBysId = groupId;
-        }
+        this._memorizeGroupId(groupId, type);
     },
     _createGroupOfTimeRanges: function () {
         var self = this;
@@ -242,19 +257,9 @@ var ControlPanelModel = mvc.Model.extend({
         });
         if (timeRanges.length) {
             this._createGroupOfFilters(timeRanges);
-            this.groupOfTimeRangesId = Object.keys(self.groups).find(function (groupId) {
-                    var group = self.groups[groupId];
-                    return group.type === 'timeRange';
-                });
         } else {
-            // create empty favorite group
-            var groupId = _.uniqueId('__group__');
-            self.groups[groupId] = {
-                id: groupId,
-                type: 'timeRange',
-                activeFilterIds: [],
-            };
-            self.groupOfTimeRangesId = groupId;
+            // create empty timeRange group
+            this._createEmptyGroup('timeRange');
         }
     },
     _deleteFilter: function (filterId) {
@@ -455,19 +460,8 @@ var ControlPanelModel = mvc.Model.extend({
                 if (defaultFavoriteId) {
                     self._toggleFilter(defaultFavoriteId);
                 }
-                self.groupOfFavoritesId = Object.keys(self.groups).find(function (groupId) {
-                    var group = self.groups[groupId];
-                    return group.type === 'favorite';
-                });
             } else {
-                // create empty favorite group
-                var groupId = _.uniqueId('__group__');
-                self.groups[groupId] = {
-                    id: groupId,
-                    type: 'favorite',
-                    activeFilterIds: [],
-                };
-                self.groupOfFavoritesId = groupId;
+                self._createEmptyGroup('favorite');
             }
         });
         return def;
@@ -527,6 +521,17 @@ var ControlPanelModel = mvc.Model.extend({
             self._addNewFavorite(favorite);
         });
     },
+    _memorizeGroupId: function (groupId, type) {
+        if (type === 'groupBy') {
+            this.groupOfGroupBysId = groupId;
+        } else if (type === 'favorite') {
+            this.groupOfFavoritesId = groupId;
+        } else if (type === 'timeRange') {
+            this.groupOfTimeRangesId = groupId;
+        } else if (type === 'filter') {
+            this.groupOfFiltersIds.push(groupId);
+        }
+    },
     // This method could work in batch and take a list of ids as args.
     // (it would be useful for initialization and deletion of a facet/group)
     _toggleFilter: function (filterId) {
@@ -562,7 +567,7 @@ var ControlPanelModel = mvc.Model.extend({
      * @private
      * @param {string} groupId
      */
-    _removeGroup: function (groupId) {
+    _deactivateGroup: function (groupId) {
         var group = this.groups[groupId];
         group.activeFilterIds = [];
         this.query.splice(this.query.indexOf(groupId), 1);
