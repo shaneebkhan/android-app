@@ -852,7 +852,7 @@ var Discuss = AbstractAction.extend({
 
             // Update control panel before focusing the composer, otherwise
             // focus is on the searchview
-            self.set("title", '#' + self._thread.getName());
+            self._title = '#' + self._thread.getName();
             self._updateControlPanel();
             self._updateControlPanelButtons(self._thread);
 
@@ -967,6 +967,7 @@ var Discuss = AbstractAction.extend({
      */
     _updateControlPanel: function () {
         this.updateControlPanel({
+            title: this._title,
             cp_content: {
                 $buttons: this.$buttons,
             },
