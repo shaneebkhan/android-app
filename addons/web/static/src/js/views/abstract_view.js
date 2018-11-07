@@ -27,6 +27,7 @@ var ajax = require('web.ajax');
 var AbstractModel = require('web.AbstractModel');
 var AbstractRenderer = require('web.AbstractRenderer');
 var AbstractController = require('web.AbstractController');
+var ControlPanelView = require('web.ControlPanelView');
 var mvc = require('web.mvc');
 var viewUtils = require('web.viewUtils');
 
@@ -148,6 +149,7 @@ var AbstractView = Factory.extend({
             controllerID: params.controllerID,
             bannerRoute: this.arch.attrs.banner_route,
         };
+
         // AAB: these params won't be necessary as soon as the ControlPanel will
         // be instantiated by the View
         this.controllerParams.displayName = params.action && (params.action.display_name || params.action.name);
@@ -157,12 +159,6 @@ var AbstractView = Factory.extend({
         this.controllerParams.searchViewHidden = this.searchview_hidden; // AAB: use searchable instead where it is used?
         this.controllerParams.actionViews = params.action ? params.action.views : [];
         this.controllerParams.viewType = this.viewType;
-        this.controllerParams.withControlPanel = true;
-        if (params.action && params.action.flags) {
-            this.controllerParams.withControlPanel = !params.action.flags.headless;
-        } else if ('withControlPanel' in params) {
-            this.controllerParams.withControlPanel = params.withControlPanel;
-        }
 
         this.loadParams = {
             context: params.context,
@@ -194,6 +190,23 @@ var AbstractView = Factory.extend({
             });
         }
 
+        var action = params.action || {};
+        if (action.flags) {
+            this.withControlPanel = !action.flags.headless;
+        } else if ('withControlPanel' in params) {
+            this.withControlPanel = params.withControlPanel;
+        } else {
+            this.withControlPanel = true;
+        }
+        this.controlPanelParams = {
+            actionId: action.id || false,
+            context: params.context,
+            domain: params.domain,
+            hasSearchView: action.flags && action.flags.hasSearchView,
+            modelName: action.res_model,
+            viewInfo: action.searchFieldsView,
+        };
+
         this.userContext = params.userContext;
     },
 
@@ -207,17 +220,26 @@ var AbstractView = Factory.extend({
     getController: function (parent) {
         var self = this;
 
-        // var def;
-        // if (config.needControlPanel) {
-        //     vr controlPanel = new ...();
-        //     def = controlPanel.getController();
-        // }
+        var def;
+        if (this.withControlPanel) {
+            var controlPanelView = new ControlPanelView(this.controlPanelParams);
+            def = controlPanelView.getController(parent).then(function (controlPanel) {
+                return controlPanel.appendTo(document.createDocumentFragment()).then(function () {
+                    return controlPanel;
+                });
+            });
+        }
 
-        return $.when(def).then(function (CP) {
+        var _super = this._super.bind(this);
+        return $.when(def).then(function (controlPanel) {
             // check if a model already exists, as if not, one will be created and
             // we'll have to set the controller as its parent
-            var alreadyHasModel = !!this.model;
-            return this._super.apply(this, arguments).done(function (controller) {
+            var alreadyHasModel = !!self.model;
+            return _super(parent).done(function (controller) {
+                if (controlPanel) {
+                    controlPanel.setParent(controller);
+                    controller.set_cp(controlPanel);
+                }
                 if (!alreadyHasModel) {
                     // if we have a model, it already has a parent. Otherwise, we
                     // set the controller, so the rpcs from the model actually work
@@ -226,8 +248,6 @@ var AbstractView = Factory.extend({
             });
 
         });
-
-
     },
     /**
      * Ensures that only one instance of AbstractModel is created

@@ -13,7 +13,6 @@ var AbstractAction = require('web.AbstractAction');
 var Bus = require('web.Bus');
 var concurrency = require('web.concurrency');
 var Context = require('web.Context');
-var ControlPanelView = require('web.ControlPanelView');
 var config = require('web.config');
 var core = require('web.core');
 var Dialog = require('web.Dialog');
@@ -24,7 +23,7 @@ var Widget = require('web.Widget');
 
 var _t = core._t;
 var ActionManager = Widget.extend({
-    className: 'o_content',
+    className: 'o_action_manager',
     custom_events: {
         breadcrumb_clicked: '_onBreadcrumbClicked',
         history_back: '_onHistoryBack',
@@ -255,14 +254,6 @@ var ActionManager = Widget.extend({
         if (controller.scrollPosition) {
             this.trigger_up('scrollTo', controller.scrollPosition);
         }
-
-        var action = this.actions[controller.actionID];
-        if (action.controlPanel) {
-            action.controlPanel.updateContents({
-                breadcrumbs: this._getBreadcrumbs(),
-            }, {clear: false});
-            action.controlPanel.$el.insertBefore(this.$el); // TODO: use dom utils
-        }
     },
     /**
      * Closes the current dialog, if any. Because we listen to the 'closed'
@@ -286,31 +277,6 @@ var ActionManager = Widget.extend({
         }
     },
     /**
-     * @todo: remove this as soon as ControlPanel is instantiated by the
-     * controller
-     *
-     * @private
-     * @param {Object} controller
-     * @returns {$.Promise}
-     */
-    _createControlPanel: function (controller) {
-        var widget = controller.widget;
-        if (!widget.need_control_panel) {
-            return $.when();
-        }
-
-        var action = this.actions[controller.actionID];
-        var params = this._getControlPanelParams(action);
-        params.controllerID = controller.jsID;
-        var controlPanelView = new ControlPanelView(params);
-        return controlPanelView.getController(this).then(function (controlPanel) {
-            action.controlPanel = controlPanel;
-            // set the ControlPanel on the controller to allow it to update it
-            widget.set_cp(controlPanel);
-            return controlPanel.appendTo(document.createDocumentFragment());
-        });
-    },
-    /**
      * Detaches the current controller from the DOM and stores its scroll
      * position, in case we'd come back to that controller later.
      *
@@ -320,12 +286,7 @@ var ActionManager = Widget.extend({
         var currentController = this.getCurrentController();
         if (currentController) {
             currentController.scrollPosition = this._getScrollPosition();
-            var toDetach = [{widget: currentController.widget}];
-            var currentAction = this.actions[currentController.actionID];
-            if (currentAction.controlPanel) {
-                toDetach.push({widget: currentAction.controlPanel});
-            }
-            dom.detach(toDetach);
+            dom.detach([{widget: currentController.widget}]);
         }
     },
     /**
@@ -351,9 +312,6 @@ var ActionManager = Widget.extend({
 
         var controller = self.controllers[action.controllerID];
         return this.clearUncommittedChanges()
-            // .then(function () {
-            //     return self.dp.add(self._createControlPanel(controller));
-            // })
             .then(function () {
                 return self.dp.add(self._startController(controller));
             })
@@ -660,19 +618,6 @@ var ActionManager = Widget.extend({
         return state;
     },
     /**
-     * Given an action, returns the params to instantiate the ControlPanel.
-     *
-     * @private
-     * @param {Object} action
-     * @returns {Object}
-     */
-    _getControlPanelParams: function (action) {
-        return {
-            actionId: action.id,
-            context: action.context,
-        };
-    },
-    /**
      * Returns the current horizontal and vertical scroll positions.
      *
      * @private
@@ -846,9 +791,6 @@ var ActionManager = Widget.extend({
         delete this.actions[action.jsID];
         delete this.controllers[action.controllerID];
         controller.widget.destroy();
-        if (action.controlPanel) {
-            action.controlPanel.destroy();
-        }
     },
     /**
      * Removes the given controllers and their corresponding actions.
@@ -905,17 +847,6 @@ var ActionManager = Widget.extend({
     _startController: function (controller) {
         var self = this;
         var fragment = document.createDocumentFragment();
-        // AAB: change this logic to stop using the properties mixin
-        controller.widget.on("change:title", this, function () {
-            if (self.getCurrentController() !== controller) {
-                return;
-            }
-            var action = self.actions[controller.actionID];
-            if (!action.flags || !action.flags.headless) {
-                var breadcrumbs = self._getBreadcrumbs();
-                action.controlPanel.updateContents({breadcrumbs: breadcrumbs}, {clear: false});
-            }
-        });
         return controller.widget.appendTo(fragment).then(function () {
             return controller;
         });

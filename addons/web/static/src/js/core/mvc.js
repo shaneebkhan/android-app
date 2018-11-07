@@ -15,7 +15,7 @@ var Model = Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
     /**
      * @param {Widget} parent
      */
-    init: function (parent) {
+    init: function (parent, params) {
         mixins.EventDispatcherMixin.init.call(this);
         this.setParent(parent);
     },
@@ -76,8 +76,21 @@ var Controller = Widget.extend({
     start: function () {
         return $.when(
             this._super.apply(this, arguments),
-            this.renderer.appendTo(this.$el)
+            this._startRenderer()
         );
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * Appends the renderer in the $el. To override to insert it elsewhere.
+     *
+     * @private
+     */
+    _startRenderer: function () {
+        return this.renderer.appendTo(this.$el);
     },
 });
 
@@ -90,6 +103,7 @@ var Factory = Class.extend({
     init: function () {
         this.rendererParams = {};
         this.controllerParams = {};
+        this.modelParams = {};
         this.loadParams = {};
     },
 
@@ -134,7 +148,7 @@ var Factory = Class.extend({
      */
     getModel: function (parent) {
         var Model = this.config.Model;
-        return new Model(parent);
+        return new Model(parent, this.modelParams);
     },
     /**
      * Returns a new renderer instance

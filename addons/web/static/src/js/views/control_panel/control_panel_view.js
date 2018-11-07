@@ -91,6 +91,7 @@ var ControlPanelView = Factory.extend({
      * @param {Object} [params.viewInfo] a controlpanel (or search) fieldsview
      * @param {string} [params.viewInfo.arch]
      * @param {string} [params.context={}]
+     * @param {string} [params.domain=[]]
      * @param {string} [params.template] the QWeb template to render
      */
     init: function (params) {
@@ -113,8 +114,11 @@ var ControlPanelView = Factory.extend({
 
         this.arch = viewUtils.parseArch(viewInfo.arch);
         this.fields = viewInfo.fields;
-        this.controllerParams.controllerID = params.controllerID;
+
         this.controllerParams.modelName = params.modelName;
+
+        this.modelParams.context = params.context || {};
+        this.modelParams.domain = params.domain || [];
 
         this.rendererParams.template = params.template;
 

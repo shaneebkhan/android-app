@@ -20,6 +20,7 @@ var AbstractAction = Widget.extend(ActionMixin, {
 
     init: function (parent, action) {
         this._super(parent);
+        ActionMixin.init.call(this);
         this.controlPanelParams = {
             actionId: action.id,
             context: action.context,

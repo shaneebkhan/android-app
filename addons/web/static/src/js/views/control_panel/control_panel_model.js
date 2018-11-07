@@ -11,8 +11,17 @@ var TIME_RANGE_OPTIONS = searchViewParameters.TIME_RANGE_OPTIONS;
 var COMPARISON_TIME_RANGE_OPTIONS = searchViewParameters.COMPARISON_TIME_RANGE_OPTIONS;
 
 var ControlPanelModel = mvc.Model.extend({
-    init: function (parent) {
+    /**
+     * @override
+     * @param {string} [params.context={}]
+     * @param {string} [params.domain=[]]
+     */
+    init: function (parent, params) {
         this._super.apply(this, arguments);
+
+        this.initialContext = params.context || {};
+        this.initialDomain = params.domain || [];
+
         this.filters = {};
         this.groups = {};
         this.query = [];
@@ -173,12 +182,51 @@ var ControlPanelModel = mvc.Model.extend({
             this._getTimeRangeMenuData(domainsEvaluation)
         );
         var groupBys = this._getGroupBys();
-        return {
+        return this._processSearchData({
             // for now action manager wants domains and contexts I would prefer
             // to use domain and context.
             domain: domain,
             context: context,
             groupBys: groupBys,
+        });
+    },
+    /**
+     * Processes the search data sent by the search view.
+     *
+     * @private
+     * @param {Object} searchData
+     * @param {Object} [searchData.contexts=[]]
+     * @param {Object} [searchData.domains=[]]
+     * @param {Object} [searchData.groupbys=[]]
+     * @returns {Object} an object with keys 'context', 'domain', 'groupBy'
+     */
+    _processSearchData: function (searchData) {
+        var context = searchData.context;
+        var domain = searchData.domain;
+        // horrible! we should change that!
+        var groupBys = searchData.groupBys;
+        var action_context = this.initialContext;
+        var results = pyUtils.eval_domains_and_contexts({
+            domains: [this.initialDomain].concat([domain] || []),
+            contexts: [action_context].concat(context || []),
+            eval_context: this.userContext,
+        });
+        var groupBy = groupBys.length ?
+                        groupBys :
+                        (this.initialContext.group_by || []);
+        groupBy = (typeof groupBy === 'string') ? [groupBy] : groupBy;
+
+        if (results.error) {
+            throw new Error(_.str.sprintf(_t("Failed to evaluate search criterions")+": \n%s",
+                            JSON.stringify(results.error)));
+        }
+
+        var context = _.omit(results.context, 'time_ranges');
+
+        return {
+            context: context,
+            domain: results.domain,
+            groupBy: groupBy,
         };
     },
 

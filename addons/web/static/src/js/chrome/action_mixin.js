@@ -27,6 +27,17 @@ var qweb = core.qweb;
 var ActionMixin = {
     template: 'Action',
 
+    init: function () {
+        this._controlPanel = null;
+        // AAB: change this logic to stop using the properties mixin
+        this.on("change:title", this, function () {
+            if (self._controlPanel) {
+                var breadcrumbs = self._getBreadcrumbs();
+                // TODO: handle breadcrumbs
+                // self._controlPanel.updateContents({breadcrumbs: breadcrumbs}, {clear: false});
+            }
+        });
+    },
     renderElement: function () {
         this._super.apply(this, arguments);
         if (this.contentTemplate) {

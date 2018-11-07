@@ -24,7 +24,10 @@ var QWeb = core.qweb;
 
 var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
     custom_events: {
+        get_controller_context: '_onGetControllerContext',
+        navigation_move: '_onNavigationMove',
         open_record: '_onOpenRecord',
+        search: '_onSearch',
         switch_view: '_onSwitchView',
     },
     events: {
@@ -81,6 +84,9 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
 
         // render the ControlPanel elements (buttons, pager, sidebar...)
         this.controlPanelElements = this._renderControlPanelElements();
+        if (this._controlPanel) {
+            this._controlPanel.$el.prependTo(this.$el);
+        }
 
         return this._super.apply(this, arguments).then(function () {
             return self._update(self.initialState);
@@ -391,6 +397,13 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
         return $switchButtons;
     },
     /**
+     * @override
+     * @private
+     */
+    _startRenderer: function () {
+        return this.renderer.appendTo(this.$('.o_content'));
+    },
+    /**
      * This method is called after each update or when the start method is
      * completed.
      *
@@ -460,6 +473,36 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
         }
     },
     /**
+     * FIXME: this logic should be rethought
+     *
+     * Handles a context request: provides to the caller the context of the
+     * current controller.
+     *
+     * @private
+     * @param {OdooEvent} ev
+     * @param {function} ev.data.callback used to send the requested context
+     */
+    _onGetControllerContext: function (ev) {
+        ev.stopPropagation();
+        var context = this.getContext();
+        ev.data.callback(context || {});
+    },
+    /**
+     * Called mainly from the control panel when the focus should be given to
+     * the controller
+     *
+     * @private
+     * @param {OdooEvent} ev
+     */
+    _onNavigationMove : function (ev) {
+        switch(ev.data.direction) {
+            case 'down' :
+                ev.stopPropagation();
+                this.giveFocus();
+                break;
+        }
+    },
+    /**
      * When an Odoo event arrives requesting a record to be opened, this method
      * gets the res_id, and request a switch view in the appropriate mode
      *
@@ -482,6 +525,42 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
             mode: ev.data.mode || 'readonly',
             model: this.modelName,
         });
+    },
+    /**
+     * FIXME: move this to dashboard_controller?
+     *
+     * Handles a request to add/remove search view filters.
+     *
+     * @param {OdooEvent} ev
+     * @param {string} ev.data.controllerID
+     * @param {Array[Object]} [ev.data.newFilters]
+     * @param {Array[Object]} [ev.data.filtersToRemove]
+     * @param {function} ev.data.callback called with the added filters as arg
+     */
+    // _onUpdateFilters: function (ev) {
+    //     var controller = this.controllers[ev.data.controllerID];
+    //     var action = this.actions[controller.actionID];
+    //     var data = ev.data;
+    //     var addedFilters = action.searchView.updateFilters(data.newFilters, data.filtersToRemove);
+    //     data.callback(addedFilters);
+    // },
+    /**
+     * Called when there is a change in the search view, so the current action's
+     * environment needs to be updated with the new domain, context and groupby.
+     *
+     * @private
+     * @param {OdooEvent} ev
+     * @param {Array[]} ev.data.domain
+     * @param {Object} ev.data.context
+     * @param {string[]} ev.data.groupby
+     */
+    _onSearch: function (ev) {
+        ev.stopPropagation();
+        this.trigger_up('env_updated', {
+            controllerID: this.controllerID,
+            data: ev.data,
+        });
+        this.reload(_.extend({offset: 0}, ev.data));
     },
     /**
      * Intercepts the 'switch_view' event to add the controllerID into the data,

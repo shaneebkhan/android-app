@@ -4,6 +4,7 @@ odoo.define('web.ControlPanelController', function (require) {
 var mvc = require('web.mvc');
 
 var ControlPanelController = mvc.Controller.extend({
+    className: 'o_cp_controller',
     custom_events: {
         button_clicked: '_onButtonClicked',
         facet_removed: '_onFacetRemoved',
@@ -22,7 +23,6 @@ var ControlPanelController = mvc.Controller.extend({
     init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
 
-        this.controllerID = params.controllerID;
         this.modelName = params.modelName;
 
         // the updateIndex is used to prevent concurrent updates of the control
@@ -77,10 +77,7 @@ var ControlPanelController = mvc.Controller.extend({
         return this.renderer.$subMenus;
     },
     _reportNewQuery: function () {
-        this.trigger_up('search', {
-            controllerID: this.controllerID,
-            query: this.model.getQuery(),
-        });
+        this.trigger_up('search', this.model.getQuery());
     },
 
     //--------------------------------------------------------------------------

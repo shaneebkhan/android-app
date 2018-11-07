@@ -19,10 +19,6 @@ ActionManager.include({
     custom_events: _.extend({}, ActionManager.prototype.custom_events, {
         env_updated: '_onEnvUpdated',
         execute_action: '_onExecuteAction',
-        get_controller_context: '_onGetControllerContext',
-        navigation_move: '_onNavigationMove',
-        update_filters: '_onUpdateFilters',
-        search: '_onSearch',
         switch_view: '_onSwitchView',
     }),
 
@@ -208,12 +204,6 @@ ActionManager.include({
             // its reference is removed
             controllerDef.reject();
         });
-        if (action.searchView && !action._keepSearchView) {
-            action.searchView.destroy();
-        }
-        if (action.controlPanel) {
-            action.controlPanel.destroy();
-        }
     },
     /**
      * Executes actions of type 'ir.actions.act_window'.
@@ -241,9 +231,6 @@ ActionManager.include({
             var views = self._generateActionViews(action, fieldsViews);
             action._views = action.views;  // save the initial attribute
             action.views = views;
-            if (fieldsViews.search) {
-                action.searchFieldsView = fieldsViews.search;
-            }
             action.env = self._generateActionEnv(action, options);
             action.controllers = {};
 
@@ -284,9 +271,6 @@ ActionManager.include({
                         // controller should be placed just before the current one
                         var index = self.controllerStack.length - 1;
                         self.controllerStack.splice(index, 0, lazyLoadedController.jsID);
-                        action.controlPanel.updateContents({
-                            breadcrumbs: self._getBreadcrumbs(),
-                        }, {clear: false});
                     }
                 });
             }).fail(self._destroyWindowAction.bind(self, action));
@@ -409,22 +393,6 @@ ActionManager.include({
      * @override
      * @private
      */
-    _getControlPanelParams: function (action) {
-        var params = this._super.apply(this, arguments);
-        if (action.type === 'ir.actions.act_window') {
-            params.domain = action.domain;
-            params.hasSearchView = action.flags.hasSearchView;
-            params.modelName = action.res_model;
-            params.viewInfo = action.searchFieldsView;
-        }
-        return params;
-    },
-    /**
-     * Overrides to handle the 'ir.actions.act_window' actions.
-     *
-     * @override
-     * @private
-     */
     _handleAction: function (action, options) {
         if (action.type === 'ir.actions.act_window') {
             return this._executeWindowAction(action, options);
@@ -464,46 +432,6 @@ ActionManager.include({
         if (action.type === 'ir.actions.act_window' && options.keepSearchView) {
             action._keepSearchView = true;
         }
-    },
-    /**
-     * Processes the search data sent by the search view.
-     *
-     * @private
-     * @param {Object} action
-     * @param {Object} searchData
-     * @param {Object} [searchData.contexts=[]]
-     * @param {Object} [searchData.domains=[]]
-     * @param {Object} [searchData.groupbys=[]]
-     * @returns {Object} an object with keys 'context', 'domain', 'groupBy'
-     */
-    _processSearchData: function (action, searchData) {
-        var context = searchData.context;
-        var domain = searchData.domain;
-        // horrible! we should change that!
-        var groupBys = searchData.groupBys;
-        var action_context = action.context || {};
-        var results = pyUtils.eval_domains_and_contexts({
-            domains: [action.domain || []].concat([domain] || []),
-            contexts: [action_context].concat(context || []),
-            eval_context: this.userContext,
-        });
-        var groupBy = groupBys.length ?
-                        groupBys :
-                        (action.context.group_by || []);
-        groupBy = (typeof groupBy === 'string') ? [groupBy] : groupBy;
-
-        if (results.error) {
-            throw new Error(_.str.sprintf(_t("Failed to evaluate search criterions")+": \n%s",
-                            JSON.stringify(results.error)));
-        }
-
-        var context = _.omit(results.context, 'time_ranges');
-
-        return {
-            context: context,
-            domain: results.domain,
-            groupBy: groupBy,
-        };
     },
     /**
      * Overrides to handle the case of 'ir.actions.act_window' actions, i.e.
@@ -546,14 +474,6 @@ ActionManager.include({
                 if (action.on_reverse_breadcrumb) {
                     def = action.on_reverse_breadcrumb();
                 }
-                // temporary fix to make the web_dashboard test about the
-                // keepSearchView option pass (we fool the controlPanel by
-                // updating it with nothing, s.t. it detaches the searchView
-                // from the other instance and attaches in the current one)
-                action.controlPanel.updateContents({
-                    cp_content: {$searchview: action.searchView && action.searchView.$el},
-                    searchview: undefined,
-                }, {clear: false});
                 return $.when(def).then(function () {
                     return self._switchController(action, controller.viewType);
                 });
@@ -577,12 +497,6 @@ ActionManager.include({
             return self
                 ._createViewController(action, viewType, viewOptions)
                 .then(function (controller) {
-                    // AAB: this will be moved to the Controller
-                    var widget = controller.widget;
-                    if (widget.need_control_panel) {
-                        // set the ControlPanel bus on the controller to allow it to update it
-                        widget.set_cp(action.controlPanel);
-                    }
                     return self._startController(controller);
                 });
         };
@@ -632,11 +546,6 @@ ActionManager.include({
                 // same action and if they both are mono record
                 index = self.controllerStack.length - 1;
             }
-            // update the controllerID of the controlPanel s.t. the correct
-            // controller is updated when the user interacts with the searchview
-            // note: this will be removed as soon as the ControlPanel will be
-            // instantiated by the controllers themselves
-            action.controlPanel.setControllerID(controller.jsID);
             return self._pushController(controller, {index: index});
         });
     },
@@ -767,68 +676,6 @@ ActionManager.include({
             var options = {on_close: ev.data.on_closed};
             return self.doAction(action, options).then(ev.data.on_success, ev.data.on_fail);
         });
-    },
-    /**
-     * Handles a context request: provides to the caller the context of the
-     * current controller.
-     *
-     * @private
-     * @param {OdooEvent} ev
-     * @param {function} ev.data.callback used to send the requested context
-     */
-    _onGetControllerContext: function (ev) {
-        ev.stopPropagation();
-        var currentController = this.getCurrentController();
-        var context = currentController && currentController.widget.getContext();
-        ev.data.callback(context || {});
-    },
-    /**
-     * Called mainly from the control panel when the focus should be given to a
-     * controller
-     *
-     * @private
-     * @param {OdooEvent} ev
-     */
-    _onNavigationMove : function (ev) {
-        switch(ev.data.direction) {
-            case 'down' :
-                var currentController = this.getCurrentController().widget;
-                currentController.giveFocus();
-                ev.stopPropagation();
-                break;
-        }
-    },
-    /**
-     * Handles a request to add/remove search view filters.
-     *
-     * @param {OdooEvent} ev
-     * @param {string} ev.data.controllerID
-     * @param {Array[Object]} [ev.data.newFilters]
-     * @param {Array[Object]} [ev.data.filtersToRemove]
-     * @param {function} ev.data.callback called with the added filters as arg
-     */
-    _onUpdateFilters: function (ev) {
-        var controller = this.controllers[ev.data.controllerID];
-        var action = this.actions[controller.actionID];
-        var data = ev.data;
-        var addedFilters = action.searchView.updateFilters(data.newFilters, data.filtersToRemove);
-        data.callback(addedFilters);
-    },
-    /**
-     * Called when there is a change in the search view, so the current action's
-     * environment needs to be updated with the new domain, context and groupby.
-     *
-     * @private
-     * @param {OdooEvent} ev
-     * @param {string} ev.data.controllerID
-     * @param {Object} ev.data.query
-     */
-    _onSearch: function (ev) {
-        ev.stopPropagation();
-        var controller = this.controllers[ev.data.controllerID];
-        var action = this.actions[controller.actionID];
-        _.extend(action.env, this._processSearchData(action, ev.data.query));
-        controller.widget.reload(_.extend({offset: 0}, action.env));
     },
     /**
      * @private
