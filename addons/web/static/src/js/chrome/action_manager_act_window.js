@@ -502,7 +502,7 @@ ActionManager.include({
         } else if (view.multiRecord) {
             // remove other controllers linked to the same action from the stack
             index = _.findIndex(this.controllerStack, function (controllerID) {
-                return this.controllers[controllerID].actionID === action.jsID;
+                return self.controllers[controllerID].actionID === action.jsID;
             });
         } else if (!_.findWhere(action.views, {type: currentController.viewType}).multiRecord) {
             // replace the last controller by the new one if they are from the
