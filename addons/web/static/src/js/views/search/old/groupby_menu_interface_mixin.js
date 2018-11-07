@@ -1,7 +1,8 @@
-odoo.define('web.OldGroupByMenuInterfaceMixin', function (require) {
+odoo.define('web.GroupByMenuInterfaceMixin', function (require) {
 "use strict";
 
-var OldGroupByMenu = require('web.OldGroupByMenu');
+var GroupByMenu = require('web.GroupByMenu');
+var searchViewParameters = require('web.searchViewParameters');
 
 /**
  * The aim of this mixin is to facilitate the interaction between
@@ -10,14 +11,14 @@ var OldGroupByMenu = require('web.OldGroupByMenu');
  * understand the current implementation of this mixin
  *
  * @mixin
- * @name OldGroupByMenuInterfaceMixin
+ * @name GroupByMenuInterfaceMixin
  */
-var OldGroupByMenuInterfaceMixin = {
+var GroupByMenuInterfaceMixin = {
 
     init: function () {
         this.custom_events = _.extend({}, this.custom_events, {
-                menu_item_toggled: '_onMenuItemToggled',
-                item_option_changed : '_onItemOptionChanged',});
+                menu_item_clicked: '_onMenuItemClicked',
+                item_option_clicked: '_onItemOptionClicked',});
     },
 
     //--------------------------------------------------------------------------
@@ -25,49 +26,81 @@ var OldGroupByMenuInterfaceMixin = {
     //--------------------------------------------------------------------------
 
     /**
-     * this function instantiate a widget OldGroupByMenu and
+     * this function instantiate a widget GroupByMenu and
      * incorporate it to the control panel of the graph view.
      * This is used for instance in the dashboard view in enterprise
-     * where there is no Group by menu in the search view because it
+     * where there is no GroupBy menu in the search view because it
      * would not make sense to have one at the global level.
      * this function is called by renderButtons when the parameter
      * 'this.isEmbedded' is set to true.
      *
      * private
      * @param {jQuery} $node
+     * @param {Object} groupableFields
      */
-    _addOldGroupByMenu: function ($node, groupableFields) {
-        var groupbys = [];
-        var activeGroupbys = [];
-        _.each(this.model.get().groupedBy, function (groupby) {
-            activeGroupbys.push({fieldName: groupby.split(':')[0], interval: groupby.split(':')[1] || false});
+    _addGroupByMenu: function ($node, groupableFields) {
+        this.sortedFieldNames = _.sortBy(Object.keys(groupableFields), function (fieldName) {
+            return groupableFields[fieldName].string;
         });
-        var groupId = '__group__1';
-        _.each(groupableFields, function (field, fieldName) {
-            var groupby = _.findWhere(activeGroupbys, {fieldName: fieldName});
-            groupbys.push({
-                isActive: groupby ? true : false,
-                description: field.string,
-                itemId: fieldName,
-                fieldName: fieldName,
-                groupId: groupId,
-                defaultOptionId: groupby ? groupby.interval : false,
-            });
-        });
-        groupbys = _.sortBy(groupbys, 'description');
-        var OldgroupByMenu = new OldGroupByMenu(this, groupbys, groupableFields, {headerStyle: 'primary'});
-        OldgroupByMenu.insertAfter($node.find('div:first'));
+        this.groupableFields = groupableFields;
+        var groupBys = this._getGroupBys(this.model.get().groupedBy);
+        this.groupByMenu = new GroupByMenu(this, groupBys, this.groupableFields);
+        this.groupByMenu.insertAfter($node.find('div:first'));
     },
-
+    /**
+     * This method puts the active groupBys in a convenient form
+     *
+     * @private
+     * @param {string[]} activeGroupBys
+     * returns {string[]} groupBysNormalized
+     */
+    _normalizeActiveGroupBys: function (activeGroupBys) {
+        var groupBysNormalized = activeGroupBys.map(function (groupBy) {
+            return {fieldName: groupBy.split(':')[0], interval: groupBy.split(':')[1] || false};
+        });
+        return groupBysNormalized;
+    },
     /**
      * This method has to be implemented by the view controller
      * that needs to interpret the click in an appropriate
      * manner
      *
      * @private
-     * @param {string[]} groupbys
+     * @param {string[]} groupBys
      */
-    _setGroupby: function (groupbys) {
+    _setGroupby: function (groupBys) {
+    },
+    /**
+     * This method returns the list of groupBys in a form suitable
+     * for the groupByMenu. We do this each time because we want to be
+     * synchronized with the view model.
+     *
+     * @private
+     * @param {string[]} activeGroupBys
+     * returns {Object[]} groupBys
+     */
+    _getGroupBys: function (activeGroupBys) {
+        var self = this;
+        var groupBys = [];
+        var groupBysNormalized = this._normalizeActiveGroupBys(activeGroupBys);
+        this.sortedFieldNames.forEach(function (fieldName) {
+            var field = self.groupableFields[fieldName];
+            var groupByActivity = _.findWhere(groupBysNormalized, {fieldName: fieldName});
+            var groupBy = {
+                id: fieldName,
+                isActive: groupByActivity ? true : false,
+                description: field.string,
+            };
+            if (_.contains(['date', 'datetime'], field.type)) {
+                groupBy.hasOptions = true;
+                groupBy.options = searchViewParameters.INTERVAL_OPTIONS;
+                groupBy.currentOptionId = groupByActivity && groupByActivity.interval ?
+                                            groupByActivity.interval :
+                                            false;
+            }
+            groupBys.push(groupBy);
+        });
+        return groupBys;
     },
 
     //--------------------------------------------------------------------------
@@ -79,39 +112,55 @@ var OldGroupByMenuInterfaceMixin = {
      * @private
      * @param {OdooEvent} ev
      */
-     _onItemOptionChanged: function (ev) {
-        var fieldName = ev.data.itemId;
-        var interval = ev.data.optionId;
-        var groupbys = this.model.get().groupedBy;
-        var groupbysNormalized = _.map(groupbys, function (groupby) {
+     _onItemOptionClicked: function (ev) {
+        var fieldName = ev.data.id;
+        var optionId = ev.data.optionId;
+        var activeGroupBys = this.model.get().groupedBy;
+        var currentOptionId = activeGroupBys.reduce(
+            function (optionId, groupby) {
+                if (groupby.split(':')[0] === fieldName){
+                    optionId = groupby.split(':')[1] || searchViewParameters.DEFAULT_INTERVAL;
+                }
+                return optionId;
+            },
+            false
+        );
+        var groupByFieldNames = _.map(activeGroupBys, function (groupby) {
             return groupby.split(':')[0];
         });
-        var indexOfGroupby = groupbysNormalized.indexOf(fieldName);
-        groupbys.splice(indexOfGroupby, 1, fieldName + ':' + interval);
-        this._setGroupby(groupbys);
+        var indexOfGroupby = groupByFieldNames.indexOf(fieldName);
+        if (indexOfGroupby === -1) {
+            activeGroupBys.push(fieldName + ':' + optionId);
+        } else if (currentOptionId === optionId) {
+            activeGroupBys.splice(indexOfGroupby, 1);
+        } else {
+            activeGroupBys.splice(indexOfGroupby, 1, fieldName + ':' + optionId);
+        }
+        this._setGroupby(activeGroupBys);
+        this.groupByMenu.update(this._getGroupBys(activeGroupBys));
      },
     /**
      *
      * @private
      * @param {OdooEvent} ev
      */
-     _onMenuItemToggled: function (ev) {
-        var fieldName = ev.data.itemId;
-        var interval = ev.data.optionId;
-        var groupbys = this.model.get().groupedBy;
-        var groupbysNormalized = _.map(groupbys, function (groupby) {
+     _onMenuItemClicked: function (ev) {
+        var fieldName = ev.data.id;
+        var activeGroupBys = this.model.get().groupedBy;
+        var groupByFieldNames = _.map(activeGroupBys, function (groupby) {
             return groupby.split(':')[0];
         });
-        var indexOfGroupby = groupbysNormalized.indexOf(fieldName);
+        var indexOfGroupby = groupByFieldNames.indexOf(fieldName);
         if (indexOfGroupby === -1) {
-            groupbys.push(fieldName + (interval ? (':' + interval) : ''));
+            activeGroupBys.push(fieldName);
         } else {
-            groupbys.splice(indexOfGroupby, 1);
+            activeGroupBys.splice(indexOfGroupby, 1);
         }
-        this._setGroupby(groupbys);
+        this._setGroupby(activeGroupBys);
+        this.groupByMenu.update(this._getGroupBys(activeGroupBys));
      },
 };
 
-return OldGroupByMenuInterfaceMixin;
+return GroupByMenuInterfaceMixin;
 
 });

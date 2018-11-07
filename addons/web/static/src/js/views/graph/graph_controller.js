@@ -6,11 +6,11 @@ odoo.define('web.GraphController', function (require) {
 
 var core = require('web.core');
 var AbstractController = require('web.AbstractController');
-var OldGroupByMenuInterfaceMixin = require('web.OldGroupByMenuInterfaceMixin');
+var GroupByMenuInterfaceMixin = require('web.GroupByMenuInterfaceMixin');
 
 var qweb = core.qweb;
 
-var GraphController = AbstractController.extend(OldGroupByMenuInterfaceMixin,{
+var GraphController = AbstractController.extend(GroupByMenuInterfaceMixin,{
     className: 'o_graph',
 
     /**
@@ -24,7 +24,7 @@ var GraphController = AbstractController.extend(OldGroupByMenuInterfaceMixin,{
      * @param {string[]} params.groupableFields,
      */
     init: function (parent, model, renderer, params) {
-        OldGroupByMenuInterfaceMixin.init.call(this);
+        GroupByMenuInterfaceMixin.init.call(this);
         this._super.apply(this, arguments);
         this.measures = params.measures;
         // this parameter condition the appearance of a 'Group By'
@@ -110,10 +110,10 @@ var GraphController = AbstractController.extend(OldGroupByMenuInterfaceMixin,{
      * override
      *
      * @private
-     * @param {string[]} groupbys
+     * @param {string[]} groupBys
      */
-    _setGroupby: function (groupbys) {
-        this.update({groupBy: groupbys});
+    _setGroupby: function (groupBys) {
+        this.update({groupBy: groupBys});
     },
 
     /**
@@ -179,7 +179,6 @@ var GraphController = AbstractController.extend(OldGroupByMenuInterfaceMixin,{
      */
     _onButtonClick: function (ev) {
         var $target = $(ev.target);
-        var parent;
         var field;
         if ($target.hasClass('o_graph_button')) {
             this._setMode($target.data('mode'));
