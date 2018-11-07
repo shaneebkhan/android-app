@@ -98,8 +98,6 @@ var BasicView = AbstractView.extend({
      */
     _loadData: function (model) {
         if (this.recordID) {
-            var self = this;
-
             // Add the fieldsInfo of the current view to the given recordID,
             // as it will be shared between two views, and it must be able to
             // handle changes on fields that are only on this view.
@@ -176,7 +174,7 @@ var BasicView = AbstractView.extend({
                 });
             }
             return $.when(def).then(function () {
-                return record.id;
+                return model.get(record.id);
             });
         }
         return this._super.apply(this, arguments);
