@@ -29,6 +29,7 @@ var ControlPanelRenderer = Renderer.extend({
     init: function (parent, state, params) {
         this._super.apply(this, arguments);
         this.controls = params.controls || [];
+        this._breadcrumbs = params.breadcrumbs;
         if (params.template) {
             this.template = params.template;
         }
@@ -107,9 +108,7 @@ var ControlPanelRenderer = Renderer.extend({
             this.$controls.detach();
 
             // Render the breadcrumbs
-            if (status.breadcrumbs) {
-                this.$('.breadcrumb').html(this._renderBreadcrumbs(status.breadcrumbs));
-            }
+            this._renderBreadcrumbs(status.title);
 
             if ('search_view_hidden' in status) {
                 if (status.search_view_hidden) {
@@ -170,18 +169,17 @@ var ControlPanelRenderer = Renderer.extend({
     },
     /**
      * @private
-     * @param {Array} breadcrumbs list of objects containing the following keys:
-     *   - action: the action to execute when clicking on this part of the
-     *       breadcrumbs
-     *   - index: the index in the breadcrumbs (starting at 0)
-     *   - title: what to display in the breadcrumbs
-     * @return {Array} list of breadcrumbs' li jQuery elements
+     * @param {string} title
      */
-    _renderBreadcrumbs: function (breadcrumbs) {
+    _renderBreadcrumbs: function (title) {
         var self = this;
-        return breadcrumbs.map(function (bc, index) {
-            return self._renderBreadcrumbsItem(bc, index, breadcrumbs.length);
+        var breadcrumbsDescriptors = this._breadcrumbs.concat({
+            title: title,
         });
+        var breadcrumbs = breadcrumbsDescriptors.map(function (bc, index) {
+            return self._renderBreadcrumbsItem(bc, index, breadcrumbsDescriptors.length);
+        });
+        this.$('.breadcrumb').html(breadcrumbs);
     },
     /**
      * Renders a button to display in the buttons area, given an arch's node.

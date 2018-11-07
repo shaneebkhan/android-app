@@ -10,7 +10,6 @@ odoo.define('web.ActionManager', function (require) {
  */
 
 var AbstractAction = require('web.AbstractAction');
-var Bus = require('web.Bus');
 var concurrency = require('web.concurrency');
 var Context = require('web.Context');
 var config = require('web.config');
@@ -439,20 +438,13 @@ var ActionManager = Widget.extend({
         }
 
         var controllerID = _.uniqueId('controller_');
-        // options.controllerID = controllerID;
+
+        options.breadcrumbs = this._getBreadcrumbs(options);
         var controller = {
             actionID: action.jsID,
             jsID: controllerID,
             widget: new ClientAction(this, action, options),
         };
-        // AAB: TODO: simplify this with AbstractAction (implement a getTitle
-        // function that returns action.name by default, and that can be
-        // overriden in client actions and view controllers)
-        Object.defineProperty(controller, 'title', {
-            get: function () {
-                return controller.widget.get('title') || action.display_name || action.name;
-            },
-        });
         this.controllers[controllerID] = controller;
         action.controllerID = controllerID;
         return this._executeAction(action, options).done(function () {
@@ -563,19 +555,29 @@ var ActionManager = Widget.extend({
      * that the breadcrumbs should not be displayed for that action.
      *
      * @private
+     * @param {Object} options
+     * @param {boolean} [options.clear_breadcrumbs]
+     * @param {boolean} [options.replace_last_action]
+     * @param {number} [options.index]
      * @returns {Object[]}
      */
-    _getBreadcrumbs: function () {
+    _getBreadcrumbs: function (options) {
         var self = this;
-        var currentController = this.getCurrentController();
-        var noBreadcrumbs = !currentController ||
-                            this.actions[currentController.actionID].context.no_breadcrumbs;
-        if (noBreadcrumbs) {
-            return [];
+        var index;
+        if (options.clear_breadcrumbs) {
+            index = 0;
+        } else {
+            index = this.controllerStack.length;
+            if (options.replace_last_action) {
+                index = index - 1;
+            } else if (options.index !== undefined) {
+                index = options.index;
+            }
         }
-        return _.map(this.controllerStack, function (controllerID) {
+        var controllerIds = this.controllerStack.slice(0, index);
+        return _.map(controllerIds, function (controllerID) {
             return {
-                title: self.controllers[controllerID].title,
+                title: self.controllers[controllerID].widget.getTitle(),
                 controllerID: controllerID,
             };
         });
@@ -845,7 +847,6 @@ var ActionManager = Widget.extend({
      * @returns {Deferred<Object>} resolved with the controller when it is ready
      */
     _startController: function (controller) {
-        var self = this;
         var fragment = document.createDocumentFragment();
         return controller.widget.appendTo(fragment).then(function () {
             return controller;

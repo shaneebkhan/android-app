@@ -18,13 +18,14 @@ var AbstractAction = Widget.extend(ActionMixin, {
     },
     hasControlPanel: false,
 
-    init: function (parent, action) {
+    init: function (parent, action, options) {
         this._super(parent);
-        ActionMixin.init.call(this);
+        this._title = action.display_name || action.name;
         this.controlPanelParams = {
             actionId: action.id,
             context: action.context,
-        }
+            breadcrumbs: options && options.breadcrumbs || [],
+        };
     },
     willStart: function () {
         var self = this;

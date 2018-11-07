@@ -121,6 +121,7 @@ var ControlPanelView = Factory.extend({
         this.modelParams.domain = params.domain || [];
 
         this.rendererParams.template = params.template;
+        this.rendererParams.breadcrumbs = params.breadcrumbs;
 
         this.loadParams.actionId = params.actionId;
         this.loadParams.fields = this.fields;

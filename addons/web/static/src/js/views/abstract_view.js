@@ -23,7 +23,6 @@ odoo.define('web.AbstractView', function (require) {
  * in most case discarded.
  */
 
-var ajax = require('web.ajax');
 var AbstractModel = require('web.AbstractModel');
 var AbstractRenderer = require('web.AbstractRenderer');
 var AbstractController = require('web.AbstractController');
@@ -59,6 +58,7 @@ var AbstractView = Factory.extend({
         Renderer: AbstractRenderer,
         Controller: AbstractController,
     }),
+    withControlPanel: true,
 
     /**
      * The constructor function is supposed to set 3 variables: rendererParams,
@@ -195,16 +195,15 @@ var AbstractView = Factory.extend({
             this.withControlPanel = !action.flags.headless;
         } else if ('withControlPanel' in params) {
             this.withControlPanel = params.withControlPanel;
-        } else {
-            this.withControlPanel = true;
         }
         this.controlPanelParams = {
             actionId: action.id || false,
+            breadcrumbs: params.breadcrumbs,
             context: params.context,
             domain: params.domain,
             hasSearchView: action.flags && action.flags.hasSearchView,
             modelName: action.res_model,
-            viewInfo: action.searchFieldsView,
+            viewInfo: action.controlPanelFieldsView,
         };
 
         this.userContext = params.userContext;

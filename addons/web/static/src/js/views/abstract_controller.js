@@ -48,6 +48,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
      */
     init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
+        this._title = params.displayName;
         this.modelName = params.modelName;
         this.activeActions = params.activeActions;
         this.controllerID = params.controllerID;
@@ -57,7 +58,6 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
         this.dp = new concurrency.DropPrevious();
         // those arguments are temporary, they won't be necessary as soon as the
         // ControlPanel will be handled by the View
-        this.displayName = params.displayName;
         this.isMultiRecord = params.isMultiRecord;
         this.searchable = params.searchable;
         this.searchView = params.searchView;
@@ -71,6 +71,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
         // update the control panel when it isn't visible (this is a temporary
         // hack that can be removed as soon as the CP'll be handled by the view)
         this.need_control_panel = this.withControlPanel;
+
     },
     /**
      * Simply renders and updates the url.
@@ -158,17 +159,6 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
      */
     getContext: function () {
         return {};
-    },
-    /**
-     * Returns a title that may be displayed in the breadcrumb area.  For
-     * example, the name of the record.
-     *
-     * note: this will be moved to AbstractAction
-     *
-     * @returns {string}
-     */
-    getTitle: function () {
-        return this.displayName;
     },
     /**
      * Gives the focus to the renderer
@@ -423,6 +413,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, ControlPanelMixin, {
             active_view_selector: '.o_cp_switch_' + this.viewType,
             cp_content: cpContent,
             hidden: !this.withControlPanel,
+            title: this.getTitle(),
             search_view_hidden: !this.searchable || this.searchviewHidden,
         });
 

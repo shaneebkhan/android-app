@@ -22,22 +22,21 @@ odoo.define('web.ActionMixin', function (require) {
 
 var core = require('web.core');
 
-var qweb = core.qweb;
-
 var ActionMixin = {
     template: 'Action',
+    _controlPanel: null,
+    _title: '',
 
-    init: function () {
-        this._controlPanel = null;
+    // init: function () {
         // AAB: change this logic to stop using the properties mixin
-        this.on("change:title", this, function () {
-            if (self._controlPanel) {
-                var breadcrumbs = self._getBreadcrumbs();
-                // TODO: handle breadcrumbs
-                // self._controlPanel.updateContents({breadcrumbs: breadcrumbs}, {clear: false});
-            }
-        });
-    },
+        // this.on("change:title", this, function () {
+        //     if (self._controlPanel) {
+        //         var breadcrumbs = self._getBreadcrumbs();
+        //         // TODO: handle breadcrumbs
+        //         // self._controlPanel.updateContents({breadcrumbs: breadcrumbs}, {clear: false});
+        //     }
+        // });
+    // },
     renderElement: function () {
         this._super.apply(this, arguments);
         if (this.contentTemplate) {
@@ -79,6 +78,17 @@ var ActionMixin = {
     getContext: function () {
     },
     /**
+     * Returns a title that may be displayed in the breadcrumb area.  For
+     * example, the name of the record (for a form view). This is actually
+     * important for the action manager: this is the way it is able to give
+     * the proper titles for other actions.
+     *
+     * @returns {string}
+     */
+    getTitle: function () {
+        return this._title;
+    },
+    /**
      * Gives the focus to the action
      */
     giveFocus: function () {
@@ -98,6 +108,8 @@ var ActionMixin = {
             this._controlPanel.updateContents(status || {}, options || {});
         }
     },
+    // TODO: add hooks methods:
+    // - onRestoreHook (on_reverse_breadcrumbs)
 };
 
 return ActionMixin;

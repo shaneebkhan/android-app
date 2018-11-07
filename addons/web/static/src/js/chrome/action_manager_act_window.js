@@ -143,12 +143,6 @@ ActionManager.include({
             jsID: controllerID,
             viewType: viewType,
         };
-        Object.defineProperty(controller, 'title', {
-            get: function () {
-                // handle the case where the widget is lazy loaded
-                return controller.widget ? controller.widget.getTitle() : (action.display_name || action.name);
-            },
-        });
         this.controllers[controllerID] = controller;
 
         if (!options || !options.lazy) {
@@ -159,7 +153,9 @@ ActionManager.include({
             }, action.flags, action.flags[viewType], viewOptions, action.env);
             // pass the controllerID to the views as an hook for further
             // communication with trigger_up (e.g. for 'env_updated' event)
-            viewOptions = _.extend(viewOptions, { controllerID: controllerID });
+            viewOptions = _.extend(viewOptions, {
+                controllerID: controllerID,
+            });
 
             var view = new viewDescr.Widget(viewDescr.fieldsView, viewOptions);
             var def = $.Deferred();
@@ -231,6 +227,7 @@ ActionManager.include({
             var views = self._generateActionViews(action, fieldsViews);
             action._views = action.views;  // save the initial attribute
             action.views = views;
+            action.controlPanelFieldsView = fieldsViews.search;
             action.env = self._generateActionEnv(action, options);
             action.controllers = {};
 
@@ -259,7 +256,10 @@ ActionManager.include({
             var def;
             return $.when(def).then(function () {
                 var defs = [];
-                defs.push(self._createViewController(action, firstView.type));
+                var viewOptions = {
+                    breadcrumbs: self._getBreadcrumbs(options),
+                };
+                defs.push(self._createViewController(action, firstView.type, viewOptions));
                 if (mainView) {
                     defs.push(self._createViewController(action, mainView.type, {}, {lazy: true}));
                 }
@@ -492,6 +492,27 @@ ActionManager.include({
      */
     _switchController: function (action, viewType, viewOptions) {
         var self = this;
+        var view = _.findWhere(action.views, {type: viewType});
+        var currentController = this.getCurrentController();
+        var index;
+        if (currentController.actionID !== action.jsID) {
+            // make this work
+            // index = _.indexOf(this.controllerStack, controller.jsID);
+            index = 0;
+        } else if (view.multiRecord) {
+            // remove other controllers linked to the same action from the stack
+            index = _.findIndex(this.controllerStack, function (controllerID) {
+                return this.controllers[controllerID].actionID === action.jsID;
+            });
+        } else if (!_.findWhere(action.views, {type: currentController.viewType}).multiRecord) {
+            // replace the last controller by the new one if they are from the
+            // same action and if they both are mono record
+            index = this.controllerStack.length - 1;
+        }
+
+        viewOptions = _.extend({
+            breadcrumbs: this._getBreadcrumbs({index: index})
+        }, viewOptions);
 
         var newController = function () {
             return self
@@ -531,21 +552,6 @@ ActionManager.include({
         }
 
         return this.dp.add(controllerDef).then(function (controller) {
-            var view = _.findWhere(action.views, {type: viewType});
-            var currentController = self.getCurrentController();
-            var index;
-            if (currentController.actionID !== action.jsID) {
-                index = _.indexOf(self.controllerStack, controller.jsID);
-            } else if (view.multiRecord) {
-                // remove other controllers linked to the same action from the stack
-                index = _.findIndex(self.controllerStack, function (controllerID) {
-                    return self.controllers[controllerID].actionID === action.jsID;
-                });
-            } else if (!_.findWhere(action.views, {type: currentController.viewType}).multiRecord) {
-                // replace the last controller by the new one if they are from the
-                // same action and if they both are mono record
-                index = self.controllerStack.length - 1;
-            }
             return self._pushController(controller, {index: index});
         });
     },
