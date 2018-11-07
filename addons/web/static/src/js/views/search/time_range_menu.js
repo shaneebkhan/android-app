@@ -42,7 +42,7 @@ var TimeRangeMenu = Widget.extend({
         }));
         // variable parameters
         this.timeRanges = timeRanges;
-        this.configuration = null;
+        this.configuration = DEFAULT_CONFIGURATION;
         // compte this.configuration
         this._configure();
     },
@@ -57,81 +57,6 @@ var TimeRangeMenu = Widget.extend({
         this.renderElement();
     },
 
-    // /**
-    //  * Generates a :js:class:`~instance.web.search.Facet` descriptor from a
-    //  * filter descriptor
-    //  *
-    //  * @returns {Object}
-    //  */
-    // facetFor: function () {
-    //     var fieldDescription;
-    //     var timeRange = "[]";
-    //     var timeRangeDescription;
-    //     var comparisonTimeRange = "[]";
-    //     var comparisonTimeRangeDescription;
-
-    //     if (this.isActive) {
-    //         fieldDescription = this.dateField.description;
-    //         if (this.timeRangeId !== 'custom') {
-    //             timeRange = Domain.prototype.constructDomain(
-    //                 this.dateField.name,
-    //                 this.timeRangeId,
-    //                 this.dateField.type
-    //             );
-    //             timeRangeDescription = _.findWhere(
-    //                 this.periodOptions,
-    //                 {optionId: this.timeRangeId}
-    //             ).description;
-    //         }
-    //         if (this.comparisonIsSelected) {
-    //             comparisonTimeRange = Domain.prototype.constructDomain(
-    //                 this.dateField.name,
-    //                 this.timeRangeId,
-    //                 this.dateField.type,
-    //                 null,
-    //                 this.comparisonTimeRangeId
-    //             );
-    //             comparisonTimeRangeDescription = _.findWhere(
-    //                 this.COMPARISON_TIME_RANGE_OPTIONS,
-    //                 {optionId: this.comparisonTimeRangeId}
-    //             ).description;
-    //         }
-    //     }
-
-    //     return {
-    //         cat: 'timeRangeCategory',
-    //         category: _t("Time Range"),
-    //         icon: 'fa fa-calendar',
-    //         field: {
-    //             get_context: function (facet, noDomainEvaluation) {
-    //                 if (!noDomainEvaluation) {
-    //                         timeRange = Domain.prototype.stringToArray(timeRange);
-    //                         comparisonTimeRange = Domain.prototype.stringToArray(comparisonTimeRange);
-    //                 }
-    //                 return {
-    //                     timeRangeMenuData: {
-    //                         timeRange: timeRange,
-    //                         timeRangeDescription: timeRangeDescription,
-    //                         comparisonTimeRange: comparisonTimeRange,
-    //                         comparisonTimeRangeDescription: comparisonTimeRangeDescription,
-    //                     }
-    //                 };
-    //             },
-    //             get_groupby: function () {},
-    //             get_domain: function () {}
-    //         },
-    //         isRange: true,
-    //         values: [{
-    //             label: fieldDescription + ': ' + timeRangeDescription +
-    //                 (
-    //                     comparisonTimeRangeDescription ?
-    //                         (' / ' + comparisonTimeRangeDescription) :
-    //                         ''
-    //                 ),
-    //             value: null,
-    //         }],
-    //     };
-    // },
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
@@ -139,7 +64,7 @@ var TimeRangeMenu = Widget.extend({
     _configure: function () {
         this.configuration = this.timeRanges.find(function (timeRange) {
             return timeRange.isActive;
-        }) || DEFAULT_CONFIGURATION;
+        }) || this.configuration;
         this.configuration.comparisonIsSelected = !!this.configuration.comparisonTimeRangeId;
     },
 
