@@ -591,7 +591,7 @@ var ActionManager = Widget.extend({
         var controller = this.controllers[controllerID];
         var action = this.actions[controller.actionID];
         var state = {
-            title: controller.title,
+            title: controller.widget.getTitle(),
         };
         if (action.id) {
             state.action = action.id;
