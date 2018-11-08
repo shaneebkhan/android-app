@@ -1704,7 +1704,7 @@ QUnit.module('ActionManager', {
             className: 'o_client_action_test',
             start: function () {
                 this.$el.text('Hello World');
-                this.set('title', 'Hello'); // AAB: drop this and replace by getTitle()
+                this._setTitle('Hello');
             },
         });
         core.action_registry.add('HelloWorldTest', ClientAction);
@@ -1754,19 +1754,21 @@ QUnit.module('ActionManager', {
     QUnit.test('breadcrumb is updated on title change', function (assert) {
         assert.expect(2);
 
-        var ClientAction = Widget.extend(ControlPanelMixin, {
+        var ClientAction = AbstractAction.extend(ControlPanelMixin, {
             className: 'o_client_action_test',
+            hasControlPanel: true,
             events: {
                 click: function () {
-                    this.set("title", 'new title');
+                    this._setTitle('new title');
                 },
             },
             start: function () {
-                this.set("title", 'initial title');
+                this._setTitle('initial title');
                 this.$el.text('Hello World');
+                return this._super.apply(this, arguments);
             },
         });
-        var actionManager = createActionManager();
+        var actionManager = createActionManager({debug: 1});
         core.action_registry.add('HelloWorldTest', ClientAction);
         actionManager.doAction('HelloWorldTest');
 

@@ -210,7 +210,7 @@ var FormController = BasicController.extend({
         var self = this;
         return this._super.apply(this, arguments).then(function (changedFields) {
             // the title could have been changed
-            self.set('title', self.getTitle());
+            self._setTitle(self.getTitle());
             self._updateEnv();
 
             if (_t.database.multi_lang && changedFields.length) {
@@ -386,7 +386,7 @@ var FormController = BasicController.extend({
      */
     _update: function () {
         var title = this.getTitle();
-        this.set('title', title);
+        this._setTitle(title);
         this._updateButtons();
         this._updateSidebar();
         return this._super.apply(this, arguments).then(this.autofocus.bind(this));

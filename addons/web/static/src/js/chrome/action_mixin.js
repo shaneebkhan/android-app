@@ -110,6 +110,19 @@ var ActionMixin = {
     },
     // TODO: add hooks methods:
     // - onRestoreHook (on_reverse_breadcrumbs)
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @param {string} title
+     */
+    _setTitle: function (title) {
+        this._title = title;
+        this.updateControlPanel({title: this._title});
+    },
 };
 
 return ActionMixin;
