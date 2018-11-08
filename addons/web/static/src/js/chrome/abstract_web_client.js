@@ -215,8 +215,15 @@ var AbstractWebClient = Widget.extend(ServiceProviderMixin, KeyboardNavigationMi
         };
     },
     set_action_manager: function () {
+        var self = this;
         this.action_manager = new ActionManager(this, session.user_context);
-        return this.action_manager.appendTo(this.$el);
+        var fragment = document.createDocumentFragment();
+        return this.action_manager.appendTo(fragment).then(function () {
+            dom.append(self.$el, fragment, {
+                in_DOM: true,
+                callbacks: [{widget: self.action_manager}],
+            });
+        });
     },
     set_loading: function () {
         this.loading = new Loading(this);
