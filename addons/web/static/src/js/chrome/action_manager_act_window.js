@@ -493,6 +493,10 @@ ActionManager.include({
     _switchController: function (action, viewType, viewOptions) {
         var self = this;
         var view = _.findWhere(action.views, {type: viewType});
+        if (!view) {
+            // can't switch to an unknown view
+            return $.Deferred().reject();
+        }
         var currentController = this.getCurrentController();
         var index;
         if (currentController.actionID !== action.jsID) {
