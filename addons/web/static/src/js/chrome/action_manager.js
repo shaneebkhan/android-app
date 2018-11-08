@@ -440,6 +440,7 @@ var ActionManager = Widget.extend({
         var controllerID = _.uniqueId('controller_');
 
         options.breadcrumbs = this._getBreadcrumbs(options);
+        options.controllerID = controllerID;
         var controller = {
             actionID: action.jsID,
             jsID: controllerID,

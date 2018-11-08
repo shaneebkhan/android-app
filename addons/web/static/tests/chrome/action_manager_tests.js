@@ -818,7 +818,6 @@ QUnit.module('ActionManager', {
             actions: this.actions,
             archs: this.archs,
             data: this.data,
-            debug: 1,
         });
         actionManager.doAction(4);
 
@@ -984,7 +983,7 @@ QUnit.module('ActionManager', {
     QUnit.test('should not push a loaded state of a client action', function (assert) {
         assert.expect(4);
 
-        var ClientAction = Widget.extend({
+        var ClientAction = AbstractAction.extend({
             init: function (parent, action, options) {
                 this._super.apply(this, arguments);
                 this.controllerID = options.controllerID;
