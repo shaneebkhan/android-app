@@ -91,6 +91,8 @@ var ControlPanelView = Factory.extend({
      * @param {Object} [params.viewInfo] a controlpanel (or search) fieldsview
      * @param {string} [params.viewInfo.arch]
      * @param {string} [params.context={}]
+     * @param {boolean} [params.context.no_breadcrumbs=false] if set to true,
+     *   breadcrumbs won't be rendered
      * @param {string} [params.domain=[]]
      * @param {string} [params.template] the QWeb template to render
      */
@@ -98,9 +100,9 @@ var ControlPanelView = Factory.extend({
         this._super();
         params = params || {};
         var viewInfo = params.viewInfo || {arch: '<controlpanel/>', fields: {}};
+        var context = params.context || {};
 
         // TODO: use this where necessary
-        // var context = params.context || {};
         // var searchDefaults = {};
         // for (var key in context) {
         //     var match = /^search_default_(.*)$/.exec(key);
@@ -117,11 +119,12 @@ var ControlPanelView = Factory.extend({
 
         this.controllerParams.modelName = params.modelName;
 
-        this.modelParams.context = params.context || {};
+        this.modelParams.context = context;
         this.modelParams.domain = params.domain || [];
 
         this.rendererParams.template = params.template;
         this.rendererParams.breadcrumbs = params.breadcrumbs;
+        this.rendererParams.withBreadcrumbs = !context.no_breadcrumbs;
 
         this.loadParams.actionId = params.actionId;
         this.loadParams.fields = this.fields;

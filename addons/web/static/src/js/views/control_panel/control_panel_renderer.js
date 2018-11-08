@@ -24,6 +24,8 @@ var ControlPanelRenderer = Renderer.extend({
      * @param {Object[]} [params.controls=[]] list of nodes to render in the
      *   buttons area.
      * @param {Object[]} [params.breadcrumbs=[]] list of breadcrumbs elements
+     * @param {boolean} [params.withBreadcrumbs=false] if false, breadcrumbs
+     *   won't be rendered
      * @param {String} [params.template] the QWeb template to render the
      *   ControlPanel. By default, the template 'ControlPanel' will be used.
      */
@@ -31,6 +33,7 @@ var ControlPanelRenderer = Renderer.extend({
         this._super.apply(this, arguments);
         this.controls = params.controls || [];
         this._breadcrumbs = params.breadcrumbs || [];
+        this.withBreadcrumbs = params.withBreadcrumbs;
         if (params.template) {
             this.template = params.template;
         }
@@ -109,7 +112,9 @@ var ControlPanelRenderer = Renderer.extend({
             this.$controls.detach();
 
             // Render the breadcrumbs
-            this._renderBreadcrumbs(status.title);
+            if (this.withBreadcrumbs) {
+                this._renderBreadcrumbs(status.title);
+            }
 
             if ('search_view_hidden' in status) {
                 if (status.search_view_hidden) {

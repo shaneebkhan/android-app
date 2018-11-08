@@ -550,9 +550,6 @@ var ActionManager = Widget.extend({
      * display in the breadcrumbs) and 'controllerID' (the ID of the
      * corresponding controller, used to restore it when this part of the
      * breadcrumbs is clicked).
-     * Ignores the content of the stack of controllers if the action of the
-     * last controller of the stack is flagged with 'no_breadcrumbs', indicating
-     * that the breadcrumbs should not be displayed for that action.
      *
      * @private
      * @param {Object} options
