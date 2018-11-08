@@ -23,13 +23,14 @@ var ControlPanelRenderer = Renderer.extend({
      * @override
      * @param {Object[]} [params.controls=[]] list of nodes to render in the
      *   buttons area.
+     * @param {Object[]} [params.breadcrumbs=[]] list of breadcrumbs elements
      * @param {String} [params.template] the QWeb template to render the
      *   ControlPanel. By default, the template 'ControlPanel' will be used.
      */
     init: function (parent, state, params) {
         this._super.apply(this, arguments);
         this.controls = params.controls || [];
-        this._breadcrumbs = params.breadcrumbs;
+        this._breadcrumbs = params.breadcrumbs || [];
         if (params.template) {
             this.template = params.template;
         }

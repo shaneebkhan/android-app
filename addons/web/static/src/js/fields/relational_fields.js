@@ -1033,8 +1033,8 @@ var FieldX2Many = AbstractField.extend({
             template: 'X2ManyControlPanel',
         });
         var cpDef = controlPanelView.getController(this).then(function (controlPanel) {
-            self.control_panel = controlPanel;
-            return self.control_panel.prependTo(self.$el);
+            self._controlPanel = controlPanel;
+            return self._controlPanel.prependTo(self.$el);
         });
         this.pager = new Pager(this, this.value.count, this.value.offset + 1, this.value.limit, {
             single_page_hidden: true,
@@ -1060,7 +1060,7 @@ var FieldX2Many = AbstractField.extend({
         defs.push(this.pager.appendTo($('<div>'))); // start the pager
         defs.push(cpDef);
         return $.when.apply($, defs).then(function () {
-            self.control_panel.update({
+            self._controlPanel.updateContents({
                 cp_content: {
                     $buttons: self.$buttons,
                     $pager: self.pager.$el,
