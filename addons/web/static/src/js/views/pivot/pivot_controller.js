@@ -22,7 +22,7 @@ var _t = core._t;
 var QWeb = core.qweb;
 
 var PivotController = AbstractController.extend({
-    template: 'PivotView',
+    contentTemplate: 'PivotView',
     events: {
         'click .o_pivot_header_cell_opened': '_onOpenHeaderClick',
         'click .o_pivot_header_cell_closed': '_onClosedHeaderClick',
@@ -170,6 +170,13 @@ var PivotController = AbstractController.extend({
         this.$fieldSelection.find('.dropdown-menu').first()
             .css(cssProps)
             .addClass('show');
+    },
+    /**
+     * @override
+     * @private
+     */
+    _startRenderer: function () {
+        return this.renderer.appendTo(this.$('.o_pivot'));
     },
     /**
      * @private
