@@ -736,7 +736,7 @@ QUnit.test('save to dashboard actions with flag keepSearchView', function (asser
         views: [[false, 'graph']],
     }, options);
 
-    assert.strictEqual(actionManager.$('.o_graph').length, 1,
+    assert.strictEqual(actionManager.$('.o_graph_controller').length, 1,
         "should display the graph view");
     assert.strictEqual($('.o_add_to_dashboard_link').length, 1,
         "should allow the 'Add to dashboard' feature (this is the same searchview)");

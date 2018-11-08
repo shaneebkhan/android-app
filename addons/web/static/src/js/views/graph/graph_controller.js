@@ -11,8 +11,6 @@ var GroupByMenuInterfaceMixin = require('web.GroupByMenuInterfaceMixin');
 var qweb = core.qweb;
 
 var GraphController = AbstractController.extend(GroupByMenuInterfaceMixin,{
-    className: 'o_graph',
-
     /**
      * @override
      * @param {Widget} parent
@@ -37,6 +35,13 @@ var GraphController = AbstractController.extend(GroupByMenuInterfaceMixin,{
         // extends custom_events key. This allow the controller
         // to listen to information comming from the groupby menu.
         // this is used when the view is embedded.
+    },
+    /**
+     * @override
+     */
+    start: function () {
+        this.$el.addClass('o_graph_controller');
+        return this._super.apply(this, arguments);
     },
     /**
      * @todo check if this can be removed (mostly duplicate with
