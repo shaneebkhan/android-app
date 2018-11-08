@@ -482,8 +482,8 @@ ActionManager.include({
         return this._super.apply(this, arguments);
     },
     /**
-     * Handles the switch from a controller to another inside the same window
-     * action.
+     * Handles the switch from a controller to another (either inside the same
+     * window action, or from a window action to another using the breadcrumbs).
      *
      * @private
      * @param {Object} controller the controller to switch to
@@ -496,18 +496,37 @@ ActionManager.include({
         var currentController = this.getCurrentController();
         var index;
         if (currentController.actionID !== action.jsID) {
-            // make this work
-            // index = _.indexOf(this.controllerStack, controller.jsID);
-            index = 0;
-        } else if (view.multiRecord) {
-            // remove other controllers linked to the same action from the stack
-            index = _.findIndex(this.controllerStack, function (controllerID) {
-                return self.controllers[controllerID].actionID === action.jsID;
+            // the requested controller is from another action, so we went back
+            // to a previous action using the breadcrumbs
+            var controller = _.findWhere(this.controllers, {
+                actionID: action.jsID,
+                viewType: viewType,
             });
-        } else if (!_.findWhere(action.views, {type: currentController.viewType}).multiRecord) {
-            // replace the last controller by the new one if they are from the
-            // same action and if they both are mono record
-            index = this.controllerStack.length - 1;
+            index = _.indexOf(this.controllerStack, controller.jsID);
+        } else {
+            // the requested controller is from the same action as the current
+            // one, so we either
+            //   1) go one step back from a mono record view to a multi record
+            //      one using the breadcrumbs
+            //   2) or we switched from a view to another  using the view
+            //      switcher
+            //   3) or we opened a record from a multi record view
+            if (view.multiRecord) {
+                // cases 1) and 2) (with multi record views): replace the first
+                // controller linked to the same action in the stack
+                index = _.findIndex(this.controllerStack, function (controllerID) {
+                    return self.controllers[controllerID].actionID === action.jsID;
+                });
+            } else if (!_.findWhere(action.views, {type: currentController.viewType}).multiRecord) {
+                // case 2) (with mono record views): replace the last
+                // controller by the new one if they are from the same action
+                // and if they both are mono record
+                index = this.controllerStack.length - 1;
+            } else {
+                // case 3): insert the controller on the top of the controller
+                // stack
+                index = this.controllerStack.length;
+            }
         }
 
         viewOptions = _.extend({
