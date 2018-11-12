@@ -797,7 +797,7 @@ QUnit.module('Views', {
 
         this.data.partner.fields.foo.default = false; // no default value for this test
         this.data.partner.records[1].foo = false;  // 1 is record with id=2
-        this.data.partner.records[1].int_field = false;  // 1 is record with id=2
+        this.data.partner.records[1].display_name = false;  // 1 is record with id=2
 
         var form = createView({
             View: FormView,
@@ -807,16 +807,16 @@ QUnit.module('Views', {
                     '<sheet>' +
                         '<group>' +
                             '<field name="foo"/>' +
-                            '<field name="int_field" attrs="{\'readonly\': [[\'foo\', \'=\', \'readonly\']]}"/>' +
+                            '<field name="display_name" attrs="{\'readonly\': [[\'foo\', \'=\', \'readonly\']]}"/>' +
                         '</group>' +
                     '</sheet>' +
                 '</form>',
             res_id: 2,
         });
 
-        assert.strictEqual(form.$('.o_field_widget.o_field_empty').length, 1,
+        assert.strictEqual(form.$('.o_field_widget.o_field_empty').length, 2,
             "should have 1 empty field with correct class");
-        assert.strictEqual(form.$('.o_form_label_empty').length, 1,
+        assert.strictEqual(form.$('.o_form_label_empty').length, 2,
             "should have 1 muted label (for the empty fied) in readonly");
 
         form.$buttons.find('.o_form_button_edit').click();
