@@ -6,4 +6,5 @@ from . import account_invoice
 from . import account_move
 from . import product
 from . import stock
+from . import stock_valuation_layer
 from . import res_config_settings

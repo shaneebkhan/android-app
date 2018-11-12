@@ -133,7 +133,7 @@ class ProductProduct(models.Model):
             product.stock_value_currency_id = currency_id
 
     @api.multi
-    @api.depends('stock_move_ids.product_qty', 'stock_move_ids.state', 'stock_move_ids.remaining_value', 'product_tmpl_id.cost_method', 'product_tmpl_id.standard_price', 'product_tmpl_id.categ_id.property_valuation')
+    @api.depends('stock_move_ids.product_qty', 'stock_move_ids.state', 'product_tmpl_id.standard_price', 'product_tmpl_id.cost_method', 'product_tmpl_id.valuation')
     def _compute_stock_value(self):
         StockMove = self.env['stock.move']
         to_date = self.env.context.get('to_date')
@@ -173,15 +173,13 @@ class ProductProduct(models.Model):
 
         for product in self:
             if product.cost_method in ['standard', 'average']:
-                qty_available = product.with_context(company_owned=True, owner_id=False).qty_available
-                price_used = product.standard_price
-                if to_date:
-                    price_used = product.get_history_price(
-                        self.env.user.company_id.id,
-                        date=to_date,
-                    )
-                product.stock_value = price_used * qty_available
-                product.qty_at_date = qty_available
+                # FIXME sle: get_history_price? is it needed? change of standard price + valuation at date
+                stock_valuation_layers = self.env['stock.valuation.layer'].search([
+                    ('product_id', '=', product.id),
+                    ('company_id', '=', self.env.user.company_id.id)
+                ])
+                product.qty_at_date = sum(stock_valuation_layers.mapped('quantity'))
+                product.stock_value = sum(stock_valuation_layers.mapped('value'))
             elif product.cost_method == 'fifo':
                 if to_date:
                     if product.product_tmpl_id.valuation == 'manual_periodic':
