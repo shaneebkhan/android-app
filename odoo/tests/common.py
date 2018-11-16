@@ -447,7 +447,7 @@ class SavepointCase(SingleTransactionCase):
 class ChromeBrowser():
     """ Helper object to control a Chrome headless process. """
 
-    def __init__(self, logger):
+    def __init__(self, logger, window_size=None):
         self._logger = logger
         if websocket is None:
             self._logger.warning("websocket-client module is not installed")
@@ -459,7 +459,7 @@ class ChromeBrowser():
         self.user_data_dir = tempfile.mkdtemp(suffix='_chrome_odoo')
         self.chrome_process = None
         self.screencast_frames = []
-        self._chrome_start()
+        self._chrome_start(window_size)
         self._find_websocket()
         self._logger.info('Websocket url found: %s', self.ws_url)
         self._open_websocket()
@@ -518,7 +518,7 @@ class ChromeBrowser():
 
         raise unittest.SkipTest("Chrome executable not found")
 
-    def _chrome_start(self):
+    def _chrome_start(self, window_size=None):
         if self.chrome_process is not None:
             return
         switches = {
@@ -529,7 +529,7 @@ class ChromeBrowser():
             '--disable-extensions': '',
             '--user-data-dir': self.user_data_dir,
             '--disable-translate': '',
-            '--window-size': '1366x768',
+            '--window-size': window_size or '1366x768',
             '--remote-debugging-port': str(self.devtools_port),
             '--no-sandbox': '',
         }
@@ -801,10 +801,10 @@ class HttpCase(TransactionCase):
         self._logger = logging.getLogger('%s.%s' % (cls.__module__, cls.__name__))
 
     @classmethod
-    def start_browser(cls, logger):
+    def start_browser(cls, logger, window_size):
         # start browser on demand
         if cls.browser is None:
-            cls.browser = ChromeBrowser(logger)
+            cls.browser = ChromeBrowser(logger, window_size)
 
     @classmethod
     def tearDownClass(cls):
@@ -883,12 +883,13 @@ class HttpCase(TransactionCase):
             self._logger.info('Setting session cookie in browser')
             self.browser.set_cookie('session_id', self.session_id, '/', '127.0.0.1')
 
-    def browser_js(self, url_path, code, ready='', login=None, timeout=60, **kw):
+    def browser_js(self, url_path, code, ready='', login=None, timeout=60, window_size=None, **kw):
         """ Test js code running in the browser
         - optionnally log as 'login'
         - load page given by url_path
         - wait for ready object to be available
         - eval(code) inside the page
+        - force window_size for the spawn browser
 
         To signal success test do:
         console.log('ok')
@@ -901,7 +902,7 @@ class HttpCase(TransactionCase):
         # increase timeout if coverage is running
         if any(f.filename.endswith('/coverage/execfile.py') for f in inspect.stack()  if f.filename):
             timeout = timeout * 1.5
-        self.start_browser(self._logger)
+        self.start_browser(self._logger, window_size)
 
         try:
             self.authenticate(login, login)

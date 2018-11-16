@@ -16,7 +16,7 @@ class WebSuite(odoo.tests.HttpCase):
 
     def test_02_js(self):
         # webclient mobile test suite
-        self.phantom_js('/web/tests/mobile?mod=web&failfast', "", "", login='admin', timeout=1800)
+        self.phantom_js('/web/tests/mobile?mod=web&failfast', "", "", login='admin', timeout=1800, window_size='375x667')
 
     def test_check_suite(self):
         # verify no js test is using `QUnit.only` as it forbid any other test to be executed
