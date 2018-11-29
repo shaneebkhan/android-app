@@ -1158,16 +1158,36 @@ def formatLang(env, value, digits=None, grouping=True, monetary=False, dp=False,
     res = lang_obj.format('%.' + str(digits) + 'f', value, grouping=grouping, monetary=monetary)
 
     if currency_obj and currency_obj.symbol:
-        if currency_obj.position == 'after':
-            if currency_obj.is_space:
-                res = '%s %s' % (res, currency_obj.symbol)
+        currency_format = "%s %s"
+        currency_sign_formats = ['(%s %s;)', '-%s %s', '%s %s-']
+        negative_value = False
+        currency_sign_position = int(currency_obj.sign_position)
+
+        # for negative amount
+        if res.find('-') == 0:
+            negative_value = True
+            res = res.split('-')[1]
+            if currency_sign_position < 3:
+                currency_format = currency_sign_formats[currency_sign_position]
             else:
-                res = '%s%s' % (res, currency_obj.symbol)
-        elif currency_obj and currency_obj.position == 'before':
-            if currency_obj.is_space:
-                res = '%s %s' % (currency_obj.symbol, res)
+                currency_format = "-%s %s"
+        if currency_obj.position == "after":
+            if negative_value and currency_sign_position == 3:
+                res = '-%s %s' % (res, currency_obj.symbol)
+            elif negative_value and currency_sign_position == 4:
+                res = '%s- %s' % (res, currency_obj.symbol)
             else:
-                res = '%s%s' % (currency_obj.symbol, res)
+                res = currency_format % (res, currency_obj.symbol)
+        else:
+            if negative_value and currency_sign_position == 3:
+                res = '%s -%s' % (currency_obj.symbol, res)
+            elif negative_value and currency_sign_position == 4:
+                res = '%s %s-' % (currency_obj.symbol, res)
+            else:
+                res = currency_format % (currency_obj.symbol, res)
+
+        if not currency_obj.is_space:
+            res = res.replace(' ', '')
     return res
 
 def format_date(env, value, lang_code=False, date_format=False):
