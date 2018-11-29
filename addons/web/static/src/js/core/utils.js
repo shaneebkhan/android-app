@@ -760,6 +760,53 @@ var utils = {
         return curr;
     },
 
+    /**
+     * returns the formatted amount
+     *
+     * @param {string} value
+     * @param {Object} [options]
+     */
+    formatMonetaryValue: function(value, options) {
+        var currency_format = "%s %s";
+        var currency_sign_formats = ['(%s %s)','-%s %s','%s %s-'];
+        var negative_value = false;
+        var currency = options.currency;
+        var formatted_value = value;
+        var currency_sign_position = parseInt(currency.sign_position);
+
+        // for negative amount
+        if (formatted_value.includes('-')) {
+           negative_value = true;
+           formatted_value = formatted_value.split('-')[1];
+           currency_format = currency_sign_position < 3 ? currency_sign_formats[currency_sign_position] : "-%s %s";
+        }
+        if (currency.position === "after") {
+            if (negative_value && currency_sign_position === 3) {
+                formatted_value = _.str.sprintf('-%s %s', formatted_value, currency.symbol);
+            }
+            else if (negative_value && currency_sign_position === 4) {
+                formatted_value = _.str.sprintf('%s- %s', formatted_value, currency.symbol);
+            }
+            else {
+                formatted_value = _.str.sprintf(currency_format, formatted_value, currency.symbol);
+            }
+        } else {
+            if (negative_value && currency_sign_position === 3) {
+                formatted_value = _.str.sprintf('%s -%s', currency.symbol, formatted_value);
+            }
+            else if (negative_value && currency_sign_position === 4) {
+                formatted_value = _.str.sprintf('%s %s-', currency.symbol, formatted_value);
+            }
+            else {
+                formatted_value = _.str.sprintf(currency_format, currency.symbol, formatted_value);
+            }
+        }
+        if (currency.is_space === false){
+            formatted_value = formatted_value.replace(' ', '');
+        }
+        return formatted_value;
+    }
+
 };
 
 return utils;
