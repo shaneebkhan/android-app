@@ -1085,7 +1085,7 @@ QUnit.module('account', {
         await clientAction.appendTo($('#qunit-fixture'));
         await testUtils.nextTick();
 
-        assert.strictEqual(clientAction.$('.accounting_view tfoot .cell_right, .accounting_view tfoot .cell_left').text().replace(/[$, ]+/g, ''), " 1175.00 32.58 2000.00", "should display the open balance values");
+        assert.strictEqual(clientAction.$('.accounting_view tfoot .cell_right, .accounting_view tfoot .cell_left').text().replace(/[$, ]+/g, ''), "1175.0032.582000.00", "should display the open balance values");
 
         var widget = clientAction.widgets[0];
 
@@ -1119,7 +1119,7 @@ QUnit.module('account', {
         await testUtils.fields.editInput(widget.$('.create .create_amount input'), '1100.00');
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1100.00", "should display the value 1100.00 in right column");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 75.00", "should display 'Open Balance' line because the rest to reconcile is 75.00");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 75.00", "should display 'Open Balance' line because the rest to reconcile is 75.00");
         assert.containsOnce(widget, '.accounting_view tbody tr', "should have ever only the created reconcile line");
         assert.strictEqual(widget.$('.accounting_view tbody tr').text().replace(/[\n\r\s$,]+/g, ' '), " 101200 New SAJ/2014/002 and SAJ/2014/003 1100.00 ",
             "the new line should be update the amout");
@@ -1134,7 +1134,7 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_left:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 100.00", "should display the value 100.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open Balance'");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 175.00", "should display 'Open Balance' line because the rest to reconcile is 175.00");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 175.00", "should display 'Open Balance' line because the rest to reconcile is 175.00");
         assert.containsN(widget, '.accounting_view tbody tr', 2, "should have 2 created reconcile lines");
         assert.strictEqual(widget.$('.accounting_view tbody tr:eq(1)').text().replace(/[\n\r\s$,]+/g, ' '), " 101000 New test0 100.00 ",
             "the new line should have the selected account, name and amout");
@@ -1152,7 +1152,7 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 200.00", "should display the value 200.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open balance'");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_left').text(), "$ 25.00", "should display 'Open balance' with 25.00 in left column");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_left').text(), "$ 25.00", "should display 'Open balance' with 25.00 in left column");
         assert.containsN(widget, '.accounting_view tbody tr', 3, "should have 3 created reconcile lines");
 
         clientAction.destroy();
@@ -1248,7 +1248,7 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right:last').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1100.00", "should display the value 1100.00 in left column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open Balance'");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$\u00a075.00", "should display 'Open Balance' with 75.00 in right column");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 75.00", "should display 'Open Balance' with 75.00 in right column");
         assert.containsOnce(widget, '.accounting_view tbody tr', "should have 1 created reconcile lines");
 
         await testUtils.dom.click(widget.$('.create .create_tax_id input'));
@@ -1257,7 +1257,7 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1000.00 $ 100.00", "should have 2 created reconcile lines with right column values");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open Balance'");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$\u00a075.00", "should display 'Open Balance' with 75.00 in right column");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_right').text(), "$ 75.00", "should display 'Open Balance' with 75.00 in right column");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_left').text(), "", "should display 'Open Balance' without any value in left column");
         assert.containsN(widget, '.accounting_view tbody tr', 2, "should have 2 created reconcile lines");
         await testUtils.dom.click(widget.$('[name="tax_ids"] a.o_delete'));
@@ -1268,7 +1268,7 @@ QUnit.module('account', {
 
         assert.strictEqual(widget.$('.accounting_view tbody .cell_right').text().trim().replace(/[\n\r\s\u00a0]+/g, ' '), "$ 1100.00 $ 220.00", "should have 2 created reconcile lines with right column values");
         assert.strictEqual(widget.$('.accounting_view tfoot .cell_label').text(), "Open balance", "should display 'Open balance'");
-        assert.strictEqual(widget.$('.accounting_view tfoot .cell_left').text(), "$\u00a0145.00", "should display 'Open balance' with 145.00 in right column");
+        assert.strictEqual(widget.$('.accounting_view tfoot .cell_left').text(), "$ 145.00", "should display 'Open balance' with 145.00 in right column");
         assert.containsN(widget, '.accounting_view tbody tr', 2, "should have 2 created reconcile lines");
 
         clientAction.destroy();
