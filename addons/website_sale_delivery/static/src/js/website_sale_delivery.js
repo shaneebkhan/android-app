@@ -42,10 +42,6 @@ publicWidget.registry.websiteSaleDelivery = publicWidget.Widget.extend({
         return this._super.apply(this, arguments);
     },
 
-    //--------------------------------------------------------------------------
-    // Private
-    //--------------------------------------------------------------------------
-
     /**
      * @private
      * @param {jQuery} $carrierInput
@@ -64,7 +60,6 @@ publicWidget.registry.websiteSaleDelivery = publicWidget.Widget.extend({
         var $amountUntaxed = $('#order_total_untaxed .monetary_field');
         var $amountTax = $('#order_total_taxes .monetary_field');
         var $amountTotal = $('#order_total .monetary_field');
-
         if (result.status === true) {
             $amountDelivery.html(result.new_amount_delivery);
             $amountUntaxed.html(result.new_amount_untaxed);
