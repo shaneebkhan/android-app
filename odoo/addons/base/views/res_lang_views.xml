@@ -40,6 +40,7 @@
                                 <field name="translatable"/>
                                 <field name="position"/>
                                 <field name="is_space"/>
+                                <field name="sign_position"/>
                             </group>
                             <group>
                                 <field name="direction"/>

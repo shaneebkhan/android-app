@@ -35,6 +35,12 @@ class Currency(models.Model):
     decimal_places = fields.Integer(compute='_compute_decimal_places', store=True)
     active = fields.Boolean(default=True)
     position = fields.Selection(compute='_compute_currency_position', string='Symbol Position', selection=[('after', 'After Amount'), ('before', 'Before Amount')], help='Currency position (before or after) set from the language of user locale and user can change position from language.')
+    sign_position = fields.Selection(compute='_compute_currency_position', selection=[('0', 'Surrounded by parentheses'),
+                                     ('1', 'Before value and symbol'),
+                                     ('2', 'After value and symbol'),
+                                     ('3', 'Before value'),
+                                     ('4', 'After value')],
+                    default='0', string='Sign Position', help="Determines where the currency symbol should be placed after or before the amount.")
     is_space = fields.Boolean(compute='_compute_currency_position', string='Allow space between amount and currency symbol', help='Space between amount and symbol set from language of user locale and user can change it from language form.')
     date = fields.Date(compute='_compute_date')
     currency_unit_label = fields.Char(string="Currency Unit", help="Currency Unit Name")
@@ -83,6 +89,7 @@ class Currency(models.Model):
         for currency in self:
             currency.position = language.position
             currency.is_space = language.is_space
+            currency.sign_position = language.sign_position
 
     @api.multi
     @api.depends('rate_ids.name')

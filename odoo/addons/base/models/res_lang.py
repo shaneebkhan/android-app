@@ -49,6 +49,12 @@ class Lang(models.Model):
     thousands_sep = fields.Char(string='Thousands Separator', default=',', trim=False)
     position = fields.Selection([('after', 'After Amount'), ('before', 'Before Amount')], default='after', required=True,
         string='Currency Symbol Position', help="Determines where the currency symbol should be placed after or before the amount.")
+    sign_position = fields.Selection([('0', 'Surrounded by parentheses'),
+                                     ('1', 'Before value and symbol'),
+                                     ('2', 'After value and symbol'),
+                                     ('3', 'Before value'),
+                                     ('4', 'After value')],
+                    default='0', string='Sign Position', help="Determines where the currency symbol should be placed after or before the amount.")
     is_space = fields.Boolean(string='Allow space between amount and currency symbol')
 
     _sql_constraints = [
@@ -99,8 +105,11 @@ class Lang(models.Model):
         language = self.with_context(active_test=False).search([('code', '=', lang)], limit=1)
         position = 'before' if conv.get('p_cs_precedes', 'n_cs_precedes') == 1 else 'after'
         is_space = False if conv.get('p_sep_by_space', 'n_sep_by_space') == 0 else True
+        sign_position = conv.get('p_sign_posn', 'n_sign_posn')
+        if sign_position == locale.CHAR_MAX:
+            sign_position = 1
         if language:
-            language.write({'active': True, 'position': position, 'is_space': is_space})
+            language.write({'active': True, 'position': position, 'is_space': is_space, 'sign_position': str(sign_position)})
             return language.id
 
         # create the language with locale information
@@ -154,7 +163,8 @@ class Lang(models.Model):
             'thousands_sep' : fix_xa0(str(conv['thousands_sep'])),
             'grouping' : str(conv.get('grouping', [])),
             'position': position,
-            'is_space': is_space
+            'is_space': is_space,
+            'sign_position': str(sign_position)
         }
         try:
             return self.create(lang_info).id
