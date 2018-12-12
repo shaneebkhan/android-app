@@ -111,11 +111,11 @@ class account_abstract_payment(models.AbstractModel):
         })
         return rec
 
-    @api.one
     @api.constrains('amount')
     def _check_amount(self):
-        if self.amount < 0:
-            raise ValidationError(_('The payment amount cannot be negative.'))
+        for payment in self:
+            if payment.amount < 0:
+                raise ValidationError(_('The payment amount cannot be negative.'))
 
     @api.model
     def _get_method_codes_using_bank_account(self):
@@ -442,26 +442,26 @@ class account_payment(models.Model):
             'context': action_context,
         }
 
-    @api.one
     @api.depends('invoice_ids', 'payment_type', 'partner_type', 'partner_id')
     def _compute_destination_account_id(self):
-        if self.invoice_ids:
-            self.destination_account_id = self.invoice_ids[0].account_id.id
-        elif self.payment_type == 'transfer':
-            if not self.company_id.transfer_account_id.id:
-                raise UserError(_('There is no Transfer Account defined in the accounting settings. Please define one to be able to confirm this transfer.'))
-            self.destination_account_id = self.company_id.transfer_account_id.id
-        elif self.partner_id:
-            if self.partner_type == 'customer':
-                self.destination_account_id = self.partner_id.property_account_receivable_id.id
-            else:
-                self.destination_account_id = self.partner_id.property_account_payable_id.id
-        elif self.partner_type == 'customer':
-            default_account = self.env['ir.property'].get('property_account_receivable_id', 'res.partner')
-            self.destination_account_id = default_account.id
-        elif self.partner_type == 'supplier':
-            default_account = self.env['ir.property'].get('property_account_payable_id', 'res.partner')
-            self.destination_account_id = default_account.id
+        for payment in self:
+            if payment.invoice_ids:
+                payment.destination_account_id = payment.invoice_ids[0].account_id.id
+            elif payment.payment_type == 'transfer':
+                if not payment.company_id.transfer_account_id.id:
+                    raise UserError(_('There is no Transfer Account defined in the accounting settings. Please define one to be able to confirm this transfer.'))
+                payment.destination_account_id = payment.company_id.transfer_account_id.id
+            elif payment.partner_id:
+                if payment.partner_type == 'customer':
+                    payment.destination_account_id = payment.partner_id.property_account_receivable_id.id
+                else:
+                    payment.destination_account_id = payment.partner_id.property_account_payable_id.id
+            elif payment.partner_type == 'customer':
+                default_account = self.env['ir.property'].get('property_account_receivable_id', 'res.partner')
+                payment.destination_account_id = default_account.id
+            elif payment.partner_type == 'supplier':
+                default_account = self.env['ir.property'].get('property_account_payable_id', 'res.partner')
+                payment.destination_account_id = default_account.id
 
     @api.depends('move_line_ids.matched_debit_ids', 'move_line_ids.matched_credit_ids')
     def _compute_reconciled_invoice_ids(self):
@@ -569,13 +569,13 @@ class account_payment(models.Model):
 
     @api.multi
     def cancel(self):
-        for rec in self:
-            for move in rec.move_line_ids.mapped('move_id'):
-                if rec.invoice_ids:
+        for payment in self:
+            for move in payment.move_line_ids.mapped('move_id'):
+                if payment.invoice_ids:
                     move.line_ids.remove_move_reconcile()
                 move.button_cancel()
                 move.unlink()
-            rec.state = 'cancelled'
+            payment.state = 'cancelled'
 
     @api.multi
     def unlink(self):
@@ -593,46 +593,46 @@ class account_payment(models.Model):
             If invoice_ids is not empty, there will be one reconcilable move line per invoice to reconcile with.
             If the payment is a transfer, a second journal entry is created in the destination journal to receive money from the transfer account.
         """
-        for rec in self:
+        for payment in self:
 
-            if rec.state != 'draft':
+            if payment.state != 'draft':
                 raise UserError(_("Only a draft payment can be posted."))
 
-            if any(inv.state != 'open' for inv in rec.invoice_ids):
+            if any(inv.state != 'open' for inv in payment.invoice_ids):
                 raise ValidationError(_("The payment cannot be processed because the invoice is not open!"))
 
             # keep the name in case of a payment reset to draft
-            if not rec.name:
+            if not payment.name:
                 # Use the right sequence to set the name
-                if rec.payment_type == 'transfer':
+                if payment.payment_type == 'transfer':
                     sequence_code = 'account.payment.transfer'
                 else:
-                    if rec.partner_type == 'customer':
-                        if rec.payment_type == 'inbound':
+                    if payment.partner_type == 'customer':
+                        if payment.payment_type == 'inbound':
                             sequence_code = 'account.payment.customer.invoice'
-                        if rec.payment_type == 'outbound':
+                        if payment.payment_type == 'outbound':
                             sequence_code = 'account.payment.customer.refund'
-                    if rec.partner_type == 'supplier':
-                        if rec.payment_type == 'inbound':
+                    if payment.partner_type == 'supplier':
+                        if payment.payment_type == 'inbound':
                             sequence_code = 'account.payment.supplier.refund'
-                        if rec.payment_type == 'outbound':
+                        if payment.payment_type == 'outbound':
                             sequence_code = 'account.payment.supplier.invoice'
-                rec.name = self.env['ir.sequence'].with_context(ir_sequence_date=rec.payment_date).next_by_code(sequence_code)
-                if not rec.name and rec.payment_type != 'transfer':
+                payment.name = self.env['ir.sequence'].with_context(ir_sequence_date=payment.payment_date).next_by_code(sequence_code)
+                if not payment.name and payment.payment_type != 'transfer':
                     raise UserError(_("You have to define a sequence for %s in your company.") % (sequence_code,))
 
             # Create the journal entry
-            amount = rec.amount * (rec.payment_type in ('outbound', 'transfer') and 1 or -1)
-            move = rec._create_payment_entry(amount)
+            amount = payment.amount * (payment.payment_type in ('outbound', 'transfer') and 1 or -1)
+            move = payment._create_payment_entry(amount)
 
             # In case of a transfer, the first journal entry created debited the source liquidity account and credited
             # the transfer account. Now we debit the transfer account and credit the destination liquidity account.
-            if rec.payment_type == 'transfer':
-                transfer_credit_aml = move.line_ids.filtered(lambda r: r.account_id == rec.company_id.transfer_account_id)
-                transfer_debit_aml = rec._create_transfer_entry(amount)
+            if payment.payment_type == 'transfer':
+                transfer_credit_aml = move.line_ids.filtered(lambda r: r.account_id == payment.company_id.transfer_account_id)
+                transfer_debit_aml = payment._create_transfer_entry(amount)
                 (transfer_credit_aml + transfer_debit_aml).reconcile()
 
-            rec.write({'state': 'posted', 'move_name': move.name})
+            payment.write({'state': 'posted', 'move_name': move.name})
         return True
 
     @api.multi

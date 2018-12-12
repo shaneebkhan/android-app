@@ -73,43 +73,49 @@ class Users(models.Model):
             email
         )).encode('utf-8')).hexdigest()
 
-    @api.one
     def send_forum_validation_email(self, forum_id=None):
-        if not self.email:
-            return False
-        token = self._generate_forum_token(self.id, self.email)
-        activation_template = self.env.ref('website_forum.validation_email')
-        if activation_template:
-            params = {
-                'token': token,
-                'id': self.id,
-                'email': self.email}
-            if forum_id:
-                params['forum_id'] = forum_id
-            base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            token_url = base_url + '/forum/validate_email?%s' % urls.url_encode(params)
-            with self._cr.savepoint():
-                activation_template.sudo().with_context(token_url=token_url).send_mail(
-                    self.id, force_send=True, raise_exception=True)
-        return True
+        valses = []
+        for user in self:
+            if not user.email:
+                valses.append(False)
+                continue
+            token = user._generate_forum_token(user.id, user.email)
+            activation_template = self.env.ref('website_forum.validation_email')
+            if activation_template:
+                params = {
+                    'token': token,
+                    'id': user.id,
+                    'email': user.email}
+                if forum_id:
+                    params['forum_id'] = forum_id
+                base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                token_url = base_url + '/forum/validate_email?%s' % urls.url_encode(params)
+                with user._cr.savepoint():
+                    activation_template.sudo().with_context(token_url=token_url).send_mail(
+                        user.id, force_send=True, raise_exception=True)
+            valses.append(True)
+        return valses
 
-    @api.one
     def process_forum_validation_token(self, token, email, forum_id=None, context=None):
-        validation_token = self._generate_forum_token(self.id, email)
-        if token == validation_token and self.karma == 0:
-            karma = 3
-            forum = None
-            if forum_id:
-                forum = self.env['forum.forum'].browse(forum_id)
-            else:
-                forum_ids = self.env['forum.forum'].search([], limit=1)
-                if forum_ids:
-                    forum = forum_ids[0]
-            if forum:
-                # karma gained: karma to ask a question and have 2 downvotes
-                karma = forum.karma_ask + (-2 * forum.karma_gen_question_downvote)
-            return self.write({'karma': karma})
-        return False
+        valses = []
+        for user in self:
+            validation_token = user._generate_forum_token(user.id, email)
+            if token == validation_token and user.karma == 0:
+                karma = 3
+                forum = None
+                if forum_id:
+                    forum = self.env['forum.forum'].browse(forum_id)
+                else:
+                    forum_ids = self.env['forum.forum'].search([], limit=1)
+                    if forum_ids:
+                        forum = forum_ids[0]
+                if forum:
+                    # karma gained: karma to ask a question and have 2 downvotes
+                    karma = forum.karma_ask + (-2 * forum.karma_gen_question_downvote)
+                valses.append(user.write({'karma': karma}))
+                continue
+            valses.append(False)
+        return valses
 
     @api.multi
     def add_karma(self, karma):

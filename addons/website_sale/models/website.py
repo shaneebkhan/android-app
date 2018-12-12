@@ -39,9 +39,9 @@ class Website(models.Model):
     cart_recovery_mail_template_id = fields.Many2one('mail.template', string='Cart Recovery Email', default=_default_recovery_mail_template, domain="[('model', '=', 'sale.order')]")
     cart_abandoned_delay = fields.Float("Abandoned Delay", default=1.0)
 
-    @api.one
     def _compute_pricelist_ids(self):
-        self.pricelist_ids = self.env["product.pricelist"].search([("website_id", "=", self.id)])
+        for website in self:
+            website.pricelist_ids = self.env["product.pricelist"].search([("website_id", "=", website.id)])
 
     @api.multi
     def _compute_pricelist_id(self):

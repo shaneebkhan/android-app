@@ -54,19 +54,19 @@ class StockMoveLine(models.Model):
     origin = fields.Char(related='move_id.origin', string='Source')
     picking_type_entire_packs = fields.Boolean(related='picking_id.picking_type_id.show_entire_packs', readonly=True)
 
-    @api.one
     @api.depends('picking_id.picking_type_id', 'product_id.tracking')
     def _compute_lots_visible(self):
-        picking = self.picking_id
-        if picking.picking_type_id and self.product_id.tracking != 'none':  # TDE FIXME: not sure correctly migrated
-            self.lots_visible = picking.picking_type_id.use_existing_lots or picking.picking_type_id.use_create_lots
-        else:
-            self.lots_visible = self.product_id.tracking != 'none'
+        for line in self:
+            picking = line.picking_id
+            if picking.picking_type_id and line.product_id.tracking != 'none':  # TDE FIXME: not sure correctly migrated
+                line.lots_visible = picking.picking_type_id.use_existing_lots or picking.picking_type_id.use_create_lots
+            else:
+                line.lots_visible = line.product_id.tracking != 'none'
 
-    @api.one
     @api.depends('product_id', 'product_uom_id', 'product_uom_qty')
     def _compute_product_qty(self):
-        self.product_qty = self.product_uom_id._compute_quantity(self.product_uom_qty, self.product_id.uom_id, rounding_method='HALF-UP')
+        for line in self:
+            line.product_qty = line.product_uom_id._compute_quantity(line.product_uom_qty, line.product_id.uom_id, rounding_method='HALF-UP')
 
     @api.constrains('lot_id', 'product_id')
     def _check_lot_product(self):
@@ -80,13 +80,13 @@ class StockMoveLine(models.Model):
             if line.move_id and line.move_id.company_id != line.company_id:
                 raise ValidationError(_('The move line a a different company than its move'))
 
-    @api.one
     def _set_product_qty(self):
         """ The meaning of product_qty field changed lately and is now a functional field computing the quantity
         in the default product UoM. This code has been added to raise an error if a write is made given a value
         for `product_qty`, where the same write should set the `product_uom_qty` field instead, in order to
         detect errors. """
-        raise UserError(_('The requested operation cannot be processed because of a programming error setting the `product_qty` field instead of the `product_uom_qty`.'))
+        for line in self:
+            raise UserError(_('The requested operation cannot be processed because of a programming error setting the `product_qty` field instead of the `product_uom_qty`.'))
 
     @api.constrains('product_uom_qty')
     def check_reserved_done_quantity(self):

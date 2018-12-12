@@ -222,65 +222,65 @@ class ProductProduct(models.Model):
                 list_price = product.list_price
             product.lst_price = list_price + product.price_extra
 
-    @api.one
     def _compute_product_code(self):
-        for supplier_info in self.seller_ids:
-            if supplier_info.name.id == self._context.get('partner_id'):
-                self.code = supplier_info.product_code or self.default_code
-                break
-        else:
-            self.code = self.default_code
+        for product in self:
+            for supplier_info in product.seller_ids:
+                if supplier_info.name.id == product._context.get('partner_id'):
+                    product.code = supplier_info.product_code or product.default_code
+                    break
+            else:
+                product.code = product.default_code
 
-    @api.one
     def _compute_partner_ref(self):
-        for supplier_info in self.seller_ids:
-            if supplier_info.name.id == self._context.get('partner_id'):
-                product_name = supplier_info.product_name or self.default_code or self.name
-                self.partner_ref = '%s%s' % (self.code and '[%s] ' % self.code or '', product_name)
-                break
-        else:
-            self.partner_ref = self.display_name
+        for product in self:
+            for supplier_info in product.seller_ids:
+                if supplier_info.name.id == product._context.get('partner_id'):
+                    product_name = supplier_info.product_name or product.default_code or product.name
+                    product.partner_ref = '%s%s' % (product.code and '[%s] ' % product.code or '', product_name)
+                    break
+            else:
+                product.partner_ref = product.display_name
 
-    @api.one
     @api.depends('image_variant', 'product_tmpl_id.image')
     def _compute_images(self):
-        if self._context.get('bin_size'):
-            self.image_medium = self.image_variant
-            self.image_small = self.image_variant
-            self.image = self.image_variant
-        else:
-            resized_images = tools.image_get_resized_images(self.image_variant, return_big=True, avoid_resize_medium=True)
-            self.image_medium = resized_images['image_medium']
-            self.image_small = resized_images['image_small']
-            self.image = resized_images['image']
-        if not self.image_medium:
-            self.image_medium = self.product_tmpl_id.image_medium
-        if not self.image_small:
-            self.image_small = self.product_tmpl_id.image_small
-        if not self.image:
-            self.image = self.product_tmpl_id.image
+        for product in self:
+            if product._context.get('bin_size'):
+                product.image_medium = product.image_variant
+                product.image_small = product.image_variant
+                product.image = product.image_variant
+            else:
+                resized_images = tools.image_get_resized_images(product.image_variant, return_big=True, avoid_resize_medium=True)
+                product.image_medium = resized_images['image_medium']
+                product.image_small = resized_images['image_small']
+                product.image = resized_images['image']
+            if not product.image_medium:
+                product.image_medium = product.product_tmpl_id.image_medium
+            if not product.image_small:
+                product.image_small = product.product_tmpl_id.image_small
+            if not product.image:
+                product.image = product.product_tmpl_id.image
 
-    @api.one
     def _set_image(self):
-        self._set_image_value(self.image)
+        for product in self:
+            product._set_image_value(product.image)
 
-    @api.one
     def _set_image_medium(self):
-        self._set_image_value(self.image_medium)
+        for product in self:
+            product._set_image_value(product.image_medium)
 
-    @api.one
     def _set_image_small(self):
-        self._set_image_value(self.image_small)
+        for product in self:
+            product._set_image_value(product.image_small)
 
-    @api.one
     def _set_image_value(self, value):
-        if isinstance(value, str):
-            value = value.encode('ascii')
-        image = tools.image_resize_image_big(value)
-        if self.product_tmpl_id.image:
-            self.image_variant = image
-        else:
-            self.product_tmpl_id.image = image
+        for product in self:
+            if isinstance(value, str):
+                value = value.encode('ascii')
+            image = tools.image_resize_image_big(value)
+            if product.product_tmpl_id.image:
+                product.image_variant = image
+            else:
+                product.product_tmpl_id.image = image
 
     @api.depends('product_tmpl_id', 'attribute_value_ids')
     def _compute_product_template_attribute_value_ids(self):
@@ -306,12 +306,12 @@ class ProductProduct(models.Model):
                 else:
                     product.product_template_attribute_value_ids += values_per_template[product.product_tmpl_id.id][pav.id]
 
-    @api.one
     def _get_pricelist_items(self):
-        self.pricelist_item_ids = self.env['product.pricelist.item'].search([
-            '|',
-            ('product_id', '=', self.id),
-            ('product_tmpl_id', '=', self.product_tmpl_id.id)]).ids
+        for product in self:
+            product.pricelist_item_ids = self.env['product.pricelist.item'].search([
+                '|',
+                ('product_id', '=', product.id),
+                ('product_tmpl_id', '=', product.product_tmpl_id.id)]).ids
 
     @api.constrains('attribute_value_ids')
     def _check_attribute_value_ids(self):

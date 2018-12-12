@@ -89,14 +89,14 @@ class Inventory(models.Model):
         help="Specify Product Category to focus your inventory on a particular Category.")
     exhausted = fields.Boolean('Include Exhausted Products', readonly=True, states={'draft': [('readonly', False)]})
 
-    @api.one
     @api.depends('product_id', 'line_ids.product_qty')
     def _compute_total_qty(self):
         """ For single product inventory, total quantity of the counted """
-        if self.product_id:
-            self.total_qty = sum(self.mapped('line_ids').mapped('product_qty'))
-        else:
-            self.total_qty = 0
+        for inventory in self:
+            if inventory.product_id:
+                inventory.total_qty = sum(inventory.mapped('line_ids').mapped('product_qty'))
+            else:
+                inventory.total_qty = 0
 
     @api.multi
     def unlink(self):
@@ -145,19 +145,19 @@ class Inventory(models.Model):
         if self.location_id.company_id:
             self.company_id = self.location_id.company_id
 
-    @api.one
     @api.constrains('filter', 'product_id', 'lot_id', 'partner_id', 'package_id')
     def _check_filter_product(self):
-        if self.filter == 'none' and self.product_id and self.location_id and self.lot_id:
-            return
-        if self.filter not in ('product', 'product_owner') and self.product_id:
-            raise UserError(_('The selected product doesn\'t belong to that owner..'))
-        if self.filter != 'lot' and self.lot_id:
-            raise UserError(_('The selected lot number doesn\'t exist.'))
-        if self.filter not in ('owner', 'product_owner') and self.partner_id:
-            raise UserError(_('The selected owner doesn\'t have the proprietary of that product.'))
-        if self.filter != 'pack' and self.package_id:
-            raise UserError(_('The selected inventory options are not coherent, the package doesn\'t exist.'))
+        for inventory in self:
+            if inventory.filter == 'none' and inventory.product_id and inventory.location_id and inventory.lot_id:
+                continue
+            if inventory.filter not in ('product', 'product_owner') and inventory.product_id:
+                raise UserError(_('The selected product doesn\'t belong to that owner..'))
+            if inventory.filter != 'lot' and inventory.lot_id:
+                raise UserError(_('The selected lot number doesn\'t exist.'))
+            if inventory.filter not in ('owner', 'product_owner') and inventory.partner_id:
+                raise UserError(_('The selected owner doesn\'t have the proprietary of that product.'))
+            if inventory.filter != 'pack' and inventory.package_id:
+                raise UserError(_('The selected inventory options are not coherent, the package doesn\'t exist.'))
 
     def action_reset_product_qty(self):
         self.mapped('line_ids').write({'product_qty': 0})
@@ -357,21 +357,21 @@ class InventoryLine(models.Model):
         'stock.location', 'Inventory Location', related='inventory_id.location_id', related_sudo=False, readonly=False)
     product_tracking = fields.Selection('Tracking', related='product_id.tracking', readonly=True)
 
-    @api.one
     @api.depends('location_id', 'product_id', 'package_id', 'product_uom_id', 'company_id', 'prod_lot_id', 'partner_id')
     def _compute_theoretical_qty(self):
-        if not self.product_id:
-            self.theoretical_qty = 0
-            return
-        theoretical_qty = self.product_id.get_theoretical_quantity(
-            self.product_id.id,
-            self.location_id.id,
-            lot_id=self.prod_lot_id.id,
-            package_id=self.package_id.id,
-            owner_id=self.partner_id.id,
-            to_uom=self.product_uom_id.id,
-        )
-        self.theoretical_qty = theoretical_qty
+        for line in self:
+            if not line.product_id:
+                line.theoretical_qty = 0
+                continue
+            theoretical_qty = line.product_id.get_theoretical_quantity(
+                line.product_id.id,
+                line.location_id.id,
+                lot_id=line.prod_lot_id.id,
+                package_id=line.package_id.id,
+                owner_id=line.partner_id.id,
+                to_uom=line.product_uom_id.id,
+            )
+            line.theoretical_qty = theoretical_qty
 
     @api.onchange('product_id')
     def _onchange_product(self):

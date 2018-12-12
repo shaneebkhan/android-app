@@ -62,10 +62,10 @@ class AccountMove(models.Model):
             else:
                 move.matched_percentage = total_reconciled / total_amount
 
-    @api.one
     @api.depends('company_id')
     def _compute_currency(self):
-        self.currency_id = self.company_id.currency_id or self.env.user.company_id.currency_id
+        for move in self:
+            move.currency_id = move.company_id.currency_id or self.env.user.company_id.currency_id
 
     @api.multi
     def _get_default_journal(self):
@@ -564,16 +564,16 @@ class AccountMoveLine(models.Model):
         for record in self.filtered('move_id'):
             record.parent_state = record.move_id.state
 
-    @api.one
     @api.depends('move_id.line_ids')
     def _get_counterpart(self):
-        counterpart = set()
-        for line in self.move_id.line_ids:
-            if (line.account_id.code != self.account_id.code):
-                counterpart.add(line.account_id.code)
-        if len(counterpart) > 2:
-            counterpart = list(counterpart)[0:2] + ["..."]
-        self.counterpart = ",".join(counterpart)
+        for line in self:
+            counterpart = set()
+            for line in line.move_id.line_ids:
+                if (line.account_id.code != line.account_id.code):
+                    counterpart.add(line.account_id.code)
+            if len(counterpart) > 2:
+                counterpart = list(counterpart)[0:2] + ["..."]
+            line.counterpart = ",".join(counterpart)
 
     name = fields.Char(string="Label")
     quantity = fields.Float(digits=dp.get_precision('Product Unit of Measure'),
@@ -1228,29 +1228,31 @@ class AccountMoveLine(models.Model):
                 vals_line = obj_line._prepare_analytic_line()[0]
                 self.env['account.analytic.line'].create(vals_line)
 
-    @api.one
     def _prepare_analytic_line(self):
         """ Prepare the values used to create() an account.analytic.line upon validation of an account.move.line having
             an analytic account. This method is intended to be extended in other modules.
         """
-        amount = (self.credit or 0.0) - (self.debit or 0.0)
-        default_name = self.name or (self.ref or '/' + ' -- ' + (self.partner_id and self.partner_id.name or '/'))
-        return {
-            'name': default_name,
-            'date': self.date,
-            'account_id': self.analytic_account_id.id,
-            'tag_ids': [(6, 0, self._get_analytic_tag_ids())],
-            'unit_amount': self.quantity,
-            'product_id': self.product_id and self.product_id.id or False,
-            'product_uom_id': self.product_uom_id and self.product_uom_id.id or False,
-            'amount': amount,
-            'general_account_id': self.account_id.id,
-            'ref': self.ref,
-            'move_id': self.id,
-            'user_id': self.invoice_id.user_id.id or self._uid,
-            'partner_id': self.partner_id.id,
-            'company_id': self.analytic_account_id.company_id.id or self.env.user.company_id.id,
-        }
+        valses = []
+        for line in self:
+            amount = (line.credit or 0.0) - (line.debit or 0.0)
+            default_name = line.name or (line.ref or '/' + ' -- ' + (line.partner_id and line.partner_id.name or '/'))
+            valses.append({
+                'name': default_name,
+                'date': line.date,
+                'account_id': line.analytic_account_id.id,
+                'tag_ids': [(6, 0, line._get_analytic_tag_ids())],
+                'unit_amount': line.quantity,
+                'product_id': line.product_id and line.product_id.id or False,
+                'product_uom_id': line.product_uom_id and line.product_uom_id.id or False,
+                'amount': amount,
+                'general_account_id': line.account_id.id,
+                'ref': line.ref,
+                'move_id': line.id,
+                'user_id': line.invoice_id.user_id.id or line._uid,
+                'partner_id': line.partner_id.id,
+                'company_id': line.analytic_account_id.company_id.id or self.env.user.company_id.id,
+            })
+        return valses
 
     def _prepare_analytic_distribution_line(self, distribution):
         """ Prepare the values used to create() an account.analytic.line upon validation of an account.move.line having

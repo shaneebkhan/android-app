@@ -50,24 +50,24 @@ class AccountInvoice(models.Model):
     def _get_default_incoterm(self):
         return self.env.user.company_id.incoterm_id
 
-    @api.one
     @api.depends('invoice_line_ids.price_subtotal', 'tax_line_ids.amount', 'tax_line_ids.amount_rounding',
                  'currency_id', 'company_id', 'date_invoice', 'type')
     def _compute_amount(self):
-        round_curr = self.currency_id.round
-        self.amount_untaxed = sum(line.price_subtotal for line in self.invoice_line_ids)
-        self.amount_tax = sum(round_curr(line.amount_total) for line in self.tax_line_ids)
-        self.amount_total = self.amount_untaxed + self.amount_tax
-        amount_total_company_signed = self.amount_total
-        amount_untaxed_signed = self.amount_untaxed
-        if self.currency_id and self.company_id and self.currency_id != self.company_id.currency_id:
-            currency_id = self.currency_id
-            amount_total_company_signed = currency_id._convert(self.amount_total, self.company_id.currency_id, self.company_id, self.date_invoice or fields.Date.today())
-            amount_untaxed_signed = currency_id._convert(self.amount_untaxed, self.company_id.currency_id, self.company_id, self.date_invoice or fields.Date.today())
-        sign = self.type in ['in_refund', 'out_refund'] and -1 or 1
-        self.amount_total_company_signed = amount_total_company_signed * sign
-        self.amount_total_signed = self.amount_total * sign
-        self.amount_untaxed_signed = amount_untaxed_signed * sign
+        for invoice in self:
+            round_curr = invoice.currency_id.round
+            invoice.amount_untaxed = sum(line.price_subtotal for line in invoice.invoice_line_ids)
+            invoice.amount_tax = sum(round_curr(line.amount_total) for line in invoice.tax_line_ids)
+            invoice.amount_total = invoice.amount_untaxed + invoice.amount_tax
+            amount_total_company_signed = invoice.amount_total
+            amount_untaxed_signed = invoice.amount_untaxed
+            if invoice.currency_id and invoice.company_id and invoice.currency_id != invoice.company_id.currency_id:
+                currency_id = invoice.currency_id
+                amount_total_company_signed = currency_id._convert(invoice.amount_total, invoice.company_id.currency_id, invoice.company_id, invoice.date_invoice or fields.Date.today())
+                amount_untaxed_signed = currency_id._convert(invoice.amount_untaxed, invoice.company_id.currency_id, invoice.company_id, invoice.date_invoice or fields.Date.today())
+            sign = invoice.type in ['in_refund', 'out_refund'] and -1 or 1
+            invoice.amount_total_company_signed = amount_total_company_signed * sign
+            invoice.amount_total_signed = invoice.amount_total * sign
+            invoice.amount_untaxed_signed = amount_untaxed_signed * sign
 
     @api.onchange('amount_total')
     def _onchange_amount_total(self):
@@ -97,67 +97,67 @@ class AccountInvoice(models.Model):
         journal = self._default_journal()
         return journal.currency_id or journal.company_id.currency_id or self.env.user.company_id.currency_id
 
-    @api.one
     @api.depends(
         'state', 'currency_id', 'invoice_line_ids.price_subtotal',
         'move_id.line_ids.amount_residual',
         'move_id.line_ids.currency_id')
     def _compute_residual(self):
-        residual = 0.0
-        residual_company_signed = 0.0
-        sign = self.type in ['in_refund', 'out_refund'] and -1 or 1
-        for line in self.sudo().move_id.line_ids:
-            if line.account_id == self.account_id:
-                residual_company_signed += line.amount_residual
-                if line.currency_id == self.currency_id:
-                    residual += line.amount_residual_currency if line.currency_id else line.amount_residual
-                else:
-                    from_currency = line.currency_id or line.company_id.currency_id
-                    residual += from_currency._convert(line.amount_residual, self.currency_id, line.company_id, line.date or fields.Date.today())
-        self.residual_company_signed = abs(residual_company_signed) * sign
-        self.residual_signed = abs(residual) * sign
-        self.residual = abs(residual)
-        digits_rounding_precision = self.currency_id.rounding
-        if float_is_zero(self.residual, precision_rounding=digits_rounding_precision):
-            self.reconciled = True
-        else:
-            self.reconciled = False
-
-    @api.one
-    def _get_outstanding_info_JSON(self):
-        self.outstanding_credits_debits_widget = json.dumps(False)
-        if self.state == 'open':
-            domain = [('account_id', '=', self.account_id.id), ('partner_id', '=', self.env['res.partner']._find_accounting_partner(self.partner_id).id), ('reconciled', '=', False), '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0)]
-            if self.type in ('out_invoice', 'in_refund'):
-                domain.extend([('credit', '>', 0), ('debit', '=', 0)])
-                type_payment = _('Outstanding credits')
-            else:
-                domain.extend([('credit', '=', 0), ('debit', '>', 0)])
-                type_payment = _('Outstanding debits')
-            info = {'title': '', 'outstanding': True, 'content': [], 'invoice_id': self.id}
-            lines = self.env['account.move.line'].search(domain)
-            currency_id = self.currency_id
-            if len(lines) != 0:
-                for line in lines:
-                    # get the outstanding residual value in invoice currency
-                    if line.currency_id and line.currency_id == self.currency_id:
-                        amount_to_show = abs(line.amount_residual_currency)
+        for invoice in self:
+            residual = 0.0
+            residual_company_signed = 0.0
+            sign = invoice.type in ['in_refund', 'out_refund'] and -1 or 1
+            for line in invoice.sudo().move_id.line_ids:
+                if line.account_id == invoice.account_id:
+                    residual_company_signed += line.amount_residual
+                    if line.currency_id == invoice.currency_id:
+                        residual += line.amount_residual_currency if line.currency_id else line.amount_residual
                     else:
-                        currency = line.company_id.currency_id
-                        amount_to_show = currency._convert(abs(line.amount_residual), self.currency_id, self.company_id, line.date or fields.Date.today())
-                    if float_is_zero(amount_to_show, precision_rounding=self.currency_id.rounding):
-                        continue
-                    info['content'].append({
-                        'journal_name': line.ref or line.move_id.name,
-                        'amount': amount_to_show,
-                        'currency': currency_id.symbol,
-                        'id': line.id,
-                        'position': currency_id.position,
-                        'digits': [69, self.currency_id.decimal_places],
-                    })
-                info['title'] = type_payment
-                self.outstanding_credits_debits_widget = json.dumps(info)
-                self.has_outstanding = True
+                        from_currency = line.currency_id or line.company_id.currency_id
+                        residual += from_currency._convert(line.amount_residual, invoice.currency_id, line.company_id, line.date or fields.Date.today())
+            invoice.residual_company_signed = abs(residual_company_signed) * sign
+            invoice.residual_signed = abs(residual) * sign
+            invoice.residual = abs(residual)
+            digits_rounding_precision = invoice.currency_id.rounding
+            if float_is_zero(invoice.residual, precision_rounding=digits_rounding_precision):
+                invoice.reconciled = True
+            else:
+                invoice.reconciled = False
+
+    def _get_outstanding_info_JSON(self):
+        for invoice in self:
+            invoice.outstanding_credits_debits_widget = json.dumps(False)
+            if invoice.state == 'open':
+                domain = [('account_id', '=', invoice.account_id.id), ('partner_id', '=', self.env['res.partner']._find_accounting_partner(invoice.partner_id).id), ('reconciled', '=', False), '|', ('amount_residual', '!=', 0.0), ('amount_residual_currency', '!=', 0.0)]
+                if invoice.type in ('out_invoice', 'in_refund'):
+                    domain.extend([('credit', '>', 0), ('debit', '=', 0)])
+                    type_payment = _('Outstanding credits')
+                else:
+                    domain.extend([('credit', '=', 0), ('debit', '>', 0)])
+                    type_payment = _('Outstanding debits')
+                info = {'title': '', 'outstanding': True, 'content': [], 'invoice_id': invoice.id}
+                lines = self.env['account.move.line'].search(domain)
+                currency_id = invoice.currency_id
+                if len(lines) != 0:
+                    for line in lines:
+                        # get the outstanding residual value in invoice currency
+                        if line.currency_id and line.currency_id == invoice.currency_id:
+                            amount_to_show = abs(line.amount_residual_currency)
+                        else:
+                            currency = line.company_id.currency_id
+                            amount_to_show = currency._convert(abs(line.amount_residual), invoice.currency_id, invoice.company_id, line.date or fields.Date.today())
+                        if float_is_zero(amount_to_show, precision_rounding=invoice.currency_id.rounding):
+                            continue
+                        info['content'].append({
+                            'journal_name': line.ref or line.move_id.name,
+                            'amount': amount_to_show,
+                            'currency': currency_id.symbol,
+                            'id': line.id,
+                            'position': currency_id.position,
+                            'digits': [69, invoice.currency_id.decimal_places],
+                        })
+                    info['title'] = type_payment
+                    invoice.outstanding_credits_debits_widget = json.dumps(info)
+                    invoice.has_outstanding = True
 
     @api.model
     def _get_payments_vals(self):
@@ -211,22 +211,22 @@ class AccountInvoice(models.Model):
             })
         return payment_vals
 
-    @api.one
     @api.depends('payment_move_line_ids.amount_residual')
     def _get_payment_info_JSON(self):
-        self.payments_widget = json.dumps(False)
-        if self.payment_move_line_ids:
-            info = {'title': _('Less Payment'), 'outstanding': False, 'content': self._get_payments_vals()}
-            self.payments_widget = json.dumps(info, default=date_utils.json_default)
+        for invoice in self:
+            invoice.payments_widget = json.dumps(False)
+            if invoice.payment_move_line_ids:
+                info = {'title': _('Less Payment'), 'outstanding': False, 'content': invoice._get_payments_vals()}
+                invoice.payments_widget = json.dumps(info, default=date_utils.json_default)
 
-    @api.one
     @api.depends('move_id.line_ids.amount_residual')
     def _compute_payments(self):
-        payment_lines = set()
-        for line in self.move_id.line_ids.filtered(lambda l: l.account_id.id == self.account_id.id):
-            payment_lines.update(line.mapped('matched_credit_ids.credit_move_id.id'))
-            payment_lines.update(line.mapped('matched_debit_ids.debit_move_id.id'))
-        self.payment_move_line_ids = self.env['account.move.line'].browse(list(payment_lines)).sorted()
+        for invoice in self:
+            payment_lines = set()
+            for line in invoice.move_id.line_ids.filtered(lambda l: l.account_id.id == invoice.account_id.id):
+                payment_lines.update(line.mapped('matched_credit_ids.credit_move_id.id'))
+                payment_lines.update(line.mapped('matched_debit_ids.debit_move_id.id'))
+            invoice.payment_move_line_ids = self.env['account.move.line'].browse(list(payment_lines)).sorted()
 
     name = fields.Char(string='Reference/Description', index=True,
         readonly=True, states={'draft': [('readonly', False)]}, copy=False, help='The name that will be used on account move lines')
@@ -1577,24 +1577,24 @@ class AccountInvoiceLine(models.Model):
     _description = "Invoice Line"
     _order = "invoice_id,sequence,id"
 
-    @api.one
     @api.depends('price_unit', 'discount', 'invoice_line_tax_ids', 'quantity',
         'product_id', 'invoice_id.partner_id', 'invoice_id.currency_id', 'invoice_id.company_id',
         'invoice_id.date_invoice', 'invoice_id.date')
     def _compute_price(self):
-        currency = self.invoice_id and self.invoice_id.currency_id or None
-        price = self.price_unit * (1 - (self.discount or 0.0) / 100.0)
-        taxes = False
-        if self.invoice_line_tax_ids:
-            taxes = self.invoice_line_tax_ids.compute_all(price, currency, self.quantity, product=self.product_id, partner=self.invoice_id.partner_id)
-        self.price_subtotal = price_subtotal_signed = taxes['total_excluded'] if taxes else self.quantity * price
-        self.price_total = taxes['total_included'] if taxes else self.price_subtotal
-        if self.invoice_id.currency_id and self.invoice_id.currency_id != self.invoice_id.company_id.currency_id:
-            currency = self.invoice_id.currency_id
-            date = self.invoice_id._get_currency_rate_date()
-            price_subtotal_signed = currency._convert(price_subtotal_signed, self.invoice_id.company_id.currency_id, self.company_id or self.env.user.company_id, date or fields.Date.today())
-        sign = self.invoice_id.type in ['in_refund', 'out_refund'] and -1 or 1
-        self.price_subtotal_signed = price_subtotal_signed * sign
+        for line in self:
+            currency = line.invoice_id and line.invoice_id.currency_id or None
+            price = line.price_unit * (1 - (line.discount or 0.0) / 100.0)
+            taxes = False
+            if line.invoice_line_tax_ids:
+                taxes = line.invoice_line_tax_ids.compute_all(price, currency, line.quantity, product=line.product_id, partner=line.invoice_id.partner_id)
+            line.price_subtotal = price_subtotal_signed = taxes['total_excluded'] if taxes else line.quantity * price
+            line.price_total = taxes['total_included'] if taxes else line.price_subtotal
+            if line.invoice_id.currency_id and line.invoice_id.currency_id != line.invoice_id.company_id.currency_id:
+                currency = line.invoice_id.currency_id
+                date = line.invoice_id._get_currency_rate_date()
+                price_subtotal_signed = currency._convert(price_subtotal_signed, line.invoice_id.company_id.currency_id, line.company_id or self.env.user.company_id, date or fields.Date.today())
+            sign = line.invoice_id.type in ['in_refund', 'out_refund'] and -1 or 1
+            line.price_subtotal_signed = price_subtotal_signed * sign
 
     @api.model
     def _default_account(self):
@@ -1931,51 +1931,54 @@ class AccountPaymentTerm(models.Model):
     sequence = fields.Integer(required=True, default=10)
 
     @api.constrains('line_ids')
-    @api.one
     def _check_lines(self):
-        payment_term_lines = self.line_ids.sorted()
-        if payment_term_lines and payment_term_lines[-1].value != 'balance':
-            raise ValidationError(_('The last line of a Payment Term should have the Balance type.'))
-        lines = self.line_ids.filtered(lambda r: r.value == 'balance')
-        if len(lines) > 1:
-            raise ValidationError(_('A Payment Term should have only one line of type Balance.'))
+        for term in self:
+            payment_term_lines = term.line_ids.sorted()
+            if payment_term_lines and payment_term_lines[-1].value != 'balance':
+                raise ValidationError(_('The last line of a Payment Term should have the Balance type.'))
+            lines = term.line_ids.filtered(lambda r: r.value == 'balance')
+            if len(lines) > 1:
+                raise ValidationError(_('A Payment Term should have only one line of type Balance.'))
 
-    @api.one
     def compute(self, value, date_ref=False):
-        date_ref = date_ref or fields.Date.today()
-        amount = value
-        sign = value < 0 and -1 or 1
         result = []
-        if self.env.context.get('currency_id'):
-            currency = self.env['res.currency'].browse(self.env.context['currency_id'])
-        else:
-            currency = self.env.user.company_id.currency_id
-        for line in self.line_ids:
-            if line.value == 'fixed':
-                amt = sign * currency.round(line.value_amount)
-            elif line.value == 'percent':
-                amt = currency.round(value * (line.value_amount / 100.0))
-            elif line.value == 'balance':
-                amt = currency.round(amount)
-            if amt:
-                next_date = fields.Date.from_string(date_ref)
-                if line.option == 'day_after_invoice_date':
-                    next_date += relativedelta(days=line.days)
-                    if line.day_of_the_month > 0:
-                        months_delta = (line.day_of_the_month < next_date.day) and 1 or 0
-                        next_date += relativedelta(day=line.day_of_the_month, months=months_delta)
-                elif line.option == 'day_following_month':
-                    next_date += relativedelta(day=line.days, months=1)
-                elif line.option == 'day_current_month':
-                    next_date += relativedelta(day=line.days, months=0)
-                result.append((fields.Date.to_string(next_date), amt))
-                amount -= amt
-        amount = sum(amt for _, amt in result)
-        dist = currency.round(value - amount)
-        if dist:
-            last_date = result and result[-1][0] or fields.Date.today()
-            result.append((last_date, dist))
-        return result
+        for term in self:
+            date_ref = date_ref or fields.Date.today()
+            amount = value
+            sign = value < 0 and -1 or 1
+            if self.env.context.get('currency_id'):
+                currency = self.env['res.currency'].browse(self.env.context['currency_id'])
+            else:
+                currency = self.env.user.company_id.currency_id
+            for line in term.line_ids:
+                if line.value == 'fixed':
+                    amt = sign * currency.round(line.value_amount)
+                elif line.value == 'percent':
+                    amt = currency.round(value * (line.value_amount / 100.0))
+                elif line.value == 'balance':
+                    amt = currency.round(amount)
+                if amt:
+                    next_date = fields.Date.from_string(date_ref)
+                    if line.option == 'day_after_invoice_date':
+                        next_date += relativedelta(days=line.days)
+                        if line.day_of_the_month > 0:
+                            months_delta = (line.day_of_the_month < next_date.day) and 1 or 0
+                            next_date += relativedelta(day=line.day_of_the_month, months=months_delta)
+                    elif line.option == 'day_following_month':
+                        next_date += relativedelta(day=line.days, months=1)
+                    elif line.option == 'day_current_month':
+                        next_date += relativedelta(day=line.days, months=0)
+                    result.append((fields.Date.to_string(next_date), amt))
+                    amount -= amt
+            amount = sum(amt for _, amt in result)
+            dist = currency.round(value - amount)
+            if dist:
+                last_date = result and result[-1][0] or fields.Date.today()
+                result.append((last_date, dist))
+        # XXX: result is returned as a list of lists because of the deprecation of `api.one`
+        # if it is ever refactored, it should just return a recordset and any code calling
+        # this method should properly handle recordsets
+        return [result]
 
     @api.multi
     def unlink(self):
@@ -2010,19 +2013,19 @@ class AccountPaymentTermLine(models.Model):
     payment_id = fields.Many2one('account.payment.term', string='Payment Terms', required=True, index=True, ondelete='cascade')
     sequence = fields.Integer(default=10, help="Gives the sequence order when displaying a list of payment terms lines.")
 
-    @api.one
     @api.constrains('value', 'value_amount')
     def _check_percent(self):
-        if self.value == 'percent' and (self.value_amount < 0.0 or self.value_amount > 100.0):
-            raise ValidationError(_('Percentages on the Payment Terms lines must be between 0 and 100.'))
+        for line in self:
+            if line.value == 'percent' and (line.value_amount < 0.0 or line.value_amount > 100.0):
+                raise ValidationError(_('Percentages on the Payment Terms lines must be between 0 and 100.'))
 
-    @api.one
     @api.constrains('days')
     def _check_days(self):
-        if self.option in ('day_following_month', 'day_current_month') and self.days <= 0:
-            raise ValidationError(_("The day of the month used for this term must be stricly positive."))
-        elif self.days < 0:
-            raise ValidationError(_("The number of days used for a payment term cannot be negative."))
+        for line in self:
+            if line.option in ('day_following_month', 'day_current_month') and line.days <= 0:
+                raise ValidationError(_("The day of the month used for this term must be stricly positive."))
+            elif line.days < 0:
+                raise ValidationError(_("The number of days used for a payment term cannot be negative."))
 
     @api.onchange('option')
     def _onchange_option(self):

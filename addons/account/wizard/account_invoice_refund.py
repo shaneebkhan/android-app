@@ -28,13 +28,13 @@ class AccountInvoiceRefund(models.TransientModel):
         default='refund', string='Credit Method', required=True, help='Choose how you want to credit this invoice. You cannot Modify and Cancel if the invoice is already reconciled')
 
     @api.depends('date_invoice')
-    @api.one
     def _get_refund_only(self):
-        invoice_id = self.env['account.invoice'].browse(self._context.get('active_id',False))
-        if len(invoice_id.payment_move_line_ids) != 0 and invoice_id.state != 'paid':
-            self.refund_only = True
-        else:
-            self.refund_only = False
+        for refund in self:
+            invoice_id = self.env['account.invoice'].browse(refund._context.get('active_id',False))
+            if len(invoice_id.payment_move_line_ids) != 0 and invoice_id.state != 'paid':
+                refund.refund_only = True
+            else:
+                refund.refund_only = False
 
 
     @api.multi

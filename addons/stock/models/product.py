@@ -619,14 +619,14 @@ class ProductCategory(models.Model):
         'stock.location.route', string='Total routes', compute='_compute_total_route_ids',
         readonly=True)
 
-    @api.one
     def _compute_total_route_ids(self):
-        category = self
-        routes = self.route_ids
-        while category.parent_id:
-            category = category.parent_id
-            routes |= category.route_ids
-        self.total_route_ids = routes
+        for category in self:
+            base_cat = category
+            routes = category.route_ids
+            while base_cat.parent_id:
+                base_cat = base_cat.parent_id
+                routes |= base_cat.route_ids
+            category.total_route_ids = routes
 
 
 class UoM(models.Model):

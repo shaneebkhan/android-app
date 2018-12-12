@@ -86,10 +86,10 @@ class AccountVoucher(models.Model):
         ], 'Payment', index=True, readonly=True, states={'draft': [('readonly', False)]}, default='pay_later')
     date_due = fields.Date('Due Date', readonly=True, index=True, states={'draft': [('readonly', False)]})
 
-    @api.one
     @api.depends('move_id.line_ids.reconciled', 'move_id.line_ids.account_id.internal_type')
     def _check_paid(self):
-        self.paid = any([((line.account_id.internal_type, 'in', ('receivable', 'payable')) and line.reconciled) for line in self.move_id.line_ids])
+        for voucher in self:
+            voucher.paid = any([((line.account_id.internal_type, 'in', ('receivable', 'payable')) and line.reconciled) for line in voucher.move_id.line_ids])
 
     @api.model
     def _get_currency(self):
@@ -115,10 +115,10 @@ class AccountVoucher(models.Model):
     def name_get(self):
         return [(r.id, (r.number or _('Voucher'))) for r in self]
 
-    @api.one
     @api.depends('journal_id', 'company_id')
     def _get_journal_currency(self):
-        self.currency_id = self.journal_id.currency_id.id or self.company_id.currency_id.id
+        for voucher in self:
+            voucher.currency_id = voucher.journal_id.currency_id.id or voucher.company_id.currency_id.id
 
     @api.multi
     @api.depends('tax_correction', 'line_ids.price_subtotal')
@@ -418,13 +418,13 @@ class AccountVoucherLine(models.Model):
     tax_ids = fields.Many2many('account.tax', string='Tax', help="Only for tax excluded from price")
     currency_id = fields.Many2one('res.currency', related='voucher_id.currency_id', readonly=False)
 
-    @api.one
     @api.depends('price_unit', 'tax_ids', 'quantity', 'product_id', 'voucher_id.currency_id')
     def _compute_subtotal(self):
-        self.price_subtotal = self.quantity * self.price_unit
-        if self.tax_ids:
-            taxes = self.tax_ids.compute_all(self.price_unit, self.voucher_id.currency_id, self.quantity, product=self.product_id, partner=self.voucher_id.partner_id)
-            self.price_subtotal = taxes['total_excluded']
+        for line in self:
+            line.price_subtotal = line.quantity * line.price_unit
+            if line.tax_ids:
+                taxes = line.tax_ids.compute_all(line.price_unit, line.voucher_id.currency_id, line.quantity, product=line.product_id, partner=line.voucher_id.partner_id)
+                line.price_subtotal = taxes['total_excluded']
 
     @api.onchange('product_id', 'voucher_id', 'price_unit', 'company_id')
     def _onchange_line_details(self):
