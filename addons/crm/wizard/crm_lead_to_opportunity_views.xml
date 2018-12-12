@@ -9,11 +9,7 @@
                     <group name="name">
                         <field name="name" widget="radio"/>
                     </group>
-                    <group string="Assign this opportunity to">
-                        <field name="user_id" domain="[('share', '=', False)]"/>
-                        <field name="team_id" widget="selection"/>
-                    </group>
-                    <group string="Opportunities" attrs="{'invisible': [('name', '!=', 'merge')]}">
+                    <group string="Opportunities to merge" attrs="{'invisible': [('name', '!=', 'merge')]}">
                         <field name="opportunity_ids" nolabel="1">
                             <tree>
                                 <field name="create_date"/>
@@ -29,11 +25,18 @@
                             </tree>
                         </field>
                     </group>
-                    <group name="action" attrs="{'invisible': [('name', '!=', 'convert')]}" string="Customer" col="1">
+                    <group attrs="{'invisible': [('name', '!=', 'merge')]}">
+                        <field name="merge_destination_opportunity_id" domain="[('id', 'in', opportunity_ids)]" attrs="{'required': [('name', '=', 'merge')]}" options="{'no_create': True}"/>
+                    </group>
+                    <group name="action" attrs="{'invisible': [('name', '!=', 'convert')]}" string="Customers" col="1">l
                         <field name="action" nolabel="1" widget="radio"/>
                         <group col="2">
                             <field name="partner_id" widget="res_partner_many2one" domain="[('customer', '=', True)]" context="{'search_default_customer': 1, 'show_vat': True}" attrs="{'required': [('action', '=', 'exist')], 'invisible':[('action','!=','exist')]}"/>
                         </group>
+                    </group>
+                    <group string="Assign this opportunity to">
+                        <field name="user_id" domain="[('share', '=', False)]"/>
+                        <field name="team_id" widget="selection"/>
                     </group>
                     <footer>
                         <button name="action_apply" string="Create Opportunity" type="object" class="btn-primary"/>
@@ -99,6 +102,7 @@
             <field name="res_model">crm.lead2opportunity.partner</field>
             <field name="view_mode">form</field>
             <field name="view_id" ref="view_crm_lead2opportunity_partner"/>
+            <field name="context">{'default_opportunity_ids': [(4, lead_id)]}</field>
             <field name="target">new</field>
         </record>
 

@@ -10,7 +10,7 @@ class Lead2OpportunityPartner(models.TransientModel):
 
     _name = 'crm.lead2opportunity.partner'
     _description = 'Convert Lead to Opportunity (not in mass)'
-    _inherit = 'crm.partner.binding'
+    _inherit = ['crm.partner.binding', 'crm.common.merge.opportunity']
 
     @api.model
     def default_get(self, fields):
@@ -48,9 +48,6 @@ class Lead2OpportunityPartner(models.TransientModel):
         ('convert', 'Convert to opportunity'),
         ('merge', 'Merge with existing opportunities')
     ], 'Conversion Action', required=True)
-    opportunity_ids = fields.Many2many('crm.lead', string='Opportunities')
-    user_id = fields.Many2one('res.users', 'Salesperson', index=True)
-    team_id = fields.Many2one('crm.team', 'Sales Team', oldname='section_id', index=True)
 
     @api.onchange('action')
     def onchange_action(self):
@@ -58,20 +55,6 @@ class Lead2OpportunityPartner(models.TransientModel):
             self.partner_id = self._find_matching_partner()
         else:
             self.partner_id = False
-
-    @api.onchange('user_id')
-    def _onchange_user(self):
-        """ When changing the user, also set a team_id or restrict team id
-            to the ones user_id is member of.
-        """
-        if self.user_id:
-            if self.team_id:
-                user_in_team = self.env['crm.team'].search_count([('id', '=', self.team_id.id), '|', ('user_id', '=', self.user_id.id), ('member_ids', '=', self.user_id.id)])
-            else:
-                user_in_team = False
-            if not user_in_team:
-                values = self.env['crm.lead']._onchange_user_values(self.user_id.id if self.user_id else False)
-                self.team_id = values.get('team_id', False)
 
     @api.model
     def _get_duplicated_leads(self, partner_id, email, include_lost=False):
@@ -116,6 +99,9 @@ class Lead2OpportunityPartner(models.TransientModel):
             the freshly created opportunity view.
         """
         self.ensure_one()
+        if self.opportunity_ids and self.active_id not in self.opportunity_ids:
+            raise UserError(_('The current lead has been removed from the list of opportunities to merge. Please add it back to the list and try again'))
+
         values = {
             'team_id': self.team_id.id,
         }
@@ -124,7 +110,7 @@ class Lead2OpportunityPartner(models.TransientModel):
             values['partner_id'] = self.partner_id.id
 
         if self.name == 'merge':
-            leads = self.with_context(active_test=False).opportunity_ids.merge_opportunity()
+            leads = self.with_context(active_test=False).opportunity_ids.merge_opportunity(destination_id=self.merge_destination_opportunity_id.id)
             if not leads.active:
                 leads.write({'active': True, 'activity_type_id': False, 'lost_reason': False})
             if leads.type == "lead":

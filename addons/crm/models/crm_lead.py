@@ -658,7 +658,7 @@ class Lead(models.Model):
         self._merge_opportunity_attachments(opportunities)
 
     @api.multi
-    def merge_opportunity(self, user_id=False, team_id=False):
+    def merge_opportunity(self, user_id=False, team_id=False, destination_id=False):
         """ Merge opportunities in one. Different cases of merge:
                 - merge leads together = 1 new lead
                 - merge at least 1 opp with anything else (lead or opp) = 1 new opp
@@ -666,19 +666,30 @@ class Lead(models.Model):
             updated with values from other opportunities to merge.
             :param user_id : the id of the saleperson. If not given, will be determined by `_merge_data`.
             :param team : the id of the Sales Team. If not given, will be determined by `_merge_data`.
+            :param destination_id : the id of the opportunity to use as head
+                                    (into which the other opportunities will be merged with)
+                                    Must be one of the opportunity to merge.
             :return crm.lead record resulting of th merge
         """
         if len(self.ids) <= 1:
-            raise UserError(_('Please select more than one element (lead or opportunity) from the list view.'))
+            raise UserError(_('Please select at least one lead or opportunity to merge with.'))
 
-        # Sorting the leads/opps according to the confidence level of its stage, which relates to the probability of winning it
-        # The confidence level increases with the stage sequence, except when the stage probability is 0.0 (Lost cases)
-        # An Opportunity always has higher confidence level than a lead, unless its stage probability is 0.0
-        opportunities = self._sort_by_confidence_level(reverse=True)
-
-        # get SORTED recordset of head and tail, and complete list
-        opportunities_head = opportunities[0]
-        opportunities_tail = opportunities[1:]
+        if destination_id:
+            if destination_id in self.ids:
+                opportunities_head = self[self.ids.index(destination_id)]
+                opportunities_tail = self[:self.ids.index(destination_id)] | self[self.ids.index(destination_id)+1:]
+                opportunities = opportunities_head | opportunities_tail
+            else:
+                raise UserError(_('The destination opportunity must be one of the opportunity to merge.'))
+        else:
+            # If destination id is not set :
+            # get SORTED recordset of head and tail, and complete list
+            # Sorting the leads/opps according to the confidence level of its stage, which relates to the probability of winning it
+            # The confidence level increases with the stage sequence, except when the stage probability is 0.0 (Lost cases)
+            # An Opportunity always has higher confidence level than a lead, unless its stage probability is 0.0
+            opportunities = self._sort_by_confidence_level(reverse=True)
+            opportunities_head = opportunities[0]
+            opportunities_tail = opportunities[1:]
 
         # merge all the sorted opportunity. This means the value of
         # the first (head opp) will be a priority.
