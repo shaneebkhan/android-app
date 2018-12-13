@@ -304,13 +304,6 @@ return AbstractModel.extend({
         this.setDate(moment(new Date()));
     },
     /**
-     * Toggle the sidebar (containing the mini calendar)
-     */
-    toggleFullWidth: function () {
-        var fullWidth = this.call('local_storage', 'getItem', 'calendar_fullWidth') !== 'true';
-        this.call('local_storage', 'setItem', 'calendar_fullWidth', fullWidth);
-    },
-    /**
      * @param {Object} record
      * @param {integer} record.id
      * @returns {Promise}
@@ -405,8 +398,10 @@ return AbstractModel.extend({
             snapMinutes: 15,
             longPressDelay: 500,
             eventResizableFromStart: true,
+            nowIndicator: true,
             weekNumbers: true,
-            weekNumberTitle: _t("W"),
+            weekNumbersWithinDays: true,
+            weekNumberTitle: _t("Week") + " ",
             allDayText: _t("All day"),
             monthNames: moment.months(),
             monthNamesShort: moment.monthsShort(),
@@ -439,7 +434,6 @@ return AbstractModel.extend({
      */
     _loadCalendar: function () {
         var self = this;
-        this.data.fullWidth = this.call('local_storage', 'getItem', 'calendar_fullWidth') === 'true';
         this.data.fc_options = this._getFullCalendarOptions();
 
         var defs = _.map(this.data.filters, this._loadFilter.bind(this));
