@@ -5,6 +5,7 @@ var emojis = require('mail.emojis');
 var MentionManager = require('mail.composer.MentionManager');
 var DocumentViewer = require('mail.DocumentViewer');
 var mailUtils = require('mail.utils');
+var utils = require('web.utils');
 
 var config = require('web.config');
 var core = require('web.core');
@@ -276,24 +277,6 @@ var BasicComposer = Widget.extend({
      */
     _hideEmojis: function () {
         this._$emojisContainer.remove();
-    },
-    /**
-     * Making sure that dragging content is external files.
-     * Ignoring other content draging like text.
-     *
-     * @private
-     * @param {DataTransfer} dataTransfer
-     * @returns {boolean}
-     */
-    _isDragSourceExternalFile: function (dataTransfer) {
-        var DragDataType = dataTransfer.types;
-        if (DragDataType.constructor === DOMStringList) {
-            return DragDataType.contains('Files');
-        }
-        if (DragDataType.constructor === Array) {
-            return DragDataType.indexOf('Files') !== -1;
-        }
-        return false;
     },
     /**
      * @private
@@ -622,7 +605,7 @@ var BasicComposer = Widget.extend({
      */
     _onBodyFileDragover: function (ev) {
         ev.preventDefault();
-        if (this._isDragSourceExternalFile(ev.originalEvent.dataTransfer)) {
+        if (utils.is_external_file(ev.originalEvent.dataTransfer)) {
             this.$(".o_file_drop_zone_container").removeClass("d-none");
         }
     },
@@ -724,7 +707,7 @@ var BasicComposer = Widget.extend({
         // FIX: In case multiple chat windows are opened, and file droped in one of them
         // at that time, other chat windows are still displaing drop areas so here hide them all with $ selector
         $(".o_file_drop_zone_container").addClass("d-none");
-        if (this._isDragSourceExternalFile(ev.originalEvent.dataTransfer)) {
+        if (utils.is_external_file(ev.originalEvent.dataTransfer)) {
             var files = ev.originalEvent.dataTransfer.files;
             this._processAttachmentChange({ files: files });
         }

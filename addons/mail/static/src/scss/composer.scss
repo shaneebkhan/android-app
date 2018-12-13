@@ -288,6 +288,11 @@ $o-mail-attachment-margin: 5px;
     flex-flow: row wrap;
 }
 
+.o_attachment_delete_cross {
+    @include o-position-absolute($right: 6px, $top:7px);
+    cursor: pointer;
+}
+
 .o_attachment {
     position: relative;
     width: 100%;
@@ -432,6 +437,10 @@ $o-mail-attachment-margin: 5px;
                 width: 80%;
                 @include o-text-overflow(inline-block);
                 font-size: $font-size-sm;
+            }
+
+            .o_attachment_delete_cross {
+                color: white;
             }
 
             .o_attachment_download {

@@ -34,6 +34,7 @@ var ThreadWidget = Widget.extend({
         'click .o_thread_show_more': '_onClickShowMore',
         'click .o_attachment_download': '_onAttachmentDownload',
         'click .o_attachment_view': '_onAttachmentView',
+        'click .o_attachment_delete_cross': '_onDeleteAttachment',
         'click .o_thread_message_needaction': '_onClickMessageNeedaction',
         'click .o_thread_message_star': '_onClickMessageStar',
         'click .o_thread_message_reply': '_onClickMessageReply',
@@ -410,6 +411,17 @@ var ThreadWidget = Widget.extend({
             });
         });
     },
+    /**
+    * @private
+    * @param {MouseEvent} ev
+    */
+    _onDeleteAttachment: function (ev) {
+        ev.stopPropagation();
+        this.trigger_up('delete_attachment', {
+            attachment_id: $(ev.currentTarget).data('id'),
+            attachment_name: $(ev.currentTarget).data('name')
+        });
+     },
     /**
      * @private
      * @param {Object} options

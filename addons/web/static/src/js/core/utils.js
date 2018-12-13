@@ -217,6 +217,23 @@ var utils = {
         return (/^\d+(\.\d*)? [^0-9]+$/).test(v);
     },
     /**
+     * Making sure that content is external files.
+     * Ignoring other content like text.
+     *
+     * @param {DataTransfer} dataTransfer
+     * @returns {boolean}
+     */
+    is_external_file: function (dataTransfer) {
+        var DataType = dataTransfer.types;
+        if (DataType.constructor === DOMStringList) {
+            return DataType.contains('Files');
+        }
+        if (DataType.constructor === Array) {
+            return DataType.indexOf('Files') !== -1;
+        }
+        return false;
+    },
+    /**
      * @param {any} node
      * @param {any} human_readable
      * @param {any} indent

@@ -4,6 +4,7 @@ odoo.define('mail.Chatter', function (require) {
 var Activity = require('mail.Activity');
 var AttachmentBox = require('mail.AttachmentBox');
 var ChatterComposer = require('mail.composer.Chatter');
+var Dialog = require('web.Dialog');
 var Followers = require('mail.Followers');
 var ThreadField = require('mail.ThreadField');
 var mailUtils = require('mail.utils');
@@ -13,20 +14,23 @@ var config = require('web.config');
 var core = require('web.core');
 var Widget = require('web.Widget');
 
+var _t = core._t;
 var QWeb = core.qweb;
 
 // The purpose of this widget is to display the chatter area below the form view
 //
-// It instanciates the optional mail_thread, mail_activity and mail_followers widgets.
+// It instantiates the optional mail_thread, mail_activity and mail_followers widgets.
 // It Ensures that those widgets are appended at the right place, and allows them to communicate
 // with each other.
-// It synchronizes the rendering of those widgets (as they may be asynchronous), to limitate
+// It synchronizes the rendering of those widgets (as they may be asynchronous), to mitigate
 // the flickering when switching between records
 var Chatter = Widget.extend({
     template: 'mail.Chatter',
     custom_events: {
         discard_record_changes: '_onDiscardRecordChanges',
         reload_mail_fields: '_onReloadMailFields',
+        delete_attachment: '_onDeleteAttachment',
+        reload_attachment_box: '_reloadAttachmentBox',
     },
     events: {
         'click .o_chatter_button_new_message': '_onOpenComposerMessage',
@@ -74,16 +78,21 @@ var Chatter = Widget.extend({
             this.hasLogButton = options.display_log_button || nodeOptions.display_log_button;
             this.postRefresh = nodeOptions.post_refresh || 'never';
         }
-        this.attachmentBoxOpened = false;
+        this.disableAttachmentBox = !!options.disable_attachment_box;
+        this.attachmentsLoaded = false;
+        this.attachments = {};
+        this.attachmentBoxIsOpen = false;
     },
     /**
      * @override
      */
     start: function () {
         this._$topbar = this.$('.o_chatter_topbar');
-        this.$('.o_topbar_right_area').append(QWeb.render('mail.chatter.Attachment.Button', {
-            count: this.record.data.message_attachment_count || 0,
-        }));
+        if(!this.disableAttachmentBox) {
+            this.$('.o_topbar_right_area').append(QWeb.render('mail.chatter.Attachment.Button', {
+                count: this.record.data.message_attachment_count || 0,
+            }));
+        }
         // render and append the buttons
         this._$topbar.prepend(QWeb.render('mail.chatter.Buttons', {
             newMessageButton: !!this.fields.thread,
@@ -115,6 +124,8 @@ var Chatter = Widget.extend({
         if (this.record.res_id !== record.res_id) {
             this._closeComposer(true);
             this._closeAttachments();
+            this.attachmentsLoaded = false;
+            this.attachments = {};
         }
 
         // update the state
@@ -155,13 +166,12 @@ var Chatter = Widget.extend({
 
     /**
      * @private
-     * @param {boolean} force
      */
     _closeAttachments: function () {
         if (this.fields.attachments) {
             this.$('.o_chatter_button_attachment').removeClass('o_active_attach');
             this.fields.attachments.destroy();
-            this.attachmentBoxOpened = false;
+            this.attachmentBoxIsOpen = false;
         }
     },
     /**
@@ -231,22 +241,52 @@ var Chatter = Widget.extend({
     _enableComposer: function () {
         this.$(".o_composer_button_send").prop('disabled', false);
     },
+    /*
+    * @private
+    * @param {boolean} doFetch do the rpc if new list needed
+    * @return {Deferred}
+    */
+    _fetchAttachments: function (doFetch) {
+        var self = this;
+        if (!doFetch) {
+            return $.when([]);
+        }
+        var domain = [
+            ['res_id', '=', this.record.res_id],
+            ['res_model', '=', this.record.model],
+        ];
+        return this._rpc({
+            model: 'ir.attachment',
+            method: 'search_read',
+            domain: domain,
+            fields: ['id', 'name', 'datas_fname', 'mimetype'],
+        }).then(function (result) {
+            self.attachmentsLoaded = true;
+            self.attachments = result;
+        });
+
+    },
     /**
      * @private
+     * @param {boolean} reloadAttachments: calls a new rpc to update the attachment list
      */
-    _openAttachments: function () {
+    _openAttachments: function (reloadAttachments) {
         var self = this;
-        this.fields.attachments = new AttachmentBox(this, this.record);
-
-        var $anchor = this.$('.o_chatter_topbar');
-        if (this._composer) {
-            $anchor = this.$('.o_thread_composer');
+        if (this.fields.attachments) {
+            this._closeAttachments();
         }
-        this.fields.attachments.insertAfter($anchor).then(function () {
-            self.$el.addClass('o_chatter_composer_active');
-            self.$('.o_chatter_button_attachment').addClass('o_active_attach');
+        this._fetchAttachments(reloadAttachments).then(function () {
+            self.fields.attachments = new AttachmentBox(self, self.record, self.attachments);
+            var $anchor = self.$('.o_chatter_topbar');
+            if (self._composer) {
+                $anchor = self.$('.o_thread_composer');
+            }
+            self.fields.attachments.insertAfter($anchor).then(function () {
+                self.$el.addClass('o_chatter_composer_active');
+                self.$('.o_chatter_button_attachment').addClass('o_active_attach');
+            });
+            self.attachmentBoxIsOpen = true;
         });
-        this.attachmentBoxOpened = true;
     },
     /**
      * @private
@@ -286,6 +326,7 @@ var Chatter = Widget.extend({
                         if (self._reloadAfterPost(messageData)) {
                             self.trigger_up('reload');
                         } else if (messageData.attachment_ids.length) {
+                            self._reloadAttachmentBox();
                             self.trigger_up('reload', {fieldNames: ['message_attachment_count']});
                         }
                     }).fail(function () {
@@ -322,6 +363,16 @@ var Chatter = Widget.extend({
     },
     /**
      * @private
+     */
+    _reloadAttachmentBox: function () {
+        this.attachmentsLoaded = false;
+        if (this.attachmentBoxIsOpen) {
+            this._openAttachments(true);
+        }
+        this.trigger_up('reload', {fieldNames: ['message_attachment_count']});
+    },
+    /**
+     * @private
      * @param {Deferred} def
      * @returns {Deferred}
      */
@@ -344,7 +395,11 @@ var Chatter = Widget.extend({
                 self.fields.activity.$el.appendTo(self.$el);
             }
             if (self.fields.followers) {
-                self.fields.followers.$el.insertBefore(self.$('.o_chatter_button_attachment'));
+                if (self.disableAttachmentBox) {
+                    self.fields.followers.$el.appendTo(self.$('.o_topbar_right_area'));
+                } else {
+                    self.fields.followers.$el.insertBefore(self.$('.o_chatter_button_attachment'));
+                }
             }
             if (self.fields.thread) {
                 self.fields.thread.$el.appendTo(self.$el);
@@ -383,8 +438,7 @@ var Chatter = Widget.extend({
      */
      _updateAttachmentCounter: function () {
         var count = this.record.data.message_attachment_count || 0;
-        this.$('.o_chatter_attachment_button_count').html(' ('+ count +')');
-        this.$('.o_chatter_button_attachment').toggleClass('o_hidden', !count);
+        this.$('.o_chatter_attachment_button_count').html(' '+ count);
      },
     /**
      * @private
@@ -427,12 +481,39 @@ var Chatter = Widget.extend({
 
     /**
      * @private
+     * @param {OdooEvent} ev
+     */
+    _onDeleteAttachment: function (ev) {
+        ev.stopPropagation();
+        var self = this;
+        var options = {
+            confirm_callback: function () {
+                self._rpc({
+                    model: 'ir.attachment',
+                    method: 'unlink',
+                    args: [parseInt(ev.data.attachment_id, 10)],
+                })
+                .then(function () {
+                    self._reloadAttachmentBox();
+                    self.fields.thread.removeAttachments([ev.data.attachment_id]);
+                    self.trigger_up('reload');
+                });
+            }
+        };
+        var promptText = _.str.sprintf(_t("Do you really want to delete %s?"), _.escape(ev.data.attachment_name));
+        Dialog.confirm(this, promptText, options);
+    },
+    /**
+     * @private
      */
     _onOpenAttachments: function () {
-        if (this.attachmentBoxOpened) {
+        if(this.disableAttachmentBox) {
+            return;
+        }
+        if (this.attachmentBoxIsOpen) {
             this._closeAttachments();
         } else {
-            this._openAttachments();
+            this._openAttachments(!this.attachmentsLoaded);
         }
     },
     /**
