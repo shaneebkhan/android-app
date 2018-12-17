@@ -1232,11 +1232,11 @@ class AccountMoveLine(models.Model):
         """ Prepare the values used to create() an account.analytic.line upon validation of an account.move.line having
             an analytic account. This method is intended to be extended in other modules.
         """
-        valses = []
+        value_dicts = []
         for line in self:
             amount = (line.credit or 0.0) - (line.debit or 0.0)
             default_name = line.name or (line.ref or '/' + ' -- ' + (line.partner_id and line.partner_id.name or '/'))
-            valses.append({
+            value_dicts.append({
                 'name': default_name,
                 'date': line.date,
                 'account_id': line.analytic_account_id.id,
@@ -1252,7 +1252,7 @@ class AccountMoveLine(models.Model):
                 'partner_id': line.partner_id.id,
                 'company_id': line.analytic_account_id.company_id.id or self.env.user.company_id.id,
             })
-        return valses
+        return value_dicts
 
     def _prepare_analytic_distribution_line(self, distribution):
         """ Prepare the values used to create() an account.analytic.line upon validation of an account.move.line having
