@@ -3,15 +3,13 @@
     <data noupdate="1">
 
         <record id="payment.payment_acquirer_transfer" model="payment.acquirer">
-            <field name="name">Wire Transfer</field>
+            <field name="name">Manual Payment</field>
             <field name="image" type="base64" file="payment_transfer/static/src/img/transfer_icon.png"/>
             <field name="provider">transfer</field>
             <field name="company_id" ref="base.main_company"/>
             <field name="view_template_id" ref="transfer_form"/>
-            <field name="environment">test</field>
-            <field name="website_published" eval="True"/>
             <field name="pre_msg"><![CDATA[
-<p>Transfer information will be provided after choosing the payment aquirer.</p>]]>
+<p>Transfer information will be provided when clicking 'Pay Now'.</p>]]>
             </field>
         </record>
 

@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 class TransferPaymentAcquirer(models.Model):
     _inherit = 'payment.acquirer'
 
-    provider = fields.Selection(selection_add=[('transfer', 'Wire Transfer')], default='transfer')
+    provider = fields.Selection(selection_add=[('transfer', 'Manual Payment')], default='transfer')
 
     @api.model
     def _create_missing_journal_for_acquirers(self, company=None):
@@ -38,16 +38,7 @@ class TransferPaymentAcquirer(models.Model):
         accounts = journals.mapped('bank_account_id').name_get()
         bank_title = _('Bank Accounts') if len(accounts) > 1 else _('Bank Account')
         bank_accounts = ''.join(['<ul>'] + ['<li>%s</li>' % name for id, name in accounts] + ['</ul>'])
-        post_msg = _('''<div>
-<h3>Please use the following transfer details</h3>
-<h4>%(bank_title)s</h4>
-%(bank_accounts)s
-<h4>Communication</h4>
-<p>Please use the order name as communication reference.</p>
-</div>''') % {
-            'bank_title': bank_title,
-            'bank_accounts': bank_accounts,
-        }
+        post_msg = _('<h3>Please make a payment to: </h3><ul><li>Bank: %bank%</li><li>Account Number: %account%</li><li>Account Holder: %holder%</li></ul>').replace('%bank%', bank_title).replace('%account%', bank_accounts).replace('%holder%', self.env.user.company_id.name)
         return post_msg
 
     @api.model

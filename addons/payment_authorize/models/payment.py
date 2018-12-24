@@ -23,8 +23,19 @@ class PaymentAcquirerAuthorize(models.Model):
     _inherit = 'payment.acquirer'
 
     provider = fields.Selection(selection_add=[('authorize', 'Authorize.Net')])
-    authorize_login = fields.Char(string='API Login Id', required_if_provider='authorize', groups='base.group_user')
-    authorize_transaction_key = fields.Char(string='API Transaction Key', required_if_provider='authorize', groups='base.group_user')
+    authorize_login = fields.Char(string='API Login Id', groups='base.group_user')
+    authorize_transaction_key = fields.Char(string='API Transaction Key', groups='base.group_user')
+    
+    auth_msg = fields.Html(
+        'Authorize Message', translate=True,
+        default=lambda s: _('Your payment has been authorized.'),
+        help='Message displayed if payment is authorized.')
+    
+    def _required_to_enable(self):
+        res = super(PaymentAcquirerAuthorize,self)._required_to_enable()
+        if self.provider == 'authorize':
+            res += ['authorize_login','authorize_transaction_key']
+        return res
 
     def _get_feature_support(self):
         """Get advanced feature support by provider.

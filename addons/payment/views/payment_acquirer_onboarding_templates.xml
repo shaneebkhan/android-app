@@ -73,6 +73,7 @@
                                     <field name="acc_number" attrs="{'required': [('payment_method', '=', 'manual')]}"/>
                                     <field name="manual_post_msg" attrs="{'required': [('payment_method', '=', 'manual')]}"/>
                                 </group>
+                                <div class="form-text text-muted">You need to include %bank%, %account% and %holder% in the Payment Instructions. It will be substitued with the real values.</div>
                             </div>
                         </div>
                     </div>

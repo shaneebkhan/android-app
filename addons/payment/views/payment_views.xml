@@ -14,7 +14,6 @@
             <field name="model">payment.acquirer</field>
             <field name="arch" type="xml">
                 <form string="Payment Acquirer">
-                    <field name="environment" invisible='1'/>
                     <field name="fees_implemented" invisible='1'/>
                     <field name="token_implemented" invisible='1'/>
                     <field name="authorize_implemented" invisible="1"/>
@@ -22,34 +21,6 @@
                         <field name="module_id" invisible="1"/>
                         <field name="module_state" invisible="1"/>
                         <field name="inbound_payment_method_ids" invisible="1"/>
-                        <div class="oe_button_box" name="button_box" attrs="{'invisible': ['&amp;', ('module_id', '!=', False), ('module_state', '!=', 'installed')]}">
-                            <!-- transfer referenced here due to view inheritance issue in current master (post-saas-16) -->
-                            <button name="toggle_environment_value"
-                                    attrs="{'invisible': ['|', ('environment', '=', 'test'), ('provider', '=', 'transfer')]}"
-                                    class="oe_stat_button"
-                                    type="object" icon="fa-play">
-                                <div class="o_stat_info o_field_widget">
-                                    <span class="text-success">Production</span>
-                                    <span class="o_stat_text">Environment</span>
-                                </div>
-                            </button>
-                            <!-- transfer referenced here due to view inheritance issue in current master (post-saas-16) -->
-                            <button name="toggle_environment_value"
-                                    attrs="{'invisible': ['|', ('environment', '=', 'prod'), ('provider', '=', 'transfer')]}"
-                                    class="oe_stat_button"
-                                    type="object" icon="fa-stop">
-                                <div class="o_stat_info o_field_widget">
-                                    <span class="o_warning_text">Test</span>
-                                    <span class="o_stat_text">Environment</span>
-                                </div>
-                            </button>
-                            <button name="toggle_website_published"
-                                    class="oe_stat_button"
-                                    type="object" icon="fa-globe">
-                                <field name="website_published" widget="boolean_button"
-                                    options='{"terminology": {"string_true": "Published", "hover_false": "Publish"}}'/>
-                            </button>
-                        </div>
                         <field name="image" widget='image' class="oe_avatar" options='{"preview_image": "image_medium"}'/>
                         <div class="oe_title">
                             <h1><field name="name" placeholder="Name"/></h1>
@@ -60,6 +31,9 @@
                                 <field name="description"/>
                             </div>
                         </div>
+                        <group>
+                            <field name="publish_mode" widget="radio"/>
+                        </group>
                         <group name="acquirer_base" col="2" attrs="{'invisible': ['&amp;', ('module_id', '!=', False), ('module_state', '!=', 'installed')]}">
                             <group name="acquirer_left">
                                 <field name="provider" groups="base.group_no_one"/>
@@ -68,17 +42,7 @@
                         </group>
                         <notebook attrs="{'invisible': ['&amp;', ('module_id', '!=', False), ('module_state', '!=', 'installed')]}">
                             <page string="Credentials" name="acquirer_credentials">
-                                <group name="acquirer">
-                                </group>
-                            </page>
-                            <page string="Messages">
-                                <group>
-                                    <field name="pre_msg" invisible="1"/>
-                                    <field name="post_msg"/>
-                                    <field name="pending_msg"/>
-                                    <field name="done_msg"/>
-                                    <field name="cancel_msg"/>
-                                    <field name="error_msg"/>
+                                <group name="acquirer" attrs="{'invisible': [('provider', '!=', 'manual')]}">
                                 </group>
                             </page>
                             <page string="Configuration">
@@ -120,6 +84,16 @@
                                     <field name="check_validity" attrs="{'invisible': [('payment_flow', '!=', 's2s')]}" groups="base.group_no_one"/>
                                 </group>
                             </page>
+                            <page string="Messages">
+                                <group>
+                                    <field name="pre_msg" attrs="{'invisible': 1}"/>
+                                    <field name="post_msg"/>
+                                    <field name="pending_msg"/>
+                                    <field name="done_msg"/>
+                                    <field name="cancel_msg"/>
+                                    <field name="error_msg"/>
+                                </group>
+                            </page>
                         </notebook>
                     </sheet>
                 </form>
@@ -136,7 +110,6 @@
                     <field name="id"/>
                     <field name="name"/>
                     <field name="description"/>
-                    <field name="environment"/>
                     <field name="provider"/>
                     <field name="module_id"/>
                     <field name="module_state"/>
@@ -154,7 +127,7 @@
                                 </div>
                                 <div class="o_payment_acquirer_bottom">
                                     <t t-if="installed">
-                                        <field name="environment" widget="label_selection" options="{'classes': {'test': 'warning', 'production': 'success'}}"/>
+                                        <field name="publish_mode" widget="label_selection" options="{'classes': {'enabled': 'success', 'test': 'warning', 'disabled' : 'error'}}"/>
                                     </t>
                                     <button t-if="!installed" type="object" class="btn btn-secondary float-right" name="button_immediate_install">Install</button>
                                     <button t-if="installed and !record.website_published.raw_value" type="edit" class="btn btn-primary float-right">Activate</button>
@@ -173,10 +146,8 @@
             <field name="arch" type="xml">
                 <tree string="Payment Acquirers">
                     <field name="sequence" widget="handle"/>
-                    <field name="name"/>
-                    <field name="provider"/>
-                    <field name="website_published"/>
-                    <field name="environment"/>
+                    <field name="display_as"/>
+                    <field name="publish_mode"/>
                 </tree>
             </field>
         </record>
@@ -190,7 +161,7 @@
                     <field name="provider"/>
                     <group expand="0" string="Group By">
                         <filter string="Provider" name="provider" domain="[]" context="{'group_by': 'provider'}"/>
-                        <filter string="Environment" name="environment" domain="[]" context="{'group_by': 'environment'}"/>
+                        <filter string="Mode" name="publish_mode" domain="[]" context="{'group_by': 'publish_mode'}"/>
                     </group>
                 </search>
             </field>

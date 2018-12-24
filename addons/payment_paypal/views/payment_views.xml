@@ -9,10 +9,10 @@
             <field name="arch" type="xml">
                 <xpath expr='//group[@name="acquirer"]' position='after'>
                     <group attrs="{'invisible': [('provider', '!=', 'paypal')]}">
-                        <field name="paypal_email_account"/>
-                        <field name="paypal_seller_account"/>
-                        <field name="paypal_pdt_token"/>
-                        <field name="paypal_use_ipn"/>
+                        <field name="paypal_email_account" attrs="{'required':[ ('provider', '=', 'paypal'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="paypal_seller_account" attrs="{'required':[ ('provider', '=', 'paypal'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="paypal_pdt_token" attrs="{'required':[ ('provider', '=', 'paypal'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="paypal_use_ipn" attrs="{'required':[ ('provider', '=', 'paypal'), ('publish_mode', '=', 'enabled')]}"/>
                         <field name="paypal_api_enabled" invisible="1"/>
                         <field name="paypal_api_username" invisible="1"/>
                         <field name="paypal_api_password" invisible="1"/>

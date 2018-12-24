@@ -20,7 +20,7 @@ class AcquirerPaypal(models.Model):
     _inherit = 'payment.acquirer'
 
     provider = fields.Selection(selection_add=[('paypal', 'Paypal')])
-    paypal_email_account = fields.Char('Paypal Email ID', required_if_provider='paypal', groups='base.group_user')
+    paypal_email_account = fields.Char('Paypal Email ID', groups='base.group_user')
     paypal_seller_account = fields.Char(
         'Paypal Merchant ID', groups='base.group_user',
         help='The Merchant ID is used to ensure communications coming from Paypal are valid and secured.')
@@ -37,6 +37,12 @@ class AcquirerPaypal(models.Model):
     fees_dom_var = fields.Float(default=3.4)
     fees_int_fixed = fields.Float(default=0.35)
     fees_int_var = fields.Float(default=3.9)
+    
+    def _required_to_enable(self):
+        res = super(AcquirerPaypal,self)._required_to_enable()
+        if self.provider == 'paypal':
+            res += ['paypal_email_account']
+        return res
 
     def _get_feature_support(self):
         """Get advanced feature support by provider.

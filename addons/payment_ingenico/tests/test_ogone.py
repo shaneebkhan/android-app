@@ -5,30 +5,30 @@ import time
 
 from odoo.addons.payment.models.payment_acquirer import ValidationError
 from odoo.addons.payment.tests.common import PaymentAcquirerCommon
-from odoo.addons.payment_ogone.controllers.main import OgoneController
+from odoo.addons.payment_ingenico.controllers.main import IngenicoController
 from werkzeug import urls
 
 from odoo.tools import mute_logger
 
 
-class OgonePayment(PaymentAcquirerCommon):
+class IngenicoPayment(PaymentAcquirerCommon):
 
     def setUp(self):
-        super(OgonePayment, self).setUp()
+        super(IngenicoPayment, self).setUp()
 
-        self.ogone = self.env.ref('payment.payment_acquirer_ogone')
+        self.ingenico = self.env.ref('payment.payment_acquirer_ingenico')
 
-    def test_10_ogone_form_render(self):
+    def test_10_ingenico_form_render(self):
         base_url = self.env['ir.config_parameter'].get_param('web.base.url')
         # be sure not to do stupid thing
-        self.assertEqual(self.ogone.environment, 'test', 'test without test environment')
+        self.assertEqual(self.ingenico.environment, 'test', 'test without test environment')
 
         # ----------------------------------------
         # Test: button direct rendering + shasign
         # ----------------------------------------
 
         form_values = {
-            'PSPID': 'dummy',
+            'PSPID': '',
             'ORDERID': 'test_ref0',
             'AMOUNT': '1',
             'CURRENCY': 'EUR',
@@ -41,28 +41,28 @@ class OgonePayment(PaymentAcquirerCommon):
             'OWNERTOWN': 'Sin City',
             'OWNERTELNO': '0032 12 34 56 78',
             'SHASIGN': '815f67b8ff70d234ffcf437c13a9fa7f807044cc',
-            'ACCEPTURL': urls.url_join(base_url, OgoneController._accept_url),
-            'DECLINEURL': urls.url_join(base_url, OgoneController._decline_url),
-            'EXCEPTIONURL': urls.url_join(base_url, OgoneController._exception_url),
-            'CANCELURL': urls.url_join(base_url, OgoneController._cancel_url),
+            'ACCEPTURL': urls.url_join(base_url, IngenicoController._accept_url),
+            'DECLINEURL': urls.url_join(base_url, IngenicoController._decline_url),
+            'EXCEPTIONURL': urls.url_join(base_url, IngenicoController._exception_url),
+            'CANCELURL': urls.url_join(base_url, IngenicoController._cancel_url),
         }
 
         # render the button
-        res = self.ogone.render(
+        res = self.ingenico.render(
             'test_ref0', 0.01, self.currency_euro.id,
             partner_id=None,
             partner_values=self.buyer_values)
 
         # check form result
         tree = objectify.fromstring(res)
-        self.assertEqual(tree.get('action'), 'https://secure.ogone.com/ncol/test/orderstandard.asp', 'ogone: wrong form POST url')
+        self.assertEqual(tree.get('action'), 'https://secure.ogone.com/ncol/test/orderstandard.asp', 'ingenico: wrong form POST url')
         for form_input in tree.input:
             if form_input.get('name') in ['submit']:
                 continue
             self.assertEqual(
                 form_input.get('value'),
                 form_values[form_input.get('name')],
-                'ogone: wrong value for input %s: received %s instead of %s' % (form_input.get('name'), form_input.get('value'), form_values[form_input.get('name')])
+                'ingenico: wrong value for input %s: received %s instead of %s' % (form_input.get('name'), form_input.get('value'), form_values[form_input.get('name')])
             )
 
         # ----------------------------------------
@@ -72,12 +72,12 @@ class OgonePayment(PaymentAcquirerCommon):
         # create a new draft tx
         tx = self.env['payment.transaction'].create({
             'amount': 0.01,
-            'acquirer_id': self.ogone.id,
+            'acquirer_id': self.ingenico.id,
             'currency_id': self.currency_euro.id,
             'reference': 'test_ref0',
             'partner_id': self.buyer_id})
         # render the button
-        res = self.ogone.render(
+        res = self.ingenico.render(
             'should_be_erased', 0.01, self.currency_euro,
             tx_id=tx.id,
             partner_id=None,
@@ -85,23 +85,23 @@ class OgonePayment(PaymentAcquirerCommon):
 
         # check form result
         tree = objectify.fromstring(res)
-        self.assertEqual(tree.get('action'), 'https://secure.ogone.com/ncol/test/orderstandard.asp', 'ogone: wrong form POST url')
+        self.assertEqual(tree.get('action'), 'https://secure.ogone.com/ncol/test/orderstandard.asp', 'ingenico: wrong form POST url')
         for form_input in tree.input:
             if form_input.get('name') in ['submit']:
                 continue
             self.assertEqual(
                 form_input.get('value'),
                 form_values[form_input.get('name')],
-                'ogone: wrong value for form input %s: received %s instead of %s' % (form_input.get('name'), form_input.get('value'), form_values[form_input.get('name')])
+                'ingenico: wrong value for form input %s: received %s instead of %s' % (form_input.get('name'), form_input.get('value'), form_values[form_input.get('name')])
             )
 
-    @mute_logger('odoo.addons.payment_ogone.models.payment', 'ValidationError')
-    def test_20_ogone_form_management(self):
+    @mute_logger('odoo.addons.payment_ingenico.models.payment', 'ValidationError')
+    def test_20_ingenico_form_management(self):
         # be sure not to do stupid thing
-        self.assertEqual(self.ogone.environment, 'test', 'test without test environment')
+        self.assertEqual(self.ingenico.environment, 'test', 'test without test environment')
 
-        # typical data posted by ogone after client has successfully paid
-        ogone_post_data = {
+        # typical data posted by ingenico after client has successfully paid
+        ingenico_post_data = {
             'orderID': u'test_ref_2',
             'STATUS': u'9',
             'CARDNO': u'XXXXXXXXXXXX0002',
@@ -121,52 +121,52 @@ class OgonePayment(PaymentAcquirerCommon):
 
         # should raise error about unknown tx
         with self.assertRaises(ValidationError):
-            self.env['payment.transaction'].form_feedback(ogone_post_data)
+            self.env['payment.transaction'].form_feedback(ingenico_post_data)
 
         # create tx
         tx = self.env['payment.transaction'].create({
             'amount': 1.95,
-            'acquirer_id': self.ogone.id,
+            'acquirer_id': self.ingenico.id,
             'currency_id': self.currency_euro.id,
             'reference': 'test_ref_2-1',
             'partner_name': 'Norbert Buyer',
             'partner_country_id': self.country_france.id})
         # validate it
-        tx.form_feedback(ogone_post_data)
+        tx.form_feedback(ingenico_post_data)
         # check state
-        self.assertEqual(tx.state, 'done', 'ogone: validation did not put tx into done state')
-        self.assertEqual(tx.ogone_payid, ogone_post_data.get('PAYID'), 'ogone: validation did not update tx payid')
+        self.assertEqual(tx.state, 'done', 'ingenico: validation did not put tx into done state')
+        self.assertEqual(tx.ingenico_payid, ingenico_post_data.get('PAYID'), 'ingenico: validation did not update tx payid')
 
         # reset tx
         tx = self.env['payment.transaction'].create({
             'amount': 1.95,
-            'acquirer_id': self.ogone.id,
+            'acquirer_id': self.ingenico.id,
             'currency_id': self.currency_euro.id,
             'reference': 'test_ref_2-2',
             'partner_name': 'Norbert Buyer',
             'partner_country_id': self.country_france.id})
 
-        # now ogone post is ok: try to modify the SHASIGN
-        ogone_post_data['SHASIGN'] = 'a4c16bae286317b82edb49188d3399249a784691'
+        # now ingenico post is ok: try to modify the SHASIGN
+        ingenico_post_data['SHASIGN'] = 'a4c16bae286317b82edb49188d3399249a784691'
         with self.assertRaises(ValidationError):
-            tx.form_feedback(ogone_post_data)
+            tx.form_feedback(ingenico_post_data)
 
         # simulate an error
-        ogone_post_data['STATUS'] = 2
-        ogone_post_data['SHASIGN'] = 'a4c16bae286317b82edb49188d3399249a784691'
-        tx.form_feedback(ogone_post_data)
+        ingenico_post_data['STATUS'] = 2
+        ingenico_post_data['SHASIGN'] = 'a4c16bae286317b82edb49188d3399249a784691'
+        tx.form_feedback(ingenico_post_data)
         # check state
-        self.assertEqual(tx.state, 'cancel', 'ogone: erroneous validation did not put tx into error state')
+        self.assertEqual(tx.state, 'cancel', 'ingenico: erroneous validation did not put tx into error state')
 
-    def test_30_ogone_s2s(self):
+    def test_30_ingenico_s2s(self):
         test_ref = 'test_ref_%.15f' % time.time()
         # be sure not to do stupid thing
-        self.assertEqual(self.ogone.environment, 'test', 'test without test environment')
+        self.assertEqual(self.ingenico.environment, 'test', 'test without test environment')
 
         # create a new draft tx
         tx = self.env['payment.transaction'].create({
             'amount': 0.01,
-            'acquirer_id': self.ogone.id,
+            'acquirer_id': self.ingenico.id,
             'currency_id': self.currency_euro.id,
             'reference': test_ref,
             'partner_id': self.buyer_id,
@@ -174,11 +174,11 @@ class OgonePayment(PaymentAcquirerCommon):
         })
 
         # create an alias
-        res = tx.ogone_s2s_create_alias({
+        res = tx.ingenico_s2s_create_alias({
             'expiry_date_mm': '01',
             'expiry_date_yy': '2015',
             'holder_name': 'Norbert Poilu',
             'number': '4000000000000002',
             'brand': 'VISA'})
 
-        res = tx.ogone_s2s_execute({})
+        res = tx.ingenico_s2s_execute({})

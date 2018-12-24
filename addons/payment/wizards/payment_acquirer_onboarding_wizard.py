@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, models, fields, _
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class PaymentWizard(models.TransientModel):
@@ -26,15 +26,22 @@ class PaymentWizard(models.TransientModel):
     manual_name = fields.Char("Method",  default=lambda self: self._get_default_payment_acquirer_onboarding_value('manual_name'))
     journal_name = fields.Char("Bank Name", default=lambda self: self._get_default_payment_acquirer_onboarding_value('journal_name'))
     acc_number = fields.Char("Account Number",  default=lambda self: self._get_default_payment_acquirer_onboarding_value('acc_number'))
-    manual_post_msg = fields.Html("Payment Instructions")
+    manual_post_msg = fields.Html("Payment Instructions", default=lambda self:_('<h3>Please make a payment to: </h3><ul><li>Bank: %bank%</li><li>Account Number: %account%</li><li>Account Holder: %holder%</li></ul>'))
 
-    @api.onchange('journal_name', 'acc_number')
+    @api.constrains('manual_post_msg')
     def _set_manual_post_msg_value(self):
-        self.manual_post_msg = _('<h3>Please make a payment to: </h3><ul><li>Bank: %s</li><li>Account Number: %s</li><li>Account Holder: %s</li></ul>') %\
-                               (self.journal_name or _("Bank") , self.acc_number or _("Account"), self.env.company.name)
+        if '%bank%' not in str(self.manual_post_msg):
+            raise models.ValidationError(_("Please add '%bank%' in the Payment Instructions"))
+        if '%account%' not in str(self.manual_post_msg):
+            raise models.ValidationError(_("Please add '%account%' in the Payment Instructions"))
+        if '%holder%' not in str(self.manual_post_msg):
+            raise models.ValidationError(_("Please add '%holder%' in the Payment Instructions"))
+        # self.manual_post_msg = _('<h3>Please make a payment to: </h3><ul><li>Bank: %s</li><li>Account Number: %s</li><li>Account Holder: %s</li></ul>') %\
+        #                        (self.journal_name or _("Bank") , self.acc_number or _("Account"), self.env.user.company_id.name)
 
     _payment_acquirer_onboarding_cache = {}
     _data_fetched = False
+    #_constraint = [_set_manual_post_msg_value, "Message of wrong entry", ['manual_post_msg']]
 
     def _get_manual_payment_acquirer(self, env=None):
         if env is None:
@@ -113,15 +120,13 @@ class PaymentWizard(models.TransientModel):
                     'paypal_email_account': self.paypal_email_account,
                     'paypal_seller_account': self.paypal_seller_account,
                     'paypal_pdt_token': self.paypal_pdt_token,
-                    'website_published': True,
-                    'environment': 'prod',
+                    'publish_mode': 'enabled',
                 })
             if self.payment_method == 'stripe':
                 new_env.ref('payment.payment_acquirer_stripe').write({
                     'stripe_secret_key': self.stripe_secret_key,
                     'stripe_publishable_key': self.stripe_publishable_key,
-                    'website_published': True,
-                    'environment': 'prod',
+                    'publish_mode': 'enabled',
                 })
             if self.payment_method == 'manual':
                 manual_acquirer = self._get_manual_payment_acquirer(new_env)
@@ -131,9 +136,8 @@ class PaymentWizard(models.TransientModel):
                         'Please create one from the Payment Acquirer menu.'
                     ))
                 manual_acquirer.name = self.manual_name
-                manual_acquirer.post_msg = self.manual_post_msg
-                manual_acquirer.website_published = True
-                manual_acquirer.environment = 'prod'
+                manual_acquirer.post_msg = self.manual_post_msg.replace('%bank%', self.journal_name).replace('%account%', self.acc_number).replace('%holder%', self.env.user.company_id.name)
+                manual_acquirer.publish_mode = 'enabled'
 
                 journal = manual_acquirer.journal_id
                 if journal:

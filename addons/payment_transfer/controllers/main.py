@@ -9,7 +9,7 @@ from odoo.http import request
 _logger = logging.getLogger(__name__)
 
 
-class OgoneController(http.Controller):
+class IngenicoController(http.Controller):
     _accept_url = '/payment/transfer/feedback'
 
     @http.route([

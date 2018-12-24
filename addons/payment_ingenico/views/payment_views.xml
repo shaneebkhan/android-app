@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="acquirer_form_ingenico" model="ir.ui.view">
+            <field name="name">acquirer.form.ingenico</field>
+            <field name="model">payment.acquirer</field>
+            <field name="inherit_id" ref="payment.acquirer_form"/>
+            <field name="arch" type="xml">
+                <xpath expr='//group[@name="acquirer"]' position='after'>
+                    <group attrs="{'invisible': [('provider', '!=', 'ingenico')]}">
+                        <field name="ingenico_pspid" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="ingenico_userid" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="ingenico_password" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="ingenico_shakey_in" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="ingenico_shakey_out" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <field name="ingenico_alias_usage" attrs="{'required':[ ('provider', '=', 'ingenico'), ('publish_mode', '=', 'enabled')]}"/>
+                        <a colspan="2" href="https://payment-services.ingenico.com/int/en/support#frequentlyaskedquestions" target="_blank">How to configure your Ingenico account?</a>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

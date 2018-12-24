@@ -8,6 +8,9 @@
             <page name="acquirer_credentials" position="attributes">
                 <attribute name="attrs">{'invisible': [('provider', '=', 'transfer')]}</attribute>
             </page>
+            <field name="pre_msg" position="attributes">
+                <attribute name="attrs">{'invisible': [('provider', '!=', 'transfer')]}</attribute>
+            </field>
             <field name="done_msg" position="attributes">
                 <attribute name="attrs">{'invisible': [('provider', '=', 'transfer')]}</attribute>
             </field>
@@ -15,6 +18,17 @@
                 <attribute name="attrs">{'invisible': [('provider', '=', 'transfer')]}</attribute>
             </field>
             <field name="error_msg" position="attributes">
+                <attribute name="attrs">{'invisible': [('provider', '=', 'transfer')]}</attribute>
+            </field>
+        </field>
+    </record>
+    
+    <record id="payment_acquirer_kanban_inherit_transfer" model="ir.ui.view">
+        <field name="name">payment.acquirer.kanban.inhereit.transfer</field>
+        <field name="model">payment.acquirer</field>
+        <field name="inherit_id" ref="payment.acquirer_kanban"/>
+        <field name="arch" type="xml">
+            <field name="publish_mode" position="attributes">
                 <attribute name="attrs">{'invisible': [('provider', '=', 'transfer')]}</attribute>
             </field>
         </field>

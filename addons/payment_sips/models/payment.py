@@ -42,11 +42,18 @@ class AcquirerSips(models.Model):
     _inherit = 'payment.acquirer'
 
     provider = fields.Selection(selection_add=[('sips', 'Sips')])
-    sips_merchant_id = fields.Char('Merchant ID', help="Used for production only", required_if_provider='sips', groups='base.group_user')
-    sips_secret = fields.Char('Secret Key', size=64, required_if_provider='sips', groups='base.group_user')
-    sips_test_url = fields.Char("Test url", required_if_provider='sips', groups='base.group_no_one', default='https://payment-webinit.sips-atos.com/paymentInit')
-    sips_prod_url = fields.Char("Production url", required_if_provider='sips', groups='base.group_no_one', default='https://payment-webinit.simu.sips-atos.com/paymentInit')
-    sips_version = fields.Char("Interface Version", required_if_provider='sips', groups='base.group_no_one', default='HP_2.3')
+    sips_merchant_id = fields.Char('Merchant ID', help="Used for production only", groups='base.group_user')
+    sips_secret = fields.Char('Secret Key', size=64, groups='base.group_user')
+    sips_test_url = fields.Char("Test url", groups='base.group_no_one', default='https://payment-webinit.sips-atos.com/paymentInit')
+    sips_prod_url = fields.Char("Production url", groups='base.group_no_one', default='https://payment-webinit.simu.sips-atos.com/paymentInit')
+    sips_version = fields.Char("Interface Version", groups='base.group_no_one', default='HP_2.3')
+    
+    def _required_to_enable(self):
+        res = super(AcquirerSips,self)._required_to_enable()
+        if self.provider == 'sips':
+            res += ['sips_merchant_id','sips_secret','sips_test_url',
+                    'sips_prod_url','sips_version']
+        return res
 
     def _sips_generate_shasign(self, values):
         """ Generate the shasign for incoming or outgoing communications.

@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from dateutil import relativedelta
 import pprint
+import re
 
 from odoo import api, exceptions, fields, models, _, SUPERUSER_ID
 from odoo.tools import consteq, float_round, image_resize_images, image_process, ustr
@@ -37,7 +38,7 @@ class PaymentAcquirer(models.Model):
     to have required fields that depend on a specific acquirer.
 
     Each acquirer has a link to an ir.ui.view record that is a template of
-    a button used to display the payment form. See examples in ``payment_ogone``
+    a button used to display the payment form. See examples in ``payment_ingenico``
     and ``payment_paypal`` modules.
 
     Methods that should be added in an acquirer-specific implementation:
@@ -59,16 +60,17 @@ class PaymentAcquirer(models.Model):
     """
     _name = 'payment.acquirer'
     _description = 'Payment Acquirer'
-    _order = 'website_published desc, sequence, name'
+    _order = 'publish_mode desc, sequence, name'
 
     def _get_default_view_template_id(self):
         return self.env.ref('payment.default_acquirer_button', raise_if_not_found=False)
 
     name = fields.Char('Name', required=True, translate=True)
+    display_as = fields.Char('Payment mean', compute=lambda self: self._compute_display_as())
     description = fields.Html('Description')
     sequence = fields.Integer('Sequence', default=10, help="Determine the display order")
     provider = fields.Selection(
-        selection=[('manual', 'Manual Configuration')], string='Provider',
+        selection=[('manual', 'Custom Payment Form')], string='Provider',
         default='manual', required=True)
     company_id = fields.Many2one(
         'res.company', 'Company',
@@ -79,14 +81,18 @@ class PaymentAcquirer(models.Model):
     registration_view_template_id = fields.Many2one(
         'ir.ui.view', 'S2S Form Template', domain=[('type', '=', 'qweb')],
         help="Template for method registration")
-    environment = fields.Selection([
+    publish_mode = fields.Selection([
+        ('enabled', 'Enabled'),
         ('test', 'Test'),
-        ('prod', 'Production')], string='Environment',
-        default='test', oldname='env', required=True)
-    website_published = fields.Boolean(
-        'Visible in Portal / Website', copy=False,
-        help="Make this payment acquirer available (Customer invoices, etc.)")
-    # Formerly associated to `authorize` option from auto_confirm
+        ('disabled', 'Disabled')],required=True,
+        help='''In test mode, a fake payment is processed through a test
+             payment interface. This mode is advised when setting up the
+             acquirer. Watch out, test and production modes require
+             different credentials.''',
+        default='enabled')
+    website_published = fields.Boolean(compute='_is_published', store=True)
+    environment = fields.Selection([('test', 'Test'),('prod', 'Production')],
+        compute='_is_environment', store=True)
     capture_manually = fields.Boolean(string="Capture Amount Manually",
         help="Capture the amount from Odoo, when the delivery is completed.")
     journal_id = fields.Many2one(
@@ -112,7 +118,7 @@ class PaymentAcquirer(models.Model):
         'Help Message', translate=True,
         help='Message displayed to explain and help the payment process.')
     post_msg = fields.Html(
-        'Thanks Message', translate=True,
+        'Thanks Message', translate=True,default='',
         help='Message displayed after having done the payment process.')
     pending_msg = fields.Html(
         'Pending Message', translate=True,
@@ -181,13 +187,52 @@ class PaymentAcquirer(models.Model):
         elif electronic in self.inbound_payment_method_ids:
             self.inbound_payment_method_ids = [(2, electronic.id)]
 
+    @api.constrains('publish_mode')
+    def _onchange_mode(self):
+        if self.publish_mode in ('enabled'):
+            f = self._check_can_enable()
+            if len(f) > 0:
+                raise ValidationError(_("Some credentials are missing to activate the payment acquirer: {field}").format(field=','.join(f)))
+        if self.journal_id:
+            self.journal_id.show_on_dashboard = self.publish_mode=='enabled'
+
+    def _check_can_enable(self):
+        res = []
+        pattern = re.compile('^\s*$')
+        for v in self._required_to_enable():
+            if pattern.match(getattr(self, v,'pass')):
+                res+=[v]
+        return res
+
+    def _required_to_enable(self):
+        return []
+
+    @api.depends('publish_mode', 'module_state')
+    def _is_published(self):
+        for record in self:
+            record.website_published = record.module_state == 'installed' and record.publish_mode in ('enabled','test')
+
+    @api.depends('publish_mode')
+    def _is_environment(self):
+        for record in self:
+            record.environment = 'test' if record.publish_mode=='test' else 'prod'
+
     def _search_is_tokenized(self, operator, value):
         tokenized = self._get_feature_support()['tokenize']
         if (operator, value) in [('=', True), ('!=', False)]:
             return [('provider', 'in', tokenized)]
         return [('provider', 'not in', tokenized)]
 
+    @api.depends('name')
+    def _compute_display_as(self):
+        for acquirer in self:
+            if acquirer.provider in ('transfer', 'paypal'):
+                acquirer.display_as = acquirer.name
+            else:
+                acquirer.display_as = _("Credit Card (powered by {})").format(acquirer.name)
+
     @api.multi
+    @api.depends('provider')
     def _compute_feature_support(self):
         feature_support = self._get_feature_support()
         for acquirer in self:
@@ -286,17 +331,6 @@ class PaymentAcquirer(models.Model):
     def write(self, vals):
         image_resize_images(vals)
         return super(PaymentAcquirer, self).write(vals)
-
-    @api.multi
-    def toggle_website_published(self):
-        ''' When clicking on the website publish toggle button, the website_published is reversed and
-        the acquirer journal is set or not in favorite on the dashboard.
-        '''
-        self.ensure_one()
-        self.website_published = not self.website_published
-        if self.journal_id:
-            self.journal_id.show_on_dashboard = self.website_published
-        return True
 
     @api.multi
     def get_acquirer_extra_fees(self, amount, currency_id, country_id):
@@ -722,7 +756,7 @@ class PaymentTransaction(models.Model):
 
     @api.multi
     def _set_transaction_pending(self):
-        '''Move the transaction to the pending state(e.g. Wire Transfer).'''
+        '''Move the transaction to the pending state(e.g. Manual Payment).'''
         if any(trans.state != 'draft' for trans in self):
             raise ValidationError(_('Only draft transaction can be processed.'))
 
@@ -892,7 +926,7 @@ class PaymentTransaction(models.Model):
 
     @api.model
     def create(self, values):
-        # call custom create method if defined (i.e. ogone_create for ogone)
+        # call custom create method if defined (i.e. ingenico_create for ingenico)
         acquirer = self.env['payment.acquirer'].browse(values['acquirer_id'])
         if values.get('partner_id'):
             partner = self.env['res.partner'].browse(values['partner_id'])
@@ -1064,7 +1098,7 @@ class PaymentToken(models.Model):
 
     @api.model
     def create(self, values):
-        # call custom create method if defined (i.e. ogone_create for ogone)
+        # call custom create method if defined (i.e. ingenico_create for ingenico)
         if values.get('acquirer_id'):
             acquirer = self.env['payment.acquirer'].browse(values['acquirer_id'])
 
