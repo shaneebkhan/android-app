@@ -164,15 +164,15 @@
                         </div>
                         <div class="col-12 col-lg-6 o_setting_box" id="sale_config_online_confirmation_pay">
                             <div class="o_setting_left_pane">
-                                <field name="portal_confirmation_pay"/>
+                                <field name="group_confirmation_pay"/>
                             </div>
                             <div class="o_setting_right_pane">
-                                <label for="portal_confirmation_pay"/>
+                                <label for="group_confirmation_pay"/>
                                 <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." groups="base.group_multi_company"/>
                                 <div class="text-muted">
                                     Request an online payment to confirm orders
                                 </div>
-                                <div attrs="{'invisible': [('portal_confirmation_pay', '=', False)]}">
+                                <div attrs="{'invisible': [('group_confirmation_pay', '=', False)]}">
                                     <button name='%(payment.action_payment_acquirer)d' icon="fa-arrow-right" type="action" string="Payment Acquirers" class="btn-link"/>
                                 </div>
                             </div>
@@ -378,7 +378,7 @@
                             </div>
                         </div>
                         <div class="col-xs-12 col-md-6 o_setting_box"
-                             attrs="{'invisible': ['|', ('default_invoice_policy', '!=', 'order'), ('portal_confirmation_pay', '=', False)]}">
+                             attrs="{'invisible': ['|', ('default_invoice_policy', '!=', 'order'), ('group_confirmation_pay', '=', False)]}">
                             <div class="o_setting_left_pane">
                                 <field name="automatic_invoice"/>
                             </div>

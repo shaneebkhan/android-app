@@ -20,6 +20,11 @@
         <field name="name">Pro-forma Invoices</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
+    
+    <record id="group_confirmation_pay" model="res.groups">
+        <field name="name">Payment Acquirers</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
 
     <record id="group_sale_order_dates" model="res.groups">
         <field name="name">Manage delivery dates from sales orders.</field>
