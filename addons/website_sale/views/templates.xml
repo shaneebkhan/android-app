@@ -1609,7 +1609,7 @@
                         <t t-raw="payment_tx_id.acquirer_id.pending_msg"/>
                     </t>
                     <t t-if="payment_tx_id.state == 'done'">
-                        <t t-raw="payment_tx_id.acquirer_id.done_msg"/>
+                        <span t-if='payment_tx_id.acquirer_id.done_msg' t-raw="payment_tx_id.acquirer_id.done_msg"/>
                     </t>
                     <t t-if="payment_tx_id.state == 'cancel'">
                         <t t-raw="payment_tx_id.acquirer_id.cancel_msg"/>

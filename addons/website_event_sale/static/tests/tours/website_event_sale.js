@@ -74,13 +74,13 @@ tour.register('event_buy_tickets', {
             run: function () {}, // it's a check
         },
         {
-            content: "Select `Wire Transfer` payment method",
-            trigger: '#payment_method label:contains("Wire Transfer")',
+            content: "Select `Manual Payment` payment method",
+            trigger: '#payment_method label:contains("Manual Payment")',
         },
         {
             content: "Pay",
             //Either there are multiple payment methods, and one is checked, either there is only one, and therefore there are no radio inputs
-            extra_trigger: '#payment_method label:contains("Wire Transfer") input:checked,#payment_method:not(:has("input:radio:visible"))',
+            extra_trigger: '#payment_method label:contains("Manual Payment") input:checked,#payment_method:not(:has("input:radio:visible"))',
             trigger: 'button[id="o_payment_form_pay"]:visible',
         },
         {
