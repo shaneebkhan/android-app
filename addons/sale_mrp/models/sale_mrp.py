@@ -21,7 +21,7 @@ class SaleOrderLine(models.Model):
                         (b.product_id == order_line.product_id or
                         (b.product_tmpl_id == order_line.product_id.product_tmpl_id and not b.product_id)))
                 if relevant_bom:
-                    moves = order_line.move_ids.filtered(lambda m: m.state == 'done' and not m.scrapped)
+                    moves = order_line.move_ids.filtered(lambda m: m.state == 'done' and not m.scrapped and not m.is_sale_cancel)
                     filters = {
                         'incoming_moves': lambda m: m.location_dest_id.usage == 'customer' and (not m.origin_returned_move_id or (m.origin_returned_move_id and m.to_refund)),
                         'outgoing_moves': lambda m: m.location_dest_id.usage != 'customer' and m.to_refund

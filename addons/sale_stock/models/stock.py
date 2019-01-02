@@ -12,6 +12,7 @@ class StockLocationRoute(models.Model):
 class StockMove(models.Model):
     _inherit = "stock.move"
     sale_line_id = fields.Many2one('sale.order.line', 'Sale Line')
+    is_sale_cancel = fields.Boolean(string="Technical field used for cancel the sale order")
 
     @api.model
     def _prepare_merge_moves_distinct_fields(self):
@@ -67,7 +68,12 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
     sale_id = fields.Many2one(related="group_id.sale_id", string="Sales Order", store=True, readonly=False)
+    is_sale_cancel = fields.Boolean(string='Technical field used for cancel the sale order', compute='_is_sale_cancel')
 
+    @api.depends('move_lines.is_sale_cancel')
+    def _is_sale_cancel(self):
+        for picking in self:
+            picking.is_sale_cancel = all([ml.is_sale_cancel for ml in picking.move_lines])
 
     def _log_less_quantities_than_expected(self, moves):
         """ Log an activity on sale order that are linked to moves. The
