@@ -370,6 +370,32 @@ return core.Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
 
         var action_helper = new RunningTourActionHelper(tip.widget);
         _.delay((function () {
+            // Because of the delay, the DOM might not contain the $anchor
+            // anymore (the jQuery element obtained from the step' selector
+            // before the delay). When this happens, two cases are possible:
+            //  1) the tip selector has no match anymore, meaning that the
+            //     element has been removed from the DOM meanwhile
+            //  2) the tip selector still has a match in the DOM, but that
+            //     element has been rerendered meanwhile
+            // In the case of 1), executing the action of the tip is useless as
+            // the element doesn't exist anymore, so we have to wait for a next
+            // DOM mutation to hopefully execute this step.
+            // In the case of 2), we can't execute the action on the saved
+            // $anchor, as it has been removed from the DOM. Instead, we have to
+            // re-create an $anchor with the tip' selector and execute the step
+            // action on that new $anchor.
+            // Note that we skip this process if the $anchor is inside an iframe
+            // (hence the ownerDocument check) as it would require to check that
+            // the iframe is still in the DOM as well, and it's not that easy.
+            var anchor = tip.widget.$anchor[0];
+            if (anchor.ownerDocument === document && !document.contains(anchor)) {
+                var triggered = this._check_for_tooltip(tip, tour_name);
+                if (triggered) {
+                    this._to_next_running_step(tip, tour_name);
+                }
+                return;
+            }
+
             do_before_unload(this._consume_tip.bind(this, tip, tour_name));
 
             if (typeof tip.run === "function") {
