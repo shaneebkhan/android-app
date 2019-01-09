@@ -496,7 +496,11 @@ class StockMove(models.Model):
                 else:
                     raise UserError(_('You cannot unreserve a stock move that has been set to \'Done\'.'))
             moves_to_unreserve |= move
-        moves_to_unreserve.mapped('move_line_ids').unlink()
+
+        move_lines_to_unreserve = moves_to_unreserve.mapped('move_line_ids')
+        move_lines_to_unlink = move_lines_to_unreserve.filtered(lambda ml: float_is_zero(ml.qty_done, precision_rounding=ml.product_uom_id.rounding))
+        move_lines_to_unlink.unlink()
+        (move_lines_to_unreserve - move_lines_to_unlink).write({'product_uom_qty': 0})
         return True
 
     def _push_apply(self):
