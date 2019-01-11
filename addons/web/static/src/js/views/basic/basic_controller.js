@@ -38,6 +38,10 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         FieldManagerMixin.init.call(this, this.model);
         this.handle = params.initialState.id;
         this.mode = params.mode || 'readonly';
+        // savingDef is used to ensure that we always wait for pending save
+        // operations to complete before checking if there are changes to
+        // discard when discardChanges is called
+        this.savingDef = $.when();
     },
     /**
      * @override
@@ -109,7 +113,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
      * @see _.discardChanges
      */
     discardChanges: function (recordID, options) {
-        return this.mutex.exec(function () {})
+        return $.when(this.savingDef)
             .then(this._discardChanges.bind(this, recordID || this.handle, options));
     },
     /**
@@ -183,11 +187,12 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
         // mutex-protected as commitChanges function of x2m has to be aware of
         // all final changes made to a row.
         var self = this;
-        return this.mutex.getUnlockedDef().then(function () {
+        this.savingDef = this.mutex.getUnlockedDef().then(function () {
             return self.renderer.commitChanges(recordID || self.handle).then(function () {
                 return self.mutex.exec(self._saveRecord.bind(self, recordID, options));
             });
         });
+        return this.savingDef;
     },
     /**
      * @override
