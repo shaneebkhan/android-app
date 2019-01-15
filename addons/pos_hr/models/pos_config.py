@@ -3,7 +3,9 @@
 from functools import partial
 
 from odoo import models, fields
+from odoo.addons.point_of_sale.models.pos_config import FORBIDDEN_CONFIG_FIELDS
 
+FORBIDDEN_CONFIG_FIELDS |= set(['employee_ids'])
 
 class PosConfig(models.Model):
     _inherit = 'pos.config'

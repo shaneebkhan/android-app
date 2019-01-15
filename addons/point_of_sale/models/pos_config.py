@@ -5,7 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, UserError
 
 
 class AccountCashboxLine(models.Model):
@@ -35,9 +35,15 @@ class AccountBankStmtCashWizard(models.Model):
                 vals['cashbox_lines_ids'] = [[0, 0, {'coin_value': line.coin_value, 'number': 0, 'subtotal': 0.0}] for line in lines]
         return vals
 
+# fields that cannot be modified when there is a running pos session
+FORBIDDEN_CONFIG_FIELDS = set([
+    'active', 'journal_id', 'journal_ids', 'module_pos_restaurant', 'picking_type_id', 'sequence_id',
+])
+
 class PosConfig(models.Model):
     _name = 'pos.config'
     _description = 'Point of Sale Configuration'
+
 
     def _default_sale_journal(self):
         journal = self.env.ref('point_of_sale.pos_sale_journal', raise_if_not_found=False)
@@ -367,8 +373,23 @@ class PosConfig(models.Model):
 
     @api.multi
     def write(self, vals):
-        result = super(PosConfig, self).write(vals)
+        forbidden_fields = set(vals) & FORBIDDEN_CONFIG_FIELDS
+        if forbidden_fields:
+            running_sessions = self.env['pos.session'].search([
+                ('config_id', 'in', self.ids),
+                ('state', '!=', 'closed'),
+            ])
+            if running_sessions:
+                forbidden_configs = running_sessions.mapped('config_id') & self
+                fields_label = [self._fields[key].get_description(self.env)['string'] for key in forbidden_fields]
+                raise UserError(
+                    _("You cannot modify the values of %s while your session is still open. "
+                      "Close your session first before modifying the configuration of %s")
+                    % (', '.join(fields_label),
+                       ', '.join(config.name for config in forbidden_configs))
+                )
 
+        result = super(PosConfig, self).write(vals)
         config_display = self.filtered(lambda c: c.is_posbox and c.iface_customer_facing_display and not (c.customer_facing_display_html or '').strip())
         if config_display:
             super(PosConfig, config_display).write({'customer_facing_display_html': self._compute_default_customer_html()})

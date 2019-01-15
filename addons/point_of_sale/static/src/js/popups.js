@@ -98,6 +98,16 @@ var ErrorPopupWidget = PopupWidget.extend({
 gui.define_popup({name:'error', widget: ErrorPopupWidget});
 
 
+var ErrorJsonPopupWidget = PopupWidget.extend({
+    template:'ErrorJsonPopupWidget',
+    show: function(options){
+        this._super(options);
+        this.gui.play_sound('error');
+    },
+});
+gui.define_popup({name:'error-json', widget: ErrorJsonPopupWidget});
+
+
 var ErrorTracebackPopupWidget = ErrorPopupWidget.extend({
     template:'ErrorTracebackPopupWidget',
     show: function(opts) {

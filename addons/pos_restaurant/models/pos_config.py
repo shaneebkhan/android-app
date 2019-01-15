@@ -2,6 +2,9 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, fields, models
+from odoo.addons.point_of_sale.models.pos_config import FORBIDDEN_CONFIG_FIELDS
+
+FORBIDDEN_CONFIG_FIELDS |= set(['is_table_management', 'floor_ids'])
 
 
 class PosConfig(models.Model):

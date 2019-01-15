@@ -3,9 +3,14 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+# fields that cannot be modified when there is a running pos session
+FORBIDDEN_PRODUCT_FIELDS = set([
+    'available_in_pos', 'pos_categ_id'
+])
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
+
 
     available_in_pos = fields.Boolean(string='Available in POS', help='Check if you want this product to appear in the Point of Sale.', default=False)
     to_weight = fields.Boolean(string='To Weigh With Scale', help="Check if the product should be weighted using the hardware scale integration.")
@@ -25,6 +30,18 @@ class ProductTemplate(models.Model):
     def _onchange_sale_ok(self):
         if not self.sale_ok:
             self.available_in_pos = False
+
+    @api.multi
+    def write(self, vals):
+        forbidden_fields = set(vals) & FORBIDDEN_PRODUCT_FIELDS
+        if forbidden_fields:
+            if self.env['pos.session'].search_count([('state', '!=', 'closed')]):
+                fields_label = [self._fields[key].get_description(self.env)['string'] for key in forbidden_fields]
+                raise UserError(
+                    _("You cannot modify the fields %s while there is an active PoS session")
+                    % ", ".join(fields_label)
+                )
+        return super(ProductTemplate, self).write(vals)
 
 
 class ProductProduct(models.Model):

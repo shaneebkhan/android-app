@@ -31,10 +31,6 @@
           <field name="name">Chairs</field>
         </record>
 
-        <record model="pos.config" id="pos_config_main">
-            <field name="iface_start_categ_id" ref="pos_category_chairs"/>
-            <field name="start_category">True</field>
-        </record>
 
         <!-- Resource: product.product -->
         <record id="stock.product_cable_management_box" model="product.product">

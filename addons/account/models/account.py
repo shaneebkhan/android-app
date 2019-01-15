@@ -451,6 +451,23 @@ class AccountAccount(models.Model):
         partner_prop_acc = self.env['ir.property'].search([('value_reference', 'in', values)], limit=1)
         if partner_prop_acc:
             raise UserError(_('You cannot remove/deactivate an account which is set on a customer or vendor.'))
+        default_journals = self.env['account.journal'].search([
+            ('default_credit_account_id', 'in', self.ids),
+            ('default_debit_account_id', 'in', self.ids)
+        ])
+        if default_journals:
+            used_accounts = default_journals.mapped('default_credit_account_id')
+            used_accounts |= default_journals.mapped('default_debit_account_id')
+            used_accounts = used_accounts & self
+
+            error_msg = _("You cannot remove an account that is used as a default credit or debit account in a journal: \n")
+            for account in used_accounts:
+                journals = [journal for journal in default_journals
+                                if account in [journal.default_credit_account_id, journal.default_debit_account_id]]
+
+                error_msg += _("Account: %s - Journal(s): %s \n") % (account.name, ', '.join(journal.name for journal in journals))
+            raise UserError(error_msg)
+
         return super(AccountAccount, self).unlink()
 
     @api.multi

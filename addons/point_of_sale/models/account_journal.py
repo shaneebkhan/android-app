@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 # Copyright (C) 2004-2008 PC Solutions (<http://pcsol.be>). All Rights Reserved
-from odoo import fields, models, api
+from odoo import fields, models, api, _
+from odoo.exceptions import UserError
 
 
 class AccountJournal(models.Model):
@@ -27,3 +28,39 @@ class AccountJournal(models.Model):
     def onchange_type(self):
         if self.type not in ['bank', 'cash']:
             self.journal_user = False
+
+    @api.multi
+    def write(self, vals):
+        """ Prevent to archive journals that are still used in an opened session """
+        if not vals.get('active', True):
+            self._check_pos_sessions(_("You cannot archive a journal that is used in a PoS session, close the session(s) first: \n"))
+        return super(AccountJournal, self).write(vals)
+
+    @api.multi
+    def unlink(self):
+        """ Prevent removing the journals that are still used in opened sessions """
+        self._check_pos_sessions(_("You cannot remove a journal that is used in a PoS session, close the session(s) first: \n"))
+
+        return super(AccountJournal, self).unlink()
+
+    def _check_pos_sessions(self, error_msg):
+        confs = self.env['pos.session'].search([
+            ('state', '!=', 'closed'),'|', '|',
+            ('config_id.journal_id', 'in', self.ids),
+            ('config_id.journal_ids', 'in', self.ids),
+            ('config_id.invoice_journal_id', 'in', self.ids),
+        ]).mapped('config_id')
+        if confs:
+            # find the problematic journal back from the one in self
+            journals = confs.mapped('journal_id')
+            journals |= confs.mapped('journal_ids')
+            journals |= confs.mapped('invoice_journal_id')
+            journals = journals & self
+
+            for journal in journals:
+                configs = [config for config in confs
+                        if journal in [config.journal_id, config.invoice_journal_id] or journal in config.journal_ids]
+
+                error_msg += _("Journal: %s - PoS Config(s): %s \n") % (journal.name, ', '.join(config.name for config in configs))
+
+            raise UserError(error_msg)

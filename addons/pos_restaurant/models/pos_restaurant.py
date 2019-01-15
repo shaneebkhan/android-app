@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class RestaurantFloor(models.Model):
@@ -16,6 +17,30 @@ class RestaurantFloor(models.Model):
     table_ids = fields.One2many('restaurant.table', 'floor_id', string='Tables', help='The list of tables in this floor')
     sequence = fields.Integer('Sequence', help='Used to sort Floors', default=1)
 
+    @api.multi
+    def write(self, vals):
+        if not vals.get('active', True):
+            self._check_pos_sessions(_("You cannot archive a floor that is used in a PoS session, close the session(s) first: \n"))
+        return super(RestaurantFloor, self).write(vals)
+
+    @api.multi
+    def unlink(self):
+        self._check_pos_sessions(_("You cannot remove a floor that is used in a PoS session, close the session(s) first: \n"))
+        return super(RestaurantFloor, self).unlink()
+
+    def _check_pos_sessions(self, error_msg):
+        confs = self.env['pos.session'].search([
+            ('state', '!=', 'closed'),
+            ('config_id.floor_ids', 'in', self.ids)
+        ]).mapped('config_id')
+        if confs:
+            floors = confs.mapped('floor_ids') & self
+
+            for floor in floors:
+                config = [config for config in confs if floor in config.floor_ids][0]
+
+                error_msg += _("Floor: %s - PoS Config: %s \n") % (floor.name, config.name)
+            raise UserError(error_msg)
 
 class RestaurantTable(models.Model):
 
