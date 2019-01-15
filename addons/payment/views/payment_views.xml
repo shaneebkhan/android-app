@@ -87,11 +87,9 @@
                             <page string="Messages">
                                 <group>
                                     <field name="pre_msg" attrs="{'invisible': 1}"/>
-                                    <field name="post_msg"/>
                                     <field name="pending_msg"/>
                                     <field name="done_msg"/>
                                     <field name="cancel_msg"/>
-                                    <field name="error_msg"/>
                                 </group>
                             </page>
                         </notebook>

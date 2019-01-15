@@ -117,25 +117,18 @@ class PaymentAcquirer(models.Model):
     pre_msg = fields.Html(
         'Help Message', translate=True,
         help='Message displayed to explain and help the payment process.')
-    post_msg = fields.Html(
-        'Thanks Message', translate=True,default='',
-        help='Message displayed after having done the payment process.')
     pending_msg = fields.Html(
         'Pending Message', translate=True,
-        default=lambda s: _('<i>Pending,</i> Your online payment has been successfully processed. But your order is not validated yet.'),
+        default=lambda s: _('Your payment has been successfully processed but is waiting for approval.'),
         help='Message displayed, if order is in pending state after having done the payment process.')
     done_msg = fields.Html(
         'Done Message', translate=True,
-        default=lambda s: _('<i>Done,</i> Your online payment has been successfully processed. Thank you for your order.'),
+        default=lambda s: _('Your payment has been successfully processed. Thank you!'),
         help='Message displayed, if order is done successfully after having done the payment process.')
     cancel_msg = fields.Html(
         'Cancel Message', translate=True,
-        default=lambda s: _('<i>Cancel,</i> Your payment has been cancelled.'),
+        default=lambda s: _('Your payment has been cancelled.'),
         help='Message displayed, if order is cancel during the payment process.')
-    error_msg = fields.Html(
-        'Error Message', translate=True,
-        default=lambda s: _('<i>Error,</i> Please be aware that an error occurred during the transaction. The order has been confirmed but will not be paid. Do not hesitate to contact us if you have any questions on the status of your order.'),
-        help='Message displayed, if error is occur during the payment process.')
     save_token = fields.Selection([
         ('none', 'Never'),
         ('ask', 'Let the customer decide'),
@@ -822,7 +815,7 @@ class PaymentTransaction(models.Model):
             raise ValidationError(_('Only draft transaction can be processed.'))
 
         self.write({
-            'state': 'error',
+            'state': 'cancel',
             'date': datetime.now().strftime(DEFAULT_SERVER_DATETIME_FORMAT),
             'state_message': msg,
         })

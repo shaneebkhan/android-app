@@ -26,22 +26,22 @@ class PaymentWizard(models.TransientModel):
     manual_name = fields.Char("Method",  default=lambda self: self._get_default_payment_acquirer_onboarding_value('manual_name'))
     journal_name = fields.Char("Bank Name", default=lambda self: self._get_default_payment_acquirer_onboarding_value('journal_name'))
     acc_number = fields.Char("Account Number",  default=lambda self: self._get_default_payment_acquirer_onboarding_value('acc_number'))
-    manual_post_msg = fields.Html("Payment Instructions", default=lambda self:_('<h3>Please make a payment to: </h3><ul><li>Bank: %bank%</li><li>Account Number: %account%</li><li>Account Holder: %holder%</li></ul>'))
+    manual_pending_msg = fields.Html("Payment Instructions", default=lambda self:_('<h3>Please make a payment to: </h3><ul><li>Bank: %bank%</li><li>Account Number: %account%</li><li>Account Holder: %holder%</li></ul>'))
 
-    @api.constrains('manual_post_msg')
-    def _set_manual_post_msg_value(self):
-        if '%bank%' not in str(self.manual_post_msg):
+    @api.constrains('manual_pending_msg')
+    def _set_manual_pending_msg_value(self):
+        if '%bank%' not in str(self.manual_pending_msg):
             raise models.ValidationError(_("Please add '%bank%' in the Payment Instructions"))
-        if '%account%' not in str(self.manual_post_msg):
+        if '%account%' not in str(self.manual_pending_msg):
             raise models.ValidationError(_("Please add '%account%' in the Payment Instructions"))
-        if '%holder%' not in str(self.manual_post_msg):
+        if '%holder%' not in str(self.manual_pending_msg):
             raise models.ValidationError(_("Please add '%holder%' in the Payment Instructions"))
-        # self.manual_post_msg = _('<h3>Please make a payment to: </h3><ul><li>Bank: %s</li><li>Account Number: %s</li><li>Account Holder: %s</li></ul>') %\
+        # self.manual_pending_msg = _('<h3>Please make a payment to: </h3><ul><li>Bank: %s</li><li>Account Number: %s</li><li>Account Holder: %s</li></ul>') %\
         #                        (self.journal_name or _("Bank") , self.acc_number or _("Account"), self.env.user.company_id.name)
 
     _payment_acquirer_onboarding_cache = {}
     _data_fetched = False
-    #_constraint = [_set_manual_post_msg_value, "Message of wrong entry", ['manual_post_msg']]
+    #_constraint = [_set_manual_pending_msg_value, "Message of wrong entry", ['manual_pending_msg']]
 
     def _get_manual_payment_acquirer(self, env=None):
         if env is None:
@@ -81,7 +81,7 @@ class PaymentWizard(models.TransientModel):
         journal = manual_payment.journal_id
 
         self._payment_acquirer_onboarding_cache['manual_name'] = manual_payment['name']
-        self._payment_acquirer_onboarding_cache['manual_post_msg'] = manual_payment['post_msg']
+        self._payment_acquirer_onboarding_cache['manual_pending_msg'] = manual_payment['pending_msg']
         self._payment_acquirer_onboarding_cache['journal_name'] = journal.name if journal.name != "Bank" else ""
         self._payment_acquirer_onboarding_cache['acc_number'] = journal.bank_acc_number
 
@@ -136,7 +136,7 @@ class PaymentWizard(models.TransientModel):
                         'Please create one from the Payment Acquirer menu.'
                     ))
                 manual_acquirer.name = self.manual_name
-                manual_acquirer.post_msg = self.manual_post_msg.replace('%bank%', self.journal_name).replace('%account%', self.acc_number).replace('%holder%', self.env.user.company_id.name)
+                manual_acquirer.pending_msg = self.manual_pending_msg.replace('%bank%', self.journal_name).replace('%account%', self.acc_number).replace('%holder%', self.env.user.company_id.name)
                 manual_acquirer.publish_mode = 'enabled'
 
                 journal = manual_acquirer.journal_id

@@ -30,7 +30,7 @@ class AdyenController(http.Controller):
         tx = post.get('merchantReference') and request.env['payment.transaction'].sudo().search([('reference', 'in', [post.get('merchantReference')])], limit=1)
         if post.get('eventCode') in ['AUTHORISATION'] and tx:
             states = (post.get('merchantReference'), post.get('success'), tx.state)
-            if (post.get('success') == 'true' and tx.state == 'done') or (post.get('success') == 'false' and tx.state in ['cancel', 'error']):
+            if (post.get('success') == 'true' and tx.state == 'done') or (post.get('success') == 'false' and tx.state in ['cancel']):
                 _logger.info('Notification from Adyen for the reference %s: received %s, state is %s', states)
             else:
                 _logger.warning('Notification from Adyen for the reference %s: received %s but state is %s', states)
