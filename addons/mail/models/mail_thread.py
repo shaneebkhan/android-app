@@ -1262,15 +1262,7 @@ class MailThread(models.AbstractModel):
             if dest_aliases:
                 routes = []
                 for alias in dest_aliases:
-                    user_id = alias.alias_user_id.id
-                    if not user_id:
-                        # TDE note: this could cause crashes, because no clue that the user
-                        # that send the email has the right to create or modify a new document
-                        # Fallback on user_id = uid
-                        # Note: recognized partners will be added as followers anyway
-                        # user_id = self._message_find_user_id(message)
-                        user_id = self._uid
-                        _logger.info('No matching user_id for the alias %s', alias.alias_name)
+                    user_id = self._message_find_user_id(email_from=email_from, alias=alias)
                     route = (alias.alias_model_id.model, alias.alias_force_thread_id, safe_eval(alias.alias_defaults), user_id, alias)
                     route = self.message_route_verify(
                         message, message_dict, route,
@@ -1286,14 +1278,15 @@ class MailThread(models.AbstractModel):
         if fallback_model:
             # no route found for a matching reference (or reply), so parent is invalid
             message_dict.pop('parent_id', None)
+            user_id = self._message_find_user_id(email_from=email_from, fallback_model=fallback_model)
             route = self.message_route_verify(
                 message, message_dict,
-                (fallback_model, thread_id, custom_values, self._uid, None),
+                (fallback_model, thread_id, custom_values, user_id, None),
                 update_author=True, assert_model=True)
             if route:
                 _logger.info(
                     'Routing mail from %s to %s with Message-Id %s: fallback to model:%s, thread_id:%s, custom_values:%s, uid:%s',
-                    email_from, email_to, message_id, fallback_model, thread_id, custom_values, self._uid)
+                    email_from, email_to, message_id, fallback_model, thread_id, custom_values, user_id)
                 return [route]
 
         # ValueError if no routes found and if no bounce occured
@@ -1302,6 +1295,34 @@ class MailThread(models.AbstractModel):
             'Create an appropriate mail.alias or force the destination model.' %
             (email_from, email_to, message_id)
         )
+
+    @api.multi
+    def _message_find_user_id(self, email_from, alias=None, fallback_model=False):
+        email_from = tools.email_normalize(email_from)
+        user = self.env['res.users']
+        user_id = model = False
+        if alias:
+            model = alias.alias_model_id.model
+            if alias.alias_parent_model_id and alias.alias_parent_thread_id:
+                record = self.env[alias.alias_parent_model_id.model].browse(alias.alias_parent_thread_id)
+                if hasattr(record, 'message_partner_ids'):
+                    user_id = record.mapped('message_partner_ids.user_ids').filtered(lambda x: x.email_normalized == email_from).id
+            if not user_id:
+                user_id = user.search([('email_normalized', '=', email_from)], limit=1).id
+            if not user_id:
+                user_id = alias.alias_user_id.id
+        elif fallback_model:
+            model = fallback_model
+            user_id = user.search([('email_normalized', '=', email_from)], limit=1).id
+
+        if user_id and model:
+            try:
+                self.env[model].sudo(user_id).check_access_rights('create')
+            except exceptions.AccessError:
+                user_id = self._uid
+        else:
+            user_id = self._uid
+        return user_id
 
     @api.model
     def message_route_process(self, message, message_dict, routes):
@@ -1445,7 +1466,13 @@ class MailThread(models.AbstractModel):
         name_field = self._rec_name or 'name'
         if name_field in fields and not data.get('name'):
             data[name_field] = msg_dict.get('subject', '')
-        return self.create(data)
+        try:
+            with self.env.cr.savepoint():
+                record = self.create(data)
+        except exceptions.AccessError:
+            # incase of record rule fails use super user
+            record = self.sudo().create(data)
+        return record
 
     @api.multi
     def message_update(self, msg_dict, update_vals=None):

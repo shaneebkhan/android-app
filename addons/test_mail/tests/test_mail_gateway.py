@@ -262,6 +262,27 @@ class TestMailgateway(BaseFunctionalTest, MockEmails):
         self.assertEqual(formataddr((self.partner_1.name, self.partner_1.email)), self._mails[0].get('email_to')[0],
                          'message_process: email should be sent to Sylvie')
 
+    @mute_logger('odoo.addons.mail.models.mail_thread', 'odoo.models')
+    def test_message_process_alias_accessright(self):
+        # create public user with no access right on mail.test.simple
+        user_1 = mail_new_test_user(self.env, login='B', groups='base.group_public', name='Brice Denisse', email='from.test@example.com')
+        rec = self.format_and_process(
+            MAIL_TEMPLATE,
+            email_from=formataddr((user_1.partner_id.name, user_1.partner_id.email)),
+            msg_id='<1198923581.41972151344608186760.JavaMail.new1@agrolait.com>',
+            subject='Tiktok1')
+        self.assertNotEqual(user_1, rec.create_uid, 'User 1 do not have access right so record must be created through super user.')
+
+        # give access right of create to user 1 and check create user for mail.test.simple
+        user_1.write({'groups_id': [(4, self.env.ref('base.group_user').id)]})
+        rec = self.format_and_process(
+            MAIL_TEMPLATE,
+            email_from=formataddr((user_1.partner_id.name, user_1.partner_id.email)),
+            msg_id='<1198923581.41972151344608186760.JavaMail.new2@agrolait.com>',
+            subject='Tiktok2')
+        self.assertEqual(user_1, rec.create_uid, 'Record must be created through user 1.')
+
+
     # --------------------------------------------------
     # Email Management
     # --------------------------------------------------
