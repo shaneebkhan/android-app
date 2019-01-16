@@ -100,7 +100,7 @@ class Lead2OpportunityPartner(models.TransientModel):
         """
         self.ensure_one()
         if self.opportunity_ids and self.active_id not in self.opportunity_ids:
-            raise UserError(_('The current lead has been removed from the list of opportunities to merge. Please add it back to the list and try again'))
+            raise UserError(_('The current lead has been removed from the list of opportunities to merge. Please add it back to the list and try again.'))
 
         values = {
             'team_id': self.team_id.id,

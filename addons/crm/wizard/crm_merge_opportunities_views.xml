@@ -6,10 +6,6 @@
             <field name="model">crm.merge.opportunity</field>
             <field name="arch" type="xml">
                 <form string="Merge Leads/Opportunities">
-                    <group string="Assign opportunities to">
-                        <field name="user_id" class="oe_inline"/>
-                        <field name="team_id" class="oe_inline"/>
-                    </group>
                     <group string="Select Leads/Opportunities">
                         <field name="opportunity_ids" nolabel="1">
                             <tree>
@@ -24,6 +20,13 @@
                                 <field name="team_id"/>
                             </tree>
                         </field>
+                    </group>
+                    <group>
+                        <field name="merge_destination_opportunity_id" domain="[('id', 'in', opportunity_ids)]" options="{'no_create': True}"/>
+                    </group>
+                    <group string="Assign opportunities to">
+                        <field name="user_id"/>
+                        <field name="team_id"/>
                     </group>
                     <footer>
                         <button name="action_merge" type="object" string="Merge" class="btn-primary"/>
