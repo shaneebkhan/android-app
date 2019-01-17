@@ -4132,6 +4132,51 @@ QUnit.module('basic_fields', {
         form.destroy();
     });
 
+    QUnit.module('PhoneInternationalWidget');
+
+    QUnit.test('use phone_intl widget for proper validation in form view', async function (assert) {
+        assert.expect(4);
+
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch:'<form string="Partners">' +
+                    '<sheet>' +
+                        '<group>' +
+                            '<field name="foo" widget="phone_intl"/>' +
+                        '</group>' +
+                    '</sheet>' +
+                '</form>',
+            res_id: 1,
+            viewOptions: {
+                mode: 'edit',
+            },
+            mockRPC: function (route, args) {
+                if (route === "/web/session/get_geoip_info") {
+                    return Promise.resolve();
+                }
+                if (args.method === 'write') {
+                    assert.strictEqual(args.args[1].foo, '+91 98765 43210',
+                        'Should have sent properly formatted number to be saved');
+                }
+                return this._super.apply(this, arguments);
+            },
+        });
+
+        var $phoneField = form.$('.intl-tel-input');
+        assert.strictEqual($phoneField.length, 1, "should have correct input for the field with 'phone_intl' widget ");
+        await testUtils.dom.click($phoneField.find('.selected-flag'));
+        await testUtils.dom.click($phoneField.find('.country-list li[data-dial-code="91"]'));
+        assert.strictEqual($phoneField.find('.selected-dial-code').text(), '+91', "India should be selected");
+        await testUtils.form.clickSave(form);
+        assert.containsOnce(form, '.o_field_phone.o_field_invalid', "should have an error while saving form with invalid number");
+        await testUtils.fields.editInput($phoneField.find('input.o_input'), '9876543210');
+        await testUtils.form.clickSave(form);
+
+        form.destroy();
+    });
+
     QUnit.module('PriorityWidget');
 
     QUnit.test('priority widget when not set', async function (assert) {

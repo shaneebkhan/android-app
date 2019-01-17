@@ -34,6 +34,7 @@ registry
     .add('handle', basic_fields.HandleWidget)
     .add('email', basic_fields.FieldEmail)
     .add('phone', basic_fields.FieldPhone)
+    .add('phone_intl', basic_fields.FieldPhoneInternational)
     .add('url', basic_fields.UrlWidget)
     .add('CopyClipboardText', basic_fields.TextCopyClipboard)
     .add('CopyClipboardChar', basic_fields.CharCopyClipboard)

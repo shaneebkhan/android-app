@@ -52,3 +52,10 @@
 .form-field input[type=file].form-control {
     height: 100%;
 }
+
+.s_website_form .form-field .intl-tel-input .flag-container,
+.s_website_form .form-field .intl-tel-input .flag-container:hover {
+    .selected-flag {
+        background-color: inherit;
+    }
+}

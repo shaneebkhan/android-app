@@ -847,6 +847,17 @@ class Session(http.Controller):
         # return all installed modules. Web client is smart enough to not load a module twice
         return module_installed(environment=request.env(user=odoo.SUPERUSER_ID))
 
+    @http.route('/web/session/get_geoip_info', type='json', auth="public")
+    def get_geoip_info(self):
+        """
+        Used to get dictionary containing geoip related information
+        (Returns empty dict if details are not available)
+
+        :returns: dict with geoip related info or {}
+        :rtype: dict
+        """
+        return request.session.geoip
+
     @http.route('/web/session/save_session_action', type='json', auth="user")
     def save_session_action(self, the_action):
         """

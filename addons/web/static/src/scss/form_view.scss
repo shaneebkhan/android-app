@@ -109,6 +109,14 @@
             max-width: map-get($container-max-widths, md) - (2 * $o-horizontal-padding);
         }
 
+        // For FieldPhoneInternational widget
+        .o_field_phone .intl-tel-input .flag-container,
+        .o_field_phone .intl-tel-input .flag-container:hover {
+            .selected-flag {
+                background-color: inherit;
+            }
+        }
+
         @include media-breakpoint-up(vsm, $o-extra-grid-breakpoints) {
             .o_row {
                 > .o_field_widget, > div {
@@ -763,3 +771,4 @@
         }
     }
 }
+

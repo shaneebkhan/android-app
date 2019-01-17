@@ -606,7 +606,7 @@
                                        string="Phone"/>
                                 <field name="phone"
                                        attrs="{'invisible': [('partner_address_phone', '!=', False)]}"
-                                       widget="phone"/>
+                                       widget="phone_intl"/>
                             </group>
 
                             <group>

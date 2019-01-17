@@ -1293,6 +1293,139 @@ var FieldPhone = FieldEmail.extend({
     },
 });
 
+var FieldPhoneInternational = FieldPhone.extend({
+    cssLibs: [
+        '/web/static/lib/intl-tel-input/css/intlTelInput.css',
+    ],
+    jsLibs: [
+        '/web/static/lib/intl-tel-input/js/utils.js',
+        '/web/static/lib/intl-tel-input/js/intlTelInput.js',
+    ],
+    events: _.extend({}, FieldPhone.prototype.events, {
+        'countrychange .o_input': '_onCountryChange',
+        'blur .selected-flag': '_onBlurSelectedFlag',
+    }),
+
+    /**
+     * @override
+     */
+    start: function () {
+        if (this.mode === 'edit') {
+            // Library needs a parent container to set up the plugin,
+            // so we wrap the input within a div tag.
+            var $div = $("<div><input></div>").addClass(this.$el.attr('class'));
+            var $input = $div.find('input');
+            this.intlTel = this._makeIntlTel($input[0]);
+            this.intlTelSet = false;
+
+            this._prepareInput($input);
+            this._replaceElement($div);
+        }
+        return this._super.apply(this, arguments);
+    },
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    isValid: function () {
+        if (this.$input && this.$input.val().trim()) {
+            return this.intlTel.isValidNumber();
+        }
+        return this._super();
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    _getGeoIpValue: function (callback) {
+        var defaultCountryCode = 'US';
+        var always = function (res) {
+            var countryCode = (res && res.country_code) ? res.country_code : defaultCountryCode;
+            callback(countryCode);
+        };
+        this._rpc({ route: '/web/session/get_geoip_info' }).then(always).guardedCatch(always);
+    },
+    /**
+     * @override
+     * @private
+     */
+    _getValue: function () {
+        if (this.$input.val().trim()) {
+            return this.intlTel.getNumber(intlTelInputUtils.numberFormat.INTERNATIONAL);
+        }
+        return '';
+    },
+    /**
+     * create intlTelInput object from library
+     *
+     * @private
+     */
+    _makeIntlTel(input) {
+        return intlTelInput(input, {
+            separateDialCode: true,
+            initialCountry: 'auto',
+            customContainer: 'w-100',
+            geoIpLookup: this._getGeoIpValue.bind(this),
+        });
+    },
+    /**
+     * @override
+     * @private
+     */
+    _renderEdit: function () {
+        if (this.value) {
+            this.intlTel.setNumber(this.value);
+        }
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    /**
+     * Close the drop-down when clicking outside
+     *
+     * @private
+     */
+    _onBlurSelectedFlag: function () {
+        this.intlTel._closeDropdown();
+    },
+    /**
+     * Listens to change event triggered by library when country is changed
+     */
+    _onCountryChange: function () {
+        var value = this._getValue();
+        var options = {doNotSetDirty: false};
+        // While initializing, library triggers the event to set up country flag
+        // for existing number and we display formatted number which should not
+        // mark the record as dirty to avoid warning while discarding
+        if (!this.intlTelSet) {
+            options.doNotSetDirty = true;
+            this.intlTelSet = true;
+        }
+        this.intlTel.setNumber(value);
+        this._setValue(value, options);
+    },
+    /**
+     * @override
+     * @private
+     */
+    _onKeydown: function (ev) {
+        // To allow movement using up / down key in flag drop-down
+        if ($(ev.target).is('input')) {
+            return this._super.apply(this, arguments);
+        }
+    },
+});
+
 var UrlWidget = InputField.extend({
     description: _lt("URL"),
     className: 'o_field_url',
@@ -3035,6 +3168,7 @@ return {
     FieldMonetary: FieldMonetary,
     FieldPercentPie: FieldPercentPie,
     FieldPhone: FieldPhone,
+    FieldPhoneInternational: FieldPhoneInternational,
     FieldProgressBar: FieldProgressBar,
     FieldText: FieldText,
     ListFieldText: ListFieldText,

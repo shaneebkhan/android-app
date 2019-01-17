@@ -1696,6 +1696,14 @@ order.
 
     - Supported field types: *char*
 
+- phone_intl (FieldPhoneInternational)
+     In addition to what *phone* widget does, this field stores the numbers in
+    international format. For doing so, it uses external library `intl-tel-input`_
+    which also helps validation of a number, and displays flag and placeholder
+    for the selected country.
+
+    - Supported field types: *char*
+
 - url (UrlWidget)
     This field displays an url (in readonly mode). The main reason to use it is
     that it is rendered as an anchor tag with the proper css classes and href.
@@ -2276,3 +2284,5 @@ For more information, look into the *control_panel.js* file.
     http://api.jquery.com/delegate/
 
 .. _datepicker: https://github.com/Eonasdan/bootstrap-datetimepicker
+
+.. _intl-tel-input: https://intl-tel-input.com/
