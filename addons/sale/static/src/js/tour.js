@@ -24,13 +24,11 @@ tour.register('sale_tour', {
     content: _t("Let's create a new quotation.<br/><i>Note that colored buttons usually point to the next logical actions.</i>"),
     position: "bottom",
 }, {
-    trigger: ".o_form_editable .o_field_many2one[name='partner_id']",
+    trigger: ".o_form_editable .o_field_many2one[name='partner_id'] input",
     extra_trigger: ".o_sale_order",
     content: _t("Write the name of your customer to create one on the fly, or select an existing one."),
     position: "bottom",
-    run: function (actions) {
-        actions.text("Agrolait", this.$anchor.find("input"));
-    },
+    run: 'text Agrolait'
 }, {
     trigger: ".ui-menu-item > a",
     auto: true,
