@@ -761,6 +761,7 @@ var StatementModel = BasicModel.extend({
                 args: [ids, values],
                 context: self.context,
             })
+            .then(self._validatePostProcess.bind(self))
             .then(function () {
                 return {handles: handles};
             });
@@ -1258,6 +1259,17 @@ var StatementModel = BasicModel.extend({
         if (prop.tax_id && prop.is_tax) result.tax_line_id = prop.tax_id.id;
         if (prop.reconcileModelId) result.reconcile_model_id = prop.reconcileModelId
         return result;
+    },
+
+    /**
+     * Used as a hook to handle return values of the validate's line process.
+     * @private
+     * @param {object} params
+     * @param {object[]} params.moves list of processed account.move
+     * @returns Deferred
+     */
+    _validatePostProcess: function (params) {
+        return $.when();
     },
 });
 
