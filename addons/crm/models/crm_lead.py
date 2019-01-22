@@ -674,12 +674,7 @@ class Lead(models.Model):
         # Sorting the leads/opps according to the confidence level of its stage, which relates to the probability of winning it
         # The confidence level increases with the stage sequence, except when the stage probability is 0.0 (Lost cases)
         # An Opportunity always has higher confidence level than a lead, unless its stage probability is 0.0
-        def opps_key(opportunity):
-            sequence = -1
-            if opportunity.stage_id.on_change:
-                sequence = opportunity.stage_id.sequence
-            return (sequence != -1 and opportunity.type == 'opportunity'), sequence, -opportunity.id
-        opportunities = self.sorted(key=opps_key, reverse=True)
+        opportunities = self._sort_by_confidence_level(reverse=True)
 
         # get SORTED recordset of head and tail, and complete list
         opportunities_head = opportunities[0]
@@ -712,6 +707,16 @@ class Lead(models.Model):
         opportunities_tail.sudo().unlink()
 
         return opportunities_head
+
+    @api.multi
+    def _sort_by_confidence_level(self, reverse=False):
+        def opps_key(opportunity):
+            sequence = -1
+            if opportunity.stage_id.on_change:
+                sequence = opportunity.stage_id.sequence
+            return (sequence != -1 and opportunity.type == 'opportunity'), sequence, -opportunity.id
+
+        return self.sorted(key=opps_key, reverse=reverse)
 
     @api.multi
     def get_duplicated_leads(self, partner_id, include_lost=False):
