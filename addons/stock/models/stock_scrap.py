@@ -25,6 +25,7 @@ class StockScrap(models.Model):
         'Reference',  default=lambda self: _('New'),
         copy=False, readonly=True, required=True,
         states={'done': [('readonly', True)]})
+    company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.user.company_id, required=True)
     origin = fields.Char(string='Source Document')
     product_id = fields.Many2one(
         'product.product', 'Product', domain=[('type', 'in', ['product', 'consu'])],
@@ -93,6 +94,7 @@ class StockScrap(models.Model):
         return {
             'name': self.name,
             'origin': self.origin or self.picking_id.name or self.name,
+            'company_id': self.company_id.id,
             'product_id': self.product_id.id,
             'product_uom': self.product_uom_id.id,
             'product_uom_qty': self.scrap_qty,
@@ -102,6 +104,7 @@ class StockScrap(models.Model):
             'move_line_ids': [(0, 0, {'product_id': self.product_id.id,
                                            'product_uom_id': self.product_uom_id.id, 
                                            'qty_done': self.scrap_qty,
+                                           'company_id': self.company_id.id,
                                            'location_id': self.location_id.id, 
                                            'location_dest_id': self.scrap_location_id.id,
                                            'package_id': self.package_id.id, 
