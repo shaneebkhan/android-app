@@ -568,9 +568,9 @@ class AccountMoveLine(models.Model):
     def _get_counterpart(self):
         for line in self:
             counterpart = set()
-            for line in line.move_id.line_ids:
-                if (line.account_id.code != line.account_id.code):
-                    counterpart.add(line.account_id.code)
+            for ml in line.move_id.line_ids:
+                if (ml.account_id.code != ml.account_id.code):
+                    counterpart.add(ml.account_id.code)
             if len(counterpart) > 2:
                 counterpart = list(counterpart)[0:2] + ["..."]
             line.counterpart = ",".join(counterpart)

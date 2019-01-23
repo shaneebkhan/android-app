@@ -1942,14 +1942,14 @@ class AccountPaymentTerm(models.Model):
 
     def compute(self, value, date_ref=False):
         result = []
+        date_ref = date_ref or fields.Date.today()
+        amount = value
+        sign = value < 0 and -1 or 1
+        if self.env.context.get('currency_id'):
+            currency = self.env['res.currency'].browse(self.env.context['currency_id'])
+        else:
+            currency = self.env.user.company_id.currency_id
         for term in self:
-            date_ref = date_ref or fields.Date.today()
-            amount = value
-            sign = value < 0 and -1 or 1
-            if self.env.context.get('currency_id'):
-                currency = self.env['res.currency'].browse(self.env.context['currency_id'])
-            else:
-                currency = self.env.user.company_id.currency_id
             for line in term.line_ids:
                 if line.value == 'fixed':
                     amt = sign * currency.round(line.value_amount)
