@@ -397,6 +397,7 @@ class AccountBankStatementLine(models.Model):
             aml_to_cancel.remove_move_reconcile()
             moves_to_cancel = aml_to_cancel.mapped('move_id')
             moves_to_cancel.button_cancel()
+            moves_to_cancel.button_draft()
             moves_to_cancel.unlink()
         if payment_to_cancel:
             payment_to_cancel.unlink()
@@ -638,7 +639,7 @@ class AccountBankStatementLine(models.Model):
             move_vals = self._prepare_reconciliation_move(self.statement_id.name)
             if edition_mode:
                 self.button_cancel_reconciliation()
-            move = self.env['account.move'].create(move_vals)
+            move = self.env['account.move'].with_context(default_journal_id=move_vals['journal_id']).create(move_vals)
             counterpart_moves = (counterpart_moves | move)
 
             # Create The payment
@@ -700,7 +701,7 @@ class AccountBankStatementLine(models.Model):
 
                 (new_aml | counterpart_move_line).reconcile()
 
-                self._check_invoice_state(counterpart_move_line.invoice_id)
+                self._check_invoice_state(counterpart_move_line.move_id)
 
             # Balance the move
             st_line_amount = -sum([x.balance for x in move.line_ids])
@@ -730,5 +731,4 @@ class AccountBankStatementLine(models.Model):
         return counterpart_moves
 
     def _check_invoice_state(self, invoice):
-        if invoice.state == 'in_payment' and all([payment.state == 'reconciled' for payment in invoice.mapped('payment_move_line_ids.payment_id')]):
-           invoice.write({'state': 'paid'})
+        invoice._compute_amount()

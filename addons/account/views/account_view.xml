@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-
-
-        <!-- Accounts -->
-
         <record id="view_account_form" model="ir.ui.view">
             <field name="name">account.account.form</field>
             <field name="model">account.account</field>
@@ -34,6 +30,7 @@
                 </form>
             </field>
         </record>
+
         <record id="view_account_list" model="ir.ui.view">
             <field name="name">account.account.list</field>
             <field name="model">account.account</field>
@@ -97,6 +94,7 @@
                 </search>
             </field>
         </record>
+
         <record id="action_account_form" model="ir.actions.act_window">
             <field name="name">Chart of Accounts</field>
             <field name="res_model">account.account</field>

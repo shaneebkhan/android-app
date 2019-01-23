@@ -9,6 +9,9 @@ from odoo.tools import DEFAULT_SERVER_DATE_FORMAT as DF, safe_eval
 from odoo.tools.misc import formatLang
 import random
 
+import ast
+
+
 class account_journal(models.Model):
     _inherit = "account.journal"
 
@@ -124,12 +127,12 @@ class account_journal(models.Model):
         start_date = (first_day_of_week + timedelta(days=-7))
         for i in range(0,6):
             if i == 0:
-                query += "("+select_sql_clause+" and date_due < '"+start_date.strftime(DF)+"')"
+                query += "("+select_sql_clause+" and date < '"+start_date.strftime(DF)+"')"
             elif i == 5:
-                query += " UNION ALL ("+select_sql_clause+" and date_due >= '"+start_date.strftime(DF)+"')"
+                query += " UNION ALL ("+select_sql_clause+" and date >= '"+start_date.strftime(DF)+"')"
             else:
                 next_date = start_date + timedelta(days=7)
-                query += " UNION ALL ("+select_sql_clause+" and date_due >= '"+start_date.strftime(DF)+"' and date_due < '"+next_date.strftime(DF)+"')"
+                query += " UNION ALL ("+select_sql_clause+" and date >= '"+start_date.strftime(DF)+"' and date < '"+next_date.strftime(DF)+"')"
                 start_date = next_date
 
         self.env.cr.execute(query, query_args)
@@ -157,9 +160,9 @@ class account_journal(models.Model):
         the bar graph's data as its first element, and the arguments dictionary
         for it as its second.
         """
-        return ("""SELECT sum(residual_company_signed) as total, min(date_due) as aggr_date
-               FROM account_invoice
-               WHERE journal_id = %(journal_id)s and state = 'open'""", {'journal_id':self.id})
+        return ("""SELECT sum(residual) as total, min(date) as aggr_date
+               FROM account_move
+               WHERE journal_id = %(journal_id)s and state = 'posted' AND type != 'misc'""", {'journal_id':self.id})
 
     @api.multi
     def get_journal_dashboard_datas(self):
@@ -176,7 +179,7 @@ class account_journal(models.Model):
                             FROM account_bank_statement_line AS line
                             LEFT JOIN account_bank_statement AS st
                             ON line.statement_id = st.id
-                            WHERE st.journal_id IN %s AND st.state = 'open' AND line.amount != 0.0 AND line.account_id IS NULL
+                            WHERE st.journal_id IN %s AND st.state = 'posted' AND line.amount != 0.0 AND line.account_id IS NULL
                             AND not exists (select 1 from account_move_line aml where aml.statement_line_id = line.id)
                         """, (tuple(self.ids),))
             number_to_reconcile = self.env.cr.fetchone()[0]
@@ -208,7 +211,11 @@ class account_journal(models.Model):
             query_results_drafts = self.env.cr.dictfetchall()
 
             today = fields.Date.today()
-            query = """SELECT residual_signed as amount_total, currency_id AS currency, type, date_invoice, company_id FROM account_invoice WHERE journal_id = %s AND date <= %s AND state = 'open';"""
+            query = '''
+                SELECT amount_total, currency_id AS currency, type, invoice_date, company_id
+                FROM account_move
+                WHERE journal_id = %s AND date <= %s AND state = 'posted' AND type != 'misc';
+            '''
             self.env.cr.execute(query, (self.id, today))
             late_query_results = self.env.cr.dictfetchall()
             curr_cache = {}
@@ -245,9 +252,9 @@ class account_journal(models.Model):
         data as its first element, and the arguments dictionary to use to run
         it as its second.
         """
-        return ("""SELECT state, residual_signed as amount_total, currency_id AS currency, type, date_invoice, company_id
-                  FROM account_invoice
-                  WHERE journal_id = %(journal_id)s AND state = 'open';""", {'journal_id':self.id})
+        return ("""SELECT state, residual as amount_total, currency_id AS currency, type, invoice_date, company_id
+                  FROM account_move
+                  WHERE journal_id = %(journal_id)s AND state = 'posted' AND type != 'misc';""", {'journal_id':self.id})
 
     def _get_draft_bills_query(self):
         """
@@ -255,18 +262,9 @@ class account_journal(models.Model):
         gather the bills in draft state data, and the arguments
         dictionary to use to run it as its second.
         """
-        # there is no account_move_lines for draft invoices, so no relevant residual_signed value
-        return ("""SELECT state,
-                    (CASE WHEN inv.type in ('out_invoice', 'in_invoice')
-                        THEN inv.amount_total
-                        ELSE (-1 * inv.amount_total)
-                    END) AS amount_total,
-                    inv.currency_id AS currency,
-                    inv.type,
-                    inv.date_invoice,
-                    inv.company_id
-                  FROM account_invoice inv
-                  WHERE journal_id = %(journal_id)s AND state = 'draft';""", {'journal_id':self.id})
+        return ("""SELECT state, amount_total, currency_id AS currency, type, invoice_date, company_id
+                  FROM account_move
+                  WHERE journal_id = %(journal_id)s AND state = 'draft' AND type != 'misc';""", {'journal_id':self.id})
 
     def _count_results_and_sum_amounts(self, results_dict, target_currency, curr_cache=None):
         """ Loops on a query result to count the total number of invoices and sum
@@ -283,7 +281,7 @@ class account_journal(models.Model):
             cur = self.env['res.currency'].browse(result.get('currency'))
             company = self.env['res.company'].browse(result.get('company_id')) or self.env.user.company_id
             rslt_count += 1
-            date = result.get('date_invoice') or fields.Date.today()
+            date = result.get('invoice_date') or fields.Date.today()
 
             amount = result.get('amount_total', 0) or 0
             if cur != target_currency:
@@ -299,28 +297,21 @@ class account_journal(models.Model):
     @api.multi
     def action_create_new(self):
         ctx = self._context.copy()
-        model = 'account.invoice'
+        ctx['default_journal_id'] = self.id
         if self.type == 'sale':
-            ctx.update({'journal_type': self.type, 'default_type': 'out_invoice', 'type': 'out_invoice', 'default_journal_id': self.id})
-            if ctx.get('refund'):
-                ctx.update({'default_type':'out_refund', 'type':'out_refund'})
-            view_id = self.env.ref('account.invoice_form').id
+            ctx['type'] = 'out_refund' if ctx.get('refund') else 'out_invoice'
         elif self.type == 'purchase':
-            ctx.update({'journal_type': self.type, 'default_type': 'in_invoice', 'type': 'in_invoice', 'default_journal_id': self.id})
-            if ctx.get('refund'):
-                ctx.update({'default_type': 'in_refund', 'type': 'in_refund'})
-            view_id = self.env.ref('account.invoice_supplier_form').id
+            ctx['type'] = 'in_refund' if ctx.get('refund') else 'in_invoice'
         else:
-            ctx.update({'default_journal_id': self.id, 'view_no_maturity': True})
-            view_id = self.env.ref('account.view_move_form').id
-            model = 'account.move'
+            ctx['type'] = 'misc'
+            ctx['view_no_maturity'] = True
         return {
             'name': _('Create invoice/bill'),
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
-            'res_model': model,
-            'view_id': view_id,
+            'res_model': 'account.move',
+            'view_id': self.env.ref('account.view_move_form').id,
             'context': ctx,
         }
 
@@ -383,54 +374,36 @@ class account_journal(models.Model):
     @api.multi
     def open_action(self):
         """return action based on type for related journals"""
-        action_name = self._context.get('action_name', False)
+        action_name = self._context.get('action_name')
+
+        # Find action based on journal.
         if not action_name:
             if self.type == 'bank':
                 action_name = 'action_bank_statement_tree'
             elif self.type == 'cash':
                 action_name = 'action_view_bank_statement_tree'
             elif self.type == 'sale':
-                action_name = 'action_invoice_tree1'
-                self = self.with_context(use_domain=[('journal_id', '=', self.id)])
+                action_name = 'action_move_out_invoice_refund_type'
             elif self.type == 'purchase':
-                action_name = 'action_vendor_bill_template'
-                self = self.with_context(use_domain=[('journal_id', '=', self.id)])
+                action_name = 'action_move_in_invoice_refund_type'
             else:
                 action_name = 'action_move_journal_line'
 
-        _journal_invoice_type_map = {
-            ('sale', None): 'out_invoice',
-            ('purchase', None): 'in_invoice',
-            ('sale', 'refund'): 'out_refund',
-            ('purchase', 'refund'): 'in_refund',
-            ('bank', None): 'bank',
-            ('cash', None): 'cash',
-            ('general', None): 'general',
-        }
-        invoice_type = _journal_invoice_type_map[(self.type, self._context.get('invoice_type'))]
+        # Set 'account.' prefix if missing.
+        if '.' not in action_name:
+            action_name = 'account.%s' % action_name
 
-        ctx = self._context.copy()
-        ctx.pop('group_by', None)
-        ctx.update({
-            'journal_type': self.type,
+        action = self.env.ref(action_name).read()[0]
+        context = self._context.copy()
+        if 'context' in action and type(action['context']) == str:
+            context.update(ast.literal_eval(action['context']))
+        else:
+            context.update(action.get('context', {}))
+        action['context'] = context
+        action['context'].update({
             'default_journal_id': self.id,
-            'default_type': invoice_type,
-            'type': invoice_type,
             'search_default_journal_id': self.id,
         })
-
-        [action] = self.env.ref('account.%s' % action_name).read()
-        action['context'] = ctx
-        action['domain'] = self._context.get('use_domain', [])
-        account_invoice_filter = self.env.ref('account.view_account_invoice_filter', False)
-        if action_name in ['action_invoice_tree1', 'action_vendor_bill_template']:
-            action['search_view_id'] = account_invoice_filter and account_invoice_filter.id or False
-        if action_name in ['action_bank_statement_tree', 'action_view_bank_statement_tree']:
-            action['views'] = False
-            action['view_id'] = False
-        if self.type == 'purchase':
-            new_help = self.env['account.invoice'].with_context(ctx).complete_empty_list_help()
-            action.update({'help': (action.get('help') or '') + new_help})
         return action
 
     @api.multi

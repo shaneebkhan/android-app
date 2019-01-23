@@ -22,7 +22,7 @@
                                     <t t-if="journal_type == 'sale' || journal_type == 'purchase'" t-call="JournalBodySalePurchase"/>
                                     <t t-if="journal_type == 'general' || journal_type == 'situation'">
                                         <div class="col-6 o_kanban_primary_left">
-                                            <button type="object" name="open_action" context="{'action_name': 'action_move_journal_line', 'view_no_maturity': 1}" class="btn btn-primary">
+                                            <button type="object" name="open_action" context="{'action_name': 'action_move_journal_line'}" class="btn btn-primary">
                                                 <span>Journal Entries</span>
                                             </button>
                                         </div>
@@ -119,12 +119,12 @@
                                     <span>View</span>
                                 </div>
                                 <div>
-                                    <a t-if="journal_type == 'sale'" type="object" name="open_action" context="{'use_domain': [('type', '=', 'out_invoice')]}">Invoices</a>
-                                    <a t-if="journal_type == 'purchase'" type="object" name="open_action" context="{'use_domain': [('type', '=', 'in_invoice')]}">Bills</a>
+                                    <a t-if="journal_type == 'sale'" type="object" name="open_action" context="{'action_name': 'action_move_out_invoice_type'}">Invoices</a>
+                                    <a t-if="journal_type == 'purchase'" type="object" name="open_action" context="{'action_name': 'action_move_in_invoice_type'}">Bills</a>
                                 </div>
                                 <div>
-                                    <a t-if="journal_type == 'sale'" type="object" name="open_action" context="{'use_domain': [('type', '=', 'out_refund')], 'invoice_type': 'refund'}">Credit Notes</a>
-                                    <a t-if="journal_type == 'purchase'" type="object" name="open_action" context="{'use_domain': [('type', '=', 'in_refund')], 'invoice_type': 'refund'}">Credit Notes</a>
+                                    <a t-if="journal_type == 'sale'" type="object" name="open_action" context="{'action_name': 'action_move_out_refund_type'}">Credit Notes</a>
+                                    <a t-if="journal_type == 'purchase'" type="object" name="open_action" context="{'action_name': 'action_move_in_refund_type'}">Credit Notes</a>
                                 </div>
                                 <div>
                                     <a type="object" name="action_open_reconcile">Payments Matching</a>
@@ -170,10 +170,10 @@
                                     <span>View</span>
                                 </div>
                                 <div>
-                                    <a type="object" name="open_action" context="{'action_name': 'action_move_journal_line', 'view_no_maturity': 1}">Journal Entries</a>
+                                    <a type="object" name="open_action" context="{'action_name': 'action_move_journal_line'}">Journal Entries</a>
                                 </div>
                                 <div>
-                                    <a type="object" name="open_action" context="{'action_name': 'action_move_journal_line', 'search_default_unposted': 1, 'view_no_maturity': 1}">Entries to Review</a>
+                                    <a type="object" name="open_action" context="{'action_name': 'action_move_journal_line', 'search_default_unposted': 1}">Entries to Review</a>
                                 </div>
                                 <div>
                                     <a type="object" name="open_action" context="{'action_name': 'action_account_moves_all_a'}" groups="base.group_no_one">Journal Items</a>

@@ -636,7 +636,7 @@ class StockMove(models.Model):
 
     def _create_account_move_line(self, credit_account_id, debit_account_id, journal_id):
         self.ensure_one()
-        AccountMove = self.env['account.move']
+        AccountMove = self.env['account.move'].with_context(default_journal_id=journal_id).sudo()
         quantity = self.env.context.get('forced_quantity', self.product_qty)
         quantity = quantity if self._is_in() else -1 * quantity
 
@@ -652,7 +652,7 @@ class StockMove(models.Model):
         move_lines = self.with_context(forced_ref=ref)._prepare_account_move_line(quantity, abs(self.value), credit_account_id, debit_account_id)
         if move_lines:
             date = self._context.get('force_period_date', fields.Date.context_today(self))
-            new_account_move = AccountMove.sudo().create({
+            new_account_move = AccountMove.create({
                 'journal_id': journal_id,
                 'line_ids': move_lines,
                 'date': date,
@@ -703,13 +703,13 @@ class StockMove(models.Model):
 
         if self.company_id.anglo_saxon_accounting:
             #eventually reconcile together the invoice and valuation accounting entries on the stock interim accounts
-            self._get_related_invoices()._anglo_saxon_reconcile_valuation(product=self.product_id)
+            self._get_related_invoices()._stock_account_anglo_saxon_reconcile_valuation(product=self.product_id)
 
     def _get_related_invoices(self): # To be overridden in purchase and sale_stock
         """ This method is overrided in both purchase and sale_stock modules to adapt
         to the way they mix stock moves with invoices.
         """
-        return self.env['account.invoice']
+        return self.env['account.move']
 
 
 class StockReturnPicking(models.TransientModel):

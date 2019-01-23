@@ -6,7 +6,7 @@
                 <t t-else="">Invoices</t>
             </li>
             <li t-if="invoice" class="breadcrumb-item active">
-                <t t-esc="invoice.number" t-if="invoice.number"/>
+                <t t-esc="invoice.name" t-if="invoice.name"/>
                 <t t-else=""><em>Draft Invoice</em></t>
             </li>
         </xpath>
@@ -46,13 +46,13 @@
                 <t t-foreach="invoices" t-as="invoice">
                     <tr>
                         <td>
-                            <a t-att-href="invoice.get_portal_url()" t-att-title="invoice.number">
-                                <t t-esc="invoice.number" t-if="invoice.number"/>
+                            <a t-att-href="invoice.get_portal_url()" t-att-title="invoice.name">
+                                <t t-esc="invoice.name" t-if="invoice.name"/>
                                 <em t-else="">Draft Invoice</em>
                             </a>
                         </td>
-                        <td><span t-field="invoice.date_invoice"/></td>
-                        <td class='d-none d-md-table-cell'><span t-field="invoice.date_due"/></td>
+                        <td><span t-field="invoice.invoice_date"/></td>
+                        <td class='d-none d-md-table-cell'><span t-field="invoice.invoice_date_due"/></td>
                         <td class="tx_status">
                             <t t-if="invoice.state == 'open'">
                                 <span class="badge badge-pill badge-info"><i class="fa fa-fw fa-clock-o" aria-label="Opened" title="Opened" role="img"></i><span class="d-none d-md-inline"> Waiting for Payment</span></span>
@@ -76,7 +76,7 @@
         <xpath expr="//div[hasclass('o_portal_sidebar')]" position="inside">
             <t t-set="o_portal_fullwidth_alert" groups="sales_team.group_sale_salesman">
                 <t t-call="portal.portal_back_in_edit_mode">
-                    <t t-set="backend_url" t-value="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (invoice._name, invoice.id, invoice.env.ref('account.action_invoice_tree1').id)"/>
+                    <t t-set="backend_url" t-value="'/web#return_label=Website&amp;model=%s&amp;id=%s&amp;action=%s&amp;view_type=form' % (invoice._name, invoice.id, invoice.env.ref('account.action_move_out_invoice_type').id)"/>
                 </t>
             </t>
 
@@ -89,7 +89,7 @@
                             <b t-if="invoice.residual > 0" t-field="invoice.residual"/>
                             <b t-else="1" t-field="invoice.amount_total"/>
                         </h2>
-                        <div class="small" t-if="invoice.state != 'paid' and invoice.type == 'out_invoice'"><i class="fa fa-clock-o"/><span class="o_portal_sidebar_timeago ml4" t-att-datetime="invoice.date_due"/></div>
+                        <div class="small" t-if="invoice.state != 'paid' and invoice.type == 'out_invoice'"><i class="fa fa-clock-o"/><span class="o_portal_sidebar_timeago ml4" t-att-datetime="invoice.invoice_date_due"/></div>
                     </t>
 
                     <t t-set="entries">

@@ -33,15 +33,15 @@ class AccountPaymentTerm(models.Model):
                 raise ValidationError(_('A Payment Term should have only one line of type Balance.'))
 
     @api.multi
-    def compute(self, value, date_ref=False):
+    def compute(self, value, date_ref=False, currency=None):
         self.ensure_one()
         date_ref = date_ref or fields.Date.today()
         amount = value
         sign = value < 0 and -1 or 1
         result = []
-        if self.env.context.get('currency_id'):
+        if not currency and self.env.context.get('currency_id'):
             currency = self.env['res.currency'].browse(self.env.context['currency_id'])
-        else:
+        elif not currency:
             currency = self.env.user.company_id.currency_id
         for line in self.line_ids:
             if line.value == 'fixed':
@@ -73,7 +73,7 @@ class AccountPaymentTerm(models.Model):
     @api.multi
     def unlink(self):
         for terms in self:
-            if self.env['account.invoice'].search([('payment_term_id', 'in', terms.ids)]):
+            if self.env['account.move'].search([('payment_term_id', 'in', terms.ids)]):
                 raise UserError(_('You can not delete payment terms as other records still reference it. However, you can archive it.'))
             property_recs = self.env['ir.property'].search([('value_reference', 'in', ['account.payment.term,%s'%payment_term.id for payment_term in terms])])
             property_recs.unlink()

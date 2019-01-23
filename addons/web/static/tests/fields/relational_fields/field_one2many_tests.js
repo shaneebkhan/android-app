@@ -7878,7 +7878,7 @@ QUnit.module('fields', {}, function () {
                 data: this.data,
                 arch: '<form string="Partners">' +
                     '<header>' +
-                    '<button name="action_invoice_open" type="object" string="Validate" class="oe_highlight"/>' +
+                    '<button name="post" type="object" string="Validate" class="oe_highlight"/>' +
                     '</header>' +
                     '<field name="turtles">' +
                     '<tree editable="bottom">' +
@@ -7896,7 +7896,7 @@ QUnit.module('fields', {}, function () {
                 },
             });
 
-            await testUtils.dom.click($('button[name="action_invoice_open"]'));
+            await testUtils.dom.click($('button[name="post"]'));
             await testUtils.dom.click(form.$('.o_field_x2many_list_row_add a'));
             form.destroy();
         });

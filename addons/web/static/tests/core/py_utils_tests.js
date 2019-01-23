@@ -901,7 +901,7 @@ QUnit.module('core', function () {
                                     "number": false, "type": "out_invoice",
                                     "currency_id": 1, "partner_id": 4,
                                     "fiscal_position_id": false,
-                                    "date_invoice": false, "date": false,
+                                    "invoice_date": false, "date": false,
                                     "payment_term_id": false,
                                     "reference": false, "account_id": 440,
                                     "name": false, "invoice_line_ids": [],
@@ -914,7 +914,7 @@ QUnit.module('core', function () {
                                     "move_id": false, "comment": false,
                                     "payment_ids": [[6, false, []]],
                                     "active_id": false, "active_ids": [],
-                                    "active_model": "account.invoice",
+                                    "active_model": "account.move",
                                     "parent": {}}
                     ], "__eval_context": null}
                 }, {
@@ -932,12 +932,12 @@ QUnit.module('core', function () {
                     "invoice_line_tax_ids": [[6, false, [1]]],
                     "active_id": false,
                     "active_ids": [],
-                    "active_model": "account.invoice.line",
+                    "active_model": "account.move.line",
                     "parent": {
                         "id": false, "journal_id": 10, "number": false,
                         "type": "out_invoice", "currency_id": 1,
                         "partner_id": 4, "fiscal_position_id": false,
-                        "date_invoice": false, "date": false,
+                        "invoice_date": false, "date": false,
                         "payment_term_id": false,
                         "reference": false, "account_id": 440, "name": false,
                         "tax_line_ids": [], "amount_untaxed": 0, "amount_tax": 0,

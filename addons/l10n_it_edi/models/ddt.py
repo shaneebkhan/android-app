@@ -7,7 +7,7 @@ class L10nItDdt(models.Model):
     _name = 'l10n_it.ddt'
     _description = 'Transport Document'
 
-    invoice_id = fields.One2many('account.invoice', 'l10n_it_ddt_id', string='Invoice Reference',
+    invoice_id = fields.One2many('account.move', 'l10n_it_ddt_id', string='Invoice Reference',
                                  ondelete='cascade')
 
     name = fields.Char(string="Numero DDT", size=20, help="Transport document number", required=True)

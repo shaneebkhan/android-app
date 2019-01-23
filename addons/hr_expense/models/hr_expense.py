@@ -9,7 +9,6 @@ from odoo.tools import email_split, float_is_zero
 
 from odoo.addons import decimal_precision as dp
 
-
 class HrExpense(models.Model):
 
     _name = "hr.expense"
@@ -222,9 +221,8 @@ class HrExpense(models.Model):
             account_date = expense.sheet_id.accounting_date or expense.date
             if expense.sheet_id.id not in move_grouped_by_sheet:
                 journal = expense.sheet_id.bank_journal_id if expense.payment_mode == 'company_account' else expense.sheet_id.journal_id
-                move = self.env['account.move'].create({
+                move = self.env['account.move'].with_context(default_journal_id=journal.id).create({
                     'journal_id': journal.id,
-                    'company_id': self.env.user.company_id.id,
                     'date': account_date,
                     'ref': expense.sheet_id.name,
                     # force the name to the default value, to avoid an eventual 'default_name' in the context
@@ -395,7 +393,7 @@ class HrExpense(models.Model):
                 move_line_dst['payment_id'] = payment.id
 
             # link move lines to move, and move to expense sheet
-            move.with_context(dont_create_taxes=True).write({
+            move.write({
                 'line_ids': [(0, 0, line) for line in move_line_values]
             })
             expense.sheet_id.write({'account_move_id': move.id})

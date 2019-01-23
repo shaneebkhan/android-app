@@ -134,7 +134,7 @@ class TestSaleToInvoice(TestCommonSaleNoChart):
         })
         payment.create_invoices()
         invoice = self.sale_order.invoice_ids[0]
-        invoice.action_invoice_open()
+        invoice.post()
 
         # Check discount appeared on both SO lines and invoice lines
         for line, inv_line in zip(self.sale_order.order_line, invoice.invoice_line_ids):
@@ -192,7 +192,7 @@ class TestSaleToInvoice(TestCommonSaleNoChart):
                 self.assertEquals(line.untaxed_amount_to_invoice, line.product_uom_qty * line.price_unit, "The amount to invoice should the total of the line, as the line is confirmed (no confirmed invoice)")
                 self.assertEquals(line.untaxed_amount_invoiced, 0.0, "The invoiced amount should be zero, as no invoice are validated for now")
 
-        invoice.action_invoice_open()
+        invoice.post()
 
         # Check quantity to invoice on SO lines
         for line in self.sale_order.order_line:

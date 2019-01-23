@@ -421,7 +421,7 @@ class Project(models.Model):
                         'count': len(invoices),
                         'icon': 'fa fa-pencil-square-o',
                         'action': _to_action_data(
-                            action=self.env.ref('account.action_invoice_tree1'),
+                            action=self.env.ref('account.action_move_out_invoice_type'),
                             domain=[('id', 'in', invoices.ids), ('type', '=', 'out_invoice')],
                             context={'create': False, 'delete': False}
                         )

@@ -5,9 +5,10 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
 
-class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
-    
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    # TODO: prefix fields by 'payment_'
     transaction_ids = fields.Many2many('payment.transaction', 'account_invoice_transaction_rel', 'invoice_id', 'transaction_id',
                                        string='Transactions', copy=False, readonly=True)
     authorized_transaction_ids = fields.Many2many('payment.transaction', compute='_compute_authorized_transaction_ids',

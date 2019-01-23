@@ -9,8 +9,8 @@
             <field name="computation_mode">sum</field>
             <field name="monetary">True</field>
             <field name="model_id" eval="ref('account.model_account_invoice_report')" />
-            <field name="field_id" eval="ref('account.field_account_invoice_report__price_total')" />
-            <field name="field_date_id" eval="ref('account.field_account_invoice_report__date')" />
+            <field name="field_id" eval="ref('account.field_account_invoice_report__price_subtotal')" />
+            <field name="field_date_id" eval="ref('account.field_account_invoice_report__invoice_date')" />
             <field name="domain">[('state','!=','cancel'),('user_id','=',user.id),('type','=','out_invoice')]</field>
         </record>
 
@@ -35,7 +35,7 @@
             <field name="field_id" eval="ref('crm.field_crm_lead__day_close')" />
             <field name="field_date_id" eval="ref('crm.field_crm_lead__date_closed')" />
             <field name="domain">[('user_id','=',user.id),('type', '=', 'lead')]</field>
-        </record> 
+        </record>
 
         <record model="gamification.goal.definition" id="definition_crm_lead_delay_close">
             <field name="name">Days to Close a Deal</field>
@@ -47,7 +47,7 @@
             <field name="field_id" eval="ref('crm.field_crm_lead__day_open')" />
             <field name="field_date_id" eval="ref('crm.field_crm_lead__date_open')" />
             <field name="domain">[('user_id','=',user.id)]</field>
-        </record> 
+        </record>
 
 
         <record model="gamification.goal.definition" id="definition_crm_nbr_new_opportunities">
@@ -76,7 +76,7 @@
             <field name="computation_mode">count</field>
             <field name="suffix">orders</field>
             <field name="model_id" eval="ref('account.model_account_invoice_report')" />
-            <field name="field_date_id" eval="ref('account.field_account_invoice_report__date')" />
+            <field name="field_date_id" eval="ref('account.field_account_invoice_report__invoice_date')" />
             <field name="domain">[('state','=','paid'),('user_id','=',user.id),('type','=','out_invoice')]</field>
         </record>
         <record model="gamification.goal.definition" id="definition_crm_tot_paid_sale_order">
@@ -85,8 +85,8 @@
             <field name="computation_mode">count</field>
             <field name="monetary">True</field>
             <field name="model_id" eval="ref('account.model_account_invoice_report')" />
-            <field name="field_id" eval="ref('account.field_account_invoice_report__price_total')" />
-            <field name="field_date_id" eval="ref('account.field_account_invoice_report__date')" />
+            <field name="field_id" eval="ref('account.field_account_invoice_report__price_subtotal')" />
+            <field name="field_date_id" eval="ref('account.field_account_invoice_report__invoice_date')" />
             <field name="domain">[('state','=','paid'),('user_id','=',user.id),('type','=','out_invoice')]</field>
         </record>
 
@@ -98,7 +98,7 @@
             <field name="condition">lower</field>
             <field name="suffix">invoices</field>
             <field name="model_id" eval="ref('account.model_account_invoice_report')" />
-            <field name="field_date_id" eval="ref('account.field_account_invoice_report__date')" />
+            <field name="field_date_id" eval="ref('account.field_account_invoice_report__invoice_date')" />
             <field name="domain">[('state','!=','cancel'),('user_id','=',user.id),('type','=','out_refund')]</field>
         </record>
         <record model="gamification.goal.definition" id="definition_crm_tot_customer_refunds">
@@ -108,8 +108,8 @@
             <field name="condition">higher</field>
             <field name="monetary">True</field>
             <field name="model_id" eval="ref('account.model_account_invoice_report')" />
-            <field name="field_id" eval="ref('account.field_account_invoice_report__price_total')" />
-            <field name="field_date_id" eval="ref('account.field_account_invoice_report__date')" />
+            <field name="field_id" eval="ref('account.field_account_invoice_report__price_subtotal')" />
+            <field name="field_date_id" eval="ref('account.field_account_invoice_report__invoice_date')" />
             <field name="domain">[('state','!=','cancel'),('user_id','=',user.id),('type','=','out_refund')]</field>
         </record>
 

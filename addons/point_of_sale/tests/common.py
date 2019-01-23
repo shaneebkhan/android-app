@@ -28,12 +28,17 @@ class TestPointOfSaleCommon(common.TransactionCase):
         })
 
         # create a VAT tax of 10%, included in the public price
+        tax_account = self.env['account.account'].search([
+            ('company_id', '=', self.company_id),
+            ('user_type_id', '=', self.env.ref('account.data_account_type_revenue').id)
+        ], limit=1)
         Tax = self.env['account.tax']
         account_tax_10_incl = Tax.create({
             'name': 'VAT 10 perc Incl',
             'amount_type': 'percent',
             'amount': 10.0,
-            'price_include': 1
+            'price_include': 1,
+            'account_id': tax_account.id,
         })
 
         # assign this 10 percent tax on the [PCSC234] PC Assemble SC234 product
@@ -45,7 +50,8 @@ class TestPointOfSaleCommon(common.TransactionCase):
             'name': 'VAT 5 perc Incl',
             'amount_type': 'percent',
             'amount': 5.0,
-            'price_include': 0
+            'price_include': 0,
+            'account_id': tax_account.id,
         })
 
         # create a second VAT tax of 5% but this time for a child company, to
@@ -56,7 +62,8 @@ class TestPointOfSaleCommon(common.TransactionCase):
             'amount_type': 'percent',
             'amount': 5.0,
             'price_include': 0,
-            'company_id': self.ref('stock.res_company_1')
+            'company_id': self.ref('stock.res_company_1'),
+            'account_id': tax_account.id,
         })
 
         self.product4.company_id = False

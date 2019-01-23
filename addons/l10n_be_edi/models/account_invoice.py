@@ -11,8 +11,8 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
+class AccountMove(models.Model):
+    _inherit = 'account.move'
 
     @api.model
     def _get_ubl_namespaces(self, tree):
@@ -40,9 +40,7 @@ class AccountInvoice(models.Model):
         self.ensure_one()
         namespaces = self._get_ubl_namespaces(tree)
 
-        journal_id = self._default_journal()
-        view = journal_id.type == 'purchase' and 'account.invoice_supplier_form' or 'account.invoice_form'
-        with Form(self, view=view) as invoice_form:
+        with Form(self) as invoice_form:
             # Reference
             elements = tree.xpath('//cbc:ID', namespaces=namespaces)
             if elements:
@@ -117,7 +115,7 @@ class AccountInvoice(models.Model):
                 attachment_id = self.env['ir.attachment'].create({
                     'name': attachment_name,
                     'res_id': self.id,
-                    'res_model': 'account.invoice',
+                    'res_model': 'account.move',
                     'datas': attachment_data,
                     'datas_fname': attachment_name,
                     'type': 'binary',
@@ -160,14 +158,16 @@ class AccountInvoice(models.Model):
 
                     # Taxes
                     taxes_elements = eline.xpath('cac:TaxTotal/cac:TaxSubtotal', namespaces=namespaces)
-                    invoice_line_form.invoice_line_tax_ids.clear()
+                    invoice_line_form.tax_ids.clear()
                     for etax in taxes_elements:
                         elements = etax.xpath('cbc:Percent', namespaces=namespaces)
                         if elements:
-                            tax = self.env['account.tax'].search([('amount', '=', float(elements[0].text)), ('type_tax_use', '=', journal_id.type)], order='sequence ASC', limit=1)
+                            tax = self.env['account.tax'].search([
+                                ('amount', '=', float(elements[0].text)),
+                                ('type_tax_use', '=', invoice_form.journal_id.type),
+                            ], order='sequence ASC', limit=1)
                             if tax:
-                                invoice_line_form.invoice_line_tax_ids.add(tax)
-                    invoice_line_form.account_id = invoice_line_form.account_id or self.env['account.account'].browse(self.with_context(journal_id=journal_id.id).env['account.invoice.line']._default_account())
+                                invoice_line_form.tax_ids.add(tax)
 
         return invoice_form.save
 
@@ -175,4 +175,4 @@ class AccountInvoice(models.Model):
     def _get_xml_decoders(self):
         # Override
         ubl_decoders = [('UBL 2.1', self._detect_ubl_2_1, self._decode_ubl_2_1)]
-        return super(AccountInvoice, self)._get_xml_decoders() + ubl_decoders
+        return super(AccountMove, self)._get_xml_decoders() + ubl_decoders

@@ -16,14 +16,14 @@ class TestUBL(common.TransactionCase):
     def test_ubl_invoice_import(self):
         xml_file_path = get_module_resource('l10n_be_edi', 'test_xml_file', 'efff_test.xml')
         xml_file = open(xml_file_path, 'rb').read()
-        invoice_id = self.env['account.invoice'].with_context(default_type='in_invoice').create({})
+        invoice_id = self.env['account.move'].with_context(default_type='in_invoice').create({})
 
         attachment_id = self.env['ir.attachment'].create({
             'name': 'efff_test.xml',
             'datas_fname': 'efff_test.xml',
             'datas': base64.encodestring(xml_file),
             'res_id': invoice_id.id,
-            'res_model': 'account.invoice',
+            'res_model': 'account.move',
         })
 
         invoice_id.message_post(attachment_ids=[attachment_id.id])

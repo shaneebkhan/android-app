@@ -621,7 +621,7 @@ class AccountJournal(models.Model):
         if self.alias_id:
             self.alias_id.write(alias_values)
         else:
-            self.alias_id = self.env['mail.alias'].with_context(alias_model_name='account.invoice',
+            self.alias_id = self.env['mail.alias'].with_context(alias_model_name='account.move',
                 alias_parent_model_name='account.journal').create(alias_values)
 
         if vals.get('alias_name'):
@@ -1010,14 +1010,6 @@ class AccountTax(models.Model):
         if self.price_include:
             self.include_base_amount = True
 
-    def get_grouping_key(self, invoice_tax_val):
-        """ Returns a string that will be used to group account.invoice.tax sharing the same properties"""
-        self.ensure_one()
-        return str(invoice_tax_val['tax_id']) + '-' + \
-               str(invoice_tax_val['account_id']) + '-' + \
-               str(invoice_tax_val['account_analytic_id']) + '-' + \
-               str(invoice_tax_val.get('analytic_tag_ids', []))
-
     def _compute_amount(self, base_amount, price_unit, quantity=1.0, product=None, partner=None):
         """ Returns the amount of a single tax. base_amount is the actual amount on which the tax is applied, which is
             price_unit * quantity eventually affected by previous taxes (if tax is include_base_amount XOR price_include)
@@ -1037,7 +1029,7 @@ class AccountTax(models.Model):
             else:
                 return quantity * self.amount
 
-        price_include = self.price_include or self._context.get('force_price_include')
+        price_include = self._context.get('force_price_include', self.price_include)
 
         if (self.amount_type == 'percent' and not price_include) or (self.amount_type == 'division' and price_include):
             return base_amount * self.amount / 100

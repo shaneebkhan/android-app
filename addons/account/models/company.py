@@ -2,7 +2,6 @@
 
 from datetime import timedelta, datetime
 import calendar
-import time
 from dateutil.relativedelta import relativedelta
 
 from odoo import fields, models, api, _
@@ -10,6 +9,7 @@ from odoo.exceptions import ValidationError, UserError, RedirectWarning
 from odoo.tools.misc import DEFAULT_SERVER_DATE_FORMAT
 from odoo.tools.float_utils import float_round, float_is_zero
 from odoo.tools import date_utils
+from odoo.tests.common import Form
 
 
 MONTH_SELECTION = [
@@ -484,7 +484,7 @@ Best Regards,'''))
 
         company_id = self.env.user.company_id.id
         # try to find an existing sample invoice
-        sample_invoice = self.env['account.invoice'].search(
+        sample_invoice = self.env['account.move'].search(
             [('company_id', '=', company_id),
              ('partner_id', '=', partner.id)], limit=1)
 
@@ -499,27 +499,20 @@ Best Regards,'''))
                         "\nPlease go to Configuration > Journals.")
                 raise RedirectWarning(msg, action.id, _("Go to the journal configuration"))
 
-            sample_invoice = self.env['account.invoice'].create({
-                'name': _("Sample invoice"),
-                'journal_id': journal.id,
-                'partner_id': partner.id,
-            })
-            # sample invoice lines
-            self.env['account.invoice.line'].create({
-                'name': _("Sample invoice line name"),
-                'invoice_id': sample_invoice.id,
-                'account_id': account.id,
-                'price_unit': 199.99,
-                'quantity': 2,
-            })
-            self.env['account.invoice.line'].create({
-                'name': _("Sample invoice line name 2"),
-                'invoice_id': sample_invoice.id,
-                'account_id': account.id,
-                'price_unit': 25,
-                'quantity': 1,
-            })
-        return sample_invoice
+            with Form(self.env['account.move'].with_context(default_journal_id=journal.id)) as move_form:
+                move_form.name = _('Sample invoice')
+                move_form.partner_id = partner.id
+                with move_form.line_ids.new() as line_form:
+                    line_form.name = _('Sample invoice line name')
+                    line_form.account_id = account.id
+                    line_form.price_unit = 199.99
+                    line_form.quantity = 2
+                with move_form.line_ids.new() as line_form:
+                    line_form.name = _('Sample invoice line name 2')
+                    line_form.account_id = account.id
+                    line_form.price_unit = 25
+                    line_form.quantity = 1
+            return move_form.save()
 
     @api.model
     def action_open_account_onboarding_sample_invoice(self):
@@ -532,7 +525,7 @@ Best Regards,'''))
             'default_res_id': sample_invoice.id,
             'default_use_template': bool(template),
             'default_template_id': template and template.id or False,
-            'default_model': 'account.invoice',
+            'default_model': 'account.move',
             'default_composition_mode': 'comment',
             'mark_invoice_as_sent': True,
             'custom_layout': 'mail.mail_notification_borders',

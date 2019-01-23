@@ -621,7 +621,13 @@ class TestSaleMrpFlow(common.TransactionCase):
             'partner_id': self.partner.id,
             'partner_invoice_id': self.partner.id,
             'partner_shipping_id': self.partner.id,
-            'order_line': [(0, 0, {'name': self.finished_product.name, 'product_id': self.finished_product.id, 'product_uom_qty': 3, 'product_uom': self.finished_product.uom_id.id, 'price_unit': self.finished_product.list_price})],
+            'order_line': [(0, 0, {
+                'name': self.finished_product.name,
+                'product_id': self.finished_product.id,
+                'product_uom_qty': 3,
+                'product_uom': self.finished_product.uom_id.id,
+                'price_unit': self.finished_product.list_price
+            })],
             'pricelist_id': self.env.ref('product.list0').id,
             'company_id': self.company.id,
         }
@@ -639,11 +645,14 @@ class TestSaleMrpFlow(common.TransactionCase):
         self.so._create_invoices()
         self.invoice = self.so.invoice_ids
         # Changed the invoiced quantity of the finished product to 2
-        self.invoice.invoice_line_ids.write({'quantity': 2.0})
-        self.invoice.action_invoice_open()
-        aml = self.invoice.move_id.line_ids
-        aml_expense = aml.filtered(lambda l: l.account_id.id == account_expense.id)
-        aml_output = aml.filtered(lambda l: l.account_id.id == account_output.id)
+        move_form = Form(self.invoice)
+        with move_form.invoice_line_ids.edit(0) as line_form:
+            line_form.quantity = 2.0
+        self.invoice = move_form.save()
+        self.invoice.post()
+        aml = self.invoice.line_ids
+        aml_expense = aml.filtered(lambda l: l.display_type == 'anglo' and l.debit > 0)
+        aml_output = aml.filtered(lambda l: l.display_type == 'anglo' and l.credit > 0)
         # Check that the cost of Good Sold entries are equal to 2* (2 * 20 + 1 * 10) = 100
         self.assertEqual(aml_expense.debit, 100, "Cost of Good Sold entry missing or mismatching")
         self.assertEqual(aml_output.credit, 100, "Cost of Good Sold entry missing or mismatching")

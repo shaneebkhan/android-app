@@ -350,14 +350,11 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt_po1.move_lines.quantity_done = 10
         receipt_po1.button_validate()
 
-        invoice_po1 = self.env['account.invoice'].create({
-            'partner_id': self.partner_id.id,
-            'purchase_id': po1.id,
-            'account_id': self.partner_id.property_account_payable_id.id,
-            'type': 'in_invoice',
-        })
-        invoice_po1.purchase_order_change()
-        invoice_po1.action_invoice_open()
+        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form.partner_id = self.partner_id
+        move_form.purchase_id = po1
+        invoice_po1 = move_form.save()
+        invoice_po1.post()
 
         # Receive 10@20 ; create the vendor bill
         po2 = self.env['purchase.order'].create({
@@ -378,14 +375,11 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt_po2.move_lines.quantity_done = 10
         receipt_po2.button_validate()
 
-        invoice_po2 = self.env['account.invoice'].create({
-            'partner_id': self.partner_id.id,
-            'purchase_id': po2.id,
-            'account_id': self.partner_id.property_account_payable_id.id,
-            'type': 'in_invoice',
-        })
-        invoice_po2.purchase_order_change()
-        invoice_po2.action_invoice_open()
+        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form.partner_id = self.partner_id
+        move_form.purchase_id = po2
+        invoice_po2 = move_form.save()
+        invoice_po2.post()
 
         # valuation of product1 should be 300
         self.assertEqual(self.product1.stock_value, 300)
@@ -405,16 +399,13 @@ class TestStockValuationWithCOA(AccountingTestCase):
         self.assertEqual(self.product1.stock_value, 200)
 
         # create a credit note for po2
-        creditnote_po2 = self.env['account.invoice'].create({
-            'partner_id': self.partner_id.id,
-            'purchase_id': po2.id,
-            'account_id': self.partner_id.property_account_payable_id.id,
-            'type': 'in_refund',
-        })
-
-        creditnote_po2.purchase_order_change()
-        creditnote_po2.invoice_line_ids[0].quantity = 10
-        creditnote_po2.action_invoice_open()
+        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form.partner_id = self.partner_id
+        move_form.purchase_id = po2
+        with move_form.invoice_line_ids.edit(0) as line_form:
+            line_form.quantity = 10
+        creditnote_po2 = move_form.save()
+        creditnote_po2.post()
 
         # check the anglo saxon entries
         price_diff_entry = self.env['account.move.line'].search([('account_id', '=', price_diff_account.id)])
@@ -448,15 +439,13 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt.button_validate()
 
         # Create an invoice with a different price
-        invoice = self.env['account.invoice'].create({
-            'partner_id': order.partner_id.id,
-            'purchase_id': order.id,
-            'account_id': order.partner_id.property_account_payable_id.id,
-            'type': 'in_invoice',
-        })
-        invoice.purchase_order_change()
-        invoice.invoice_line_ids[0].price_unit = 15.0
-        invoice.action_invoice_open()
+        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form.partner_id = order.partner_id
+        move_form.purchase_id = order
+        with move_form.invoice_line_ids.edit(0) as line_form:
+            line_form.price_unit = 15.0
+        invoice = move_form.save()
+        invoice.post()
 
         # Check what was posted in the price difference account
         price_diff_aml = self.env['account.move.line'].search([('account_id','=',price_diff_account.id)])
@@ -465,9 +454,12 @@ class TestStockValuationWithCOA(AccountingTestCase):
 
         # Check what was posted in stock input account
         input_aml = self.env['account.move.line'].search([('account_id','=',self.stock_input_account.id)])
-        self.assertEquals(len(input_aml), 2, "Only two lines should have been generated in stock input account: one when receiving the product, one when making the invoice.")
-        self.assertAlmostEquals(sum(input_aml.mapped('debit')), 10, "Total debit value on stock input account should be equal to the original PO price of the product.")
-        self.assertAlmostEquals(sum(input_aml.mapped('credit')), 10, "Total credit value on stock input account should be equal to the original PO price of the product.")
+        self.assertEquals(len(input_aml), 3, "Only three lines should have been generated in stock input account: one when receiving the product, one when making the invoice.")
+        invoice_amls = input_aml.filtered(lambda l: l.move_id == invoice)
+        picking_aml = input_aml - invoice_amls
+        self.assertAlmostEquals(sum(invoice_amls.mapped('debit')), 15, "Total debit value on stock input account should be equal to the original PO price of the product.")
+        self.assertAlmostEquals(sum(invoice_amls.mapped('credit')), 5, "Total debit value on stock input account should be equal to the original PO price of the product.")
+        self.assertAlmostEquals(sum(picking_aml.mapped('credit')), 10, "Total credit value on stock input account should be equal to the original PO price of the product.")
 
     def test_valuation_from_increasing_tax(self):
         """ Check that a tax without account will increment the stock value.
