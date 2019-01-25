@@ -333,10 +333,8 @@ class IrModelFields(models.Model):
     field_description = fields.Char(string='Field Label', default='', required=True, translate=True)
     help = fields.Text(string='Field Help', translate=True)
     ttype = fields.Selection(selection=FIELD_TYPES, string='Field Type', required=True)
-    selection = fields.Char(string='Selection Options', default="",
-                            help="List of options for a selection field, "
-                                 "specified as a Python expression defining a list of (key, label) pairs. "
-                                 "For example: [('blue','Blue'),('yellow','Yellow')]")
+    selection_ids = fields.One2many("ir.model.fields.selection", "field_id",string="Selection Options",
+                                    copy=True, context={'__ir_model_fields__': True})
     copied = fields.Boolean(string='Copied', oldname='copy',
                             help="Whether the value is copied when duplicating a record.")
     related = fields.Char(string='Related Field', help="The corresponding related field, if any. This must be a dot-separated list of field names.")
@@ -390,18 +388,6 @@ class IrModelFields(models.Model):
         for field in self:
             module_names = set(xml_id.split('.')[0] for xml_id in xml_ids[field.id])
             field.modules = ", ".join(sorted(installed_names & module_names))
-
-    @api.model
-    def _check_selection(self, selection):
-        try:
-            items = safe_eval(selection)
-            if not (isinstance(items, (tuple, list)) and
-                    all(isinstance(item, (tuple, list)) and len(item) == 2 for item in items)):
-                raise ValueError(selection)
-        except Exception:
-            _logger.info('Invalid selection list definition for fields.selection', exc_info=True)
-            raise UserError(_("The Selection Options expression is not a valid Pythonic expression. "
-                              "Please provide an expression in the [('key','Label'), ...] format."))
 
     @api.constrains('name', 'state')
     def _check_name(self):
@@ -662,10 +648,6 @@ class IrModelFields(models.Model):
         if 'model_id' in vals:
             model_data = self.env['ir.model'].browse(vals['model_id'])
             vals['model'] = model_data.model
-        if vals.get('ttype') == 'selection':
-            if not vals.get('selection'):
-                raise UserError(_('For selection fields, the Selection Options must be given!'))
-            self._check_selection(vals['selection'])
 
         res = super(IrModelFields, self).create(vals)
 
@@ -697,10 +679,6 @@ class IrModelFields(models.Model):
         patched_models = set()
 
         if vals and self:
-            # check selection if given
-            if vals.get('selection'):
-                self._check_selection(vals['selection'])
-
             for item in self:
                 if item.state != 'manual':
                     raise UserError(_('Properties of base fields cannot be altered in this manner! '
@@ -888,7 +866,7 @@ class IrModelFields(models.Model):
             attrs['translate'] = bool(field_data['translate'])
             attrs['size'] = field_data['size'] or None
         elif field_data['ttype'] in ('selection', 'reference'):
-            attrs['selection'] = safe_eval(field_data['selection'])
+            attrs['selection'] = self.env['ir.model.fields.selection']._get_selection(field_data['id'])
         elif field_data['ttype'] == 'many2one':
             if not self.pool.loaded and field_data['relation'] not in self.env:
                 return
@@ -936,6 +914,161 @@ class IrModelFields(models.Model):
                 if field:
                     model._add_field(name, field)
 
+
+class IrModelSelection(models.Model):
+    _name = 'ir.model.fields.selection'
+    _order = 'sequence, id'
+    _description = "Fields Selection"
+
+    field_id = fields.Many2one("ir.model.fields",
+        required=True, ondelete="cascade", index=True,
+        domain=[('ttype', 'in', ['selection', 'reference'])])
+    value = fields.Char(required=True)
+    name = fields.Char(translate=True, required=True)
+    sequence = fields.Integer(default=1000)
+
+    _sql_constraints = [
+        ('selection_field_uniq', 'unique(field_id, value)',
+         'Selections values must be unique per field'),
+    ]
+
+    def _get_selection(self, field_id):
+        """ Return the given field's selection as a list of pairs (value, string). """
+        self._cr.execute("""
+            SELECT value, name
+            FROM ir_model_fields_selection
+            WHERE field_id=%s
+            ORDER BY sequence, id
+        """, (field_id,))
+        return self._cr.fetchall()
+
+    def _existing_selection_data(self, model_name):
+        """ Return the selection data of the given model, by field and value, as
+            a dict {field_name: {value: row_values}}.
+        """
+        query = """
+            SELECT f.name AS field_name, s.*
+            FROM ir_model_fields_selection s
+            JOIN ir_model_fields f ON s.field_id=f.id
+            WHERE f.model=%s
+        """
+        self._cr.execute(query, [model_name])
+        result = defaultdict(dict)
+        for row in self._cr.dictfetchall():
+            result[row['field_name']][row['value']] = row
+        return result
+
+    def _reflect_model(self, model):
+        """ Reflect the given model's fields' selections. """
+        cr = self.env.cr
+        module = self._context.get('module')
+        model_name = model._name.replace('.', '_')
+        xml_id_pattern = '%s.field_selection__%s__%s__%s'
+        to_xmlids = []
+
+        def make_xml_id(field_name, value):
+            # the field value may contains exotic chars like spaces
+            sanitized_value = value.replace('.', '_').replace(' ', '_').lower()
+            return xml_id_pattern % (module, model_name, field_name, sanitized_value)
+
+        # determine fields to reflect
+        fields_to_reflect = [
+            field
+            for field in model._fields.values()
+            if field.type in ('selection', 'reference')
+        ]
+        if not fields_to_reflect:
+            return
+
+        # existing selection rows by field {field_name: {value: row}}
+        model_rows = self._existing_selection_data(model._name)
+
+        for field in fields_to_reflect:
+            # if selection is callable, make sure the reflection is empty
+            selection = field.selection if isinstance(field.selection, list) else []
+
+            # field selection rows by value {value: row}
+            cur_rows = model_rows[field.name]
+            new_rows = {
+                value: dict(value=value, name=label, sequence=index)
+                for index, (value, label) in enumerate(selection)
+            }
+
+            rows_to_insert = []
+            rows_to_update = []
+            for value in new_rows.keys() | cur_rows.keys():
+                new_row, old_row = new_rows.get(value), cur_rows.get(value)
+                if old_row is None:
+                    field_id = self.env['ir.model.fields']._get(model._name, field.name).id
+                    rows_to_insert.append(dict(new_row, field_id=field_id))
+                elif any(new_row[key] != old_row[key] for key in new_row):
+                    rows_to_update.append(dict(new_row, id=old_row['id']))
+
+            if rows_to_insert:
+                row_ids = query_insert(cr, self._table, rows_to_insert)
+                # update cur_rows for adding XML ids below
+                for row, row_id in zip(rows_to_insert, row_ids):
+                    cur_rows[row['value']] = dict(row, id=row_id)
+
+            for row in rows_to_update:
+                query_update(cr, self._table, row, ['id'])
+
+            # prepare update of XML ids
+            if module:
+                for value, modules in field._selection_modules(model).items():
+                    if module in modules:
+                        to_xmlids.append(dict(
+                            xml_id=make_xml_id(field.name, value),
+                            record=self.browse(cur_rows[value]['id']),
+                        ))
+
+        # create/update XML ids
+        self.env['ir.model.data']._update_xmlids(to_xmlids)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        field_ids = {vals['field_id'] for vals in vals_list}
+        for field in self.env['ir.model.fields'].browse(field_ids):
+            if field.state != 'manual':
+                raise UserError(_('Properties of base fields cannot be altered in this manner! '
+                                  'Please modify them through Python code, '
+                                  'preferably through a custom addon!'))
+        recs = super().create(vals_list)
+
+        if not self._context.get('__ir_model_fields__'):
+            # setup models; this re-initializes model in registry
+            self.pool.setup_models(self._cr)
+
+        return recs
+
+    @api.multi
+    def write(self, vals):
+        if (
+            not self.env.user._is_admin() and
+            any(record.field_id.state != 'manual' for record in self)
+        ):
+            raise UserError(_('Properties of base fields cannot be altered in this manner! '
+                              'Please modify them through Python code, '
+                              'preferably through a custom addon!'))
+
+        if 'value' in vals:
+            for selection in self:
+                if selection.value == vals['value']:
+                    continue
+                # replace the current value by the new one
+                query = "UPDATE {table} SET {field}=%s WHERE {field}=%s".format(
+                    table=self.env[selection.field_id.model]._table,
+                    field=selection.field_id.name,
+                )
+                self.env.cr.execute(query, [vals['value'], selection.value])
+
+        result = super().write(vals)
+
+        if not self._context.get('__ir_model_fields__'):
+            # setup models; this re-initializes model in registry
+            self.pool.setup_models(self._cr)
+
+        return result
 
 class IrModelConstraint(models.Model):
     """
