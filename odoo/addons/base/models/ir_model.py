@@ -1070,6 +1070,31 @@ class IrModelSelection(models.Model):
 
         return result
 
+    @api.multi
+    def unlink(self):
+        # Prevent manual deletion of module columns
+        if not self._context.get(MODULE_UNINSTALL_FLAG) and \
+                any(selection.field_id.state != 'manual' for selection in self):
+            raise UserError(_("This column contains module data and cannot be removed!"))
+
+        for selection in self:
+            if selection.field_id.store:
+                # replace the value by NULL on the field
+                query = "UPDATE {table} SET {field}=NULL WHERE {field}=%s".format(
+                    table=self.env[selection.field_id.model]._table,
+                    field=selection.field_id.name,
+                )
+                self.env.cr.execute(query, [selection.value])
+
+        result = super().unlink()
+
+        if not self._context.get('__ir_model_fields__'):
+            # setup models; this re-initializes model in registry
+            self.pool.setup_models(self._cr)
+
+        return result
+
+
 class IrModelConstraint(models.Model):
     """
     This model tracks PostgreSQL foreign keys and constraints used by Odoo
@@ -1706,6 +1731,14 @@ class IrModelData(models.Model):
                         continue
                     if field.name == 'id':
                         continue
+                if model == 'ir.model.fields.selection':
+                    selection = self.env[model].browse(res_id).with_context(
+                        prefetch_fields=False,
+                    )
+                    if not selection.exists():
+                        _logger.info('Deleting orphan external_ids %s', external_ids)
+                        external_ids.unlink()
+                        continue
                 _logger.info('Deleting %s@%s', res_id, model)
                 try:
                     self._cr.execute('SAVEPOINT record_unlink_save')
@@ -1719,7 +1752,7 @@ class IrModelData(models.Model):
             return undeletable
 
         # Remove non-model records first, then model fields, and finish with models
-        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] not in ('ir.model', 'ir.model.fields', 'ir.model.constraint'))
+        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] not in ('ir.model', 'ir.model.fields', 'ir.model.constraint', 'ir.model.fields.selection'))
         undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model.constraint')
 
         modules = self.env['ir.module.module'].search([('name', 'in', modules_to_remove)])
@@ -1727,6 +1760,7 @@ class IrModelData(models.Model):
         constraints._module_data_uninstall()
 
         undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model.fields')
+        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model.fields.selection')
 
         relations = self.env['ir.model.relation'].search([('module', 'in', modules.ids)])
         relations._module_data_uninstall()
