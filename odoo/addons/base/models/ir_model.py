@@ -996,11 +996,14 @@ class IrModelSelection(models.Model):
 
             rows_to_insert = []
             rows_to_update = []
+            ids_to_delete = []
             for value in new_rows.keys() | cur_rows.keys():
                 new_row, old_row = new_rows.get(value), cur_rows.get(value)
                 if old_row is None:
                     field_id = self.env['ir.model.fields']._get(model._name, field.name).id
                     rows_to_insert.append(dict(new_row, field_id=field_id))
+                elif new_row is None:
+                    ids_to_delete.append(old_row['id'])
                 elif any(new_row[key] != old_row[key] for key in new_row):
                     rows_to_update.append(dict(new_row, id=old_row['id']))
 
@@ -1012,6 +1015,9 @@ class IrModelSelection(models.Model):
 
             for row in rows_to_update:
                 query_update(cr, self._table, row, ['id'])
+
+            if ids_to_delete:
+                self.browse(ids_to_delete).with_context(**{MODULE_UNINSTALL_FLAG: True}).unlink()
 
             # prepare update of XML ids
             if module:

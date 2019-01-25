@@ -158,3 +158,22 @@ class TestXMLIDS(common.TransactionCase):
             'test_inherit.field_selection__test_new_api_selection__state__baz',
         ])
 
+
+class TestSelectionInherit(common.TransactionCase):
+    def test_inherit_callable(self):
+        """ check selection fields when inherit changes selection content without selection_add """
+        field = self.env['test_new_api.selection']._fields['api_type']
+        self.assertEqual(field.get_values(self.env), ['new', 'newer'])
+
+        ir_field = self.env['ir.model.fields']._get('test_new_api.selection', 'api_type')
+
+        # the selection list contains only the remaining values
+        self.assertEqual(len(ir_field.selection_ids), 2)
+
+        # selection 'old' is no longer a possible value
+        openerp = self.env.ref('test_new_api.api_openerp')
+        self.assertEqual(openerp.api_type, False)
+
+        # selection 'new' is still a possible value
+        odoo = self.env.ref('test_new_api.api_odoo')
+        self.assertEqual(odoo.api_type, 'new')

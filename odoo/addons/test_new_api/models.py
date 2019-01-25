@@ -523,3 +523,4 @@ class Selection(models.Model):
     _description = "Selection"
 
     state = fields.Selection([('foo', 'Foo'), ('bar', 'Bar')])
+    api_type = fields.Selection([('old', 'Old'), ('new', 'New')])

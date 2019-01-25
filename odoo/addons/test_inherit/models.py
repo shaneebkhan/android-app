@@ -146,8 +146,4 @@ class Selection(models.Model):
     _inherit = 'test_new_api.selection'
 
     state = fields.Selection(selection_add=[('bar', 'Bar'), ('baz', 'Baz')])
-    api_type = fields.Selection(selection='_get_selection_type')
-
-    @api.model
-    def _get_selection_type(self):
-        return [('new', 'New'), ('newer', 'Newer')]
+    api_type = fields.Selection(selection=[('new', 'New'), ('newer', 'Newer')])
