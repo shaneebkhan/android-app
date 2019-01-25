@@ -1925,10 +1925,10 @@ class Selection(Field):
 
         # translate selection labels
         if env.lang:
-            name = "%s,%s" % (self.model_name, self.name)
-            translate = partial(
-                env['ir.translation']._get_source, name, 'selection', env.lang)
-            return [(value, translate(label) if label else label) for value, label in selection]
+            field = env['ir.model.fields']._get(self.model_name, self.name)
+            # use mapping in case selection values are not strings
+            value2label = {sel.value: sel.name for sel in field.selection_ids}
+            return [(value, value2label[value]) for value, _ in selection]
         else:
             return selection
 

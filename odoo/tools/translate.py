@@ -877,11 +877,6 @@ def trans_generate(lang, modules, cr):
                 continue
             field = field_model._fields[field_name]
 
-            if isinstance(getattr(field, 'selection', None), (list, tuple)):
-                name = "%s,%s" % (record.model, field_name)
-                for dummy, val in field.selection:
-                    push_translation(module, 'selection', name, 0, val)
-
         for field_name, field in record._fields.items():
             if field.translate:
                 name = model + "," + field_name

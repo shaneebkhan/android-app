@@ -14,7 +14,6 @@ _logger = logging.getLogger(__name__)
 TRANSLATION_TYPE = [
     ('model', 'Model Field'),
     ('model_terms', 'Structured Model Field'),
-    ('selection', 'Selection'),
     ('code', 'Code'),
     ('constraint', 'Constraint'),
     ('sql_constraint', 'SQL Constraint')
@@ -157,9 +156,9 @@ class IrTranslationImport(object):
             cr.execute(""" INSERT INTO %s(name, lang, res_id, src, type, value, module, state, comments)
                            SELECT name, lang, res_id, src, type, value, module, state, comments
                            FROM %s
-                           WHERE type IN ('selection', 'constraint', 'sql_constraint')
+                           WHERE type IN ('constraint', 'sql_constraint')
                            AND noupdate IS NOT TRUE
-                           ON CONFLICT (type, lang, name, md5(src)) WHERE type IN ('selection', 'constraint', 'sql_constraint')
+                           ON CONFLICT (type, lang, name, md5(src)) WHERE type IN ('constraint', 'sql_constraint')
                             DO UPDATE SET (name, lang, res_id, src, type, value, module, state, comments) = (EXCLUDED.name, EXCLUDED.lang, EXCLUDED.res_id, EXCLUDED.src, EXCLUDED.type, EXCLUDED.value, EXCLUDED.module, EXCLUDED.state, EXCLUDED.comments)
                             WHERE EXCLUDED.value IS NOT NULL AND EXCLUDED.value != '';
                        """ % (self._model_table, self._table))
@@ -284,7 +283,7 @@ class IrTranslation(models.Model):
         if not tools.index_exists(self._cr, 'ir_translation_model_unique'):
             self._cr.execute("CREATE UNIQUE INDEX ir_translation_model_unique ON ir_translation (type, lang, name, res_id) WHERE type = 'model'")
         if not tools.index_exists(self._cr, 'ir_translation_selection_unique'):
-            self._cr.execute("CREATE UNIQUE INDEX ir_translation_selection_unique ON ir_translation (type, lang, name, md5(src)) WHERE type IN ('selection', 'constraint', 'sql_constraint')")
+            self._cr.execute("CREATE UNIQUE INDEX ir_translation_selection_unique ON ir_translation (type, lang, name, md5(src)) WHERE type IN ('constraint', 'sql_constraint')")
         return res
 
     @api.model
@@ -794,6 +793,7 @@ class IrTranslation(models.Model):
         :return: action definition to open the list of available translations
         """
         fields = self.env['ir.model.fields'].search([('model', '=', model_name)])
+        selection_ids = [field.selection_ids.ids for field in fields if field.type == 'selection']
         view = self.env.ref("base.view_translation_tree", False) or self.env['ir.ui.view']
         return {
             'name': _("Technical Translations"),
@@ -802,11 +802,12 @@ class IrTranslation(models.Model):
             'res_model': 'ir.translation',
             'type': 'ir.actions.act_window',
             'domain': [
-                '|',
-                    '&', ('type', '=', 'model'),
+                '&',
+                    ('type', '=', 'model'),
+                    '|',
                         '&', ('res_id', 'in', fields.ids),
                              ('name', 'like', 'ir.model.fields,'),
-                    '&', ('type', '=', 'selection'),
-                         ('name', 'like', model_name+','),
+                        '&', ('res_id', 'in', selection_ids),
+                             ('name', 'like', 'ir.model.fields.selection,')
             ],
         }

@@ -319,6 +319,23 @@ class TestTranslation(TransactionCase):
         self.assertEqual(len(translations), 1, "Translations were not duplicated after `translate_fields` call")
         self.assertEqual(translations.value, "Apprenti", "The first translation must stay")
 
+    def test_field_selection(self):
+        """ Test translations of field selections. """
+        field = self.env['ir.model']._fields['state']
+        self.assertEqual([key for key, _ in field.selection], ['manual', 'base'])
+
+        ir_field = self.env['ir.model.fields']._get('ir.model', 'state')
+        ir_field = ir_field.with_context(lang='fr_FR')
+        ir_field.selection_ids[0].name = 'Custo'
+        ir_field.selection_ids[1].name = 'Pas touche!'
+
+        fg = self.env['ir.model'].fields_get(['state'])
+        self.assertEqual(fg['state']['selection'], field.selection)
+
+        fg = self.env['ir.model'].with_context(lang='fr_FR').fields_get(['state'])
+        self.assertEqual(fg['state']['selection'],
+                         [('manual', 'Custo'), ('base', 'Pas touche!')])
+
 
 class TestXMLTranslation(TransactionCase):
     def setUp(self):
