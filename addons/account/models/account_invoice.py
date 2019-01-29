@@ -122,6 +122,29 @@ class AccountInvoice(models.Model):
             self.reconciled = True
         else:
             self.reconciled = False
+    
+    @api.multi
+    def _get_domain_match_to_check(self):
+        self.ensure_one()
+        domain = [
+            ('move_id.to_check', '=', True),
+            ('full_reconcile_id', '=', False),
+        ]
+        if self.type == 'out_invoice':
+            domain.append(('balance', '=', -self.residual))
+        elif self.type == 'in_invoice':
+            domain.append(('balance', '=', self.residual))
+        elif self.type == 'out_refund':
+            domain.append(('balance', '=', self.residual))
+        elif self.type == 'in_refund':
+            domain.append(('balance', '=', -self.residual))
+        return domain
+        
+    @api.multi
+    def _get_match_to_check(self):
+        for r in self:
+            domain = r._get_domain_match_to_check()
+            r.match_to_check = self.env['account.move.line'].search_count(domain) > 0
 
     @api.one
     def _get_outstanding_info_JSON(self):
@@ -354,6 +377,7 @@ class AccountInvoice(models.Model):
         related='partner_id.commercial_partner_id', store=True, readonly=True,
         help="The commercial entity that will be used on Journal Entries for this invoice")
 
+    match_to_check = fields.Boolean(compute='_get_match_to_check', groups='account.group_account_invoice')
     outstanding_credits_debits_widget = fields.Text(compute='_get_outstanding_info_JSON', groups="account.group_account_invoice")
     payments_widget = fields.Text(compute='_get_payment_info_JSON', groups="account.group_account_invoice")
     has_outstanding = fields.Boolean(compute='_get_outstanding_info_JSON', groups="account.group_account_invoice")
@@ -599,6 +623,20 @@ class AccountInvoice(models.Model):
             return self.env.ref('account.account_invoices').report_action(self)
         else:
             return self.env.ref('account.account_invoices_without_payment').report_action(self)
+    
+    @api.multi
+    def action_reconcile_to_check(self, params):
+        self.ensure_one()
+        domain = self._get_domain_match_to_check()
+        ids = self.env['account.move.line'].search(domain).mapped('statement_line_id').ids
+        action_context = {'show_mode_selector': False, 'company_ids': self.mapped('company_id').ids}
+        action_context.update({'mode': 'to_check'})
+        action_context.update({'statement_line_ids': ids})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'bank_statement_reconciliation_view',
+            'context': action_context,
+        }
 
     @api.multi
     def action_invoice_sent(self):

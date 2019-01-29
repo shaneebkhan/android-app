@@ -821,6 +821,7 @@
                             </group>
                             <group>
                                 <field name="auto_reconcile" attrs="{'invisible': [('rule_type', '=', 'writeoff_button')]}"/>
+                                <field name="to_check" attrs="{'invisible': [('rule_type', '!=', 'writeoff_button')]}"/>
                             </group>
                         </group>
                         <group string="Conditions on Bank Statement Line">
@@ -1629,6 +1630,7 @@
                                 <field name="auto_reverse" attrs="{'readonly':[('reverse_entry_id', '!=', False)]}"/>
                                 <field name="reverse_date" attrs="{'invisible':[('auto_reverse', '=', False)], 'required':[('auto_reverse', '=', True)],'readonly':[('reverse_entry_id', '!=', False)]}"/>
                                 <field name="reverse_entry_id" attrs="{'invisible':True}"/>
+                                <field name="to_check"/>
                             </group>
                         </page>
                     </notebook>
@@ -1645,6 +1647,7 @@
                     <field name="date"/>
                     <filter string="Unposted" name="unposted" domain="[('state','=','draft')]" help="Unposted Journal Entries"/>
                     <filter string="Posted" name="posted" domain="[('state','=','posted')]" help="Posted Journal Entries"/>
+                    <filter string="To Check" name="to_check" domain="[('to_check', '=', True)]"/>
                     <separator/>
                     <filter string="Sales" name="sales" domain="[('journal_id.type','=','sale')]" context="{'default_journal_type': 'sale'}"/>
                     <filter string="Purchases" name="purchases" domain="[('journal_id.type','=','purchase')]" context="{'default_journal_type': 'purchase'}"/>

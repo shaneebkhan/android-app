@@ -145,7 +145,7 @@ class account_journal(models.Model):
     @api.multi
     def get_journal_dashboard_datas(self):
         currency = self.currency_id or self.company_id.currency_id
-        number_to_reconcile = last_balance = account_sum = 0
+        number_to_reconcile = number_to_check = last_balance = account_sum = 0
         title = ''
         number_draft = number_waiting = number_late = 0
         sum_draft = sum_waiting = sum_late = 0.0
@@ -161,6 +161,7 @@ class account_journal(models.Model):
                             AND not exists (select 1 from account_move_line aml where aml.statement_line_id = line.id)
                         """, (tuple(self.ids),))
             number_to_reconcile = self.env.cr.fetchone()[0]
+            number_to_check = len(self.to_check_ids())
             # optimization to read sum of balance from account_move_line
             account_ids = tuple(ac for ac in [self.default_debit_account_id.id, self.default_credit_account_id.id] if ac)
             if account_ids:
@@ -195,6 +196,7 @@ class account_journal(models.Model):
 
         difference = currency.round(last_balance-account_sum) + 0.0
         return {
+            'number_to_check': number_to_check,
             'number_to_reconcile': number_to_reconcile,
             'account_balance': formatLang(self.env, currency.round(account_sum) + 0.0, currency_obj=currency),
             'last_balance': formatLang(self.env, currency.round(last_balance) + 0.0, currency_obj=currency),
@@ -308,6 +310,22 @@ class account_journal(models.Model):
                 'tag': 'manual_reconciliation_view',
                 'context': action_context,
             }
+    
+    @api.multi
+    def action_open_to_check(self):
+        ids = self.to_check_ids()
+        action_context = {'show_mode_selector': False, 'company_ids': self.mapped('company_id').ids}
+        action_context.update({'mode': 'to_check'})
+        action_context.update({'statement_line_ids': ids})
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'bank_statement_reconciliation_view',
+            'context': action_context,
+        }
+    
+    def to_check_ids(self):
+        statement_line_ids = self.env['account.move'].search([('journal_id', 'in', self.ids), ('to_check', '=', True)]).mapped('line_ids.statement_line_id')
+        return statement_line_ids.ids
 
     @api.multi
     def open_action(self):

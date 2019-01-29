@@ -32,6 +32,9 @@ var StatementAction = AbstractAction.extend({
         load_more: '_onLoadMore',
         reload: 'reload',
     },
+    events: {
+        'change .reconciliation_search_input': '_onSearch',
+    },
     config: _.extend({}, AbstractAction.prototype.config, {
         // used to instantiate the model
         Model: ReconciliationModel.StatementModel,
@@ -248,6 +251,16 @@ var StatementAction = AbstractAction.extend({
                 });
             }
         });
+    },
+    
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     */
+    _onSearch: function (ev) {
+        var self = this;
+        ev.stopPropagation();
+        this.reload();
     },
 
     _onActionPartialAmount: function(event) {

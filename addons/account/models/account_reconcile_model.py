@@ -22,6 +22,7 @@ class AccountReconcileModel(models.Model):
     ], string='Type', default='writeoff_button', required=True)
     auto_reconcile = fields.Boolean(string='Auto-validate',
         help='Validate the statement line automatically (reconciliation based on your rule).')
+    to_check = fields.Boolean(string='Needs to be checked', default=False, help='This matching rule is used when the user is not certain of all the informations of the counterpart.')
 
     # ===== Conditions =====
     match_journal_ids = fields.Many2many('account.journal', string='Journals',
@@ -625,6 +626,23 @@ class AccountReconcileModel(models.Model):
                     continue
 
                 excluded_lines_found = False
+                
+                # Add the lines already linked to the st_line if we only need to check an account move.
+                if self._context.get('mode') == 'to_check':
+                    query = '''
+                        SELECT aml.id FROM (
+                            SELECT aml.id, aml.full_reconcile_id
+                            FROM account_move_line aml
+                            JOIN account_move am ON aml.move_id = am.id
+                            WHERE am.to_check = True
+                            AND aml.full_reconcile_id > 0
+                            AND aml.id IN %s) as t
+                        JOIN account_move_line as aml ON aml.full_reconcile_id = t.full_reconcile_id AND aml.id != t.id;
+                        '''
+                    self._cr.execute(query, [tuple(line.journal_entry_ids.ids)])
+                    query_res = self._cr.dictfetchall()
+                    for r in query_res:
+                        results[line.id]['aml_ids'].append(r['id'])
 
                 if model.rule_type == 'invoice_matching':
                     candidates = grouped_candidates[line.id][model.id]

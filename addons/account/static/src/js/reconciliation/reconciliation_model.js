@@ -94,7 +94,7 @@ var _t = core._t;
  */
 var StatementModel = BasicModel.extend({
     avoidCreate: false,
-    quickCreateFields: ['account_id', 'amount', 'analytic_account_id', 'label', 'tax_id', 'force_tax_included', 'analytic_tag_ids'],
+    quickCreateFields: ['account_id', 'amount', 'analytic_account_id', 'label', 'tax_id', 'force_tax_included', 'analytic_tag_ids', 'to_check'],
 
     /**
      * @override
@@ -344,8 +344,7 @@ var StatementModel = BasicModel.extend({
      */
     load: function (context) {
         var self = this;
-        // var statement_ids = context.statement_ids;
-        this.statement_ids = context.statement_ids;
+        this.statement_ids = context.statement_ids || context.statement_line_ids;
         if (!this.statement_ids) {
             return $.when();
         }
@@ -393,10 +392,12 @@ var StatementModel = BasicModel.extend({
         self.alreadyDisplayed = [];
         self.lines = {};
         self.pagerIndex = 0;
+        self.search_str = $('.reconciliation_search_input').val()
         var def_statement = this._rpc({
                 model: 'account.reconciliation.widget',
                 method: 'get_bank_statement_data',
-                args: [self.statement_ids],
+                args: [self.statement_ids, self.search_str],
+                context: self.context,
             })
             .then(function (statement) {
                 self.statement = statement;
@@ -486,7 +487,7 @@ var StatementModel = BasicModel.extend({
     quickCreateProposition: function (handle, reconcileModelId) {
         var line = this.getLine(handle);
         var reconcileModel = _.find(this.reconcileModels, function (r) {return r.id === reconcileModelId;});
-        var fields = ['account_id', 'amount', 'amount_type', 'analytic_account_id', 'journal_id', 'label', 'force_tax_included', 'tax_id', 'analytic_tag_ids'];
+        var fields = ['account_id', 'amount', 'amount_type', 'analytic_account_id', 'journal_id', 'label', 'force_tax_included', 'tax_id', 'analytic_tag_ids', 'to_check'];
         this._blurProposition(handle);
 
         var focus = this._formatQuickCreate(line, _.pick(reconcileModel, fields));
@@ -708,6 +709,12 @@ var StatementModel = BasicModel.extend({
                     return isNaN(prop.id) && prop.display;
                 }), self._formatToProcessReconciliation.bind(self, line)),
             };
+            line.reconciliation_proposition.some(function(prop) {
+                if (prop.to_check) {
+                    values_dict['to_check'] = true;
+                    return true;
+                }
+            })
 
             // If the lines are not fully balanced, create an unreconciled amount.
             // line.st_line.currency_id is never false here because its equivalent to
@@ -733,6 +740,7 @@ var StatementModel = BasicModel.extend({
                 model: 'account.reconciliation.widget',
                 method: 'process_bank_statement_line',
                 args: [ids, values],
+                context: self.context,
             })
             .then(function () {
                 return {handles: handles};
@@ -1094,6 +1102,7 @@ var StatementModel = BasicModel.extend({
             'link': values.link,
             'display': true,
             'invalid': true,
+            'to_check': values.to_check,
             '__tax_to_recompute': true,
             'is_tax': values.is_tax,
             '__focus': '__focus' in values ? values.__focus : true,
@@ -1238,7 +1247,7 @@ var StatementModel = BasicModel.extend({
  * datas allowing manual reconciliation
  */
 var ManualModel = StatementModel.extend({
-    quickCreateFields: ['account_id', 'journal_id', 'amount', 'analytic_account_id', 'label', 'tax_id', 'force_tax_included', 'analytic_tag_ids'],
+    quickCreateFields: ['account_id', 'journal_id', 'amount', 'analytic_account_id', 'label', 'tax_id', 'force_tax_included', 'analytic_tag_ids', 'to_check'],
 
     //--------------------------------------------------------------------------
     // Public
