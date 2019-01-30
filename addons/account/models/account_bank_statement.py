@@ -551,7 +551,7 @@ class AccountBankStatementLine(models.Model):
             :returns: The journal entries with which the transaction was matched. If there was at least an entry in counterpart_aml_dicts or new_aml_dicts, this list contains
                 the move created by the reconciliation, containing entries for the statement.line (1), the counterpart move lines (0..*) and the new move lines (0..*).
         """
-        to_check = self._context.get('mode') == 'to_check'
+        edition_mode = self._context.get('edition_mode')
         counterpart_aml_dicts = counterpart_aml_dicts or []
         payment_aml_rec = payment_aml_rec or self.env['account.move.line']
         new_aml_dicts = new_aml_dicts or []
@@ -568,7 +568,7 @@ class AccountBankStatementLine(models.Model):
         if any(rec.statement_id for rec in payment_aml_rec):
             raise UserError(_('A selected move line was already reconciled.'))
         for aml_dict in counterpart_aml_dicts:
-            if aml_dict['move_line'].reconciled and not to_check:
+            if aml_dict['move_line'].reconciled and not edition_mode:
                 raise UserError(_('A selected move line was already reconciled.'))
             if isinstance(aml_dict['move_line'], int):
                 aml_dict['move_line'] = aml_obj.browse(aml_dict['move_line'])
@@ -576,7 +576,7 @@ class AccountBankStatementLine(models.Model):
             if aml_dict.get('tax_ids') and isinstance(aml_dict['tax_ids'][0], int):
                 # Transform the value in the format required for One2many and Many2many fields
                 aml_dict['tax_ids'] = [(4, id, None) for id in aml_dict['tax_ids']]
-        if to_check:
+        if edition_mode:
             if any(not line.journal_entry_ids for line in self):
                 raise UserError(_('Some selected statement line were not already reconciled with an account move.'))
         else:
@@ -608,7 +608,7 @@ class AccountBankStatementLine(models.Model):
             # Create the move
             self.sequence = self.statement_id.line_ids.ids.index(self.id) + 1
             move_vals = self._prepare_reconciliation_move(self.statement_id.name)
-            if to_check:
+            if edition_mode:
                 am = self.env['account.move'].search([('name', '=', self.move_name)])
                 for aml in am.line_ids:
                     aml.remove_move_reconcile()

@@ -646,7 +646,7 @@ class AccountReconcileModel(models.Model):
                 excluded_lines_found = False
                 
                 # Add the lines already linked to the st_line if we only need to check an account move.
-                if self._context.get('mode') == 'to_check':
+                if self._context.get('edition_mode'):
                     query = '''
                         SELECT aml.id FROM (
                             SELECT aml.id, aml.full_reconcile_id

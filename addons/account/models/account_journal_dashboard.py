@@ -315,7 +315,7 @@ class account_journal(models.Model):
     def action_open_to_check(self):
         ids = self.to_check_ids()
         action_context = {'show_mode_selector': False, 'company_ids': self.mapped('company_id').ids}
-        action_context.update({'mode': 'to_check'})
+        action_context.update({'edition_mode': True})
         action_context.update({'statement_line_ids': ids})
         return {
             'type': 'ir.actions.client',
