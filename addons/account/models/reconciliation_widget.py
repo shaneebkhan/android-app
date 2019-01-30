@@ -40,14 +40,12 @@ class AccountReconciliation(models.AbstractModel):
             if datum.get('partner_id') is not None:
                 st_line.write({'partner_id': datum['partner_id']})
 
-            account_move = st_line.with_context(ctx).process_reconciliation(
+            _ctx = dict(ctx, mark_to_check=True) if datum.get('to_check') is not None else ctx
+            st_line.with_context(_ctx).process_reconciliation(
                 datum.get('counterpart_aml_dicts', []),
                 payment_aml_rec,
                 datum.get('new_aml_dicts', []))
             
-            if datum.get('to_check') is not None:
-                account_move.write({'to_check': datum['to_check']})
-
     @api.model
     def get_move_lines_for_bank_statement_line(self, st_line_id, partner_id=None, excluded_ids=None, search_str=False, offset=0, limit=None):
         """ Returns move lines for the bank statement reconciliation widget,
