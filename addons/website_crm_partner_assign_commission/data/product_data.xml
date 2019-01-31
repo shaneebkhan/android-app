@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="product_commission" model="product.product">
+            <field name="name">Commission</field>
+            <field name="purchase_ok" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

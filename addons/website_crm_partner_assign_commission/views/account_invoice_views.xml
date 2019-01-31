@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+        <record id="account_invoice_view_form_inherit" model="ir.ui.view">
+            <field name="name">account.invoice.view.form.inherit</field>
+            <field name="model">account.invoice</field>
+            <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="reseller_id"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

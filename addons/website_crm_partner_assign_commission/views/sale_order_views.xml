@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_order_form_inherit" model="ir.ui.view">
+        <field name="name">sale.order.form.view.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="reseller_id"/>
+                <field name="commission_rate" attrs="{'invisible': [('reseller_id', '=', False)]}"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <menuitem id="sale_menu_resellers" name="Resellers" parent="sale.menu_sale_config" sequence="100" action="website_crm_partner_assign.res_partner_grade_action"/>
+</odoo>
