@@ -3,6 +3,7 @@
 
 from datetime import datetime, timedelta
 import unittest
+from odoo import fields
 from odoo.tests import Form
 from odoo.tests import common
 
@@ -606,7 +607,7 @@ class TestWorkOrderProcess(common.TransactionCase):
 
         dining_table = self.env.ref("mrp.product_product_computer_desk")
 
-        date_start = datetime.now() + timedelta(days=1)
+        date_start = fields.Datetime.now() + timedelta(days=1)
 
         production_table_form = Form(self.env['mrp.production'])
         production_table_form.product_id = dining_table
