@@ -396,7 +396,7 @@ var StatementModel = BasicModel.extend({
         var def_statement = this._rpc({
                 model: 'account.reconciliation.widget',
                 method: 'get_bank_statement_data',
-                args: [self.statement_ids, self.search_str],
+                kwargs: {"bank_statement_ids":self.statement_ids, "search_str":self.search_str},
                 context: self.context,
             })
             .then(function (statement) {
