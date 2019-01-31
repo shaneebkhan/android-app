@@ -129,15 +129,12 @@ class AccountInvoice(models.Model):
         domain = [
             ('move_id.to_check', '=', True),
             ('full_reconcile_id', '=', False),
+            ('statement_line_id', '!=', False),
         ]
-        if self.type == 'out_invoice':
+        if self.type in ('out_invoice', 'in_refund'):
             domain.append(('balance', '=', -self.residual))
-        elif self.type == 'in_invoice':
+        else:
             domain.append(('balance', '=', self.residual))
-        elif self.type == 'out_refund':
-            domain.append(('balance', '=', self.residual))
-        elif self.type == 'in_refund':
-            domain.append(('balance', '=', -self.residual))
         return domain
         
     @api.multi

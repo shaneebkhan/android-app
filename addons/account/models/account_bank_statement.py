@@ -611,11 +611,7 @@ class AccountBankStatementLine(models.Model):
             self.sequence = self.statement_id.line_ids.ids.index(self.id) + 1
             move_vals = self._prepare_reconciliation_move(self.statement_id.name)
             if edition_mode:
-                am = self.env['account.move'].search([('name', '=', self.move_name)])
-                for aml in am.line_ids:
-                    aml.remove_move_reconcile()
-                am.state = 'draft' # To be able to unlink
-                am.unlink()
+                self.button_cancel_reconciliation()
                 move_vals['name'] = self.move_name
             move = self.env['account.move'].create(move_vals)
             counterpart_moves = (counterpart_moves | move)
