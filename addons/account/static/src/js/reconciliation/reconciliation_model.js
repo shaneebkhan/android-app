@@ -62,6 +62,7 @@ var _t = core._t;
  *          }
  *          [ref]: string
  *          [is_partially_reconciled]: boolean
+ *          [to_check]: boolean
  *          [amount_currency_str]: string|false (amount in record currency)
  *      }
  *      mv_lines: object - idem than reconciliation_proposition
@@ -492,6 +493,13 @@ var StatementModel = BasicModel.extend({
 
         var focus = this._formatQuickCreate(line, _.pick(reconcileModel, fields));
         focus.reconcileModelId = reconcileModelId;
+        if (!line.reconciliation_proposition.every(function(prop) {return prop.to_check == focus.to_check})) {
+            new CrashManager().show_warning({data: {
+                exception_type: _t("Incorrect Operation"),
+                message: _t("You cannot mix items with and without the 'To Check' checkbox ticked.")
+            }});
+            return $.when();
+        }
         line.reconciliation_proposition.push(focus);
 
         if (reconcileModel.has_second_line) {
@@ -616,6 +624,14 @@ var StatementModel = BasicModel.extend({
             prop = this._formatQuickCreate(line);
             line.reconciliation_proposition.push(prop);
         }
+        if (!line.reconciliation_proposition.slice(0,-1).every(function(prop) {return prop.to_check == values.to_check})) {
+            new CrashManager().show_warning({data: {
+                exception_type: _t("Incorrect Operation"),
+                message: _t("You cannot mix items with and without the 'To Check' checkbox ticked.")
+            }});
+            $('.create_to_check input').click();
+            return $.when();
+        }
         _.each(values, function (value, fieldName) {
             if (fieldName === 'analytic_tag_ids') {
                 switch (value.operation) {
@@ -715,6 +731,9 @@ var StatementModel = BasicModel.extend({
                     return true;
                 }
             })
+            if (line.reconciliation_proposition[0].to_check) {
+                values_dict['to_check'] = true;
+            }
 
             // If the lines are not fully balanced, create an unreconciled amount.
             // line.st_line.currency_id is never false here because its equivalent to

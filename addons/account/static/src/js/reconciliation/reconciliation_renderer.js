@@ -341,12 +341,9 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         this.$('caption .o_buttons button.o_reconcile').toggleClass('d-none', state.balance.type <= 0);
         this.$('caption .o_buttons .o_no_valid').toggleClass('d-none', state.balance.type >= 0);
         self.$('caption .o_buttons button.o_reconcile').toggleClass('btn-warning', false);
-        state.reconciliation_proposition.some(function(prop) {
-            if (prop.to_check) {
-                self.$('caption .o_buttons button.o_reconcile').toggleClass('btn-warning', true);
-                return true;
-            }
-        })
+        if (state.reconciliation_proposition[0] && state.reconciliation_proposition[0].to_check) {
+            self.$('caption .o_buttons button.o_reconcile').toggleClass('btn-warning', true);
+        }
 
         // partner_id
         this._makePartnerRecord(state.st_line.partner_id, state.st_line.partner_name).then(function (recordID) {

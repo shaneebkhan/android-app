@@ -644,23 +644,6 @@ class AccountReconcileModel(models.Model):
                     continue
 
                 excluded_lines_found = False
-                
-                # Add the lines already linked to the st_line if we only need to check an account move.
-                if self._context.get('edition_mode'):
-                    query = '''
-                        SELECT aml.id FROM (
-                            SELECT aml.id, aml.full_reconcile_id
-                            FROM account_move_line aml
-                            JOIN account_move am ON aml.move_id = am.id
-                            WHERE am.to_check = True
-                            AND aml.full_reconcile_id > 0
-                            AND aml.id IN %s) as t
-                        JOIN account_move_line as aml ON aml.full_reconcile_id = t.full_reconcile_id AND aml.id != t.id;
-                        '''
-                    self._cr.execute(query, [tuple(line.journal_entry_ids.ids)])
-                    query_res = self._cr.dictfetchall()
-                    for r in query_res:
-                        results[line.id]['aml_ids'].append(r['id'])
 
                 if model.rule_type == 'invoice_matching':
                     candidates = grouped_candidates[line.id][model.id]
