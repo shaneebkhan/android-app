@@ -159,23 +159,19 @@ class AccountReconciliation(models.AbstractModel):
         return results
 
     @api.model
-    def get_bank_statement_data(self, bank_statement_ids, search_str=False):
+    def get_bank_statement_data(self, bank_statement_line_ids, search_str=False):
         """ Get statement lines of the specified statements or all unreconciled
             statement lines and try to automatically reconcile them / find them
             a partner.
             Return ids of statement lines left to reconcile and other data for
             the reconciliation widget.
 
-            :param st_line_id: ids of the bank statement 
-                                if context.get('edition_mode')
-                               else it is the ids of the statement lines
+            :param bank_statement_line_ids: ids of the bank statement lines
         """
-        if not bank_statement_ids:
+        if not bank_statement_line_ids:
             return {}
         edition_mode = self._context.get('edition_mode')
-        bank_statements = self.env['account.bank.statement'].browse(bank_statement_ids)
-        if edition_mode:
-            bank_statements = self.env['account.bank.statement.line'].browse(bank_statement_ids).mapped('statement_id')
+        bank_statements = self.env['account.bank.statement.line'].browse(bank_statement_line_ids).mapped('statement_id')
             
         search_sql = '''
             AND (p.name ILIKE CONCAT('%%',%(search_str)s,'%%')
@@ -195,10 +191,10 @@ class AccountReconciliation(models.AbstractModel):
              GROUP BY line.id
         '''.format(
             join = edition_mode and "JOIN account_move_line aml ON aml.statement_line_id = line.id JOIN account_move am ON am.id = aml.move_id" or "",
-            cond = edition_mode and "AND line.id IN %(ids)s" or "AND line.statement_id IN %(ids)s AND NOT EXISTS (SELECT 1 from account_move_line aml WHERE aml.statement_line_id = line.id)",
+            cond = edition_mode and "AND line.id IN %(ids)s" or "AND line.id IN %(ids)s AND NOT EXISTS (SELECT 1 from account_move_line aml WHERE aml.statement_line_id = line.id)",
             srch = search_str and search_sql or "",
         )
-        self.env.cr.execute(query, {'ids':tuple(bank_statement_ids), 'search_str':search_str})
+        self.env.cr.execute(query, {'ids':tuple(bank_statement_line_ids), 'search_str':search_str})
 
         bank_statement_lines = self.env['account.bank.statement.line'].browse([line.get('id') for line in self.env.cr.dictfetchall()])
 

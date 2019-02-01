@@ -552,7 +552,7 @@
         <record id="action_bank_reconcile_bank_statements" model="ir.actions.client">
             <field name="name">Reconciliation on Bank Statements</field>
             <field name="tag">bank_statement_reconciliation_view</field>
-            <field name="context">{'statement_ids': [active_id]}</field>
+            <field name="context">"{'statement_line_ids': {{self.env['account.bank.statement'].browse(self._context['active_id']).mapped('line_ids').ids}} }"</field>
         </record>
 
         <record id="view_bank_statement_tree" model="ir.ui.view">
@@ -600,7 +600,7 @@
                 <form string="Bank Statement">
                 <header>
                     <field name="all_lines_reconciled" invisible="1" />
-                    <button name="%(action_bank_reconcile_bank_statements)d" string="Reconcile" type="action" class="oe_highlight" attrs="{'invisible':['|','|',('all_lines_reconciled','=',True),('line_ids','=',[]),('state', '!=', 'open')]}"/>
+                    <button name="action_bank_reconcile_bank_statements" string="Reconcile" type="object" class="oe_highlight" attrs="{'invisible':['|','|',('all_lines_reconciled','=',True),('line_ids','=',[]),('state', '!=', 'open')]}"/>
                     <button name="check_confirm_bank" string="Validate" type="object" class="oe_highlight" attrs="{'invisible':['|','|',('all_lines_reconciled','=',False),('line_ids','=',[]),('state', '!=', 'open')]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="open,confirm"/>
                 </header>
