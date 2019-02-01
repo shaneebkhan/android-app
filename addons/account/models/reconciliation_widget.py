@@ -572,8 +572,8 @@ class AccountReconciliation(models.AbstractModel):
 
             debit = line.debit
             credit = line.credit
-            amount = line.balance if edition_mode else line.amount_residual
-            amount_currency = line.amount_currency if edition_mode else line.amount_residual_currency
+            amount = line.amount_residual
+            amount_currency = line.amount_residual_currency
 
             # For already reconciled lines, don't use amount_residual(_currency)
             if line.account_id.internal_type == 'liquidity':
