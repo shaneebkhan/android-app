@@ -4,7 +4,6 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.osv import expression
 from odoo.tools.misc import formatLang
-import json
 
 
 class AccountReconciliation(models.AbstractModel):
@@ -45,7 +44,7 @@ class AccountReconciliation(models.AbstractModel):
                 datum.get('counterpart_aml_dicts', []),
                 payment_aml_rec,
                 datum.get('new_aml_dicts', []))
-            
+
     @api.model
     def get_move_lines_for_bank_statement_line(self, st_line_id, partner_id=None, excluded_ids=None, search_str=False, offset=0, limit=None):
         """ Returns move lines for the bank statement reconciliation widget,
