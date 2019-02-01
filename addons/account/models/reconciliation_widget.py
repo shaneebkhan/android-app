@@ -39,8 +39,8 @@ class AccountReconciliation(models.AbstractModel):
             if datum.get('partner_id') is not None:
                 st_line.write({'partner_id': datum['partner_id']})
 
-            _ctx = dict(ctx, mark_to_check=True) if datum.get('to_check') is not None else ctx
-            st_line.with_context(_ctx).process_reconciliation(
+            ctx['default_to_check'] = datum.get('to_check')
+            st_line.with_context(ctx).process_reconciliation(
                 datum.get('counterpart_aml_dicts', []),
                 payment_aml_rec,
                 datum.get('new_aml_dicts', []))
@@ -446,14 +446,11 @@ class AccountReconciliation(models.AbstractModel):
             :param excluded_ids:
             :param search_str:
         """
-        edition_mode = self._context.get('edition_mode')
-        
-        if edition_mode:
-            to_check_excluded = self.env['account.move.line'].search([
-                ('move_id.to_check', '=', True),
-                ('full_reconcile_id', '=', False),
-                ]).ids
-            excluded_ids.extend(to_check_excluded)
+        AccountMoveLine = self.env['account.move.line']
+
+        #Always exclude the journal items that have been marked as 'to be checked' in a former bank statement reconciliation
+        to_check_excluded = AccountMoveLine.search(AccountMoveLine._get_domain_for_edition_mode()).ids
+        excluded_ids.extend(to_check_excluded)
 
         domain_reconciliation = [
             '&', '&',
@@ -464,11 +461,6 @@ class AccountReconciliation(models.AbstractModel):
 
         # Black lines = unreconciled & (not linked to a payment or open balance created by statement
         domain_matching = [('reconciled', '=', False)]
-        if edition_mode:
-            domain_matching = expression.OR([domain_matching,
-                                [('full_reconcile_id', 'in', st_line.journal_entry_ids.mapped('full_reconcile_id').ids),
-                                    ('journal_id', '!=', st_line.journal_id.id)]
-                                ])
         if partner_id:
             domain_matching = expression.AND([
                 domain_matching,
@@ -506,9 +498,6 @@ class AccountReconciliation(models.AbstractModel):
             ])
         # filter on account.move.line having the same company as the statement line
         domain = expression.AND([domain, [('company_id', '=', st_line.company_id.id)]])
-        
-        if not edition_mode:
-            domain = expression.AND([domain, [('move_id.to_check', '=', False)]])
 
         if st_line.company_id.account_bank_reconciliation_start:
             domain = expression.AND([domain, [('date', '>=', st_line.company_id.account_bank_reconciliation_start)]])
