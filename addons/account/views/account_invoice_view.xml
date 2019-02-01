@@ -272,7 +272,7 @@
                     You have <bold><a class="alert-link" href="#outstanding" role="button">outstanding debits</a></bold> for this supplier. You can allocate them to mark this bill as paid.
                 </div>
                 <div groups="account.group_account_invoice" class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': [('edition_mode_available','=',False)]}">
-                    This invoice matches values for a Journal Entry to check.<bold><button string="Reconcile" class="alert-link" name="action_reconcile_to_check" type="object"/></bold>
+                    You have suspense account moves that match this invoice. <bold><button class="alert-link" type="object" name="action_reconcile_to_check" role="button" string="Check them" style="padding: 0 0 1px 0;"/></bold> to mark this invoice as paid.
                 </div>
                 <field name="has_outstanding" invisible="1"/>
                 <field name="edition_mode_available" invisible="1"/>
@@ -429,7 +429,7 @@
                     You have <bold><a class="alert-link" href="#outstanding" role="button">outstanding payments</a></bold> for this customer. You can allocate them to mark this invoice as paid.
                 </div>
                 <div groups="account.group_account_invoice" class="alert alert-info" role="alert" style="margin-bottom:0px;" attrs="{'invisible': [('edition_mode_available','=',False)]}">
-                    This invoice matches values for a Journal Entry to check.<bold><button string="Reconcile" class="alert-link" name="action_reconcile_to_check" type="object"/></bold>
+                    You have suspense account moves that match this invoice. <bold><button class="alert-link" type="object" name="action_reconcile_to_check" role="button" string="Check them" style="padding: 0 0 1px 0;"/></bold> to mark this invoice as paid.
                 </div>
                 <field name="has_outstanding" invisible="1"/>
                 <field name="edition_mode_available" invisible="1"/>
