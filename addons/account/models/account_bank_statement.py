@@ -435,8 +435,6 @@ class AccountBankStatementLine(models.Model):
         }
         if self.move_name:
             data.update(name=self.move_name)
-        if self._context.get('mark_to_check'):
-            data.update(to_check=True)
         return data
 
     def _prepare_reconciliation_move_line(self, move, amount):
