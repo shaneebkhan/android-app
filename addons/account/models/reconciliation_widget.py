@@ -171,7 +171,7 @@ class AccountReconciliation(models.AbstractModel):
             return {}
         edition_mode = self._context.get('edition_mode')
         bank_statements = self.env['account.bank.statement.line'].browse(bank_statement_line_ids).mapped('statement_id')
-            
+
         search_sql = '''
             AND (p.name ILIKE CONCAT('%%',%(search_str)s,'%%')
             OR line.ref ILIKE CONCAT('%%',%(search_str)s,'%%')
@@ -182,16 +182,15 @@ class AccountReconciliation(models.AbstractModel):
              SELECT line.id
              FROM account_bank_statement_line line
              LEFT JOIN res_partner p on p.id = line.partner_id
-             {join}
              WHERE line.account_id IS NULL
              AND line.amount != 0.0
+             AND line.id IN %(ids)s
              {cond}
              {srch}
              GROUP BY line.id
         '''.format(
-            join = edition_mode and "JOIN account_move_line aml ON aml.statement_line_id = line.id JOIN account_move am ON am.id = aml.move_id" or "",
-            cond = edition_mode and "AND line.id IN %(ids)s" or "AND line.id IN %(ids)s AND NOT EXISTS (SELECT 1 from account_move_line aml WHERE aml.statement_line_id = line.id)",
-            srch = search_str and search_sql or "",
+            cond=not edition_mode and "AND NOT EXISTS (SELECT 1 from account_move_line aml WHERE aml.statement_line_id = line.id)" or "",
+            srch=search_str and search_sql or "",
         )
         self.env.cr.execute(query, {'ids':tuple(bank_statement_line_ids), 'search_str':search_str})
 
@@ -530,7 +529,6 @@ class AccountReconciliation(models.AbstractModel):
         """
         context = dict(self._context or {})
         ret = []
-        edition_mode = self._context.get('edition_mode')
 
         for line in move_lines:
             company_currency = line.company_id.currency_id
