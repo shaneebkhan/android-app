@@ -336,8 +336,14 @@ class AccountMove(models.Model):
 
     @api.multi
     def button_cancel(self):
+        AccountMoveLine = self.env['account.move.line']
+        excluded_move_ids = []
+
+        if self._context.get('edition_mode'):
+            excluded_move_ids = AccountMoveLine.search(AccountMoveLine._get_domain_for_edition_mode()).mapped('move_id').ids
+
         for move in self:
-            if not move.journal_id.update_posted:
+            if not move.journal_id.update_posted and move.id not in excluded_move_ids:
                 raise UserError(_('You cannot modify a posted entry of this journal.\nFirst you should set the journal to allow cancelling entries.'))
             # We remove all the analytics entries for this journal
             move.mapped('line_ids.analytic_line_ids').unlink()
@@ -1373,6 +1379,14 @@ class AccountMoveLine(models.Model):
                 ids.append(aml.id)
         action['domain'] = [('id', 'in', ids)]
         return action
+
+    @api.model
+    def _get_domain_for_edition_mode(self):
+        return [
+            ('move_id.to_check', '=', True),
+            ('full_reconcile_id', '=', False),
+            ('statement_line_id', '!=', False),
+        ]
 
 
 class AccountPartialReconcile(models.Model):

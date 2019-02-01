@@ -313,9 +313,10 @@ class account_journal(models.Model):
                 'tag': 'manual_reconciliation_view',
                 'context': action_context,
             }
-    
+
     @api.multi
     def action_open_to_check(self):
+        self.ensure_one()
         ids = self.to_check_ids().ids
         action_context = {'show_mode_selector': False, 'company_ids': self.mapped('company_id').ids}
         action_context.update({'edition_mode': True})
@@ -325,9 +326,12 @@ class account_journal(models.Model):
             'tag': 'bank_statement_reconciliation_view',
             'context': action_context,
         }
-    
+
     def to_check_ids(self):
-        statement_line_ids = self.env['account.move'].search([('journal_id', 'in', self.ids), ('to_check', '=', True)]).mapped('line_ids.statement_line_id')
+        self.ensure_one()
+        domain = self.env['account.move.line']._get_domain_for_edition_mode()
+        domain.append(('journal_id', '=', self.id))
+        statement_line_ids = self.env['account.move.line'].search(domain).mapped('statement_line_id')
         return statement_line_ids
 
     @api.multi

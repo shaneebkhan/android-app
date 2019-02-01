@@ -122,21 +122,17 @@ class AccountInvoice(models.Model):
             self.reconciled = True
         else:
             self.reconciled = False
-    
+
     @api.multi
     def _get_domain_edition_mode_available(self):
         self.ensure_one()
-        domain = [
-            ('move_id.to_check', '=', True),
-            ('full_reconcile_id', '=', False),
-            ('statement_line_id', '!=', False),
-        ]
+        domain = self.env['account.move.line']._get_domain_for_edition_mode()
         if self.type in ('out_invoice', 'in_refund'):
             domain.append(('balance', '=', -self.residual))
         else:
             domain.append(('balance', '=', self.residual))
         return domain
-        
+
     @api.multi
     def _get_edition_mode_available(self):
         for r in self:
