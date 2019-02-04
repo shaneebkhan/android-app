@@ -126,7 +126,7 @@ class AccountInvoice(models.Model):
     @api.multi
     def _get_domain_edition_mode_available(self):
         self.ensure_one()
-        domain = self.env['account.move.line']._get_domain_for_edition_mode()
+        domain = self.env['account.move.line']._get_domain_for_edition_mode(self.partner_id.id)
         if self.type in ('out_invoice', 'in_refund'):
             domain.append(('balance', '=', -self.residual))
         else:

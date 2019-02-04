@@ -1381,9 +1381,10 @@ class AccountMoveLine(models.Model):
         return action
 
     @api.model
-    def _get_domain_for_edition_mode(self):
+    def _get_domain_for_edition_mode(self, partner_id=False):
         return [
             ('move_id.to_check', '=', True),
+            ('move_id.partner_id', '=?', partner_id),
             ('full_reconcile_id', '=', False),
             ('statement_line_id', '!=', False),
         ]
