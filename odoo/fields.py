@@ -1862,6 +1862,10 @@ class Selection(Field):
             selection_add = [('c', 'C'), ('b',)]
             > result = [('a', 'A'), ('c', 'C'), ('b', 'B')]
 
+    :param selection_fallback: provides a mapping from new ``selection_add``
+        values to overridden selection values. The mapping is used to remap
+        existing data when uninstalling the corresponding module.
+
     The attribute ``selection`` is mandatory except in the case of
     :ref:`related fields <field-related>` or :ref:`field extensions
     <field-incremental-definition>`.
@@ -1870,6 +1874,7 @@ class Selection(Field):
     column_type = ('varchar', pg_varchar())
     _slots = {
         'selection': None,              # [(value, string), ...], function or method name
+        'selection_fallback': None,     # {value: value}
         'validate': True,               # whether validating upon write
     }
 
@@ -1895,6 +1900,7 @@ class Selection(Field):
         # determine selection (applying 'selection_add' extensions)
         values = None
         labels = {}
+        fallback = {}
 
         for field in reversed(resolve_mro(model, name, self._can_setup_from)):
             # We cannot use field.selection or field.selection_add here
@@ -1916,11 +1922,20 @@ class Selection(Field):
                     "%s: selection_add=%r must be a list" % (self, selection_add)
                 assert values is not None, \
                     "%s: selection_add=%r on non-list selection %r" % (self, selection_add, self.selection)
+                if self.required and 'selection_fallback' not in field.args:
+                    _logger.error("%s: selection_add=%r requires selection_fallback", self, selection_add)
+                fallback.update(field.args.get('selection_fallback', ()))
+                for kv in selection_add:
+                    if len(kv) == 1 and kv[0] not in values:
+                        _logger.error("%s: value %r not in overridden selection", self, kv[0])
+                    if self.required and kv[0] not in fallback and kv[0] not in values:
+                        _logger.error("%s: value %r requires a selection fallback", self, kv[0])
                 values = merge_sequences(values, [kv[0] for kv in selection_add])
                 labels.update(kv for kv in selection_add if len(kv) == 2)
 
         if values is not None:
             self.selection = [(value, labels[value]) for value in values]
+            self.selection_fallback = fallback
 
     def _description_selection(self, env):
         """ return the selection list (pairs (value, label)); labels are
