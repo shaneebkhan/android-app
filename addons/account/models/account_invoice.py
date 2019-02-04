@@ -625,6 +625,8 @@ class AccountInvoice(models.Model):
         action_context = {'show_mode_selector': False, 'company_ids': self.mapped('company_id').ids}
         action_context.update({'edition_mode': True})
         action_context.update({'statement_line_ids': ids})
+        action_context.update({'partner_id': self.partner_id.id})
+        action_context.update({'partner_name': self.partner_id.name})
         return {
             'type': 'ir.actions.client',
             'tag': 'bank_statement_reconciliation_view',

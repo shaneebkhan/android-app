@@ -1054,6 +1054,13 @@ var StatementModel = BasicModel.extend({
                     return data.write_off ? self.quickCreateProposition(line.handle, data.model_id) : true;
                 })
             );
+            // If still no partner set, take the one from context, if it exists
+            if (!line.st_line.partner_id && self.context.partner_id && self.context.partner_name) {
+                return self.changePartner(line.handle, {
+                    'id': self.context.partner_id,
+                    'display_name': self.context.partner_name,
+                }, true);
+            }
         });
         return $.when.apply($, defs);
     },
