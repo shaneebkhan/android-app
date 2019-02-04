@@ -43,7 +43,7 @@ var StatementAction = AbstractAction.extend({
         // used to instantiate each widget line
         LineRenderer: ReconciliationRenderer.LineRenderer,
         // used context params
-        params: ['statement_ids'],
+        params: ['statement_line_ids'],
         // number of statements/partners/accounts to display
         defaultDisplayQty: 10,
         // number of moves lines displayed in 'match' mode

@@ -340,13 +340,13 @@ var StatementModel = BasicModel.extend({
      * - 'account.reconciliation.widget' fetch each line data
      *
      * @param {Object} context
-     * @param {number[]} context.statement_ids
+     * @param {number[]} context.statement_line_ids
      * @returns {Deferred}
      */
     load: function (context) {
         var self = this;
-        this.statement_ids = context.statement_ids || context.statement_line_ids;
-        if (!this.statement_ids) {
+        this.statement_line_ids = context.statement_line_ids;
+        if (!this.statement_line_ids) {
             return $.when();
         }
         this.context = context;
@@ -397,12 +397,12 @@ var StatementModel = BasicModel.extend({
         var def_statement = this._rpc({
                 model: 'account.reconciliation.widget',
                 method: 'get_bank_statement_data',
-                kwargs: {"bank_statement_line_ids":self.statement_ids, "search_str":self.search_str},
+                kwargs: {"bank_statement_line_ids":self.statement_line_ids, "search_str":self.search_str},
                 context: self.context,
             })
             .then(function (statement) {
                 self.statement = statement;
-                self.bank_statement_id = self.statement_ids.length === 1 ? {id: self.statement_ids[0], display_name: statement.statement_name} : false;
+                self.bank_statement_id = self.statement_line_ids.length === 1 ? {id: self.statement_line_ids[0], display_name: statement.statement_name} : false;
                 self.valuenow = self.valuenow || statement.value_min;
                 self.valuemax = self.valuemax || statement.value_max;
                 self.context.journal_id = statement.journal_id;
