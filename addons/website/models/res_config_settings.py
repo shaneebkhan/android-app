@@ -40,7 +40,7 @@ class ResConfigSettings(models.TransientModel):
     cdn_filters = fields.Text(related='website_id.cdn_filters', readonly=False)
     module_website_version = fields.Boolean("A/B Testing")
     module_website_links = fields.Boolean("Link Trackers")
-    auth_signup_uninvited = fields.Selection("Customer Account", related='website_id.auth_signup_uninvited', readonly=False)
+    auth_signup_uninvited = fields.Selection(string="Customer Account", related='website_id.auth_signup_uninvited', readonly=False)
 
     social_twitter = fields.Char(related='website_id.social_twitter', readonly=False)
     social_facebook = fields.Char(related='website_id.social_facebook', readonly=False)

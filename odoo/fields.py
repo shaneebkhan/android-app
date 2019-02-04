@@ -1901,17 +1901,21 @@ class Selection(Field):
             # because those attributes are overridden by ``_setup_attrs``.
             if 'selection' in field.args:
                 selection = field.args['selection']
+                assert values is None, \
+                    "%s: selection=%r overrides existing selection;" \
+                    " use selection_add instead" % (self, selection)
                 if isinstance(selection, list):
                     values = [kv[0] for kv in selection]
                     labels.update(selection)
                 else:
-                    values = None
                     self.selection = selection
 
             if 'selection_add' in field.args:
                 selection_add = field.args['selection_add']
-                assert isinstance(selection_add, list)
-                assert values is not None
+                assert isinstance(selection_add, list), \
+                    "%s: selection_add=%r must be a list" % (self, selection_add)
+                assert values is not None, \
+                    "%s: selection_add=%r on non-list selection %r" % (self, selection_add, self.selection)
                 values = merge_sequences(values, [kv[0] for kv in selection_add])
                 labels.update(kv for kv in selection_add if len(kv) == 2)
 
