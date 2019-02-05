@@ -2446,14 +2446,14 @@ QUnit.module('basic_fields', {
             concurrency.delay(0).then(function () {
                 return concurrency.delay(0);
             }).then(function () {
-                assert.containsN(kanban, '.o_dashboard_graph svg', 2, "there should be two graph rendered");
+                assert.containsN(kanban, '.o_dashboard_graph svg', 2, "there should be two graphs rendered");
                 return kanban.update({});
             }).then(function () {
                 return concurrency.delay(0); // one graph is re-rendered
             }).then(function () {
                 return concurrency.delay(0); // one graph is re-rendered
             }).then(function () {
-                assert.containsN(kanban, '.o_dashboard_graph svg', 2, "there should be one graph rendered");
+                assert.containsN(kanban, '.o_dashboard_graph svg', 2, "there should be two graphs rendered");
                 kanban.destroy();
                 done();
             });

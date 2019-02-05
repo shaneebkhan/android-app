@@ -75,8 +75,6 @@ QUnit.module('Views', {
         assert.containsN(kanban, '.o_kanban_group', 2, "should have 2 columns");
         assert.hasClass(kanban.$('.o_kanban_mobile_tab:first'), 'o_current',
             "first tab is the active tab with class 'o_current'");
-        assert.hasClass(kanban.$('.o_kanban_group:first'), 'o_current',
-            "first column is the active column with class 'o_current'");
         assert.containsN(kanban, '.o_kanban_group:first > div.o_kanban_record', 2,
             "there are 2 records in active tab");
         assert.strictEqual(kanban.$('.o_kanban_group:nth(1) > div.o_kanban_record').length, 0,
@@ -91,8 +89,6 @@ QUnit.module('Views', {
         kanban.$('.o_kanban_mobile_tab:nth(1)').trigger('click');
         assert.hasClass(kanban.$('.o_kanban_mobile_tab:nth(1)'), 'o_current',
             "second tab is now active with class 'o_current'");
-        assert.hasClass(kanban.$('.o_kanban_group:nth(1)'), 'o_current',
-            "second column is now active with class 'o_current'");
         assert.strictEqual(kanban.$('.o_kanban_group:nth(1) > div.o_kanban_record').length, 2,
             "the 2 records of the second group have now been loaded");
 
@@ -171,6 +167,35 @@ QUnit.module('Views', {
             return $(this).data('id');
         }).get();
         assert.deepEqual(column_ids, tab_ids, "all columns data-id should match mobile tabs data-id");
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: there should be no searchpanel in mobile', function (assert) {
+        assert.expect(3);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            mockRPC: function (route, args) {
+                assert.step(args.method || route);
+                return this._super.apply(this, arguments);
+            },
+        });
+
+        assert.containsNone(kanban, '.o_search_panel');
+        assert.verifySteps(['/web/dataset/search_read']);
 
         kanban.destroy();
     });

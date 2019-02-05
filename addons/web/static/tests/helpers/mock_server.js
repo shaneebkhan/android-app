@@ -471,6 +471,120 @@ var MockServer = Class.extend({
         return modelFields;
     },
     /**
+     * Simulate a call to the '/web/kanban/get_search_panel_category' route.
+     *
+     * Note that the implementation assumes that 'parent_id' is the field that
+     * encodes the parent relationship.
+     *
+     * @private
+     * @param {Object} kwargs
+     * @param {string} kwargs.field_name
+     * @param {string} kwargs.model
+     * @returns {Object}
+     */
+    _mockGetSearchPanelCategory: function (kwargs) {
+        var fieldName = kwargs.field_name;
+        var model = kwargs.model;
+        var field = this.data[model].fields[fieldName];
+
+        if (field.type !== 'many2one') {
+            throw new Error('Only fields of type many2one are handled');
+        }
+
+        var fields = ['display_name'];
+        var parentField = this.data[field.relation].fields.parent_id;
+        if (parentField) {
+            fields.push('parent_id');
+        }
+        return {
+            parent_field: parentField ? 'parent_id' : false,
+            values: this._mockSearchRead(field.relation, [[], fields], {}),
+        };
+    },
+    /**
+     * Simulate a call to the '/web/kanban/get_search_panel_filter' route.
+     *
+     * Note that only the many2one and selection cases are handled by this
+     * function.
+     *
+     * @param {Array} args
+     * @returns {Object}
+     */
+    _mockGetSearchPanelFilter: function (kwargs) {
+        var fieldName = kwargs.field_name;
+        var model = kwargs.model;
+        var field = this.data[model].fields[fieldName];
+        var comodelDomain = kwargs.comodel_domain || [];
+
+        if (!_.contains(['many2one', 'selection'], field.type)) {
+            throw new Error('Only fields of type many2one and selection are handled');
+        }
+
+        var modelDomain;
+        var disableCounters = kwargs.disable_counters || false;
+        modelDomain = [[fieldName, '!=', false]]
+                            .concat(kwargs.category_domain)
+                            .concat(kwargs.filter_domain)
+                            .concat(kwargs.search_domain);
+        var groupBy = kwargs.group_by || false;
+        var comodel = field.relation || false;
+        var groupByField = groupBy && this.data[comodel].fields[groupBy];
+
+        // get counters
+        var groups;
+        var counters = {};
+        if (!disableCounters) {
+            groups = this._mockReadGroup(model, {
+                domain: modelDomain,
+                fields: [fieldName],
+                groupby: [fieldName],
+            });
+            groups.forEach(function (group) {
+                var groupId = field.type === 'many2one' ? group[fieldName][0] : group[fieldName];
+                counters[groupId] = group[fieldName + '_count'];
+            });
+        }
+
+        // get filter values
+        var filterValues = [];
+        if (field.type === 'many2one') {
+            var fields = groupBy ? ['display_name', groupBy] : ['display_name'];
+            var records = this._mockSearchRead(comodel, [comodelDomain, fields], {});
+            records.forEach(function (record) {
+                var filterValue = {
+                    count: counters[record.id] || 0,
+                    id: record.id,
+                    name: record.display_name,
+                };
+                if (groupBy) {
+                    var id = record[groupBy];
+                    var name = record[groupBy];
+                    if (groupByField.type === 'many2one') {
+                        name = id[1];
+                        id = id[0];
+                    } else if (groupByField.type === 'selection') {
+                        name = _.find(field.selection, function (option) {
+                            return option[0] === id;
+                        })[1];
+                    }
+                    filterValue.group_id = id;
+                    filterValue.group_name = name;
+                }
+                filterValues.push(filterValue);
+            });
+        } else if (field.type === 'selection') {
+            field.selection.forEach(function (option) {
+                filterValues.push({
+                    count: counters[option[0]] || 0,
+                    id: option[0],
+                    name: option[1],
+                });
+            });
+        }
+
+        return filterValues;
+    },
+    /**
      * Simulate a call to the '/web/action/load' route
      *
      * @private
@@ -1083,6 +1197,10 @@ var MockServer = Class.extend({
 
             case '/web/dataset/resequence':
                 return $.when(this._mockResequence(args));
+            case '/web/kanban/get_search_panel_category':
+                return $.when(this._mockGetSearchPanelCategory(args));
+            case '/web/kanban/get_search_panel_filter':
+                return $.when(this._mockGetSearchPanelFilter(args));
         }
         if (route.indexOf('/web/image') >= 0 || _.contains(['.png', '.jpg'], route.substr(route.length - 4))) {
             return $.when();

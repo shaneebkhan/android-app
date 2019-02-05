@@ -1,12 +1,14 @@
 odoo.define('web.kanban_tests', function (require) {
 "use strict";
 
+var AbstractStorageService = require('web.AbstractStorageService');
 var fieldRegistry = require('web.field_registry');
 var KanbanColumnProgressBar = require('web.KanbanColumnProgressBar');
 var kanbanExamplesRegistry = require('web.kanban_examples_registry');
 var KanbanRenderer = require('web.KanbanRenderer');
 var KanbanView = require('web.KanbanView');
 var mixins = require('web.mixins');
+var RamStorage = require('web.RamStorage');
 var testUtils = require('web.test_utils');
 var Widget = require('web.Widget');
 var widgetRegistry = require('web.widget_registry');
@@ -47,6 +49,8 @@ QUnit.module('Views', {
                 fields: {
                     id: {string: "ID", type: "integer"},
                     name: {string: "Display Name", type: "char"},
+                    parent_id: {string: 'Parent Product', type: 'many2one', relation: 'product'},
+                    category_id: {string: 'Category', type: 'many2one', relation: 'category'},
                 },
                 records: [
                     {id: 3, name: "hello"},
@@ -63,6 +67,13 @@ QUnit.module('Views', {
                     {id: 7, name: "silver", color: 5},
                 ]
             },
+        };
+
+        var RamStorageService = AbstractStorageService.extend({
+            storage: new RamStorage(),
+        });
+        this.services = {
+            local_storage: RamStorageService,
         };
     },
 }, function () {
@@ -5209,6 +5220,1184 @@ QUnit.module('Views', {
         delete fieldRegistry.map.asyncWidget;
     });
 
+    QUnit.test('kanban with searchpanel: basic rendering', function (assert) {
+        assert.expect(17);
+
+        var category_id = { string: 'category', type: 'many2one', relation: 'category' };
+        this.data.partner.fields.category_id = category_id;
+        this.data.partner.records[0].category_id = 6;
+        this.data.partner.records[1].category_id = 7;
+        this.data.partner.records[2].category_id = 7;
+        this.data.partner.records[3].category_id = 7;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                assert.step((args.method || route) + (args.model ? (' on ' + args.model) : ''));
+                return this._super.apply(this, arguments);
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                        '<filter name="category_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        assert.containsOnce(kanban, '.o_content.o_kanban_with_searchpanel > .o_search_panel');
+        assert.containsOnce(kanban, '.o_content.o_kanban_with_searchpanel > .o_kanban_view');
+
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        assert.containsN(kanban, '.o_search_panel_section', 2);
+
+        var $firstSection = kanban.$('.o_search_panel_section:first');
+        assert.hasClass($firstSection.find('.o_search_panel_section_header i'), 'fa-folder');
+        assert.containsOnce($firstSection, '.o_search_panel_section_header:contains(something_id)');
+        assert.containsN($firstSection, '.o_search_panel_category_value', 3);
+        assert.containsOnce($firstSection, '.o_search_panel_category_value:nth(1) .active');
+        assert.strictEqual($firstSection.find('.o_search_panel_category_value').text().replace(/\s/g, ''),
+            'Allhelloxmo');
+
+        var $secondSection = kanban.$('.o_search_panel_section:nth(1)');
+        assert.hasClass($secondSection.find('.o_search_panel_section_header i'), 'fa-filter');
+        assert.containsOnce($secondSection, '.o_search_panel_section_header:contains(category)');
+        assert.containsN($secondSection, '.o_search_panel_filter_value', 2);
+        assert.strictEqual($secondSection.find('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'gold1silver1');
+
+        assert.verifySteps([
+            '/web/kanban/get_search_panel_category on partner',
+            '/web/kanban/get_search_panel_filter on partner',
+            '/web/dataset/search_read on partner',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: sections with custom icon and color', function (assert) {
+        assert.expect(4);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id" icon="fa-car" color="blue"/>' +
+                        '<filter name="state" icon="fa-star" color="#000"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        assert.hasClass(kanban.$('.o_search_panel_section_header:first i'), 'fa-car');
+        assert.hasAttrValue(kanban.$('.o_search_panel_section_header:first i'), 'style="{color: blue}"');
+        assert.hasClass(kanban.$('.o_search_panel_section_header:nth(1) i'), 'fa-star');
+        assert.hasAttrValue(kanban.$('.o_search_panel_section_header:nth(1) i'), 'style="{color: #000}"');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: categories and filters order is kept', function (assert) {
+        assert.expect(4);
+
+        var category_id = { string: 'category', type: 'many2one', relation: 'category' };
+        this.data.partner.fields.category_id = category_id;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                        '<filter name="category_id"/>' +
+                        '<category name="state"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        assert.containsN(kanban, '.o_search_panel_section', 3);
+        assert.strictEqual(kanban.$('.o_search_panel_section_header:nth(0)').text().trim(),
+            'something_id');
+        assert.strictEqual(kanban.$('.o_search_panel_section_header:nth(1)').text().trim(),
+            'category');
+        assert.strictEqual(kanban.$('.o_search_panel_section_header:nth(2)').text().trim(),
+            'State');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: specify active category value in context', function (assert) {
+        assert.expect(1);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                        '<category name="state"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.deepEqual(args.domain, [["state", "=", "ghi"]]);
+                }
+                return this._super.apply(this, arguments);
+            },
+            context: {
+                searchpanel_default_product_id: false,
+                searchpanel_default_state: 'ghi',
+            },
+        });
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: use category (on many2one) to refine search', function (assert) {
+        assert.expect(13);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            domain: [['bar', '=', true]],
+        });
+
+        // 'hello' is selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // select 'xmo'
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(2) header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(2) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // select 'All'
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:first header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:first .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        assert.verifySteps([
+            '[["bar","=",true],["product_id","=",3]]',
+            '[["bar","=",true],["product_id","=",5]]',
+            '[["bar","=",true]]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: use category (on selection) to refine search', function (assert) {
+        assert.expect(13);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="state"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // 'abc' is selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // select 'ghi'
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(3) header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(3) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // select 'All' again
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:first header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:first .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 4);
+
+        assert.verifySteps([
+            '[["state","=","abc"]]',
+            '[["state","=","ghi"]]',
+            '[]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: store and retrieve active category value', function (assert) {
+        assert.expect(8);
+
+        var Storage = RamStorage.extend({
+            getItem: function (key) {
+                assert.step('getItem ' + key);
+                return 3; // 'hello'
+            },
+            setItem: function (key, value) {
+                assert.step('setItem ' + key + ' to ' + value);
+            },
+        });
+        var RamStorageService = AbstractStorageService.extend({
+            storage: new Storage(),
+        });
+
+        var expectedActiveId = 3;
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: {
+                local_storage: RamStorageService,
+            },
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.deepEqual(args.domain, [['product_id', '=', expectedActiveId]]);
+                }
+                return this._super.apply(this, arguments);
+            },
+        });
+
+        // 'hello' should be selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // select 'xmo'
+        expectedActiveId = 5;
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(2) header'));
+
+        assert.verifySteps([
+            'getItem searchpanel_partner_product_id',
+            'setItem searchpanel_partner_product_id to 5',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: retrieved category value does not exist', function (assert) {
+        assert.expect(5);
+
+        var Storage = RamStorage.extend({
+            getItem: function (key) {
+                assert.step('getItem ' + key);
+                return 343; // this value doesn't exist
+            },
+        });
+        var RamStorageService = AbstractStorageService.extend({
+            storage: new Storage(),
+        });
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: {
+                local_storage: RamStorageService,
+            },
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.deepEqual(args.domain, [['product_id', '=', 3]]);
+                }
+                return this._super.apply(this, arguments);
+            },
+        });
+
+        // 'hello' (first value) should be selected by default as the retrieved value does not exist
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: use two categories to refine search', function (assert) {
+        assert.expect(10);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                        '<category name="state"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            domain: [['bar', '=', true]],
+        });
+
+        assert.containsN(kanban, '.o_search_panel_section', 2);
+        // 'hello' and 'abc' are selected by default
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // select 'ghi'
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value[data-id=ghi] header'));
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // select 'All' in first category (product_id)
+        testUtils.dom.click(kanban.$('.o_search_panel_section:first .o_search_panel_category_value:first header'));
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // select 'All' in second category (state)
+        testUtils.dom.click(kanban.$('.o_search_panel_section:nth(1) .o_search_panel_category_value:first header'));
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        assert.verifySteps([
+            '[["bar","=",true],["product_id","=",3],["state","=","abc"]]',
+            '[["bar","=",true],["product_id","=",3],["state","=","ghi"]]',
+            '[["bar","=",true],["state","=","ghi"]]',
+            '[["bar","=",true]]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: category with parent_field', function (assert) {
+        assert.expect(24);
+
+        this.data.product.records.push({id: 40, name: 'child product 1', parent_id: 5});
+        this.data.product.records.push({id: 41, name: 'child product 2', parent_id: 5});
+        this.data.partner.records[1].product_id = 40;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // 'hello' is selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+        assert.containsN(kanban, '.o_search_panel_category_value', 3);
+        assert.containsOnce(kanban, '.o_search_panel_category_value .o_toggle_fold');
+
+        // unfold parent category
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value .o_toggle_fold'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+        assert.containsN(kanban, '.o_search_panel_category_value', 5);
+        assert.containsN(kanban, '.o_search_panel_category_value .o_search_panel_category_value', 2);
+
+        // click on first child product
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value .o_search_panel_category_value:first header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value .o_search_panel_category_value:first .active');
+        assert.containsOnce(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
+        // click on parent product
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(2) > header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(2) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // fold category with children
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value .o_toggle_fold'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(2) .active');
+        assert.containsN(kanban, '.o_search_panel_category_value', 3);
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        assert.verifySteps([
+            '[["product_id","=",3]]',
+            '[["product_id","=",40]]',
+            '[["product_id","=",5]]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: can (un)fold parent category values', function (assert) {
+        assert.expect(7);
+
+        this.data.product.records.push({id: 40, name: 'child product 1', parent_id: 5});
+        this.data.product.records.push({id: 41, name: 'child product 2', parent_id: 5});
+        this.data.partner.records[1].product_id = 40;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        assert.strictEqual(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold').length, 1,
+            "'xmo' should be displayed as a parent category value");
+        assert.hasClass(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'), 'fa-caret-left',
+            "'xmo' should be folded");
+        assert.containsN(kanban, '.o_search_panel_category_value', 3);
+
+        // unfold xmo
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'));
+        assert.hasClass(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'), 'fa-caret-down',
+            "'xmo' should be open");
+        assert.containsN(kanban, '.o_search_panel_category_value', 5);
+
+        // fold xmo
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'));
+        assert.hasClass(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'), 'fa-caret-left',
+            "'xmo' should be folded");
+        assert.containsN(kanban, '.o_search_panel_category_value', 3);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: fold status is kept at reload', function (assert) {
+        assert.expect(4);
+
+        this.data.product.records.push({id: 40, name: 'child product 1', parent_id: 5});
+        this.data.product.records.push({id: 41, name: 'child product 2', parent_id: 5});
+        this.data.partner.records[1].product_id = 40;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // unfold xmo
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'));
+        assert.hasClass(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'), 'fa-caret-down',
+            "'xmo' should be open");
+        assert.containsN(kanban, '.o_search_panel_category_value', 5);
+
+        kanban.reload({});
+
+        assert.hasClass(kanban.$('.o_search_panel_category_value:contains(xmo) .o_toggle_fold'), 'fa-caret-down',
+            "'xmo' should be open");
+        assert.containsN(kanban, '.o_search_panel_category_value', 5);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: concurrent and delayed updates', function (assert) {
+        assert.expect(19);
+
+        this.data.product.records.unshift({id: 1, name: 'first product'});
+        var def;
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                    return $.when(def).then(_.constant(result));
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // 'first product' should be selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
+        // select 'hello' (delay the reload)
+        def = $.Deferred();
+        var helloDef = def;
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(2) header'));
+
+        // All should still be selected
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
+        // select 'xmo' (delay the reload)
+        def = $.Deferred();
+        var xmoDef = def;
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(3) header'));
+
+        // All should still be selected
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
+        // unlock hello search (should be ignored)
+        helloDef.resolve();
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsNone(kanban, '.o_kanban_record:not(.o_kanban_ghost)');
+
+        // unlock xmo search
+        xmoDef.resolve();
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(3) .active');
+        assert.containsN(kanban, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        assert.verifySteps([
+            '[["product_id","=",1]]',
+            '[["product_id","=",3]]',
+            '[["product_id","=",5]]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: use filter (on many2one) to refine search', function (assert) {
+        assert.expect(32);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/kanban/get_search_panel_filter') {
+                    // the following keys should have same value for all calls to this route
+                    var keys = ['model', 'field_name', 'group_by', 'comodel_domain', 'search_domain', 'category_domain'];
+                    assert.deepEqual(_.pick(args, keys), {
+                        model: 'partner',
+                        field_name: 'product_id',
+                        group_by: false,
+                        comodel_domain: [],
+                        search_domain: [['bar', '=', true]],
+                        category_domain: [],
+                    });
+                    // the filter_domain depends on the filter selection
+                    assert.step(JSON.stringify(args.filter_domain));
+                }
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<filter name="product_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            domain: [['bar', '=', true]],
+        });
+
+        assert.containsN(kanban, '.o_search_panel_filter_value', 2);
+        assert.containsNone(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        // check 'hello'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:first input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // check 'xmo'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_value input:checked', 2);
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        // uncheck 'hello'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:first input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'helloxmo1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // uncheck 'xmo'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+
+        assert.containsNone(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        assert.verifySteps([
+            // nothing checked
+            '[]',
+            '[["bar","=",true]]',
+            // 'hello' checked
+            '[["bar","=",true],["product_id","in",[3]]]',
+            '[["product_id","in",[3]]]',
+            // 'hello' and 'xmo' checked
+            '[["bar","=",true],["product_id","in",[3,5]]]',
+            '[["product_id","in",[3,5]]]',
+            // 'xmo' checked
+            '[["bar","=",true],["product_id","in",[5]]]',
+            '[["product_id","in",[5]]]',
+            // nothing checked
+            '[["bar","=",true]]',
+            '[]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: use filter (on selection) to refine search', function (assert) {
+        assert.expect(32);
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/kanban/get_search_panel_filter') {
+                    // the following keys should have same value for all calls to this route
+                    var keys = ['model', 'field_name', 'group_by', 'comodel_domain', 'search_domain', 'category_domain'];
+                    assert.deepEqual(_.pick(args, keys), {
+                        model: 'partner',
+                        field_name: 'state',
+                        group_by: false,
+                        comodel_domain: [],
+                        search_domain: [['bar', '=', true]],
+                        category_domain: [],
+                    });
+                    // the filter_domain depends on the filter selection
+                    assert.step(JSON.stringify(args.filter_domain));
+                }
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<filter name="state"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            domain: [['bar', '=', true]],
+        });
+
+        assert.containsN(kanban, '.o_search_panel_filter_value', 3);
+        assert.containsNone(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'ABC1DEF1GHI1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        // check 'abc'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:first input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'ABC1DEFGHI');
+        assert.containsOnce(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        // check 'def'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_value input:checked', 2);
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'ABC1DEF1GHI');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // uncheck 'abc'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:first input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'ABCDEF1GHI');
+        assert.containsOnce(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)');
+
+        // uncheck 'def'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+
+        assert.containsNone(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'ABC1DEF1GHI1');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        assert.verifySteps([
+            // nothing checked
+            '[]',
+            '[["bar","=",true]]',
+            // 'hello' checked
+            '[["bar","=",true],["state","in",["abc"]]]',
+            '[["state","in",["abc"]]]',
+            // 'hello' and 'xmo' checked
+            '[["bar","=",true],["state","in",["abc","def"]]]',
+            '[["state","in",["abc","def"]]]',
+            // 'xmo' checked
+            '[["bar","=",true],["state","in",["def"]]]',
+            '[["state","in",["def"]]]',
+            // nothing checked
+            '[["bar","=",true]]',
+            '[]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: filter with groupby', function (assert) {
+        assert.expect(42);
+
+        this.data.product.records[0].category_id = 6;
+        this.data.product.records[1].category_id = 7;
+        this.data.product.records.push({id: 11, name: 'some product', category_id: 7});
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/kanban/get_search_panel_filter') {
+                    // the following keys should have same value for all calls to this route
+                    var keys = ['model', 'field_name', 'group_by', 'comodel_domain', 'search_domain', 'category_domain'];
+                    assert.deepEqual(_.pick(args, keys), {
+                        model: 'partner',
+                        field_name: 'product_id',
+                        group_by: 'category_id',
+                        comodel_domain: [],
+                        search_domain: [['bar', '=', true]],
+                        category_domain: [],
+                    });
+                    // the filter_domain depends on the filter selection
+                    assert.step(JSON.stringify(args.filter_domain));
+                }
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<filter name="product_id" groupby="category_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+            domain: [['bar', '=', true]],
+        });
+
+        assert.containsN(kanban, '.o_search_panel_filter_group', 2);
+        assert.containsOnce(kanban, '.o_search_panel_filter_group:first .o_search_panel_filter_value');
+        assert.containsN(kanban, '.o_search_panel_filter_group:nth(1) .o_search_panel_filter_value', 2);
+        assert.containsNone(kanban, '.o_search_panel_filter_value input:checked');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_group > div > label').text().replace(/\s/g, ''),
+            'goldsilver');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo1someproduct');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 3);
+
+        // check 'hello'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:first input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        var firstGroupCheckbox = kanban.$('.o_search_panel_filter_group:first > div > input').get(0);
+        assert.strictEqual(firstGroupCheckbox.checked, true,
+            "first group checkbox should be checked");
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmosomeproduct');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // check 'xmo'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_value input:checked', 2);
+        var secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.checked, false,
+            "second group checkbox should not be checked");
+        assert.strictEqual(secondGroupCheckbox.indeterminate, true,
+            "second group checkbox should be indeterminate");
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'helloxmosomeproduct');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 0);
+
+        // check 'some product'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(2) input'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_value input:checked', 3);
+        secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.checked, true,
+            "second group checkbox should be checked");
+        assert.strictEqual(secondGroupCheckbox.indeterminate, false,
+            "second group checkbox should not be indeterminate");
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'helloxmosomeproduct');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 0);
+
+        // uncheck second group
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_group:nth(1) > div > input'));
+
+        assert.containsOnce(kanban, '.o_search_panel_filter_value input:checked');
+        secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.checked, false,
+            "second group checkbox should not be checked");
+        assert.strictEqual(secondGroupCheckbox.indeterminate, false,
+            "second group checkbox should not be indeterminate");
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmosomeproduct');
+        assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        assert.verifySteps([
+            // nothing checked
+            '[]',
+            '[["bar","=",true]]',
+            // 'hello' checked
+            '[["bar","=",true],["product_id","in",[3]]]',
+            '[["product_id","in",[3]]]',
+            // 'hello' and 'xmo' checked
+            '[["bar","=",true],["product_id","in",[3]],["product_id","in",[5]]]',
+            '[["product_id","in",[3]],["product_id","in",[5]]]',
+            // 'hello', 'xmo' and 'some product' checked
+            '[["bar","=",true],["product_id","in",[3]],["product_id","in",[5,11]]]',
+            '[["product_id","in",[3]],["product_id","in",[5,11]]]',
+            // 'hello' checked
+            '[["bar","=",true],["product_id","in",[3]]]',
+            '[["product_id","in",[3]]]',
+        ]);
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: filter with domain', function (assert) {
+        assert.expect(3);
+
+        this.data.product.records.push({id: 40, name: 'child product 1', parent_id: 3});
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/kanban/get_search_panel_filter') {
+                    assert.deepEqual(args, {
+                        model: 'partner',
+                        field_name: 'product_id',
+                        group_by: false,
+                        category_domain: [],
+                        filter_domain: [],
+                        search_domain: [],
+                        comodel_domain: [['parent_id', '=', false]],
+                        disable_counters: false,
+                    });
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<filter name="product_id" domain="[(\'parent_id\',\'=\',False)]"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        assert.containsN(kanban, '.o_search_panel_filter_value', 2);
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            'hello2xmo2');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: (un)fold filter group', function (assert) {
+        assert.expect(13);
+
+        this.data.product.records[0].category_id = 6;
+        this.data.product.records[1].category_id = 7;
+        this.data.product.records.push({id: 11, name: 'some product', category_id: 7});
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<filter name="product_id" groupby="category_id"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // groups are opened by default
+        assert.containsN(kanban, '.o_search_panel_filter_group', 2);
+        assert.containsN(kanban, '.o_search_panel_filter_value', 3);
+
+        // check 'xmo'
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_value:nth(1) input'));
+        var secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.indeterminate, true);
+        assert.hasAttrValue(kanban.$('.o_search_panel_filter_value:nth(1) input'), 'checked', 'checked');
+
+        // fold second group
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_group:nth(1) .o_toggle_fold'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_group', 2);
+        assert.containsOnce(kanban, '.o_search_panel_filter_value');
+        secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.indeterminate, true);
+
+        // fold first group
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_group:first .o_toggle_fold'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_group', 2);
+        assert.containsNone(kanban, '.o_search_panel_filter_value');
+
+        // unfold second group
+        testUtils.dom.click(kanban.$('.o_search_panel_filter_group:nth(1) .o_toggle_fold'));
+
+        assert.containsN(kanban, '.o_search_panel_filter_group', 2);
+        assert.containsN(kanban, '.o_search_panel_filter_value', 2);
+        secondGroupCheckbox = kanban.$('.o_search_panel_filter_group:nth(1) > div > input').get(0);
+        assert.strictEqual(secondGroupCheckbox.indeterminate, true);
+        assert.hasAttrValue(kanban.$('.o_search_panel_filter_value:first input'), 'checked', 'checked');
+
+        kanban.destroy();
+    });
+
+    QUnit.test('kanban with searchpanel: filter with domain depending on category', function (assert) {
+        assert.expect(19);
+
+        var category_id = { string: 'category', type: 'many2one', relation: 'category' };
+        this.data.partner.fields.category_id = category_id;
+        var c_product_id = {name: "Product", type: 'many2one', relation: 'product'};
+        this.data.category.fields.c_product_id = c_product_id;
+        this.data.category.records[0].c_product_id = 3;
+        this.data.category.records[1].c_product_id = 5;
+
+        var kanban = createView({
+            View: KanbanView,
+            model: 'partner',
+            data: this.data,
+            mockRPC: function (route, args) {
+                var result = this._super.apply(this, arguments);
+                if (route === '/web/kanban/get_search_panel_filter') {
+                    // the following keys should have same value for all calls to this route
+                    var keys = ['model', 'field_name', 'group_by', 'search_domain', 'filter_domain'];
+                    assert.deepEqual(_.pick(args, keys), {
+                        model: 'partner',
+                        field_name: 'category_id',
+                        group_by: false,
+                        filter_domain: [],
+                        search_domain: [],
+                    });
+                    assert.step(JSON.stringify(args.category_domain));
+                    assert.step(JSON.stringify(args.comodel_domain));
+                }
+                return result;
+            },
+            services: this.services,
+            arch: '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div>' +
+                            '<field name="foo"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                    '<searchpanel>' +
+                        '<category name="product_id"/>' +
+                        '<filter name="category_id" domain="[[\'c_product_id\', \'=\', product_id]]"/>' +
+                    '</searchpanel>' +
+                '</kanban>',
+        });
+
+        // 'hello' is selected by default
+        assert.containsOnce(kanban, '.o_search_panel_category_value .active');
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(1) .active');
+        assert.containsOnce(kanban, '.o_search_panel_filter_value');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            "gold");
+
+        // select 'xmo' category
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:nth(2) header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value:nth(2) .active');
+        assert.containsOnce(kanban, '.o_search_panel_filter_value');
+        assert.strictEqual(kanban.$('.o_search_panel_filter_value').text().replace(/\s/g, ''),
+            "silver");
+
+        // select All
+        testUtils.dom.click(kanban.$('.o_search_panel_category_value:first header'));
+
+        assert.containsOnce(kanban, '.o_search_panel_category_value:first .active');
+        assert.containsNone(kanban, '.o_search_panel_filter_value');
+
+        assert.verifySteps([
+            '[["product_id","=",3]]', // category_domain ('hello')
+            '[["c_product_id","=",3]]', // comodel_domain ('hello')
+            '[["product_id","=",5]]', // category_domain ('xmo')
+            '[["c_product_id","=",5]]', // comodel_domain ('xmo')
+            '[]', // category_domain (All)
+            '[["c_product_id","=",false]]', // comodel_domain (All)
+        ]);
+
+        kanban.destroy();
+    });
 });
 
 });

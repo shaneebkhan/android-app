@@ -32,6 +32,7 @@ var KanbanController = BasicController.extend({
         kanban_load_records: '_onLoadColumnRecords',
         column_toggle_fold: '_onToggleColumn',
         kanban_column_records_toggle_active: '_onToggleActiveRecords',
+        search_panel_domain_updated: '_onSearchPanelDomainUpdated',
     }),
     events: _.extend({}, BasicController.prototype.events, {
         click: '_onClick',
@@ -41,13 +42,31 @@ var KanbanController = BasicController.extend({
      * @param {Object} params
      * @param {boolean} params.quickCreateEnabled set to false to disable the
      *   quick create feature
+     * @param {SearchPanel} [params.searchPanel]
+     * @param {Array[]} [params.controlPanelDomain=[]] initial domain coming
+     *   from the controlPanel
      */
     init: function (parent, model, renderer, params) {
         this._super.apply(this, arguments);
-
         this.on_create = params.on_create;
         this.hasButtons = params.hasButtons;
         this.quickCreateEnabled = params.quickCreateEnabled;
+
+        // the following attributes are used when there is a searchPanel
+        this._searchPanel = params.searchPanel;
+        this.controlPanelDomain = params.controlPanelDomain || []; // domain coming from controlPanel
+        this.searchPanelDomain = []; // domain coming from searchPanel
+    },
+    /**
+     * @override
+     */
+    start: function () {
+        if (this._searchPanel) {
+            this.$('.o_content')
+                .addClass('o_kanban_with_searchpanel')
+                .prepend(this._searchPanel.$el);
+        }
+        return this._super.apply(this, arguments);
     },
 
     //--------------------------------------------------------------------------
@@ -64,10 +83,26 @@ var KanbanController = BasicController.extend({
                 widget: this,
             }));
             this.$buttons.on('click', 'button.o-kanban-button-new', this._onButtonNew.bind(this));
-            this.$buttons.on('keydown',this._onButtonsKeyDown.bind(this));
+            this.$buttons.on('keydown', this._onButtonsKeyDown.bind(this));
             this._updateButtons();
             this.$buttons.appendTo($node);
         }
+    },
+    /**
+     * Override to add the domain coming from the searchPanel (if any) to the
+     * domain coming from the controlPanel.
+     *
+     * @override
+     */
+    update: function (params, options) {
+        if (!this._searchPanel) {
+            return this._super.apply(this, arguments);
+        }
+        if (params.domain) {
+            this.controlPanelDomain = params.domain;
+        }
+        params.domain = this.controlPanelDomain.concat(this.searchPanelDomain);
+        return this._super(params, options).then(this._updateSearchPanel.bind(this));
     },
 
     //--------------------------------------------------------------------------
@@ -197,6 +232,13 @@ var KanbanController = BasicController.extend({
             var createHidden = this.is_action_enabled('group_create') && state.isGroupedByM2ONoColumn;
             this.$buttons.find('.o-kanban-button-new').toggleClass('o_hidden', createHidden);
         }
+    },
+    /**
+     * @private
+     * @returns {$.Promise}
+     */
+    _updateSearchPanel: function () {
+        return this._searchPanel.update({searchDomain: this.controlPanelDomain});
     },
 
     //--------------------------------------------------------------------------
@@ -452,6 +494,15 @@ var KanbanController = BasicController.extend({
         this._resequenceColumns(ev.data.ids).then(function () {
             self._updateEnv();
         });
+    },
+    /**
+     * @private
+     * @param {OdooEvent} ev
+     * @param {Array[]} ev.data.domain the current domain of the searchPanel
+     */
+    _onSearchPanelDomainUpdated: function (ev) {
+        this.searchPanelDomain = ev.data.domain;
+        this.reload({offset: 0});
     },
     /**
      * @private
