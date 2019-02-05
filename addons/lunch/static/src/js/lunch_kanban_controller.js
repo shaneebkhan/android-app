@@ -76,15 +76,34 @@ var LunchKanbanController = KanbanController.extend({
     _update: function () {
         var self = this;
 
-        this._fetchWidgetData().then(function () {
+        var def = this._fetchWidgetData().then(function () {
             if (self.widget) {
                 self.widget.destroy();
             }
             self.widgetData.wallet = parseFloat(self.widgetData.wallet).toFixed(2);
             self.widget = new LunchKanbanWidget(self, _.extend(self.widgetData, {edit: self.editMode}));
-            self.widget.insertBefore(self.$('.o_kanban_view'));
+            return self.widget.appendTo(document.createDocumentFragment()).then(function () {
+                // due to the presence of the searchPanel, we have to wrap the
+                // lunch widget and kanban rendered into a div
+                $('<div>')
+                    .append(self.widget.$el)
+                    .append(self.$('.o_kanban_view'))
+                    .appendTo(self.$('.o_content'));
+            });
         });
-        return this._super.apply(self, arguments);
+        return $.when(def, this._super.apply(self, arguments));
+    },
+    /**
+     * Override to add the location domain (coming from the lunchKanbanWidget)
+     * to the searchDomain (coming from the controlPanel).
+     *
+     * @override
+     * @private
+     */
+    _updateSearchPanel: function () {
+        var locationId = this.model.getCurrentLocationId();
+        var domain = this.controlPanelDomain.concat([['is_available_at', 'in', [locationId]]]);
+        return this._searchPanel.update({searchDomain: domain});
     },
 
     //--------------------------------------------------------------------------

@@ -117,6 +117,10 @@
                         </div>
                     </t>
                 </templates>
+                <searchpanel>
+                    <filter name="category_id" string="Categories" icon="fa-cutlery" color="#875A7B"/>
+                    <filter name="supplier_id" string="Vendors" icon="fa-truck"/>
+                </searchpanel>
             </kanban>
         </field>
     </record>
