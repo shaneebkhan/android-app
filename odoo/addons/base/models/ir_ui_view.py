@@ -1095,7 +1095,7 @@ actual arch.
                 self.raise_view_error(message, view_id)
 
         missing = [item for item in attrs_fields if item[0] not in fields]
-        if missing:
+        if missing and False:
             msg_lines = []
             msg_fmt = _("Field %r used in attributes must be present in view but is missing:")
             line_fmt = _(" - %r in %s=%r")
