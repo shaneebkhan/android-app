@@ -205,31 +205,33 @@ var KanbanView = BasicView.extend({
     _processSearchPanelNode: function (node, fv) {
         var self = this;
         node.children.forEach(function (childNode, index) {
-            if (childNode.tag !== 'category' && childNode.tag !== 'filter') {
+            if (childNode.tag !== 'field') {
+                return;
+            }
+            if (childNode.attrs.type !== 'category' && childNode.attrs.type !== 'filter') {
                 return;
             }
             var fieldName = childNode.attrs.name;
-            var field = fv.fields[fieldName];
             var sectionId = _.uniqueId('section_');
-            var section = {};
-            if (childNode.tag === 'category') {
-                section.color = '#875A7B';
-                section.icon = 'fa-folder';
-                section.type = 'category';
-            } else if (childNode.tag === 'filter') {
-                section.color = '#D59244';
+            var section = {
+                color: childNode.attrs.color,
+                description: childNode.attrs.string || fv.fields[fieldName].string,
+                fieldName: fieldName,
+                icon: childNode.attrs.icon,
+                id: sectionId,
+                index: index,
+                type: childNode.attrs.type,
+            };
+            if (section.type === 'category') {
+                section.color = section.color || '#875A7B';
+                section.icon = section.icon || 'fa-folder';
+            } else if (section.type === 'filter') {
+                section.color = section.color || '#D59244';
                 section.disableCounters = !!pyUtils.py_eval(childNode.attrs.disable_counters || '0');
                 section.domain = childNode.attrs.domain || '[]';
                 section.groupBy = childNode.attrs.groupby;
-                section.icon = 'fa-filter';
-                section.type = 'filter';
+                section.icon = section.icon || 'fa-filter';
             }
-            section.color = childNode.attrs.color || section.color;
-            section.description = childNode.attrs.string || field.string;
-            section.fieldName = fieldName;
-            section.icon = childNode.attrs.icon || section.icon;
-            section.id = sectionId;
-            section.index = index;
             self.searchPanelSections[sectionId] = section;
         });
     },

@@ -5246,8 +5246,8 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
-                        '<filter name="category_id"/>' +
+                        '<field type="category" name="product_id"/>' +
+                        '<field type="filter" name="category_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5298,8 +5298,8 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id" icon="fa-car" color="blue"/>' +
-                        '<filter name="state" icon="fa-star" color="#000"/>' +
+                        '<field type="category" name="product_id" icon="fa-car" color="blue"/>' +
+                        '<field type="filter" name="state" icon="fa-star" color="#000"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5330,9 +5330,9 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
-                        '<filter name="category_id"/>' +
-                        '<category name="state"/>' +
+                        '<field type="category" name="product_id"/>' +
+                        '<field type="filter" name="category_id"/>' +
+                        '<field type="category" name="state"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5363,8 +5363,8 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
-                        '<category name="state"/>' +
+                        '<field type="category" name="product_id"/>' +
+                        '<field type="category" name="state"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             mockRPC: function (route, args) {
@@ -5403,7 +5403,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             domain: [['bar', '=', true]],
@@ -5458,7 +5458,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="state"/>' +
+                        '<field type="category" name="state"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5522,7 +5522,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             mockRPC: function (route, args) {
@@ -5577,7 +5577,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             mockRPC: function (route, args) {
@@ -5617,8 +5617,8 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
-                        '<category name="state"/>' +
+                        '<field type="category" name="product_id"/>' +
+                        '<field type="category" name="state"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             domain: [['bar', '=', true]],
@@ -5675,7 +5675,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5746,7 +5746,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5791,7 +5791,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5836,7 +5836,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
+                        '<field type="category" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -5923,7 +5923,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<filter name="product_id"/>' +
+                        '<field type="filter" name="product_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             domain: [['bar', '=', true]],
@@ -6024,7 +6024,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<filter name="state"/>' +
+                        '<field type="filter" name="state"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             domain: [['bar', '=', true]],
@@ -6129,7 +6129,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<filter name="product_id" groupby="category_id"/>' +
+                        '<field type="filter" name="product_id" groupby="category_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
             domain: [['bar', '=', true]],
@@ -6249,7 +6249,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<filter name="product_id" domain="[(\'parent_id\',\'=\',False)]"/>' +
+                        '<field type="filter" name="product_id" domain="[(\'parent_id\',\'=\',False)]"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -6280,7 +6280,7 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<filter name="product_id" groupby="category_id"/>' +
+                        '<field type="filter" name="product_id" groupby="category_id"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });
@@ -6360,8 +6360,8 @@ QUnit.module('Views', {
                         '</div>' +
                     '</t></templates>' +
                     '<searchpanel>' +
-                        '<category name="product_id"/>' +
-                        '<filter name="category_id" domain="[[\'c_product_id\', \'=\', product_id]]"/>' +
+                        '<field type="category" name="product_id"/>' +
+                        '<field type="filter" name="category_id" domain="[[\'c_product_id\', \'=\', product_id]]"/>' +
                     '</searchpanel>' +
                 '</kanban>',
         });

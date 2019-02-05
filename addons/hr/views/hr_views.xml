@@ -350,9 +350,9 @@
                         </t>
                     </templates>
                     <searchpanel>
-                        <category name="company_id" icon="fa-building"/>
-                        <category name="department_id" icon="fa-users"/>
-                        <filter name="category_ids" icon="fa-tags"/>
+                        <field type="category" name="company_id" icon="fa-building"/>
+                        <field type="category" name="department_id" icon="fa-users"/>
+                        <field type="filter" name="category_ids" icon="fa-tags"/>
                     </searchpanel>
                 </kanban>
 
