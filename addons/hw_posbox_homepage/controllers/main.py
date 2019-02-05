@@ -123,8 +123,9 @@ class IoTboxHomepage(web.Home):
     @http.route('/list_drivers', type='http', auth='none', website=True)
     def list_drivers(self):
         drivers_list = []
-        for driver in os.listdir(get_resource_path('hw_drivers', 'drivers')):
-            if driver != '__pycache__':
+        dir_path = get_resource_path('hw_drivers', 'drivers')
+        for driver in os.listdir(dir_path):
+            if not os.path.isdir(os.path.join(dir_path, driver)):
                 drivers_list.append(driver)
         return driver_list_template.render({
             'title': "Odoo's IoT Box - Drivers list",
@@ -155,7 +156,7 @@ class IoTboxHomepage(web.Home):
                 _logger.error('A error encountered : %s ' % e)
             if resp and resp.data:
                 zip_file = zipfile.ZipFile(io.BytesIO(resp.data))
-                zip_file.extractall(get_resource_path('hw_drivers', 'drivers'))
+                zip_file.extractall("/home/pi/odoo/addons/hw_drivers")
         subprocess.check_call("sudo service odoo restart", shell=True)
         subprocess.check_call("sudo mount -o remount,ro /", shell=True)
         subprocess.check_call("sudo mount -o remount,ro /root_bypass_ramdisks", shell=True)

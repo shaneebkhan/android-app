@@ -298,7 +298,7 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
         for (var i = 0; i < callbacks.length; i++) {
             callbacks[i](params);
         }
-        if (this.get('status').status !== 'disconnected') {
+        if (this.get('status').status !== 'disconnected' && this.connection) {
             return this.connection.rpc('/hw_proxy/' + name, params || {}, {shadow: true});
         } else {
             return Promise.reject();
@@ -550,11 +550,18 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
             });
     },
 
-    update_customer_facing_display: function(html) {
+    update_customer_facing_display: function (html) {
+        var self = this;
         if (this.posbox_supports_display) {
-            return this.message('customer_facing_display',
-                { html: html },
-                { timeout: 5000 });
+            return this.message('default_display_action', {
+                data: {
+                    action: 'customer_facing_display',
+                    pos_session: this.pos.pos_session.name,
+                    html: html,
+                }
+            }).then(function (res) {
+                self.pos.chrome.widget.screen_status.check_owner(res);
+            });
         }
     },
 
@@ -562,18 +569,17 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
      * @param {string} html
      * @returns {Promise}
      */
-    take_ownership_over_client_screen: function(html) {
-        return this.message("take_control", { html: html });
-    },
-
-    /**
-     * @returns {Promise}
-     */
-    test_ownership_of_client_screen: function() {
-        if (this.connection) {
-            return this.message("test_ownership", {});
-        }
-        return Promise.reject({abort: true});
+    take_ownership_over_client_screen: function (html) {
+        var self = this;
+        return this.message('default_display_action', {
+            data: {
+                action: 'take_control',
+                pos_session: this.pos.pos_session.name,
+                html: html,
+            }
+        }).then(function (res) {
+            self.pos.chrome.widget.screen_status.check_owner(res);
+        });
     },
 
     // asks the proxy to log some information, as with the debug.log you can provide several arguments.

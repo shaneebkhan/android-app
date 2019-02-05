@@ -280,7 +280,13 @@ var DebugWidget = PosBaseWidget.extend({
         });
 
         this.$('.button.display_refresh').click(function () {
-            self.pos.proxy.message('display_refresh', {});
+            self.pos.proxy.message('default_display_action', {
+                data: {
+                    action: 'display_refresh'
+                }
+            }).then(function (res) {
+                self.pos.chrome.widget.screen_status.check_owner(res);
+            });
         });
 
         this.$('.button.import_orders input').on('change', function(event) {
@@ -443,46 +449,21 @@ var ClientScreenWidget = PosBaseWidget.extend({
             this.$('.js_disconnected').removeClass('oe_hidden');
             msg = _t('Disconnected')
             if (status === 'not_found') {
-                msg = _t('Client Screen Unsupported. Please upgrade the IoT Box')
+                msg = _t('Client screen not found');
             }
         }
 
         this.$('.oe_customer_display_text').text(msg);
     },
 
-    status_loop: function() {
-        var self = this;
-        function loop() {
-            if (self.pos.proxy.posbox_supports_display) {
-                self.pos.proxy.test_ownership_of_client_screen().then(
-                    function (data) {
-                        if (typeof data === 'string') {
-                            data = JSON.parse(data);
-                        }
-                        if (data.status === 'OWNER') {
-                            self.change_status_display('success');
-                        } else {
-                            self.change_status_display('warning');
-                        }
-                        setTimeout(loop, 3000);
-                    },
-                    function (err) {
-                        if (err.abort) {
-                            // Stop the loop
-                            return;
-                        }
-                        if (typeof err == "undefined") {
-                            self.change_status_display('failure');
-                        } else {
-                            self.change_status_display('not_found');
-                            self.pos.proxy.posbox_supports_display = false;
-                        }
-                        setTimeout(loop, 3000);
-                    }
-                );
-            }
+    check_owner: function (data) {
+        if (data.error) {
+            this.change_status_display('not_found');
+        } else if (data.owner === this.pos.pos_session.name) {
+            this.change_status_display('success');
+        } else {
+            this.change_status_display('warning');
         }
-        loop();
     },
 
     start: function(){
@@ -491,33 +472,12 @@ var ClientScreenWidget = PosBaseWidget.extend({
                 var self = this;
                 this.$el.click(function(){
                     self.pos.render_html_for_customer_facing_display().then(function(rendered_html) {
-                        self.pos.proxy.take_ownership_over_client_screen(rendered_html).then(
-                        function(data) {
-                            if (typeof data === 'string') {
-                                data = JSON.parse(data);
-                            }
-                            if (data.status === 'success') {
-                               self.change_status_display('success');
-                            } else {
-                               self.change_status_display('warning');
-                            }
-                            if (!self.pos.proxy.posbox_supports_display) {
-                                self.pos.proxy.posbox_supports_display = true;
-                                self.status_loop();
-                            }
-                        }, 
-        
-                        function(err) {
-                            if (typeof err == "undefined") {
-                                self.change_status_display('failure');
-                            } else {
-                                self.change_status_display('not_found');
-                            }
-                        });
+                        self.pos.proxy.take_ownership_over_client_screen(rendered_html);
                     });
-
                 });
-                this.status_loop();
+                this.pos.proxy.message('default_display_action', {data: {}}).then(function (res) {
+                    self.pos.chrome.widget.screen_status.check_owner(res);
+                });
         } else {
             this.hide();
         }

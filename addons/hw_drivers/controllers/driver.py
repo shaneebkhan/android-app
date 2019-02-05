@@ -337,6 +337,26 @@ class Manager(Thread):
             printer_devices[serial] = iot_device
         return printer_devices
 
+    def display_loop(self):
+        display_devices = {}
+        hdmi = subprocess.check_output('tvservice -n', shell=True).decode('utf-8')
+        if hdmi.find('=') != -1:
+            hdmi_serial = sub('[^a-zA-Z0-9 ]+', '', hdmi.split('=')[1]).replace(' ', '_')
+            iot_device = IoTDevice({
+                'identifier': hdmi_serial,
+                'name': hdmi.split('=')[1],
+            }, 'display')
+            display_devices[hdmi_serial] = iot_device
+
+        if not len(display_devices):
+            # No display connected, create "fake" device to be accessed from another computer
+            display_devices['distant_display'] = IoTDevice({
+                'identifier': "distant_display",
+                'name': "Distant Display",
+            }, 'display')
+
+        return display_devices
+
     def run(self):
         """
         Thread that will check connected/disconnected device, load drivers if needed and contact the odoo server with the updates
@@ -348,6 +368,7 @@ class Manager(Thread):
         while 1:
             updated_devices = self.usb_loop()
             updated_devices.update(self.video_loop())
+            updated_devices.update(self.display_loop())
             updated_devices.update(bt_devices)
             if cpt % 40 == 0:
                 printer_devices = self.printer_loop()
