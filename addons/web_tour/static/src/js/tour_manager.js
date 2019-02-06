@@ -316,7 +316,6 @@ return core.Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
         this.active_tooltips[tour_name] = tour.steps[tour.current_step];
     },
     _consume_tour: function (tour_name, error) {
-        var self = this;
         delete this.active_tooltips[tour_name];
         //display rainbow at the end of any tour
         if (this.tours[tour_name].rainbowMan && this.running_tour !== tour_name &&
@@ -325,9 +324,7 @@ return core.Class.extend(mixins.EventDispatcherMixin, ServicesMixin, {
                                 '<b>Good job!</b>' +
                                 ' You went through all steps of this tour.' +
                                 '</strong>');
-            setTimeout(function () {
-                new RainbowMan({message: $rainbow_message}).appendTo(self.$body);
-            }, 100);
+            new RainbowMan({message: $rainbow_message}).appendTo(this.$body);
         }
         this.tours[tour_name].current_step = 0;
         local_storage.removeItem(get_step_key(tour_name));
