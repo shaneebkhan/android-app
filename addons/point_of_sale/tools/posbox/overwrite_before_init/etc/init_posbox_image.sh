@@ -37,6 +37,7 @@ PKGS_TO_INSTALL="
     mc \
     mg \
     librsvg2-bin \
+    ntpdate \
     screen \
     iw \
     hostapd \
