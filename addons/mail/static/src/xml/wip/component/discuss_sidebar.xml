@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_wip_discuss_sidebar"
+        owl="1"
+        t-name="mail.wip.component.DiscussSidebar">
+        <div
+            class="o_mailbox o_group"
+            t-key="'mailbox'">
+            <t t-foreach="props.mailboxes" t-as="mailbox">
+                <SidebarItem
+                   class="o_item"
+                   isActive="props.threadLocalID === mailbox.localID"
+                   t-key="mailbox.localID"
+                   t-on-clicked="_onClickedItem"
+                   threadLocalID="mailbox.localID"/>
+            </t>
+        </div>
+        <hr
+            class="o_separator"
+            t-key="'separator'"/>
+        <input
+            class="o_quick_search"
+            placeholder="Quick search..."
+            t-if="props.mailChannelAmount > 19"
+            t-key="'quickSearch'"
+            t-on-input.stop="_onInputQuickSearch"
+            t-ref="quickSearch"/>
+        <div
+            class="o_channel o_group"
+            t-key="'channel'">
+            <div
+                class="o_header">
+                <div
+                    class="o_item o_title o_clickable"
+                    t-on-click.stop="_onClickChannelTitle">
+                    Channels
+                </div>
+                <div class="o_autogrow"/>
+                <div
+                    class="o_item o_add fa fa-plus"
+                    t-on-click.stop="_onClickChannelAdd"
+                    title="Add or join a channel"/>
+            </div>
+            <div
+                class="o_list">
+                <div
+                    class="o_item o_add"
+                    t-if="state.isAddingChannel"
+                    t-key="'add_item_channel'">
+                    <AutocompleteInput
+                       focusOnMount="true"
+                       html="true"
+                       select="_onChannelAutocompleteSelect"
+                       source="_onChannelAutocompleteSource"
+                       t-on-hide.stop="_onHideAddChannel"/>
+                </div>
+                <t t-foreach="quickSearchChannels" t-as="channel">
+                    <SidebarItem
+                       class="o_item"
+                       isActive="props.threadLocalID === channel.localID"
+                       t-on-clicked="_onClickedItem"
+                       t-key="channel.localID"
+                       threadLocalID="channel.localID"/>
+                </t>
+            </div>
+        </div>
+        <div
+            class="o_chat o_group"
+            t-key="'chat'">
+            <div
+                class="o_header">
+                <div
+                    class="o_item o_title">
+                    Direct Messages
+                </div>
+                <div
+                    class="o_autogrow"/>
+                <div
+                    class="o_item o_add fa fa-plus"
+                    t-on-click.stop="_onClickChatAdd"
+                    title="Start a conversation"/>
+            </div>
+            <div
+                class="o_list">
+                <div
+                    class="o_item o_add"
+                    t-if="state.isAddingChat"
+                    t-key="'add_item_chat'">
+                    <AutocompleteInput
+                       focusOnMount="true"
+                       select="_onChatAutocompleteSelect"
+                       source="_onChatAutocompleteSource"
+                       t-on-hide.stop="_onHideAddChat"/>
+                </div>
+                <t t-foreach="quickSearchChats" t-as="chat">
+                    <SidebarItem
+                       class="o_item"
+                       isActive="props.threadLocalID === chat.localID"
+                       t-on-clicked="_onClickedItem"
+                       t-key="chat.localID"
+                       threadLocalID="chat.localID"/>
+                </t>
+            </div>
+        </div>
+    </div>
+
+</templates>

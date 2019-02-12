@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_wip_discuss_sidebar_item"
+        owl="1"
+        t-att-data-thread-local-id="props.threadLocalID"
+        t-att-odoo-id="id"
+        t-att-class="{
+            o_starred_box: props.threadLocalID === 'mail.box_starred',
+        }"
+        t-name="mail.wip.component.DiscussSidebarItem"
+        t-on-click="_onClick">
+        <div
+            class="o_active_indicator"
+            t-att-class="props.isActive ? 'o_active' : ''"/>
+        <Icon
+           threadLocalID="props.threadLocalID"/>
+        <div
+            class="o_name o_editable"
+            t-if="props.thread.channel_type === 'chat' and state.renaming">
+            <EditableText
+               class="o_input"
+               placeholder="props.directPartner.name"
+               value="props.threadName"
+               t-on-cancel="_onCancelRenaming"
+               t-on-clicked="_onClickedEditableText"
+               t-on-validate.stop="_onRename"/>
+        </div>
+        <div
+            class="o_name"
+            t-att-class="props.thread.message_unread_counter > 0 ? 'o_unread' : ''"
+            t-else="">
+            <t t-esc="props.threadName"/>
+        </div>
+        <div class="o_autogrow"/>
+        <div
+            class="o_commands"
+            t-if="props.thread._model !== 'mail.box'">
+            <t t-if="props.thread.channel_type === 'channel'">
+                <div
+                    aria-label="Channel settings"
+                    class="o_settings o_command fa fa-cog"
+                    role="img"
+                    t-on-click.stop="_onClickSettings"
+                    title="Channel settings"/>
+                <div
+                    aria-label="Leave this channel"
+                    class="o_leave o_command fa fa-times"
+                    role="img"
+                    t-if="!props.thread.message_needaction_counter and !props.thread.group_based_subscription"
+                    t-on-click.stop="_onClickLeave"
+                    title="Leave this channel"/>
+            </t>
+            <t t-elif="props.thread.channel_type === 'chat'">
+                <div
+                    aria-label="Rename conversation"
+                    class="o_rename o_command fa fa-cog"
+                    role="img"
+                    t-on-click.stop="_onClickRename"
+                    title="Rename conversation"/>
+                <div
+                    aria-label="Unpin conversation"
+                    class="o_unpin o_command fa fa-times"
+                    role="img"
+                    t-if="!props.thread.message_unread_counter"
+                    t-on-click.stop="_onClickUnpin"
+                    title="Unpin conversation"/>
+            </t>
+        </div>
+        <div
+            class="o_counter badge badge-pill"
+            t-if="counter > 0">
+            <t t-esc="counter"/>
+        </div>
+    </div>
+
+</templates>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_wip_discuss"
+        owl="1"
+        t-att-class="{
+            o_fullscreen: props.threadLocalID and props.isMobile and props.thread._model !== 'mail.box',
+            o_mobile: props.isMobile,
+        }"
+        t-name="mail.wip.component.Discuss">
+        <t t-if="props.isMobile">
+            <!-- mobile layout -->
+            <t t-if="!props.threadLocalID or props.thread._model === 'mail.box'">
+                <!-- no thread or mailbox selection -->
+                <MobileMailboxSelection
+                   t-if="state.mobileNavbarTab === 'mailbox'"
+                   t-on-select-thread="_onSelectThread"
+                   threadLocalID="props.threadLocalID"/>
+                <t t-if="state.mobileNavbarTab === 'mailbox'">
+                    <Thread
+                       class="o_thread"
+                       options="threadOptions"
+                       t-if="props.threadLocalID"
+                       t-on-redirect="_onRedirect"
+                       t-ref="thread"
+                       threadLocalID="props.threadLocalID"/>
+                    <div
+                        class="o_empty"
+                        t-else="">No conversation.</div>
+                </t>
+                <t t-elif="!props.threadLocalID">
+                   <ThreadPreviewList
+                      class="o_thread_preview_list"
+                      options="threadPreviewListOptions"
+                      t-on-select-thread="_onSelectThread"/>
+                </t>
+                <MobileNavbar
+                   active="state.mobileNavbarTab"
+                   t-on-select.stop="_onSelectMobileNavbarTab"/>
+            </t>
+            <div
+                class="o_content"
+                t-else="">
+                <!-- chat/channel selection (mobile) -->
+                <Thread
+                   class="o_thread"
+                   options="threadOptions"
+                   t-on-redirect="_onRedirect"
+                   t-on-rendered="_onThreadRendered"
+                   t-ref="thread"
+                   threadLocalID="props.threadLocalID"/>
+            </div>
+        </t>
+        <t t-else="">
+            <!-- desktop layout -->
+            <Sidebar
+               class="o_sidebar"
+               t-on-select-thread="_onSelectThread"
+               threadLocalID="props.threadLocalID"/>
+            <div
+                class="o_content">
+                <t t-if="props.threadLocalID">
+                    <Thread
+                       class="o_thread"
+                       options="threadOptions"
+                       t-key="props.threadLocalID"
+                       t-on-redirect="_onRedirect"
+                       t-on-rendered="_onThreadRendered"
+                       t-ref="thread"
+                       threadLocalID="props.threadLocalID"/>
+                </t>
+            </div>
+        </t>
+    </div>
+
+</templates>

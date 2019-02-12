@@ -1,0 +1,107 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_wip_discuss_sidebar_item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+
+    &:hover > .o_commands {
+        display: flex;
+    }
+
+    > div {
+        margin-left: 3px;
+        margin-right: 3px;
+
+        &:first-of-type {
+            margin-left: 0px;
+            margin-right: $o-mail-discuss-sidebar-active-indicator-margin-right;
+        }
+
+        &:last-of-type {
+            margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+        }
+    }
+
+    > .o_active_indicator {
+        width: $o-mail-discuss-sidebar-active-indicator-width;
+        align-self: stretch;
+    }
+
+    > .o_commands {
+        display: none;
+
+        > .o_command {
+            margin-left: 3px;
+            margin-right: 3px;
+
+            &:first-child {
+                margin-left: 0px;
+            }
+
+            &:last-child {
+                margin-right: 0px;
+            }
+        }
+    }
+
+    > .o_name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &.o_editable {
+            margin-left: $o-mail-discuss-sidebar-active-indicator-width + $o-mail-discuss-sidebar-active-indicator-margin-right;
+            margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+
+            > .o_input {
+                width: 100%;
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_wip_discuss > .o_sidebar .o_item {
+    cursor: pointer;
+
+    &.o_starred_box {
+        > .o_counter {
+            border: none;
+            background-color: gray('600');
+        }
+    }
+
+    &:not(.o_active):hover {
+        background-color: darken(gray('900'), 2%);
+    }
+
+    > .o_active_indicator.o_active {
+        background-color: $o-brand-primary;
+    }
+
+    > .o_commands > .o_command:not(:hover) {
+        color: gray('600');
+    }
+
+    > .o_counter {
+        background-color: $o-brand-primary;
+    }
+
+    > .o_name {
+
+        &.o_unread {
+            font-weight: bold;
+        }
+
+        > .o_input {
+            outline: none;
+            border: none;
+            border-radius: 2px;
+        }
+    }
+}

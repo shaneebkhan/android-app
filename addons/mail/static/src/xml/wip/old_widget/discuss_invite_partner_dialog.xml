@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        @param {mail.wip.old_widget.DiscussInvitePartnerDialog} widget
+    -->
+    <div t-name="mail.wip.old_widget.DiscussInvitePartnerDialog">
+        <input type="text" class="o_input o_dialog o_invite_partner"/>
+    </div>
+
+</templates>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mobile_navbar"
+        owl="1"
+        t-name="mail.wip.component.DiscussMobileNavbar">
+        <div
+            class="o_tab"
+            data-tab="mailbox"
+            t-att-class="active === 'mailbox' ? 'o_active' : ''"
+            t-on-click="_onClick">
+            <span class="fa fa-inbox o_icon"/>
+            <span class="o_label">Mailboxes</span>
+        </div>
+        <div
+            class="o_tab"
+            data-tab="chat"
+            t-att-class="active === 'chat' ? 'o_active' : ''"
+            t-on-click="_onClick">
+            <span class="fa fa-user o_icon"/>
+            <span class="o_label">Chat</span>
+        </div>
+        <div
+            class="o_tab"
+            data-tab="channel"
+            t-att-class="active === 'channel' ? 'o_active' : ''"
+            t-on-click="_onClick">
+            <span class="fa fa-users o_icon"/>
+            <span class="o_label">Channels</span>
+        </div>
+    </div>
+
+</templates>

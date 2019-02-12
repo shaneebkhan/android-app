@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+   <div
+      class="o_mail_wip_chat_window_manager"
+      owl="1"
+      t-name="mail.wip.component.ChatWindowManager">
+      <!-- Note: DOM elements are ordered from left to right -->
+      <HiddenMenu
+         direction="direction"
+         items="props.computed.hidden.items"
+         offset="props.computed.hidden.offset"
+         t-if="props.computed.hidden.showMenu"
+         t-on-close-item.stop="_onCloseChatWindow"
+         t-on-select-item.stop="_onSelectChatWindow"
+         t-ref="hidden_menu"/>
+      <t t-set="visibleAmount" t-value="props.computed.visible.length"/>
+      <t t-foreach="reverseVisible" t-as="data">
+         <ChatWindow
+            direction="direction"
+            item="data.item"
+            offset="data.offset"
+            options="chatWindowOptions(visibleAmount - data_index - 1)"
+            t-key="data.item"
+            t-on-close.stop="_onCloseChatWindow"
+            t-on-select-thread.stop="_onSelectThreadChatWindow"
+            t-on-shift-left.stop="_onShiftLeftChatWindow"
+            t-on-shift-right.stop="_onShiftRightChatWindow"
+            t-on-redirect="_onRedirect"
+            t-ref="{{ data.item }}"/>
+      </t>
+   </div>
+
+</templates>

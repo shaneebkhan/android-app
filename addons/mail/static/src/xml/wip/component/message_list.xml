@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_wip_message_list"
+        owl="1"
+        t-name="mail.wip.component.MessageList"
+        t-on-scroll="_onScroll">
+        <div
+            class="o_loading_more"
+            t-if="loadingMore"
+            t-key="'loading'">
+            <i
+                class="o_icon fa fa-spinner fa-spin"/>Loading...
+        </div>
+        <a
+            class="o_load_more"
+            href="#"
+            t-elif="!props.threadCache.allHistoryLoaded"
+            t-key="'load_more'"
+            t-on-click="_onClickLoadMore"
+            t-ref="loadMore">
+            Load more
+        </a>
+        <t t-set="current_day" t-value="0"/>
+        <t t-set="prev_message" t-value="0"/>
+        <div
+            class="o_separator o_new_messages"
+            t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and !props.thread.seen_message_id"
+            t-key="'new_message_separator'">
+            <hr class="o_line"/><span class="o_label">New messages</span>
+        </div>
+        <t t-foreach="messages" t-as="message">
+            <t t-set="message_day" t-value="getDateDay(message)"/>
+            <div
+                class="o_separator o_date"
+                t-if="current_day !== message_day"
+                t-key="'date_separator' + message_day">
+                <hr class="o_line"/><span class="o_label"><t t-esc="message_day"/></span><hr class="o_line"/>
+                <t t-set="current_day" t-value="message_day"/>
+                <t t-set="squashed" t-value="false"/>
+            </div>
+            <t t-else="">
+                <t t-set="squashed" t-value="shouldSquash(prev_message, message)"/>
+            </t>
+            <Message
+               class="o_message"
+               messageLocalID="message.localID"
+               options="messageOptions(squashed)"
+               t-key="message.localID"
+               t-ref="{{ message.localID }}"
+               threadLocalID="props.threadLocalID"/>
+            <t t-set="prev_message" t-value="message"/>
+            <div
+                class="o_separator o_new_messages"
+                t-key="'new_message_separator'"
+                t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and props.thread.seen_message_id === message.id">
+                <hr class="o_line"/><span class="o_label">New messages</span>
+            </div>
+        </t>
+    </div>
+
+</templates>

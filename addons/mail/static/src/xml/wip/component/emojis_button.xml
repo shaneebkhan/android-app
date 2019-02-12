@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <button
+        aria-label="Emojis"
+        class="o_mail_wip_emojis_button btn btn-secondary fa fa-smile-o"
+        data-selector="true"
+        data-toggle="popover"
+        t-att-class="state.open ? 'o_open' : ''"
+        t-name="mail.wip.component.EmojisButton" owl="1"
+        title="Emojis"
+        type="button"/>
+
+</templates>

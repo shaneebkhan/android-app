@@ -2,7 +2,12 @@ odoo.define('mail.form_renderer', function (require) {
 "use strict";
 
 var Chatter = require('mail.Chatter');
+const ChatterWIP = require('mail.wip.component.Chatter');
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
+
 var FormRenderer = require('web.FormRenderer');
+
+FormRenderer.include(EnvMixin);
 
 /**
  * Include the FormRenderer to instanciate the chatter area containing (a
@@ -16,6 +21,23 @@ FormRenderer.include({
         this._super.apply(this, arguments);
         this.mailFields = params.mailFields;
         this.chatter = undefined;
+        this.chatterWIP = undefined;
+    },
+    willStart: function () {
+        return Promise.all([
+            this._super.apply(this, arguments),
+            this.getEnv(),
+        ]);
+    },
+    on_attach_callback: function () {
+        this._super.apply(this, arguments);
+
+        if (this.chatterWIP) {
+            this.chatterWIP.mount(this.$temporaryChatterDiv[0]).then(() => {
+                $(this.chatterWIP.el).unwrap();
+                this._handleAttributes($(this.chatterWIP.el), this._chatterNode);
+            });
+        }
     },
 
     //--------------------------------------------------------------------------
@@ -33,6 +55,11 @@ FormRenderer.include({
             var updatedMailFields = _.intersection(fields, chatterFields);
             if (updatedMailFields.length) {
                 this.chatter.update(state, updatedMailFields);
+                this.chatterWIP._updateProps({
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: state,
+                });
             }
         }
         return this._super.apply(this, arguments);
@@ -52,21 +79,41 @@ FormRenderer.include({
     _renderNode: function (node) {
         var self = this;
         if (node.tag === 'div' && node.attrs.class === 'oe_chatter') {
+
+            // see @on_attach_callback
+            // class needed to avoid wrapping in sheet, see @__updateView
+            this.$temporaryChatterDiv = $('<div>', { class: 'oe_chatter' });
+            this._chatterNode = node;
+
+            if (!this.chatterWIP) {
+                this.chatterWIP = new ChatterWIP(this.env, {
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: this.state,
+                });
+                // TODO: when remove old chatter, just do:
+                // return this.$temporaryChatterDiv
+            }
+
             if (!this.chatter) {
                 this.chatter = new Chatter(this, this.state, this.mailFields, {
                     isEditable: this.activeActions.edit,
                     viewType: 'form',
                 });
-
                 var $temporaryParentDiv = $('<div>');
                 this.defs.push(this.chatter.appendTo($temporaryParentDiv).then(function () {
                     self.chatter.$el.unwrap();
                     self._handleAttributes(self.chatter.$el, node);
                 }));
-                return $temporaryParentDiv;
+                return $temporaryParentDiv.add(this.$temporaryChatterDiv);
             } else {
                 this.chatter.update(this.state);
-                return this.chatter.$el;
+                this.chatterWIP._updateProps({
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: this.state,
+                });
+                return this.chatter.$el.add($(this.chatterWIP.el));
             }
         } else {
             return this._super.apply(this, arguments);
