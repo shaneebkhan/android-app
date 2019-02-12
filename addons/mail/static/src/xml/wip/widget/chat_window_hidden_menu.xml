@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ChatWindowHiddenMenu" owl="1"
+         class="o_hidden_menu dropup">
+        <div class="dropdown-toggle"
+             t-att-class="state.toggleShow ? 'show' : ''"
+             t-on-click="_onClickToggle">
+            <div class="o_icon fa fa-comments-o"/>
+            <div class="o_window_counter">
+                <t t-esc="props.threads.length"/>
+            </div>
+        </div>
+        <ul class="dropdown-menu dropdown-menu-right"
+            t-att-class="state.toggleShow ? 'show' : ''"
+            role="menu"
+            t-ref="'list'">
+            <t t-foreach="props.threads"
+               t-as="thread">
+               <li class="o_item"
+                   role="menuitem"
+                   t-key="'li_' + thread.lid">
+                    <t t-widget="ChatWindowHeader"
+                       t-props="{ options: itemOptions, threadLID: thread.lid }"
+                       t-key="'item_' + thread.lid"
+                       t-on-close="_onItemClose"
+                       t-on-select="_onItemSelect"/>
+                </li>
+            </t>
+        </ul>
+        <div t-if="unreadCounter > 0"
+             class="o_unread_counter badge badge-pill"
+             t-key="'unread_counter'">
+            <t t-esc="unreadCounter"/>
+        </div>
+    </div>
+
+</templates>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!--
+        @param {mail.wip.old_widget.Discuss} widget
+    -->
+    <div t-name="mail.wip.old_widget.Discuss"
+         class="o_mail_wip_old_discuss"/>
+
+    <!-- @param {boolean} isMobile -->
+    <div t-name="mail.wip.old_widget.discuss.ControlButtons">
+        <button type="button"
+                class="btn btn-primary o_invite o_hidden"
+                title="Invite people">Invite</button>
+        <button type="button"
+                class="btn btn-secondary o_mark_all_read o_hidden"
+                title="Mark all as read">Mark all read</button>
+        <button type="button"
+                class="btn btn-secondary o_unstar_all o_hidden"
+                title="Unstar all messages">Unstar all</button>
+        <button type="button"
+                class="btn btn-secondary o_new_message o_hidden"
+                title="New Message">New Message</button>
+        <button type="button"
+                class="btn btn-secondary o_new_channel o_hidden"
+                title="New Channel">New Channel</button>
+    </div>
+
+</templates>

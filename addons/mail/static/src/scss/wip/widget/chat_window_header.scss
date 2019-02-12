@@ -1,0 +1,74 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_wip_chat_window_header {
+    display: flex;
+    align-items: center;
+    height: $o-mail-chat-window-header-height;
+
+    > .o_commands {
+        display: flex;
+
+        > div {
+            margin: 0 5px;
+
+            &:first-of-type {
+                margin-left: 0;
+            }
+
+            &:last-of-type {
+                margin-right: 0;
+            }
+        }
+    }
+
+    > .o_name {
+        max-height: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    > div {
+        margin: 0 3px;
+
+        &:first-of-type {
+            margin-left: 10px;
+        }
+
+        &:last-of-type {
+            margin-right: 10px;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_wip_chat_window_header {
+    background-color: $o-brand-odoo;
+    color: white;
+    cursor: pointer;
+
+    > .o_commands {
+        opacity: 0.8;
+
+        &:hover {
+            opacity: 1;
+        }
+
+        > div {
+            opacity: 0.5;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+
+    > .o_name {
+        user-select: none;
+    }
+}

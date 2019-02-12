@@ -261,6 +261,12 @@ QWeb2.Engine = (function() {
                 var node = ec[i];
                 if (node.nodeType === 1) {
                     var name = node.getAttribute(this.prefix + '-name');
+
+                    if (node.getAttribute('owl')) {
+                        console.log('[qweb] skipping template: ' + name);
+                        continue;
+                    }
+
                     var extend = node.getAttribute(this.prefix + '-extend');
                     if (name && extend) {
                         // Clone template and extend it

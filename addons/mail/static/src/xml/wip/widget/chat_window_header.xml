@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ChatWindowHeader" owl="1"
+         class="o_wip_chat_window_header"
+         t-on-click="_onClick">
+        <t t-widget="Icon"
+           t-props="{ threadLID: props.threadLID }"/>
+        <div class="o_name">
+            <t t-esc="props.name"/>
+        </div>
+        <div t-if="props.thread.message_unread_counter > 0" class="o_counter" t-key="'counter'">
+            (<t t-esc="props.thread.message_unread_counter"/>)
+        </div>
+        <div class="o_autogrow"/>
+        <div class="o_commands">
+            <div t-if="options.displayExpand"
+                 class="o_command o_expand fa fa-expand"
+                 aria-label="Open in Discuss"
+                 title="Open in Discuss"
+                 t-on-click="_onClickExpand"/>
+            <div class="o_command o_close fa fa-close"
+                 aria-label="Close chat window"
+                 title="Close chat window"
+                 t-on-click="_onClickClose"/>
+        </div>
+    </div>
+
+</templates>

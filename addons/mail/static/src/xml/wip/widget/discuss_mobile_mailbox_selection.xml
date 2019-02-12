@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.DiscussMobileMailboxSelection" owl="1"
+         class="o_mobile_mailbox_selection">
+        <t t-foreach="props.mailboxes" t-as="mailbox">
+            <button class="btn"
+                    t-att-data-mailbox-lid="mailbox.lid"
+                    type="button"
+                    t-att-class="active(mailbox) ? 'btn-primary' : 'btn-secondary'"
+                    t-key="mailbox.lid"
+                    t-on-click="_onClick">
+                <t t-esc="mailbox.name"/>
+            </button>
+        </t>
+    </div>
+
+</templates>

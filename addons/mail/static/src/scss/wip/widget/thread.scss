@@ -1,0 +1,41 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+ .o_thread {
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+
+    > .o_thread_loading {
+        display: flex;
+        align-self: center;
+        flex: 1 1 auto;
+        align-items: center;
+    }
+
+    > .o_message_list {
+        flex: 1 1 auto;
+    }
+
+    > .o_empty {
+        flex: 1 1 auto;
+        height: 100%;
+        align-self: center;
+        display: flex;
+        flex-flow: column;
+        justify-content: center;
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_thread {
+    background-color: gray('100');
+
+    > .o_thread_loading .o_icon {
+        margin-right: 3px;
+    }
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.DiscussSidebarItem" owl="1"
+         class="o_item"
+         t-attf-class="{{ props.threadLID === 'mail.box_starred' ? 'o_starred_box' : '' }}"
+         t-on-click="_onClick"
+         t-att-data-thread-lid="props.threadLID">
+        <div class="o_active_indicator" t-att-class="props.isActive ? 'o_active' : ''"/>
+        <t t-widget="Icon"
+           t-props="{ threadLID: props.threadLID }"/>
+        <div t-if="props.thread.channel_type === 'chat' and state.renaming" class="o_editable_name">
+            <t t-widget="EditableText"
+               t-props="{ placeholder: props.directPartner.name, value: props.name }"
+               t-on-cancel="_onCancelRenaming"
+               t-on-validate="_onRename"/>
+        </div>
+        <div t-else=""
+             class="o_name"
+             t-att-class="props.thread.message_unread_counter > 0 ? 'o_unread' : ''">
+            <t t-esc="props.name"/>
+        </div>
+        <div class="o_autogrow"/>
+        <div t-if="props.thread._model !== 'mail.box'"
+            class="o_commands">
+            <t t-if="props.thread.channel_type === 'channel'">
+                <div class="o_settings o_command fa fa-cog"
+                     aria-label="Channel settings"
+                     role="img"
+                     title="Channel settings"
+                     t-on-click="_onClickSettings"/>
+                <div t-if="!props.thread.message_needaction_counter and !props.thread.group_based_subscription"
+                     class="o_leave o_command fa fa-times"
+                     aria-label="Leave this channel"
+                     role="img"
+                     title="Leave this channel"
+                     t-on-click="_onClickLeave"/>
+            </t>
+            <t t-elif="props.thread.channel_type === 'chat'">
+                <div class="o_rename o_command fa fa-cog"
+                     aria-label="Rename conversation"
+                     role="img"
+                     title="Rename conversation"
+                     t-on-click="_onClickRename"/>
+                <div t-if="!props.thread.message_unread_counter"
+                     class="o_unpin o_command fa fa-times"
+                     aria-label="Unpin conversation"
+                     role="img"
+                     title="Unpin conversation"
+                     t-on-click="_onClickUnpin"/>
+            </t>
+        </div>
+        <div t-if="counter > 0" class="o_counter badge badge-pill">
+            <t t-esc="counter"/>
+        </div>
+    </div>
+
+</templates>

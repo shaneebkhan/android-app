@@ -1,0 +1,95 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_wip_discuss > .o_sidebar {
+    display: flex;
+    flex-flow: column;
+    width: $o-mail-chat-sidebar-width;
+
+    @include media-breakpoint-up(xl) {
+        width: $o-mail-chat-sidebar-width + 50px;
+    }
+
+    > .o_group {
+        display: flex;
+        flex-flow: column;
+        flex: 0 0 auto;
+
+        > .o_header {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+
+            > div {
+                margin-left: 3px;
+                margin-right: 3px;
+
+                &:first-of-type {
+                    margin-left: $o-mail-discuss-sidebar-active-indicator-margin-right;
+                }
+
+                &:last-of-type {
+                    margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+                }
+            }
+        }
+    }
+
+    > .o_quick_search {
+        border-radius: 10px;
+        margin: 0 $o-mail-discuss-sidebar-scrollbar-width 10px;
+        padding: 3px 10px;
+    }
+
+    > .o_separator {
+        width: 100%;
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_wip_discuss > .o_sidebar {
+    background-color: gray('900');
+    color: gray('300');
+
+    > .o_group > .o_header {
+        font-size: $font-size-sm;
+        text-transform: uppercase;
+        font-weight: bolder;
+
+        > .o_add {
+            cursor: pointer;
+
+            &:not(:hover) {
+                color: gray('600');
+            }
+        }
+
+        > .o_title {
+
+            &:not(.o_clickable) {
+                color: gray('600');
+            }
+
+            &.o_clickable {
+                cursor: pointer;
+
+                &:not(:hover) {
+                    color: gray('600');
+                }
+            }
+        }
+    }
+
+    > .o_quick_search {
+        border: none;
+        outline: none;
+    }
+
+    > .o_separator {
+        background-color: gray('600');
+    }
+}

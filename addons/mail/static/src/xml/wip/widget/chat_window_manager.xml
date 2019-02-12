@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ChatWindowManager" owl="1"
+         class="o_wip_chat_window_manager">
+        <t t-foreach="computed.visible"
+           t-as="data">
+            <t t-if="data.item === 'blank'"
+               t-widget="ChatWindowBlank"
+               t-props="{ direction, offset: data.offset }"
+               t-key="'blank'"
+               t-ref="'blank'"
+               t-on-close="_onCloseChatWindowBlank"
+               t-on-select-thread="_onSelectThreadFromChatWindowBlank"/>
+            <t t-else=""
+               t-widget="ChatWindow"
+               t-props="{ threadLID: data.item, direction, offset: data.offset }"
+               t-key="data.item"
+               t-on-close="_onCloseChatWindow"
+               t-on-redirect="_onRedirect"
+               t-on-toggle-fold="_onToggleFoldChatWindow"/>
+        </t>
+        <t t-if="computed.hidden.showMenu"
+           t-widget="HiddenMenu"
+           t-props="{ items: computed.hidden.items, direction, offset: computed.hidden.offset }"
+           t-ref="'hidden_menu'"
+           t-key="'hidden_menu'"
+           t-on-close-item="_onCloseChatWindow"
+           t-on-select-item="_onSelectChatWindow"/>
+    </div>
+
+</templates>

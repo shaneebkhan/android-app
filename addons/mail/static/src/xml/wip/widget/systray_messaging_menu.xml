@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <li t-name="mail.wip.widget.SystrayMessagingMenu" owl="1"
+         class="o_mail_wip_systray_messaging_menu"
+         t-att-class="state.toggleShow ? 'show' : ''">
+        <a class="dropdown-toggle o-no-caret"
+           t-att-class="state.toggleShow ? 'show' : ''"
+           data-toggle="dropdown"
+           data-display="static"
+           aria-expanded="false"
+           title="Conversations"
+           role="button"
+           href="#"
+           t-on-click="_onClickToggleShow">
+            <i class="fa fa-comments-o"
+               role="img"
+               aria-label="Messages"/>
+            <span t-if="props.counter > 0"
+                  class="o_counter badge badge-pill">
+                <t t-esc="props.counter"/>
+            </span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right"
+             t-att-class="state.toggleShow ? 'show' : ''"
+             role="menu">
+            <div class="o_header">
+                <button t-foreach="['all', 'chat', 'channel']"
+                        t-as="filter"
+                        class="btn btn-link o_filter_button"
+                        t-att-class="state.filter === filter ? 'o_active' : ''"
+                        role="tab"
+                        type="button"
+                        t-key="filter"
+                        t-att-data-filter="filter"
+                        t-on-click="_onClickFilter">
+                    <t t-if="filter === 'all'">All</t>
+                    <t t-elif="filter === 'chat'">Chat</t>
+                    <t t-elif="filter === 'channel'">Channels</t>
+                </button>
+                <div class="o_mail_wip_autogrow"/>
+                <button t-if="!props.discussOpen"
+                        class="btn btn-link o_new_message"
+                        type="button">
+                    New message
+                </button>
+            </div>
+            <t t-widget="ThreadPreviewList"
+               t-props="{ filter: state.filter }"/>
+        </div>
+    </li>
+
+</templates>

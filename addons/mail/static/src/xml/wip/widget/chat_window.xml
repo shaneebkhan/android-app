@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+   <div t-name="mail.wip.widget.ChatWindow" owl="1"
+        class="o_chat_window"
+        t-att-class="folded ? 'o_folded' : ''">
+      <t t-widget="Header"
+         t-props="{ threadLID: props.threadLID }"
+         t-on-close="_onHeaderClose"
+         t-on-select="_onHeaderSelect"/>
+      <t t-widget="Thread"
+         t-props="{ options: threadOptions, threadLID: props.threadLID }"
+         t-on-redirect="_onRedirect"/>
+      <t t-if="showComposer"
+         t-widget="Composer"
+         t-props="{ options: composerOptions, threadLID: props.threadLID }"/>
+    </div>
+
+</templates>

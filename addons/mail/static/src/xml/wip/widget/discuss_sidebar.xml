@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.DiscussSidebar" owl="1"
+         class="o_sidebar">
+        <div class="o_mailbox o_group" t-key="'mailbox'">
+            <t t-foreach="props.mailboxes" t-as="mailbox">
+                <t t-widget="SidebarItem"
+                   t-props="{ threadLID: mailbox.lid, isActive: props.threadLID === mailbox.lid }"
+                   t-on-click="_onClickItem"
+                   t-key="mailbox.lid"/>
+            </t>
+        </div>
+        <hr class="o_separator" t-key="'separator'"/>
+        <input t-if="props.mailChannelAmount >= 20"
+               class="o_quick_search"
+               placeholder="Quick search..."
+               t-key="'quickSearch'"
+               t-ref="'quickSearch'"
+               t-on-input="_onInputQuickSearch"/>
+        <div class="o_channel o_group" t-key="'channel'">
+            <div class="o_header">
+                <div class="o_title o_clickable"
+                     t-on-click="_onClickChannelTitle">
+                    Channels
+                </div>
+                <div class="o_autogrow"/>
+                <div class="o_add fa fa-plus"
+                     title="Add or join a channel"
+                     t-on-click="_onClickChannelAdd"/>
+            </div>
+            <div class="o_list">
+                <div t-if="state.isAddingChannel"
+                     class="o_item o_add"
+                     t-key="'add_item_channel'">
+                    <t t-widget="AutocompleteInput"
+                       t-props="{ html: true, source: _onChannelAutocompleteSource }"
+                       t-on-select="_onChannelAutocompleteSelect"
+                       t-on-hide="_onHideAddChannel"/>
+                </div>
+                <t t-foreach="quickSearchChannels" t-as="channel">
+                    <t t-widget="SidebarItem"
+                       t-props="{ threadLID: channel.lid, isActive: props.threadLID === channel.lid }"
+                       t-on-click="_onClickItem"
+                       t-key="channel.lid"/>
+                </t>
+            </div>
+        </div>
+        <div class="o_chat o_group" t-key="'chat'">
+            <div class="o_header">
+                <div class="o_title">
+                    Direct Messages
+                </div>
+                <div class="o_autogrow"/>
+                <div class="o_add fa fa-plus"
+                     title="Start a conversation"
+                     t-on-click="_onClickChatAdd"/>
+            </div>
+            <div class="o_list">
+                <div t-if="state.isAddingChat"
+                     class="o_item o_add"
+                     t-key="'add_item_chat'">
+                    <t t-widget="AutocompleteInput"
+                       t-props="{ source: _onChatAutocompleteSource }"
+                       t-on-hide="_onHideAddChat"
+                       t-on-select="_onChatAutocompleteSelect"/>
+                </div>
+                <t t-foreach="quickSearchChats" t-as="chat">
+                    <t t-widget="SidebarItem"
+                       t-props="{ threadLID: chat.lid, isActive: props.threadLID === chat.lid }"
+                       t-on-click="_onClickItem"
+                       t-key="chat.lid"/>
+                </t>
+            </div>
+        </div>
+    </div>
+
+</templates>

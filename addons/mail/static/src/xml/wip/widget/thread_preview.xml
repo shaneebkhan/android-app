@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!--
+        The preview template is used by the discuss in mobile, and by the systray
+        menu in order to show preview of threads.
+    -->
+    <div t-name="mail.wip.widget.ThreadPreview" owl="1"
+         class="o_preview"
+         t-on-click="_onClick">
+        <div class="o_sidebar">
+            <img t-att-src="image"
+                 alt="Preview"/>
+        </div>
+        <div class="o_content">
+            <div class="o_header">
+                <span class="o_name">
+                    <t t-esc="props.threadName"/>
+                </span>
+                <span t-if="props.thread.message_unread_counter > 0"
+                      class="o_counter">
+                    (<t t-esc="props.thread.message_unread_counter"/>)
+                </span>
+                <span t-if="props.lastMessage" class="o_date">
+                    <t t-esc="props.lastMessage.$date.fromNow()"/>
+                </span>
+            </div>
+            <div class="o_core">
+                <t t-if="props.lastMessageAuthor">
+                    <t t-if="isMyselfLastMessageAuthor">Me:</t>
+                    <t t-else=""><t t-esc="props.lastMessageAuthor.name"/>:</t>
+                </t>
+                <t t-raw="inlineLastMessageBody"/>
+            </div>
+            <span t-if="props.thread.message_unread_counter > 0"
+                  class="o_mark_as_read fa fa-check"
+                  title="Mark as Read"
+                  t-on-click="_onClickMarkAsRead"/>
+        </div>
+    </div>
+
+</templates>

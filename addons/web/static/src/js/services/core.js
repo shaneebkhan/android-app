@@ -25,9 +25,9 @@ _.each('resize,scroll'.split(','), function (evtype) {
         bus.trigger(evtype, ev);
     });
 });
-
 return {
     qweb: new QWeb(config.isDebug()),
+    qwebOwl: new owl.QWeb(),
 
     // core classes and functions
     Class: Class,

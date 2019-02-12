@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <textarea t-name="mail.wip.widget.AutoresizeInput" owl="1"
+              class="o_input"
+              placeholder="Write something..."
+              t-on-keydown="_onKeydown"
+              t-on-input="_onInput"/>
+
+</templates>

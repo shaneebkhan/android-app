@@ -1,0 +1,75 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_wip_composer {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-start;
+    padding: 0;
+
+    &.o_with_avatar {
+        padding: 10px 3px;
+
+        > .o_core {
+            margin-top: 3px;
+            margin-right: 10px;
+            margin-left: 3px;
+        }
+    }
+
+    > .o_core {
+        display: flex;
+        align-items: flex-start;
+        flex: 1 1 auto;
+
+        > .o_commands {
+            display: flex;
+            align-items: center;
+            flex: 0 0 auto;
+            margin-left: 1px;
+        }
+
+        > .o_input {
+            flex: 1 1 auto;
+            align-self: stretch;
+            padding: 5px;
+        }
+    }
+
+    > .o_sidebar {
+        flex: 0 0 auto;
+        margin-right: 3px;
+        margin-left: 7px;
+
+        > img {
+            width: 36px;
+            height: 36px;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_wip_composer {
+    background-color: gray('200');
+    border: 1px solid gray('300');
+
+    &.o_with_avatar {
+        border: 1px solid gray('300');
+    }
+
+    &:not(.o_with_avatar) {
+        border-top: 1px solid gray('300');
+    }
+
+    > .o_core {
+
+        > .o_input {
+            outline: none;
+            border: none;
+        }
+    }
+}

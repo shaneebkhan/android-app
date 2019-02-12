@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.Message" owl="1"
+         class="o_message"
+         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ isStarred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }}"
+         t-on-click="_onClick"
+         t-att-data-message-lid="props.messageLID">
+        <t t-if="options.squashed">
+            <div class="o_sidebar o_squashed">
+                <div class="o_date">
+                    <t t-esc="shortTime"/>
+                </div>
+                <div class="o_commands">
+                    <div t-if="props.message.message_type !== 'notification'"
+                         class="o_star o_command"
+                         t-att-class="isStarred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
+                         t-on-click="_onClickStar"/>
+                </div>
+            </div>
+            <div class="o_core">
+                <div class="o_content">
+                    <t t-raw="props.message.$body"/>
+                </div>
+            </div>
+        </t>
+        <t t-else="">
+            <div class="o_sidebar">
+                <img alt=""
+                     class="rounded-circle"
+                     t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
+                     t-att-src="avatar"
+                     t-on-click="_onClickAuthor"/>
+            </div>
+            <div class="o_core">
+                <div class="o_header">
+                    <div class="o_author_name"
+                         t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
+                         t-on-click="_onClickAuthor">
+                        <t t-esc="displayedAuthorName"/>
+                    </div>
+                    <div class="o_date" t-att-title="datetime">
+                        - <t t-esc="timeElapsed"/>
+                    </div>
+                    <div t-if="hasDifferentOrigin" class="o_origin">
+                        <t t-if="props.origin._model === 'mail.channel'">
+                            (from <a href="#" t-on-click="_onClickOrigin">#<t t-esc="props.origin.name"/></a>)
+                        </t>
+                        <t t-else="">
+                            on <a href="#" t-on-click="_onClickOrigin"><t t-esc="props.origin.name"/></a>
+                        </t>
+                    </div>
+                    <div class="o_commands">
+                        <div t-if="props.message.message_type !== 'notification'"
+                             class="o_star o_command"
+                             t-att-class="isStarred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
+                             t-on-click="_onClickStar"/>
+                    </div>
+                </div>
+                <div class="o_content">
+                    <t t-raw="props.message.$body"/>
+                </div>
+            </div>
+        </t>
+    </div>
+
+</templates>

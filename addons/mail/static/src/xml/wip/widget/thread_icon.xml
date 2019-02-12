@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ThreadIcon" owl="1"
+         class="o_wip_thread_icon">
+        <t t-if="props.thread.channel_type === 'channel'">
+         <div t-if="props.thread.public === 'private'"
+              class="fa fa-lock"/>
+         <div t-else=""
+              class="fa fa-hashtag"/>
+      </t>
+      <t t-elif="props.thread.channel_type === 'chat'">
+         <div t-if="props.directPartner.im_status === 'online'"
+              class="fa fa-circle o_online"
+              title="Online"/>
+         <div t-elif="props.directPartner.im_status === 'offline'"
+              class="fa fa-circle-o o_offline"
+              title="Offline"/>
+         <div t-elif="props.directPartner.im_status === 'away'"
+              class="fa fa-circle o_away"
+              title="Away"/>
+         <div t-elif="props.thread.typingMemberLIDs.includes(props.thread.directPartnerLID)"
+              class="o_typing"
+              title="Is typing...">
+            <span class="o_dot"/>
+            <span class="o_dot"/>
+            <span class="o_dot"/>
+         </div>
+         <div t-if="props.directPartner.im_status === 'bot'"
+              class="fa fa-heart o_online"
+              title="Bot"/>
+      </t>
+      <t t-elif="props.thread._model === 'mail.box'">
+         <div t-if="props.thread.lid === 'mail.box_inbox'"
+              class="fa fa-inbox"/>
+         <div t-elif="props.thread.lid === 'mail.box_starred'"
+              class="fa fa-star-o"/>
+         <div t-elif="props.thread.lid === 'mail.box_moderation'"
+              class="fa fa-envelope"/>
+      </t>
+    </div>
+
+</templates>

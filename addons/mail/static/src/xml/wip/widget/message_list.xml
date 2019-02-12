@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.MessageList" owl="1"
+         class="o_message_list"
+         t-on-scroll="_onScroll">
+        <div t-if="loadingMore"
+             class="o_loading_more"
+             t-key="'loading'">
+            <i class="o_icon fa fa-spinner fa-spin"/>Loading...
+        </div>
+        <a t-elif="!props.threadCache.allHistoryLoaded"
+           href="#"
+           class="o_load_more"
+           t-key="'load_more'"
+           t-on-click="_onClickLoadMore"
+           t-ref="'loadMore'">
+            Load more
+        </a>
+        <t t-set="current_day" t-value="0"/>
+        <t t-set="prev_message" t-value="0"/>
+        <t t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and !props.thread.seen_message_id">
+            <div class="o_separator o_new_messages">
+                <hr class="o_line"/><span class="o_label">New messages</span>
+            </div>
+        </t>
+        <t t-foreach="props.messages" t-as="message">
+            <t t-set="message_day" t-value="getDateDay(message)"/>
+            <div t-if="current_day !== message_day" class="o_separator o_date">
+                <hr class="o_line"/><span class="o_label"><t t-esc="message_day"/></span><hr class="o_line"/>
+                <t t-set="current_day" t-value="message_day"/>
+                <t t-set="squashed" t-value="false"/>
+            </div>
+            <t t-else="">
+                <t t-set="squashed" t-value="shouldSquash(prev_message, message)"/>
+            </t>
+            <t t-set="messageLID" t-value="message.lid"/>
+            <t t-widget="Message"
+               t-props="{ messageLID, options: messageOptions(squashed), threadLID: props.threadLID }"
+               t-key="messageLID"
+               t-ref="messageLID"
+               t-on-redirect="_onRedirect"/>
+            <t t-set="prev_message" t-value="message"/>
+            <t t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and props.thread.seen_message_id === message.id">
+                <div class="o_separator o_new_messages">
+                    <hr class="o_line"/><span class="o_label">New messages</span>
+                </div>
+            </t>
+        </t>
+    </div>
+
+</templates>
