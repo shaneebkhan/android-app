@@ -81,6 +81,7 @@ var GraphView = AbstractView.extend({
 
         this.controllerParams.measures = measures;
         this.controllerParams.groupableFields = groupableFields;
+        this.rendererParams.fields = this.fields;
         this.rendererParams.stacked = this.arch.attrs.stacked !== "False";
         this.rendererParams.title = this.arch.attrs.title; // TODO: use attrs.string instead
 

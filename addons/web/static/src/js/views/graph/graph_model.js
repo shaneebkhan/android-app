@@ -1,11 +1,13 @@
 odoo.define('web.GraphModel', function (require) {
 "use strict";
 
+var core = require('web.core');
+var _t = core._t;
+
 /**
  * The graph model is responsible for fetching and processing data from the
  * server.  It basically just do a read_group and format/normalize data.
  */
-
 var AbstractModel = require('web.AbstractModel');
 
 return AbstractModel.extend({
@@ -26,15 +28,10 @@ return AbstractModel.extend({
      * We defend against outside modifications by extending the chart data. It
      * may be overkill.
      *
-     * @todo Adding the fields parameter looks wrong.  If the renderer or the
-     * controller need the fields, they should get it via their init method.
-     *
      * @returns {Object}
      */
     get: function () {
-        return _.extend({}, this.chart, {
-            fields: this.fields
-        });
+        return this.chart;
     },
     /**
      * Initial loading.
@@ -48,8 +45,6 @@ return AbstractModel.extend({
      * @param {string[]} params.groupBys a list of valid field names
      * @param {Object} params.context
      * @param {string[]} params.domain
-     * @param {Object} params.intervalMapping object linking fieldNames with intervals.
-     *   this could be useful to simplify the code. For now this parameter is not used.
      * @returns {Deferred} The deferred does not return a handle, we don't need
      *   to keep track of various entities.
      */
@@ -61,14 +56,9 @@ return AbstractModel.extend({
         this.chart = {
             compare: params.compare,
             comparisonTimeRange: params.comparisonTimeRange,
-            data: [],
+            dataPoints: {},
+            comparisonField: params.comparisonField,
             groupedBy: params.groupedBy.length ? params.groupedBy : groupBys,
-            // this parameter is not used anywhere for now.
-            // the idea would be to seperate intervals from
-            // fieldnames in groupbys. This could be done
-            // in graph view only or everywhere but this is
-            // a big refactoring.
-            intervalMapping: params.intervalMapping,
             measure: params.context.graph_measure || params.measure,
             mode: params.context.graph_mode || params.mode,
             timeRange: params.timeRange,
@@ -101,10 +91,12 @@ return AbstractModel.extend({
             var timeRangeMenuData = params.context.timeRangeMenuData;
             if (timeRangeMenuData) {
                 this.chart.timeRange = timeRangeMenuData.timeRange || [];
+                this.chart.comparisonField = timeRangeMenuData.comparisonField || undefined;
                 this.chart.comparisonTimeRange = timeRangeMenuData.comparisonTimeRange || [];
                 this.chart.compare = this.chart.comparisonTimeRange.length > 0;
             } else {
                 this.chart.timeRange = [];
+                this.chart.comparisonField = undefined;
                 this.chart.comparisonTimeRange = [];
                 this.chart.compare = false;
                 this.chart = _.omit(this.chart, 'comparisonData');
@@ -114,10 +106,8 @@ return AbstractModel.extend({
             this.chart.domain = params.domain;
         }
         if ('groupBy' in params) {
-            this.chart.groupedBy = params.groupBy.length ? params.groupBy : this.initialGroupBys;
-        }
-        if ('intervalMapping' in params) {
-            this.chart.intervalMapping = params.intervalMapping;
+            // this.chart.groupedBy = params.groupBy.length ? params.groupBy : this.initialGroupBys;
+            this.chart.groupedBy = params.groupBy;
         }
         if ('measure' in params) {
             this.chart.measure = params.measure;
@@ -142,6 +132,7 @@ return AbstractModel.extend({
      * @returns {Deferred}
      */
     _loadGraph: function () {
+        this.chart.dataPoints = {};
         var groupedBy = this.chart.groupedBy;
         var fields = _.map(groupedBy, function (groupBy) {
             return groupBy.split(':')[0];
@@ -199,12 +190,15 @@ return AbstractModel.extend({
         var is_count = this.chart.measure === '__count__';
         var data_pt, labels;
 
-        this.chart[dataKey] = [];
+        function getLabels (dataPt) {
+            return self.chart.groupedBy.map(function (field) {
+                return self._sanitizeValue(dataPt[field], field.split(":")[0]);
+            });
+        }
+        this.chart.dataPoints[dataKey] = [];
         for (var i = 0; i < raw_data.length; i++) {
             data_pt = raw_data[i];
-            labels = _.map(this.chart.groupedBy, function (field) {
-                return self._sanitizeValue(data_pt[field], field);
-            });
+            labels = getLabels(data_pt);
             var count = data_pt.__count || data_pt[this.chart.groupedBy[0]+'_count'] || 0;
             var value = is_count ? count : data_pt[this.chart.measure];
             if (value instanceof Array) {
@@ -217,10 +211,11 @@ return AbstractModel.extend({
                 // value for that field.
                 value = 1;
             }
-            this.chart[dataKey].push({
+            this.chart.dataPoints[dataKey].push({
                 count: count,
                 value: value,
                 labels: labels,
+                origin: dataKey,
             });
         }
     },
@@ -228,17 +223,16 @@ return AbstractModel.extend({
      * Helper function (for _processData), turns various values in a usable
      * string form, that we can display in the interface.
      *
-     * @param {any} value some value received by the read_group rpc
-     * @param {string} field the name of the corresponding field
+     * @param {any} value value for the field fieldName received by the read_group rpc
+     * @param {string} fieldName
      * @returns {string}
      */
-    _sanitizeValue: function (value, field) {
-        var fieldName = field.split(':')[0];
+    _sanitizeValue: function (value, fieldName) {
         if (value === false && this.fields[fieldName].type !== 'boolean') {
-            return undefined;
+            return _t("Undefined");
         }
         if (value instanceof Array) return value[1];
-        if (field && (this.fields[fieldName].type === 'selection')) {
+        if (fieldName && (this.fields[fieldName].type === 'selection')) {
             var selected = _.where(this.fields[fieldName].selection, {0: value})[0];
             return selected ? selected[1] : value;
         }
