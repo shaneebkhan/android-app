@@ -7,7 +7,7 @@ import io
 import odoo
 from odoo.tests import common, tagged
 from odoo.tools.misc import file_open, mute_logger
-from odoo.tools.translate import _
+from odoo.tools.translate import _, _lt
 
 
 class TestTermCount(common.TransactionCase):
@@ -156,6 +156,30 @@ class TestTermCount(common.TransactionCase):
 
         self.env.context = dict(self.env.context, lang="tlh")
         self.assertEqual(_("Klingon"), "tlhIngan", "The code translation was not applied")
+
+    def test_lazy_translation(self):
+        """Test the import from a single po file works"""
+        with file_open('test_translation_import/i18n/tlh.po', 'rb') as f:
+            po_file = base64.encodestring(f.read())
+
+        import_tlh = self.env["base.language.import"].create({
+            'name': 'Klingon',
+            'code': 'tlh',
+            'data': po_file,
+            'filename': 'tlh.po',
+        })
+        with mute_logger('odoo.addons.base.models.res_lang'):
+            import_tlh.import_lang()
+
+        context = {'lang': "tlh"}
+        self.assertEqual(_("Klingon"), "tlhIngan", "The direct code translation was not applied")
+        context = None
+
+        term = _lt("Klingon")
+        self.assertEqual(str(term), "Klingon", "The translation should not be applied yet")
+
+        context = {'lang': "tlh"}
+        self.assertEqual(str(term), "tlhIngan", "The lazy code translation was not applied")
 
     def test_import_from_csv_file(self):
         """Test the import from a single CSV file works"""
