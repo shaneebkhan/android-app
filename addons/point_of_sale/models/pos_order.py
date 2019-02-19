@@ -297,7 +297,8 @@ class PosOrder(models.Model):
             'credit': ((amount_subtotal > 0) and amount_subtotal) or 0.0,
             'debit': ((amount_subtotal < 0) and -amount_subtotal) or 0.0,
             'tax_ids': [(6, 0, base_line_tax_ids.ids)],
-            'partner_id': partner_id
+            'partner_id': partner_id,
+            'pos_order_ids': [(4, order.id, False)]
         }
         if currency_id != cur_company:
             data['currency_id'] = currency_id.id
@@ -324,7 +325,8 @@ class PosOrder(models.Model):
                     'debit': ((amount_tax < 0) and -amount_tax) or 0.0,
                     'tax_line_id': tax['id'],
                     'partner_id': partner_id,
-                    'order_id': order.id
+                    'order_id': order.id,
+                    'pos_order_ids': [(4, order.id, False)]
                 }
                 if currency_id != cur_company:
                     data['currency_id'] = currency_id.id
@@ -412,6 +414,7 @@ class PosOrder(models.Model):
                         current_value['quantity'] = current_value.get('quantity', 0.0) + values.get('quantity', 0.0)
                         current_value['credit'] = current_value.get('credit', 0.0) + values.get('credit', 0.0)
                         current_value['debit'] = current_value.get('debit', 0.0) + values.get('debit', 0.0)
+                        current_value['pos_order_ids'] = current_value.get('pos_order_ids', []) + values.get('pos_order_ids', [])
                         if 'currency_id' in values:
                             current_value['amount_currency'] = current_value.get('amount_currency', 0.0) + values.get('amount_currency', 0.0)
                         if key[0] == 'tax' and rounding_method == 'round_globally':
@@ -460,12 +463,14 @@ class PosOrder(models.Model):
                 amount_total = amount_cur_company
             else:
                 amount_total = order.amount_total
+
             data = {
                 'name': _("Trade Receivables"),  # order.name,
                 'account_id': order_account,
                 'credit': ((amount_total < 0) and -amount_total) or 0.0,
                 'debit': ((amount_total > 0) and amount_total) or 0.0,
-                'partner_id': partner_id
+                'partner_id': partner_id,
+                'pos_order_ids': [(4, order.id, False)]
             }
             if cur != cur_company:
                 data['currency_id'] = cur.id
@@ -500,16 +505,11 @@ class PosOrder(models.Model):
 
     def _reconcile_payments(self):
         for order in self:
-            aml = order.statement_ids.mapped('journal_entry_ids') | order.account_move.line_ids | order.invoice_id.move_id.line_ids
+            aml = order.statement_ids.mapped('journal_entry_ids') | order.account_move_line_ids | order.invoice_id.move_id.line_ids
             aml = aml.filtered(lambda r: not r.reconciled and r.account_id.internal_type == 'receivable' and r.partner_id == order.partner_id.commercial_partner_id)
 
-            # Reconcile returns first
-            # to avoid mixing up the credit of a payment and the credit of a return
-            # in the receivable account
-            aml_returns = aml.filtered(lambda l: (l.journal_id.type == 'sale' and l.credit) or (l.journal_id.type != 'sale' and l.debit))
             try:
-                aml_returns.reconcile()
-                (aml - aml_returns).reconcile()
+                aml.reconcile()
             except Exception:
                 # There might be unexpected situations where the automatic reconciliation won't
                 # work. We don't want the user to be blocked because of this, since the automatic
@@ -582,6 +582,7 @@ class PosOrder(models.Model):
         readonly=True,
         states={'draft': [('readonly', False)]},
     )
+    account_move_line_ids = fields.Many2many('account.move.line', 'account_move_line_pos_order_rel', 'pos_order_id', 'account_move_line_id')
 
     @api.onchange('statement_ids', 'lines')
     def _onchange_amount_all(self):

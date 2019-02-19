@@ -27,3 +27,9 @@ class AccountJournal(models.Model):
     def onchange_type(self):
         if self.type not in ['bank', 'cash']:
             self.journal_user = False
+
+
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
+
+    pos_order_ids = fields.Many2many('pos.order', 'account_move_line_pos_order_rel', 'account_move_line_id', 'pos_order_id')
