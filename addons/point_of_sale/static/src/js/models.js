@@ -946,6 +946,7 @@ exports.PosModel = Backbone.Model.extend({
         // then we want to notify the user that we are waiting on something )
         var args = [_.map(orders, function (order) {
                 order.to_invoice = options.to_invoice || false;
+                order.to_email = options.to_email || false;
                 return order;
             })];
         return rpc.query({
@@ -2091,6 +2092,7 @@ exports.Order = Backbone.Model.extend({
         this.temporary      = options.temporary || false;
         this.creation_date  = new Date();
         this.to_invoice     = false;
+        this.to_email     = false;
         this.orderlines     = new OrderlineCollection();
         this.paymentlines   = new PaymentlineCollection();
         this.pos_session_id = this.pos.pos_session.id;
@@ -2180,6 +2182,7 @@ exports.Order = Backbone.Model.extend({
 
         this.temporary = false;     // FIXME
         this.to_invoice = false;    // FIXME
+        this.to_email = false;
 
         var orderlines = json.lines;
         for (var i = 0; i < orderlines.length; i++) {
@@ -2731,6 +2734,13 @@ exports.Order = Backbone.Model.extend({
     },
     is_to_invoice: function(){
         return this.to_invoice;
+    },
+    /* ---- Email --- */
+    set_to_email: function(to_email) {
+        this.to_email = to_email;
+    },
+    is_to_email: function(){
+        return this.to_email;
     },
     /* ---- Client / Customer --- */
     // the client related to the current order.
