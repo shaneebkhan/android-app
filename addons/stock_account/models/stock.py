@@ -58,75 +58,75 @@ class StockLocation(models.Model):
         return False
 
 
-class StockMoveLine(models.Model):
-    _inherit = 'stock.move.line'
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        lines = super(StockMoveLine, self).create(vals_list)
-        for line in lines:
-            move = line.move_id
-            if move.state == 'done':
-                correction_value = move._run_valuation(line.qty_done)
-                if move.product_id.valuation == 'real_time' and (move._is_in() or move._is_out()):
-                    move.with_context(force_valuation_amount=correction_value)._account_entry_move()
-        return lines
-
-    @api.multi
-    def write(self, vals):
-        """ When editing a done stock.move.line, we impact the valuation. Users may increase or
-        decrease the `qty_done` field. There are three cost method available: standard, average
-        and fifo. We implement the logic in a similar way for standard and average: increase
-        or decrease the original value with the standard or average price of today. In fifo, we
-        have a different logic wheter the move is incoming or outgoing. If the move is incoming, we
-        update the value and remaining_value/qty with the unit price of the move. If the move is
-        outgoing and the user increases qty_done, we call _run_fifo and it'll consume layer(s) in
-        the stack the same way a new outgoing move would have done. If the move is outoing and the
-        user decreases qty_done, we either increase the last receipt candidate if one is found or
-        we decrease the value with the last fifo price.
-        """
-        if 'qty_done' in vals:
-            moves_to_update = {}
-            for move_line in self.filtered(lambda ml: ml.state == 'done' and (ml.move_id._is_in() or ml.move_id._is_out())):
-                moves_to_update[move_line.move_id] = vals['qty_done'] - move_line.qty_done
-
-            for move_id, qty_difference in moves_to_update.items():
-                move_vals = {}
-                if move_id.product_id.cost_method in ['standard', 'average']:
-                    correction_value = qty_difference * move_id.product_id.standard_price
-                    if move_id._is_in():
-                        move_vals['value'] = move_id.value + correction_value
-                    elif move_id._is_out():
-                        move_vals['value'] = move_id.value - correction_value
-                else:
-                    if move_id._is_in():
-                        correction_value = qty_difference * move_id.price_unit
-                        new_remaining_value = move_id.remaining_value + correction_value
-                        move_vals['value'] = move_id.value + correction_value
-                        move_vals['remaining_qty'] = move_id.remaining_qty + qty_difference
-                        move_vals['remaining_value'] = move_id.remaining_value + correction_value
-                    elif move_id._is_out() and qty_difference > 0:
-                        correction_value = self.env['stock.move']._run_fifo(move_id, quantity=qty_difference)
-                        # no need to adapt `remaining_qty` and `remaining_value` as `_run_fifo` took care of it
-                        move_vals['value'] = move_id.value - correction_value
-                    elif move_id._is_out() and qty_difference < 0:
-                        candidates_receipt = self.env['stock.move'].search(move_id._get_in_domain(), order='date, id desc', limit=1)
-                        if candidates_receipt:
-                            candidates_receipt.write({
-                                'remaining_qty': candidates_receipt.remaining_qty + -qty_difference,
-                                'remaining_value': candidates_receipt.remaining_value + (-qty_difference * candidates_receipt.price_unit),
-                            })
-                            correction_value = qty_difference * candidates_receipt.price_unit
-                        else:
-                            correction_value = qty_difference * move_id.product_id.standard_price
-                        move_vals['value'] = move_id.value - correction_value
-                move_id.write(move_vals)
-
-                if move_id.product_id.valuation == 'real_time':
-                    move_id.with_context(force_valuation_amount=correction_value, forced_quantity=qty_difference)._account_entry_move()
-                if qty_difference > 0:
-                    move_id.product_price_update_before_done(forced_qty=qty_difference)
-        return super(StockMoveLine, self).write(vals)
+#class StockMoveLine(models.Model):
+#    _inherit = 'stock.move.line'
+#
+#    @api.model_create_multi
+#    def create(self, vals_list):
+#        lines = super(StockMoveLine, self).create(vals_list)
+#        for line in lines:
+#            move = line.move_id
+#            if move.state == 'done':
+#                correction_value = move._run_valuation(line.qty_done)
+#                if move.product_id.valuation == 'real_time' and (move._is_in() or move._is_out()):
+#                    move.with_context(force_valuation_amount=correction_value)._account_entry_move()
+#        return lines
+#
+#    @api.multi
+#    def write(self, vals):
+#        """ When editing a done stock.move.line, we impact the valuation. Users may increase or
+#        decrease the `qty_done` field. There are three cost method available: standard, average
+#        and fifo. We implement the logic in a similar way for standard and average: increase
+#        or decrease the original value with the standard or average price of today. In fifo, we
+#        have a different logic wheter the move is incoming or outgoing. If the move is incoming, we
+#        update the value and remaining_value/qty with the unit price of the move. If the move is
+#        outgoing and the user increases qty_done, we call _run_fifo and it'll consume layer(s) in
+#        the stack the same way a new outgoing move would have done. If the move is outoing and the
+#        user decreases qty_done, we either increase the last receipt candidate if one is found or
+#        we decrease the value with the last fifo price.
+#        """
+#        if 'qty_done' in vals:
+#            moves_to_update = {}
+#            for move_line in self.filtered(lambda ml: ml.state == 'done' and (ml.move_id._is_in() or ml.move_id._is_out())):
+#                moves_to_update[move_line.move_id] = vals['qty_done'] - move_line.qty_done
+#
+#            for move_id, qty_difference in moves_to_update.items():
+#                move_vals = {}
+#                if move_id.product_id.cost_method in ['standard', 'average']:
+#                    correction_value = qty_difference * move_id.product_id.standard_price
+#                    if move_id._is_in():
+#                        move_vals['value'] = move_id.value + correction_value
+#                    elif move_id._is_out():
+#                        move_vals['value'] = move_id.value - correction_value
+#                else:
+#                    if move_id._is_in():
+#                        correction_value = qty_difference * move_id.price_unit
+#                        new_remaining_value = move_id.remaining_value + correction_value
+#                        move_vals['value'] = move_id.value + correction_value
+#                        move_vals['remaining_qty'] = move_id.remaining_qty + qty_difference
+#                        move_vals['remaining_value'] = move_id.remaining_value + correction_value
+#                    elif move_id._is_out() and qty_difference > 0:
+#                        correction_value = self.env['stock.move']._run_fifo(move_id, quantity=qty_difference)
+#                        # no need to adapt `remaining_qty` and `remaining_value` as `_run_fifo` took care of it
+#                        move_vals['value'] = move_id.value - correction_value
+#                    elif move_id._is_out() and qty_difference < 0:
+#                        candidates_receipt = self.env['stock.move'].search(move_id._get_in_domain(), order='date, id desc', limit=1)
+#                        if candidates_receipt:
+#                            candidates_receipt.write({
+#                                'remaining_qty': candidates_receipt.remaining_qty + -qty_difference,
+#                                'remaining_value': candidates_receipt.remaining_value + (-qty_difference * candidates_receipt.price_unit),
+#                            })
+#                            correction_value = qty_difference * candidates_receipt.price_unit
+#                        else:
+#                            correction_value = qty_difference * move_id.product_id.standard_price
+#                        move_vals['value'] = move_id.value - correction_value
+#                move_id.write(move_vals)
+#
+#                if move_id.product_id.valuation == 'real_time':
+#                    move_id.with_context(force_valuation_amount=correction_value, forced_quantity=qty_difference)._account_entry_move()
+#                if qty_difference > 0:
+#                    move_id.product_price_update_before_done(forced_qty=qty_difference)
+#        return super(StockMoveLine, self).write(vals)
 
 
 class StockMove(models.Model):
@@ -139,19 +139,24 @@ class StockMove(models.Model):
     remaining_value = fields.Float(copy=False)
     account_move_ids = fields.One2many('account.move', 'stock_move_id')
 
-    @api.multi
-    def action_get_account_moves(self):
-        self.ensure_one()
-        action_ref = self.env.ref('account.action_move_journal_line')
-        if not action_ref:
-            return False
-        action_data = action_ref.read()[0]
-        action_data['domain'] = [('id', 'in', self.account_move_ids.ids)]
-        return action_data
+#    @api.multi
+#    def action_get_account_moves(self):
+#        self.ensure_one()
+#        action_ref = self.env.ref('account.action_move_journal_line')
+#        if not action_ref:
+#            return False
+#        action_data = action_ref.read()[0]
+#        action_data['domain'] = [('id', 'in', self.account_move_ids.ids)]
+#        return action_data
 
     def _get_price_unit(self):
         """ Returns the unit price to store on the quant """
-        return not self.company_id.currency_id.is_zero(self.price_unit) and self.price_unit or self.product_id.standard_price
+        self.ensure_one()
+        price_unit = self.price_unit
+        # If the move is a return of a return, use the original move's price unit.
+        if self.origin_returned_move_id and self.origin_returned_move_id.origin_returned_move_id:
+            price_unit = self.origin_returned_move_id.origin_returned_move_id.price_unit
+        return not self.company_id.currency_id.is_zero(price_unit) and price_unit or self.product_id.standard_price
 
     @api.model
     def _get_in_base_domain(self, company_id=False):
@@ -293,9 +298,9 @@ class StockMove(models.Model):
                 break
 
         # Update the standard price with the price of the last used candidate, if any.
-        if new_standard_price and move.product_id.cost_method == 'fifo':
-            move.product_id.sudo().with_context(force_company=move.company_id.id) \
-                .standard_price = new_standard_price
+#        if new_standard_price and move.product_id.cost_method == 'fifo':
+#            move.product_id.sudo().with_context(force_company=move.company_id.id) \
+#                .standard_price = new_standard_price
 
         # If there's still quantity to value but we're out of candidates, we fall in the
         # negative stock use case. We chose to value the out move at the price of the
@@ -380,7 +385,7 @@ class StockMove(models.Model):
             return value_to_return
 
     def _action_done(self, cancel_backorder=False):
-        self.product_price_update_before_done()
+        #self.product_price_update_before_done()
         res = super(StockMove, self)._action_done(cancel_backorder=cancel_backorder)
         for move in res:
             # Apply restrictions on the stock move to be able to make
@@ -739,10 +744,10 @@ class StockReturnPickingLine(models.TransientModel):
     to_refund = fields.Boolean(string="Update quantities on SO/PO", help='Trigger a decrease of the delivered/received quantity in the associated Sale Order/Purchase Order')
 
 
-class ProcurementGroup(models.Model):
-    _inherit = 'procurement.group'
-
-    @api.model
-    def _run_scheduler_tasks(self, use_new_cursor=False, company_id=False):
-        super(ProcurementGroup, self)._run_scheduler_tasks(use_new_cursor=use_new_cursor, company_id=company_id)
-        self.env['stock.move']._run_fifo_vacuum()
+#class ProcurementGroup(models.Model):
+#    _inherit = 'procurement.group'
+#
+#    @api.model
+#    def _run_scheduler_tasks(self, use_new_cursor=False, company_id=False):
+#        super(ProcurementGroup, self)._run_scheduler_tasks(use_new_cursor=use_new_cursor, company_id=company_id)
+#        self.env['stock.move']._run_fifo_vacuum()
