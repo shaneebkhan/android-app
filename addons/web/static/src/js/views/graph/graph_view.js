@@ -28,6 +28,7 @@ var GraphView = AbstractView.extend({
     jsLibs: [
         '/web/static/lib/nvd3/d3.v3.js',
         '/web/static/lib/nvd3/nv.d3.js',
+        '/web/static/lib/Chart/Chart.js',
         '/web/static/src/js/libs/nvd3.js'
     ],
     config: {

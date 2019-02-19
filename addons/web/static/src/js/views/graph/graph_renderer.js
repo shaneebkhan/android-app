@@ -254,6 +254,34 @@ return AbstractRenderer.extend({
             });
         }
 
+        // this.$el.append('<canvas id="myChart" width="400" height="400"></canvas>');
+        // var ctx = document.getElementById("myChart").getContext('2d');
+
+        // var labels = dataProcessed.ticksLabels;
+        // var dataChart = data[0].values.map(function (pt) {return pt.y;});
+
+        // var myChart = new Chart(ctx, {
+        //     type: 'bar',
+        //     data: {
+        //         labels: labels,
+        //         datasets: [{
+        //             label: '# of Votes',
+        //             data: dataChart,
+        //             borderWidth: 1
+        //         }]
+        //     },
+        //     options: {
+        //         scales: {
+        //             yAxes: [{
+        //                 ticks: {
+        //                     beginAtZero:true
+        //                 }
+        //             }]
+        //         }
+        //     }
+        // });
+
+
         // nvd3 specific
         var $svgContainer = $('<div/>', {class: 'o_graph_svg_container'});
         this.$el.append($svgContainer);
