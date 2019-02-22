@@ -137,9 +137,10 @@ class AccountReconciliation(models.AbstractModel):
                 bank_statements_left += line.statement_id
 
                 amls = aml_ids and self.env['account.move.line'].browse(aml_ids)
+                target_currency = line.currency_id or line.journal_id.currency_id or line.journal_id.company_id.currency_id
                 line_vals = {
                     'st_line': self._get_statement_line(line),
-                    'reconciliation_proposition': aml_ids and self._prepare_move_lines(amls) or [],
+                    'reconciliation_proposition': aml_ids and self._prepare_move_lines(amls, target_currency=target_currency, target_date=line.date,) or [],
                     'model_id': matching_amls[line.id].get('model') and matching_amls[line.id]['model'].id,
                     'write_off': matching_amls[line.id].get('status') == 'write_off',
                 }
