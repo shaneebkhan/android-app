@@ -97,7 +97,8 @@ class AccountMove(models.Model):
     amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, readonly=True, tracking=True,
         compute='_compute_amount')
     amount_total = fields.Monetary(string='Total', store=True, readonly=True,
-        compute='_compute_amount')
+        compute='_compute_amount',
+        inverse='_inverse_amount_total')
     residual = fields.Monetary(string='Amount Due', store=True,
         compute='_compute_amount')
     user_id = fields.Many2one('res.users', readonly=True, copy=False, tracking=True,
@@ -143,10 +144,11 @@ class AccountMove(models.Model):
         help="Technical field used to keep track of the tax cash basis reconciliation. "
              "This is needed when cancelling the source: it will post the inverse journal entry to cancel that part too.")
 
+    # ==== Auto-post feature fields ====
+    auto_post = fields.Boolean(string='Post Automatically', default=False,
+        help='If this checkbox is ticked, this entry will be automatically posted at its date.')
+
     # ==== Reverse feature fields ====
-    reverse = fields.Boolean(string='Reverse Automatically', default=False, copy=False,
-        help='If this checkbox is ticked, this entry will be automatically reversed at the reversal date you defined.')
-    reverse_date = fields.Date(string='Reversal Date', help='Date of the reverse accounting entry.', copy=False)
     reverse_entry_id = fields.Many2one('account.move', string="Reverse entry", readonly=True, copy=False)
     reverse_entry_ids = fields.One2many('account.move', 'reverse_entry_id', string="Reverse entries", readonly=True)
 
@@ -899,6 +901,7 @@ class AccountMove(models.Model):
         'line_ids.debit',
         'line_ids.credit',
         'line_ids.currency_id',
+        'line_ids.amount_currency',
         'line_ids.amount_residual',
         'line_ids.amount_residual_currency',
         'line_ids.payment_id.state')
@@ -990,6 +993,30 @@ class AccountMove(models.Model):
                     move.invoice_payment_state = 'paid'
             else:
                 move.invoice_payment_state = 'not_paid'
+
+    @api.multi
+    def _inverse_amount_total(self):
+        for move in self:
+            if len(move.line_ids) != 2 or move.type != 'misc':
+                continue
+
+            to_write = []
+
+            if move.currency_id != move.company_id.currency_id:
+                amount_currency = abs(move.amount_total)
+                balance = move.currency_id._convert(amount_currency, move.currency_id, move.company_id, move.date)
+            else:
+                balance = abs(move.amount_total)
+                amount_currency = 0.0
+
+            for line in move.line_ids:
+                to_write.append((1, line.id, {
+                    'debit': line.balance > 0.0 and balance or 0.0,
+                    'credit': line.balance < 0.0 and -balance or 0.0,
+                    'amount_currency': line.balance > 0.0 and amount_currency or -amount_currency,
+                }))
+
+            move.write({'line_ids': to_write})
 
     @api.depends('line_ids.reconcile_model_id')
     def _compute_reconcile_model(self):
@@ -1197,7 +1224,7 @@ class AccountMove(models.Model):
         self.assert_balanced()
         return self._check_lock_date()
 
-    @api.constrains('line_ids', 'journal_id', 'reverse', 'reverse_date')
+    @api.constrains('line_ids', 'journal_id')
     def _validate_move_modification(self):
         if 'posted' in self.mapped('line_ids.payment_id.state'):
             raise ValidationError(_("You cannot modify a journal entry linked to a posted payment."))
@@ -1648,6 +1675,10 @@ class AccountMove(models.Model):
     @api.multi
     def post(self):
         for move in self:
+            if move.auto_post and move.date > fields.Date.today():
+                date_msg = move.date.strftime(self.env['res.lang']._lang_get(self.env.user.lang).date_format)
+                raise UserError(_("This move is configured to be auto-posted on %s" % date_msg))
+
             if not move.partner_id:
                 if move.type in ('out_invoice', 'out_refund'):
                     raise UserError(_("The field 'Customer' is required, please complete it to validate the Vendor Bill."))
@@ -1663,6 +1694,7 @@ class AccountMove(models.Model):
         self.mapped('line_ids').create_analytic_lines()
         for move in self:
             to_write = {'state': 'posted'}
+
             if move.name == '/':
                 # Get the journal's sequence.
                 sequence = move._get_sequence()
@@ -1842,25 +1874,17 @@ class AccountMove(models.Model):
         return action
 
     @api.model
-    def _run_reverses_entries(self):
-        ''' This method is called from a cron job. '''
-        moves = self.search([
-            ('type', '=', 'misc'),
-            ('state', '=', 'posted'),
-            ('reverse', '=', True),
-            ('reverse_date', '<=', fields.Date.today()),
-            ('reverse_entry_id', '=', False),
+    def _run_post_draft_to_post(self):
+        ''' This method is called from a cron job.
+        It is used to post entries such as those created by the module
+        account_asset.
+        '''
+        records = self.search([
+            ('state', '=', 'draft'),
+            ('date', '<=', fields.Date.today()),
+            ('auto_post', '=', True),
         ])
-        if not moves:
-            return
-
-        # Create default values.
-        default_values_list = []
-        for move in moves:
-            default_values_list.append({'ref': _('Automatic reversal of: %s') % move.name})
-
-        # Create reverse moves.
-        moves._reverse_moves(default_values_list, cancel=True)
+        records.post()
 
 
 class AccountMoveLine(models.Model):

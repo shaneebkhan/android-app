@@ -614,10 +614,8 @@
                                     <field name="company_id" groups="base.group_multi_company"/>
 
                                     <!-- Miscellaneous Operations specific fields -->
-                                    <field name="reverse"
+                                    <field name="auto_post"
                                            attrs="{'invisible': [('type', '!=', 'misc')], 'readonly':[('reverse_entry_id', '!=', False)]}"/>
-                                    <field name="reverse_date"
-                                           attrs="{'invisible':['|', ('type', '!=', 'misc'), ('reverse', '=', False)], 'required':[('reverse', '=', True)],'readonly':[('reverse_entry_id', '!=', False)]}"/>
                                     <field name="reverse_entry_id"
                                            attrs="{'invisible': [('type', '!=', 'misc')]}"/>
 
