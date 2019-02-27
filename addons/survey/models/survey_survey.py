@@ -94,11 +94,17 @@ class Survey(models.Model):
         domain="[('model', '=', 'survey.user_input')]",
         help="Automated email sent to the user when he succeeds the certification, containing his certification document.")
 
+    # Certification badge
+    certification_give_badge = fields.Boolean('Give Badge')
+    certification_badge_id = fields.Many2one('gamification.badge', 'Certification Badge')
+    certification_badge_id_dummy = fields.Many2one(related='certification_badge_id', string='Certification Badge ')
+
     _sql_constraints = [
         ('access_token_unique', 'unique(access_token)', 'Access token should be unique'),
         ('certificate_check', "CHECK( scoring_type!='no_scoring' OR certificate=False )", 'You can only create certifications for surveys that have a scoring mechanism.'),
         ('time_limit_check', "CHECK( (is_time_limited=False) OR (time_limit is not null AND time_limit > 0) )", 'The time limit needs to be a positive number if the survey is time limited.'),
-        ('attempts_limit_check', "CHECK( (is_attempts_limited=False) OR (attempts_limit is not null AND attempts_limit > 0) )", 'The attempts limit needs to be a positive number if the survey has a limited number of attempts.')
+        ('attempts_limit_check', "CHECK( (is_attempts_limited=False) OR (attempts_limit is not null AND attempts_limit > 0) )", 'The attempts limit needs to be a positive number if the survey has a limited number of attempts.'),
+        ('badge_uniq', 'unique (certification_badge_id)', "The badge for each survey should be unique!")
     ]
 
     @api.multi
@@ -180,6 +186,29 @@ class Survey(models.Model):
     def _read_group_states(self, values, domain, order):
         selection = self.env['survey.survey'].fields_get(allfields=['state'])['state']['selection']
         return [s[0] for s in selection]
+
+    @api.onchange('users_login_required', 'certificate')
+    def _onchange_set_certification_give_badge(self):
+        if not self.users_login_required or not self.certificate:
+            self.certification_give_badge = False
+
+    # CRUD
+    @api.model
+    def create(self, vals):
+        if vals.get('certification_give_badge'):
+            if not vals.get('certification_badge_id'):
+                raise UserError('Certification badge must be configured if give_badge is set.')
+            survey = super(Survey, self).create(vals)
+            survey._create_certification_badge()
+            return survey
+        return super(Survey, self).create(vals)
+
+    def write(self, vals):
+        if 'certification_badge_id' in vals and not vals.get('certification_badge_id') and self.mapped('certification_give_badge'):
+            raise UserError('Certification badge must be configured if give_badge is set.')
+        if 'certification_give_badge' in vals:
+            return self._handle_certification_badges(vals)
+        return super(Survey, self).write(vals)
 
     # Public methods #
     def copy_data(self, default=None):
@@ -432,6 +461,71 @@ class Survey(models.Model):
         result['answered'] = len([line for line in question.user_input_line_ids if line.user_input_id.state != 'new' and not line.user_input_id.test_entry and not line.skipped])
         result['skipped'] = len([line for line in question.user_input_line_ids if line.user_input_id.state != 'new' and not line.user_input_id.test_entry and line.skipped])
 
+        return result
+
+    # Private Methods
+    # TODO DBE : Reorganise this class to have public methods in public method section and private in private one
+    def _create_certification_badge(self):
+        self.ensure_one()
+        goal = self.env['gamification.goal.definition'].create({
+            'name': self.title,
+            'description': "%s certification passed" % self.title,
+            'domain': "['&', ('survey_id', '=', %s), ('quizz_passed', '=', True)]" % self.id,
+            'computation_mode': 'count',
+            'display_mode': 'boolean',
+            'model_id': self.env.ref('survey.model_survey_user_input').id,
+            'condition': 'higher',
+            'batch_mode': True,
+            'batch_distinctive_field': self.env.ref('survey.field_survey_user_input__partner_id').id,
+            'batch_user_expression': 'user.partner_id.id'
+        })
+        challenge = self.env['gamification.challenge'].create({
+            'name': '%s challenge certificate' % self.title,
+            'reward_id': self.certification_badge_id.id,
+            'state': 'inprogress',
+            'period': 'once',
+            'category': 'certification',
+            'reward_realtime': True,
+            'report_message_frequency': 'never',
+            'user_domain': [('karma', '>', 0)],
+            'visibility_mode': 'personal'
+        })
+        self.env['gamification.challenge.line'].create({
+            'definition_id': goal.id,
+            'challenge_id': challenge.id,
+            'target_goal': 1
+        })
+
+    def _handle_certification_badges(self, vals):
+        if vals.get('certification_give_badge'):
+            # If no badge set on records
+            survey_without_badge = self.filtered(lambda s: not s.certification_badge_id)
+            if survey_without_badge:
+                if not vals.get('certification_badge_id'):
+                    raise UserError('Certification badge must be configured if give_badge is set.')
+                else:
+                    survey_without_badge._create_certification_badge()
+            # If badge already set on records, reactivate them all.
+            survey_with_badge = self - survey_without_badge
+            survey_with_badge.mapped('certification_badge_id').write({'active': True})
+            result = super(Survey, self).write(vals)
+        else:
+            # if badge with owner : archive them, else delete everything (badge, challenge, goal)
+            badges = self.mapped('certification_badge_id')
+            badges_with_owner = badges.filtered(lambda b: b.owner_ids)
+            badge_without_owner = badges - badges_with_owner
+            challenges_to_delete = self.env['gamification.challenge'].search(
+                [('reward_id', 'in', badge_without_owner.ids)])
+            goals_to_delete = challenges_to_delete.mapped('line_ids').mapped('definition_id')
+
+            # call super to execute the write before cleaning badges related records
+            result = super(Survey, self).write(vals)
+
+            badge_without_owner.unlink()
+            badges_with_owner.write({'active': False})
+            # delete all challenges and goals because not needed anymore (challenge lines are deleted in cascade)
+            challenges_to_delete.unlink()
+            goals_to_delete.unlink()
         return result
 
     # Actions
