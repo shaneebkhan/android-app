@@ -384,7 +384,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="o_kanban_card_manage_pane">
+                                    <div class="o_kanban_card_manage_pane o_m2o_hidden">
                                         <div class="o_kanban_card_manage_section o_dropdown_kanban dropdown">
                                             <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" aria-label="Dropdown menu" title="Dropdown menu">
                                                 <span class="fa fa-ellipsis-v"/>
@@ -401,7 +401,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="o_mailing_list_kanban_boxes">
+                                <div class="o_mailing_list_kanban_boxes o_m2o_hidden">
                                     <a class="o_project_kanban_box" name="%(action_view_mass_mailing_contacts_from_list)d" type="action">
                                         <div>
                                             <span class="badge badge-pill">
@@ -685,7 +685,7 @@
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_global_click oe_kanban_mass_mailing">
-                                <div class="o_dropdown_kanban dropdown">
+                                <div class="o_dropdown_kanban dropdown o_m2o_hidden">
                                     <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" aria-label="Dropdown menu" title="Dropdown menu">
                                         <span class="fa fa-ellipsis-v"/>
                                     </a>
@@ -710,7 +710,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="o_kanban_record_body" attrs="{'invisible': [('sent_date', '=', False)]}">
+                                    <div class="o_kanban_record_body o_m2o_hidden" attrs="{'invisible': [('sent_date', '=', False)]}">
                                         <t t-if="record.sent_date">
                                             <div class="row">
                                                 <div class="col-8">
@@ -1040,7 +1040,7 @@
                     <templates>
                         <t t-name="kanban-box">
                             <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_card oe_kanban_global_click oe_kanban_mass_mailing_campaign">
-                                <div class="o_dropdown_kanban dropdown">
+                                <div class="o_dropdown_kanban dropdown o_m2o_hidden">
 
                                     <a role="button" class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#" aria-label="Dropdown menu" title="Dropdown menu">
                                         <span class="fa fa-ellipsis-v"/>
@@ -1062,13 +1062,13 @@
                                         <div class="o_kanban_record_headings">
                                             <h3 class="oe_margin_bottom_8 o_kanban_record_title"><field name="name"/></h3>
                                             <a name="%(action_view_mass_mailings_from_campaign)d" type="action"
-                                                class="oe_mailings o_kanban_record_subtitle">
+                                                class="oe_mailings o_kanban_record_subtitle o_m2o_hidden">
                                                 <t t-raw="record.mass_mailing_ids.raw_value.length"/> Mailings
                                             </a>
                                         </div>
                                     </div>
                                     <div class="o_kanban_record_body">
-                                        <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                                        <field name="tag_ids" groups="mass_mailing.group_mass_mailing_campaign" widget="many2many_tags" options="{'color_field': 'color'}"/>
                                     </div>
                                     <div class="o_kanban_record_bottom mt16" style="height:90px">
                                         <div class="oe_kanban_bottom_left" style="height:90px">

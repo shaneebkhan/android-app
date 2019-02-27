@@ -137,7 +137,7 @@
                                         </t>
                                     </div>
                                 </div>
-                                <div t-if="record.remaining_sending.value != 0" class="o_kanban_button">
+                                <div t-if="record.remaining_sending.value != 0" class="o_kanban_button o_m2o_hidden">
                                     <button type="action" name="%(action_grant_wizard)d" class="oe_highlight btn btn-primary">Grant</button>
                                 </div>
                             </div>
