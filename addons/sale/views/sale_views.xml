@@ -280,7 +280,12 @@
                         <group>
                             <field name="validity_date" attrs="{'invisible': [('state', 'in', ['sale', 'done'])]}"/>
                             <field name="confirmation_date" attrs="{'invisible': [('state', 'in', ['draft', 'sent', 'cancel'])]}"/>
-                            <field name="pricelist_id" groups="product.group_sale_pricelist"/>
+                            <field name="is_change_pricelist" invisible="1"/>
+                            <label for="pricelist_id" groups="product.group_sale_pricelist"/>
+                            <div groups="product.group_sale_pricelist">
+                                <field name="pricelist_id"/>
+                                <button name="%(sale.action_view_sale_update_pricelist)d" type="action" string=" Recompute Price" class="btn-link" icon="fa-refresh" attrs="{'invisible': [('is_change_pricelist', '=', False)]}"/>
+                            </div>
                             <field name="currency_id" invisible="1"/>
                             <field name="payment_term_id" options="{'no_create': True}"/>
                         </group>

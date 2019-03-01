@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="sale_update_pricelist_view_form" model="ir.ui.view">
+        <field name="name">sale.update.pricelist.form</field>
+        <field name="model">sale.update.pricelist</field>
+        <field name="arch" type="xml">
+            <form string="Update Pricelist">
+                <field name="sale_id" invisible="1"/>
+                <p class="oe_grey">
+                    Do you want to recompute price of sale order line according to new pricelist?
+                </p>
+                <footer>
+                    <button name="update_pricelist" string="Yes" type="object" class="btn-primary"/>
+                    <button name="skip_update_pricelist" string="No" type="object" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_view_sale_update_pricelist" model="ir.actions.act_window">
+        <field name="name">Update Pricelist</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">sale.update.pricelist</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
