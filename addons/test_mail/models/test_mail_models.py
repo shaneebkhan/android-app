@@ -158,3 +158,12 @@ class MailMultiCompany(models.Model):
 
     name = fields.Char()
     company_id = fields.Many2one('res.company')
+
+
+class test_message_tracking_property(models.Model):
+    _name = 'test.message.tracking'
+    _description = 'Test Message Tracking'
+
+    name = fields.Char()
+    property_foo = fields.Integer(string='Foo', company_dependent=True, tracking=True)
+
