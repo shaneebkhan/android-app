@@ -277,3 +277,69 @@ using the view in the kanban arch (a specific example is the helpdesk dashboard)
     from the server point of view, this is still a view of the same base type,
     subjected to the same rules (rng validation, for example).  So, your views still
     need to have a valid arch field.
+
+Promises and asynchroneous code
+===============================
+
+Creating a new Promises
+-----------------------
+- based on an already asynchroneous code
+    Suppose that in a function you must do a rpc, and when it is completed set the result on this.
+    The `this._rpc` is a function that returns a `Promise`.
+
+    .. code-block:: javascript
+
+        function callRpc() {
+            var self = this;
+            return this._rpc(...).then(function(result) {
+                self.myValueFromRpc = result;
+            });
+        }
+
+- for callback based function
+    Suppose that you were using a function `this.close` that takes as parameter a callback that is called when the closing is finished.
+    Now suppose that you are doing that in a method that must send a promise that is resolved when the closing is finished.
+
+    .. code-block:: javascript
+        :linenos:
+
+        function waitForClose() {
+            var self = this;
+            return new Promise (function(resolve, reject) {
+                self.close(resolve);
+            });
+        }
+
+    * line 2: we save the `this` into a variable so that in an inner function, we can access the scope of our component
+    * line 3: we create and return a new promise. The constructor of a promise takes a function as parameter. This function itself has 2 parameters that I called here `resolve` and `reject`.
+        - `resolve` is a function that, when called, will put the promise in the resolved state.
+        - `reject` is a function that, when called, will put the promise in the rejected state. We do not use reject here and it can be omitted.
+    * line 4: we are calling the function close on our object. it takes a function as parameter (the callback) and it happens that resolve is already a function, so we can pass it directly. To be clearer, I could have written:
+
+        .. code-block:: javascript
+
+            return new Promise (function(resolve) {
+                self.close(function() {
+                    resolve();
+                });
+            });
+
+
+
+- creating a promise generator (calling one promise after the other)
+- creating a promise, then resolving it outside the scope of its definition (anti-pattern)
+
+Waiting for Promises
+--------------------
+- waiting for a number of Promises
+- waiting for a part of a promise chain, but not another part
+
+Error handling
+--------------
+- in general in promises
+- in Odoo specifically
+
+Testing asynchroneous code
+--------------------------
+
+- using promises in tests
