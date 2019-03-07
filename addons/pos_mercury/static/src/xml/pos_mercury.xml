@@ -56,9 +56,7 @@
   <t t-extend="XmlReceipt">
     <t t-jquery="t[t-foreach*='paymentlines'][t-as*='line']" t-operation="append">
       <t t-if="line.mercury_data">
-        <line line-ratio="1">
-          <left><pre>  APPROVAL CODE:</pre><t t-esc="line.mercury_auth_code"/></left>
-        </line>
+          <p style="padding-left: 1em;">APPROVAL CODE:<t t-esc="line.mercury_auth_code"/></p>
       </t>
     </t>
     <t t-jquery="receipt" t-operation="append">

@@ -416,7 +416,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible': [('iface_print_via_proxy','=',False)]}">
+                        <div class="col-12 col-lg-6 o_setting_box" attrs="{'invisible': [('iface_print_via_proxy','=',False)]}" id="iface_printing">
                             <div class="o_setting_left_pane">
                                 <field name='module_pos_reprint'/>
                             </div>
