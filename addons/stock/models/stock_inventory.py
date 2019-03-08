@@ -348,7 +348,7 @@ class InventoryLine(models.Model):
         'stock.location', 'Location', related='inventory_id.location_id', related_sudo=False)
 
     @api.one
-    @api.depends('location_id', 'product_id', 'package_id', 'product_uom_id', 'company_id', 'prod_lot_id', 'partner_id')
+    @api.depends('location_id', 'product_id', 'package_id', 'product_uom_id', 'company_id', 'prod_lot_id', 'partner_id', 'product_qty')
     def _compute_theoretical_qty(self):
         if not self.product_id:
             self.theoretical_qty = 0
