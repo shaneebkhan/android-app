@@ -119,7 +119,7 @@ class Attendee(models.Model):
         return uuid.uuid4().hex
 
     STATE_SELECTION = [
-        ('needsAction', 'Needs Action'),
+        ('needsAction', 'Your Answer?'),
         ('tentative', 'Uncertain'),
         ('declined', 'Declined'),
         ('accepted', 'Accepted'),
@@ -1814,3 +1814,12 @@ class Meeting(models.Model):
             if 'UNTIL' not in rule_str and 'COUNT' not in rule_str:
                 rule_str += ';COUNT=100'
         return rule_str
+
+    def change_attendee_status(self, status):
+        attendee = self.attendee_ids.filtered(lambda x: x.partner_id == self.env.user.partner_id)
+        if status == 'accepted':
+            return attendee.do_accept()
+        elif status == 'declined':
+            return attendee.do_decline()
+        else:
+            return attendee.do_tentative()
