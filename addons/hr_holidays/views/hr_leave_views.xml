@@ -32,7 +32,7 @@
                 <separator/>
                 <filter string="My Department Time Off" name="department" domain="['|', ('department_id.member_ids.user_id', '=', uid), ('employee_id.user_id', '=', uid)]" help="My Department Time Off"/>
                 <filter string="People I Manage" name="managed_people" domain="[('employee_id.parent_id.user_id', '=', uid)]" help="Time off of people you are manager of"/>
-                <filter string="My Team Time Off" name="my_team_leaves" domain="[('employee_id.leave_manager_id', '=', uid)]" groups="hr_holidays.group_hr_holidays_team_leader" help="Time off of Your Team Members"/>
+                <filter string="My Team Time Off" name="my_team_leaves" domain="[('employee_id.leave_manager_id', '=', uid)]" groups="hr_holidays.group_hr_holidays_user" help="Time off of Your Team Members"/>
                 <filter string="My Time Off" name="my_leaves" domain="[('employee_id.user_id', '=', uid)]"/>
                 <separator/>
                 <filter string="To Report in Payslip" name="gray" domain="[('payslip_status', '=', False)]" groups="hr_holidays.group_hr_holidays_manager"/>
@@ -54,7 +54,6 @@
                     <filter name="group_name" string="Description" context="{'group_by':'name'}"/>
                     <filter name="group_employee" string="Employee" context="{'group_by':'employee_id'}"/>
                     <filter name="group_category" string="Category" context="{'group_by':'category_id'}"/>
-                    <filter name="group_manager" string="Manager" context="{'group_by':'manager_id'}"/>
                     <filter name="group_second_approver_id" string="Validator" context="{'group_by':'second_approver_id'}"/>
                     <filter name="group_type" string="Type" context="{'group_by':'holiday_status_id'}"/>
                     <separator/>
@@ -392,7 +391,6 @@
                 <field name="payslip_status" widget="toggle_button" options='{"active": "Reported in last payslips", "inactive": "To Report in Payslip"}' groups="hr_holidays.group_hr_holidays_manager"/>
                 <field name="category_id" invisible="1"/>
                 <field name="department_id" invisible="1"/>
-                <field name="manager_id" invisible="1"/>
                 <field name="user_id" invisible="1"/>
                 <field name="message_needaction" invisible="1"/>
                 <button string="Approve" name="action_approve" type="object"
@@ -452,59 +450,6 @@
         <field name="search_view_id" ref="view_hr_holidays_filter"/>
     </record>
 
-    <menuitem
-        name="Time Off"
-        id="menu_hr_holidays_root"
-        sequence="95"
-        web_icon="hr_holidays,static/description/icon.png"
-        groups="base.group_user"/>
-
-    <menuitem
-        id="menu_hr_holidays_dashboard"
-        name="My Team"
-        parent="menu_hr_holidays_root"
-        sequence="1"
-        action="action_hr_holidays_dashboard"
-        groups="hr_holidays.group_hr_holidays_manager"/>
-
-    <menuitem
-        id="menu_hr_holidays_my_leaves"
-        name="My Time Off"
-        parent="menu_hr_holidays_root"
-        sequence="3"/>
-
-    <menuitem
-        id="menu_hr_holidays_approvals"
-        name="Managers"
-        parent="menu_hr_holidays_root"
-        sequence="4"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user,hr_holidays.group_hr_holidays_team_leader"/>
-    <menuitem
-        id="hr_holidays_menu_manager_approve"
-        name="To Approve"
-        parent="menu_hr_holidays_approvals"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user,hr_holidays.group_hr_holidays_team_leader"
-        sequence="1"/>
-    <menuitem
-        id="hr_holidays_menu_manager_all"
-        name="All"
-        parent="menu_hr_holidays_approvals"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user,hr_holidays.group_hr_holidays_team_leader"
-        sequence="2"/>
-    <menuitem
-        id="hr_holidays_menu_manager_payroll"
-        name="Payroll"
-        parent="menu_hr_holidays_approvals"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user"
-        sequence="3"/>
-
-    <menuitem
-        id="menu_hr_holidays_report"
-        name="Reporting"
-        parent="menu_hr_holidays_root"
-        sequence="99"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user"/>
-
     <record id="hr_leave_action_new_request" model="ir.actions.act_window">
         <field name="name">Dashboard</field>
         <field name="res_model">hr.leave</field>
@@ -519,18 +464,21 @@
             </p>
         </field>
     </record>
+
     <record id="hr_leave_action_new_request_view_calendar" model="ir.actions.act_window.view">
         <field name="sequence">1</field>
         <field name="view_mode">calendar</field>
         <field name="act_window_id" ref="hr_leave_action_new_request"/>
         <field name="view_id" ref="hr_leave_view_dashboard"/>
     </record>
+
     <record id="hr_leave_action_new_request_view_tree" model="ir.actions.act_window.view">
         <field name="sequence">2</field>
         <field name="view_mode">tree</field>
         <field name="act_window_id" ref="hr_leave_action_new_request"/>
         <field name="view_id" ref="hr_leave_view_tree_my"/>
     </record>
+
     <record id="hr_leave_action_new_request_view_form" model="ir.actions.act_window.view">
         <field name="sequence">3</field>
         <field name="view_mode">form</field>
@@ -574,24 +522,20 @@
             </p>
         </field>
     </record>
+
     <record id="hr_leave_action_my_view_tree" model="ir.actions.act_window.view">
         <field name="sequence">1</field>
         <field name="view_mode">tree</field>
         <field name="act_window_id" ref="hr_leave_action_my"/>
         <field name="view_id" ref="hr_leave_view_tree_my"/>
     </record>
+
     <record id="hr_leave_action_my_view_form" model="ir.actions.act_window.view">
         <field name="sequence">2</field>
         <field name="view_mode">form</field>
         <field name="act_window_id" ref="hr_leave_action_my"/>
         <field name="view_id" ref="hr_leave_view_form"/>
     </record>
-
-    <menuitem
-        id="hr_leave_menu_my"
-        parent="menu_hr_holidays_my_leaves"
-        action="hr_leave_action_my"
-        sequence="4"/>
 
     <record id="hr_leave_action_all" model="ir.actions.act_window">
         <field name="name">Time Off</field>
@@ -657,21 +601,6 @@
         <field name="domain">[('holiday_type','=','employee')]</field>
     </record>
 
-    <menuitem
-        id="menu_open_department_leave_approve"
-        name="Time Off"
-        parent="hr_holidays_menu_manager_approve"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user,hr_holidays.group_hr_holidays_team_leader"
-        action="hr_leave_action_action_approve_department"
-        sequence="1"/>
-    <menuitem
-        id="menu_open_employee_leave"
-        name="Time Off"
-        parent="hr_holidays_menu_manager_all"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user,hr_holidays.group_hr_holidays_team_leader"
-        action="hr_leave_action_all"
-        sequence="1"/>
-
     <record id="hr_leave_action_payroll" model="ir.actions.act_window">
         <field name="name">Time Off Requests</field>
         <field name="res_model">hr.leave</field>
@@ -687,14 +616,6 @@
             </p>
         </field>
     </record>
-
-    <menuitem
-        id="hr_holidays_menu_manager_payroll_to_report"
-        name="Time Off to report"
-        parent="hr_holidays_menu_manager_payroll"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user"
-        action="hr_leave_action_payroll"
-        sequence="1"/>
 
     <record id="view_holiday_pivot" model="ir.ui.view">
         <field name="name">hr.holidays.report_pivot</field>
@@ -736,9 +657,4 @@
         <field name="act_window_id" ref="action_hr_available_holidays_report"/>
     </record>
 
-    <menuitem
-        name="Time Off Analysis"
-        id="menu_hr_available_holidays_report_tree"
-        action="action_hr_available_holidays_report"
-        parent="menu_hr_holidays_report" sequence="5"/>
 </odoo>

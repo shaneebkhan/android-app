@@ -12,13 +12,6 @@
             <field name="allocation_notif_subtype_id" eval="ref('mt_leave_allocation')"/>
         </record>
 
-         <!-- Home working -->
-        <record id="holiday_status_hw" model="hr.leave.type">
-            <field name="name">Home Workings</field>
-            <field name="color_name">lightgreen</field>
-            <field name="leave_notif_subtype_id" eval="ref('mt_leave_home_working')"/>
-        </record>
-
         <!-- Sick leave -->
         <record id="holiday_status_sl" model="hr.leave.type">
             <field name="name">Sick Time Off</field>
@@ -32,6 +25,7 @@
         <record id="holiday_status_comp" model="hr.leave.type">
             <field name="name">Compensatory Days</field>
             <field name="allocation_type">fixed_allocation</field>
+            <field name="validation_type">both</field>
             <field name="request_unit">hour</field>
             <field name="color_name">lavender</field>
             <field name="validity_start" eval="time.strftime('%Y-01-01')"/>

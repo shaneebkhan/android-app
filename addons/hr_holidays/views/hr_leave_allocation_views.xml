@@ -388,26 +388,4 @@
         </field>
     </record>
 
-    <menuitem
-        id="menu_open_allocation"
-        name="Allocation Requests"
-        parent="menu_hr_holidays_my_leaves"
-        action="hr_leave_allocation_action_my"
-        sequence="6"/>
-
-    <menuitem
-        id="hr_holidays_menu_manager_approve_allocations"
-        name="Allocations"
-        parent="hr_holidays_menu_manager_approve"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user"
-        action="hr_leave_allocation_action_approve_department"
-        sequence="2"/>
-    <menuitem
-        id="hr_holidays_menu_manager_all_allocations"
-        name="Allocations"
-        parent="hr_holidays_menu_manager_all"
-        groups="hr_holidays.group_hr_holidays_manager,hr_holidays.group_hr_holidays_user"
-        action="hr_leave_allocation_action_all"
-        sequence="2"/>
-
 </odoo>
