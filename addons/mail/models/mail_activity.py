@@ -332,6 +332,8 @@ class MailActivity(models.Model):
             self.env['bus.bus'].sendone(
                 (self._cr.dbname, 'res.partner', activity.user_id.partner_id.id),
                 {'type': 'activity_updated', 'activity_created': True})
+        if activity.res_model and activity.res_id and activity.activity_type_id.decoration_type in ['warning', 'danger']:
+            self.env[activity.res_model].browse(activity.res_id)._set_activity_exception_type()
         return activity
 
     @api.multi
@@ -359,16 +361,25 @@ class MailActivity(models.Model):
                         self.env['bus.bus'].sendone(
                             (self._cr.dbname, 'res.partner', partner.id),
                             {'type': 'activity_updated', 'activity_deleted': True})
+        if values.get('activity_type_id'):
+            for activity in self.filtered(lambda x: x.res_id and x.res_model):
+                self.env[activity.res_model].browse(activity.res_id)._set_activity_exception_type()
         return res
 
     @api.multi
     def unlink(self):
+        res_record = set()
         for activity in self:
             if activity.date_deadline <= fields.Date.today():
                 self.env['bus.bus'].sendone(
                     (self._cr.dbname, 'res.partner', activity.user_id.partner_id.id),
                     {'type': 'activity_updated', 'activity_deleted': True})
-        return super(MailActivity, self).unlink()
+            if activity.res_model and activity.res_id and activity.activity_type_id.decoration_type in ['warning', 'danger']:
+                res_record.add(self.env[activity.res_model].browse(activity.res_id))
+        rec = super(MailActivity, self).unlink()
+        for record in res_record:
+            record._set_activity_exception_type()
+        return rec
 
     # ------------------------------------------------------
     # Business Methods
@@ -603,6 +614,13 @@ class MailActivityMixin(models.AbstractModel):
         related='activity_ids.summary', readonly=False,
         search='_search_activity_summary',
         groups="base.group_user",)
+    # Instead of fetching decoration_type and icon each time from activity type
+    # we taken these fields to display the exceptions on record
+    activity_exception_decoration = fields.Selection([
+        ('warning', 'Alert'),
+        ('danger', 'Error')],
+        help="Type of the exception activity on record.")
+    activity_exception_icon = fields.Char('Icon', help="Icon to indicate an exception activity.")
 
     @api.depends('activity_ids.state')
     def _compute_activity_state(self):
@@ -636,6 +654,22 @@ class MailActivityMixin(models.AbstractModel):
     @api.model
     def _search_activity_summary(self, operator, operand):
         return [('activity_ids.summary', operator, operand)]
+
+    @api.multi
+    def _set_activity_exception_type(self):
+        self.ensure_one()
+        decoration_type = None
+        icon = None
+        for activity in self.activity_ids.filtered(lambda x: x.activity_type_id.decoration_type in ['warning', 'danger']):
+            if not decoration_type and activity.activity_type_id.decoration_type == 'warning':
+                decoration_type = 'warning'
+                icon = activity.activity_type_id.icon
+            elif activity.activity_type_id.decoration_type == 'danger':
+                decoration_type = 'danger'
+                icon = activity.activity_type_id.icon
+                break
+        self.activity_exception_decoration = decoration_type
+        self.activity_exception_icon = icon
 
     @api.multi
     def write(self, vals):

@@ -646,6 +646,10 @@ var KanbanActivity = BasicActivity.extend({
     events:_.extend({}, BasicActivity.prototype.events, {
         'show.bs.dropdown': '_onDropdownShow',
     }),
+    fieldDependencies: _.extend({}, BasicActivity.prototype.fieldDependencies, {
+        activity_exception_decoration: {type: 'selection'},
+        activity_exception_icon: {type: 'char'}
+    }),
 
     /**
      * @override
@@ -682,6 +686,14 @@ var KanbanActivity = BasicActivity.extend({
      */
     _render: function () {
         var $span = this.$('.o_activity_btn > span');
+        // when no goupby on kanban, it will not call renderElement so update activity icon manually.
+        if (this.recordData.activity_exception_decoration) {
+            $span.removeClass('fa-clock-o');
+            $span.addClass('text-' + this.recordData.activity_exception_decoration + ' ' + this.recordData.activity_exception_icon);
+        } else {
+            $span.removeClass();
+            $span.addClass('fa-lg fa-fw fa fa-clock-o');
+        }
         $span.removeClass(function (index, classNames) {
             return classNames.split(/\s+/).filter(function (className) {
                 return _.str.startsWith(className, 'o_activity_color_');
@@ -740,9 +752,49 @@ var KanbanActivity = BasicActivity.extend({
     },
 });
 
+// -----------------------------------------------------------------------------
+// Activity Exception Widget to display Exception icon ('activity_exception' widget)
+// -----------------------------------------------------------------------------
+
+var ActivityException = AbstractField.extend({
+    noLabel: true,
+    fieldDependencies: _.extend({}, AbstractField.prototype.fieldDependencies, {
+        activity_exception_icon: {type: 'char'}
+    }),
+
+    //------------------------------------------------------------
+    // Private
+    //------------------------------------------------------------
+
+    /**
+     * display the icon, do not allow to edit
+     * @override
+     * @private
+     */
+    _renderEdit: function () {
+        return this._renderReadonly();
+    },
+
+    /**
+     * add the field value as class on element to display exception icon
+     * @override
+     * @private
+     */
+    _renderReadonly: function () {
+        if (this.value) {
+            this.$el.empty();
+            this.$el.attr({
+                'title': _t('This record has an exception activity.'),
+                'class': "pull-right mt-1 text-" + this.value + " fa " + this.recordData.activity_exception_icon
+            });
+        }
+    }
+});
+
 field_registry
     .add('mail_activity', Activity)
-    .add('kanban_activity', KanbanActivity);
+    .add('kanban_activity', KanbanActivity)
+    .add('activity_exception', ActivityException);
 
 return Activity;
 
