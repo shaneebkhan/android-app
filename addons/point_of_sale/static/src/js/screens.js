@@ -1667,7 +1667,7 @@ var ReceiptScreenWidget = ScreenWidget.extend({
     print_xml: function() {
         var receipt = QWeb.render('XmlReceipt', this.get_receipt_render_env());
 
-        this.pos.proxy.print_receipt(receipt);
+        this.pos.proxy.printer.print_receipt(receipt);
         this.pos.get_order()._printed = true;
     },
     print: function() {
@@ -2057,7 +2057,7 @@ var PaymentScreenWidget = ScreenWidget.extend({
         });
 
         this.$('.js_cashdrawer').click(function(){
-            self.pos.proxy.open_cashbox();
+            self.pos.proxy.printer.open_cashbox();
         });
 
     },
@@ -2168,7 +2168,7 @@ var PaymentScreenWidget = ScreenWidget.extend({
 
         if (order.is_paid_with_cash() && this.pos.config.iface_cashdrawer) { 
 
-                this.pos.proxy.open_cashbox();
+                this.pos.proxy.printer.open_cashbox();
         }
 
         order.initialize_validation_date();

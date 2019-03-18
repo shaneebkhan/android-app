@@ -25,6 +25,8 @@ PKGS_TO_INSTALL="
     fswebcam \
     nginx-full \
     dnsmasq \
+    dbus \
+    dbus-x11 \
     cups \
     printer-driver-all \
     cups-ipp-utils \
@@ -34,6 +36,7 @@ PKGS_TO_INSTALL="
     vim \
     mc \
     mg \
+    librsvg2-bin \
     screen \
     iw \
     hostapd \
@@ -44,6 +47,7 @@ PKGS_TO_INSTALL="
     lightdm \
     xserver-xorg-video-fbdev \
     xserver-xorg-input-evdev \
+    xfonts-75dpi \
     iceweasel \
     xdotool \
     unclutter \
@@ -103,6 +107,13 @@ sudo -u postgres createuser -s pi
 apt-get clean
 localepurge
 rm -rf /usr/share/doc
+
+# Install wkhtltopdf, the version available with apt-get is not working.
+cd "/tmp"
+wget 'https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.raspbian.stretch_armhf.deb' -O wkhtmltox.deb
+dpkg -i wkhtmltox.deb
+rm wkhtmltox.deb
+cd "${__dir}"
 
 # python-usb in wheezy is too old
 # the latest pyusb from pip does not work either, usb.core.find() never returns
