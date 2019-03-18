@@ -146,6 +146,8 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
             }
         });
 
+        this.iot_devices_status = {};
+
         this.posbox_supports_display = true;
 
         window.hw_proxy = this;
@@ -153,10 +155,25 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
     set_connection_status: function(status,drivers){
         var oldstatus = this.get('status');
         var newstatus = {};
-        newstatus.status = status;
+        newstatus.status = status ? status : oldstatus.status;
         newstatus.drivers = status === 'disconnected' ? {} : oldstatus.drivers;
         newstatus.drivers = drivers ? drivers : newstatus.drivers;
+        for (var device in this.iot_devices_status){
+            newstatus.drivers[device] = this.iot_devices_status[device];
+        }
         this.set('status',newstatus);
+    },
+    get_current_status: function () {
+        var self = this;
+        (this.pos.config.iface_print_via_proxy || this.pos.config.iface_cashdrawer)
+            && this.message('default_printer_status', {})
+            .then(function (status) {
+                self.set_driver_connection_status(status.state, 'printer');
+            });
+    },
+    set_driver_connection_status: function (status, driver) {
+        this.iot_devices_status[driver] = status;
+        this.set_connection_status();
     },
     disconnect: function(){
         if(this.get('status').status !== 'disconnected'){
@@ -180,6 +197,7 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
         return this.message('handshake').then(function(response){
                 if(response){
                     self.set_connection_status('connected');
+                    self.get_current_status();
                     localStorage.hw_proxy_url = url;
                     self.keepalive();
                 }else{
@@ -447,8 +465,15 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
     },
 
     // ask for the cashbox (the physical box where you store the cash) to be opened
-    open_cashbox: function(){
-        return this.message('open_cashbox');
+    open_cashbox: function () {
+        var self = this;
+        return this.message('default_printer_action', {
+                data: {
+                    action: 'cashbox',
+                }
+        }, { timeout: 5000 }).then(function (status) {
+                self.set_driver_connection_status(status.state, 'printer');
+            })
     },
 
     /*
@@ -459,12 +484,12 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
         if(receipt){
             this.receipt_queue.push(receipt);
         }
-        function send_printing_job(){
+        function process_next_job(){
             if (self.receipt_queue.length > 0){
                 var r = self.receipt_queue.shift();
-                self.message('print_xml_receipt',{ receipt: r },{ timeout: 5000 })
-                    .then(function(){
-                        send_printing_job();
+                self.send_printing_job(r)
+                    .then(function () {
+                        process_next_job();
                     },function(error){
                         if (error) {
                             self.pos.gui.show_popup('error-traceback',{
@@ -477,7 +502,19 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
                     });
             }
         }
-        send_printing_job();
+        process_next_job();
+    },
+
+    send_printing_job: function (receipt) {
+        var self = this;
+        return this.pos.config.iface_print_via_proxy && this.message('default_printer_action', {
+            data: {
+                action: 'html_receipt',
+                receipt: receipt,
+            }
+        }, { timeout: 5000 }).then(function (status) {
+            self.set_driver_connection_status(status.state, 'printer');
+        })
     },
 
     print_sale_details: function() {

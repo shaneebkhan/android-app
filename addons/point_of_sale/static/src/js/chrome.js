@@ -366,8 +366,8 @@ var ProxyStatusWidget = StatusWidget.extend({
             }
             if( this.pos.config.iface_print_via_proxy || 
                 this.pos.config.iface_cashdrawer ){
-                var printer = status.drivers.escpos ? status.drivers.escpos.status : false;
-                if( printer != 'connected' && printer != 'connecting'){
+                var printer = status.drivers.printer ? status.drivers.printer.status : false;
+                if( printer != 'connected' && printer != 'connecting' && printer != 'processing' ){
                     warning = true;
                     msg = msg ? msg + ' & ' : msg;
                     msg += _t('Printer');

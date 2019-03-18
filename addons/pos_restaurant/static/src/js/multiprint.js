@@ -18,19 +18,19 @@ var Printer = core.Class.extend(mixins.PropertiesMixin,{
         this.connection = new Session(undefined,url, { use_cors: true});
         this.host       = url;
         this.receipt_queue = [];
+        this.pos = options.pos;
     },
     print: function(receipt){
         var self = this;
         if(receipt){
             this.receipt_queue.push(receipt);
         }
-        function send_printing_job(){
+        function process_next_job(){
             if(self.receipt_queue.length > 0){
                 var r = self.receipt_queue.shift();
-                var options = {shadow: true, timeout: 5000};
-                self.connection.rpc('/hw_proxy/print_xml_receipt', {receipt: r}, options)
-                    .then(function(){
-                        send_printing_job();
+                self.send_printing_job(r)
+                    .then(function () {
+                        process_next_job();
                     },function(error, event){
                         self.receipt_queue.unshift(r);
                         console.log('There was an error while trying to print the order:');
@@ -38,7 +38,20 @@ var Printer = core.Class.extend(mixins.PropertiesMixin,{
                     });
             }
         }
-        send_printing_job();
+        process_next_job();
+    },
+
+    send_printing_job: function (receipt) {
+        var self = this;
+        var options = {shadow: true, timeout: 5000};
+        return this.connection.rpc('/hw_proxy/default_printer_action', {
+            data: {
+                action: 'html_receipt',
+                receipt: receipt,
+            }
+        }, options).then(function (status) {
+            self.pos.proxy.set_driver_connection_status(status.state, 'printer');
+        });
     },
 });
 
@@ -65,7 +78,7 @@ models.load_models({
                 if(url.indexOf(':',url.indexOf('//')+2) < 0){
                     url = url+':8069';
                 }
-                var printer = new Printer(self,{url:url});
+                var printer = new Printer(self, {url:url, pos:self.proxy.pos});
                 printer.config = printers[i];
                 self.printers.push(printer);
 

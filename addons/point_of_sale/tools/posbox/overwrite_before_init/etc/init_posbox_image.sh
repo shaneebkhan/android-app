@@ -25,6 +25,8 @@ PKGS_TO_INSTALL="
     fswebcam \
     nginx-full \
     dnsmasq \
+    dbus \
+    dbus-x11 \
     cups \
     printer-driver-all \
     cups-ipp-utils \
@@ -34,6 +36,7 @@ PKGS_TO_INSTALL="
     vim \
     mc \
     mg \
+    librsvg2-bin \
     screen \
     iw \
     hostapd \
@@ -44,6 +47,7 @@ PKGS_TO_INSTALL="
     lightdm \
     xserver-xorg-video-fbdev \
     xserver-xorg-input-evdev \
+    xfonts-75dpi \
     iceweasel \
     xdotool \
     unclutter \

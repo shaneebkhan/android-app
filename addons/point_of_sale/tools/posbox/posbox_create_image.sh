@@ -66,6 +66,13 @@ rm ngrok.zip
 cd "${__dir}"
 mv /tmp/ngrok "${USR_BIN}"
 
+# Install wkhtltopdf
+cd "/tmp"
+curl 'https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.raspbian.stretch_armhf.deb' > wkhtmltox.deb
+dpkg -i wkhtmltox.deb
+rm wkhtmltox.deb
+cd "${__dir}"
+
 # zero pad the image to be around 3.5 GiB, by default the image is only ~1.3 GiB
 echo "Enlarging the image..."
 dd if=/dev/zero bs=1M count=2048 >> posbox.img
