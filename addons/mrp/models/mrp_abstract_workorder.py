@@ -99,6 +99,9 @@ class MrpAbstractWorkorder(models.AbstractModel):
                 if float_compare(qty_todo, 0.0, precision_rounding=rounding) > 0:
                     for vals in self._generate_lines_values(move_raw, qty_todo):
                         line_values['to_create'].append(vals)
+        # Keep coherence between qty_done and qty_to_consume
+        for line in self.workorder_line_ids.filtered(lambda line: line.qty_to_consume != line.qty_done):
+            line.qty_to_consume = line.qty_done
         return line_values
 
     @api.model
