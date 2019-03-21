@@ -9,18 +9,21 @@ dom.isAnchor = function (node) {
     return (node.tagName === 'A' || node.tagName === 'BUTTON' || $(node).hasClass('btn')) &&
         !$(node).hasClass('fa') && !$(node).hasClass('o_image');
 };
+var keycode = ({
+    '8': 'BACKSPACE',
+    '9': 'TAB',
+    '13': 'ENTER',
+    '46': 'DELETE',
+});
+var iPhone = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
 
 var KeyboardPlugin = AbstractPlugin.extend({
     events: {
         'summernote.keydown': '_onKeydown',
         'DOMNodeInserted .note-editable': '_removeGarbageSpans',
+        'textInput .note-editable': '_onTextInput',
     },
-
-    //--------------------------------------------------------------------------
-    // Public
-    //--------------------------------------------------------------------------
-
-
 
     //--------------------------------------------------------------------------
     // Private
@@ -1014,76 +1017,47 @@ var KeyboardPlugin = AbstractPlugin.extend({
      * @returns {Boolean} true if case handled
      */
     _onKeydown: function (se, e) {
-        var self = this;
-        var handled = false;
-
         if (e.ctrlKey && e.key === 'a') {
             e.preventDefault();
             this._selectAll();
             return;
         }
+        if (!keycode[e.keyCode]) {
+            return;
+        }
 
-        if (e.key &&
-            (e.key.length === 1 || e.key === "Dead" || e.key === "Unidentified") &&
-            !e.ctrlKey && !e.altKey && !e.metaKey) {
+        this.context.invoke('editor.clearTarget');
+        this.context.invoke('MediaPlugin.hidePopovers');
+        this.context.invoke('editor.beforeCommand');
+        var handled = false;
+        switch (keycode[e.keyCode]) {
+            case 'BACKSPACE':
+                handled = this._onBackspace(e);
+                break;
+            case 'TAB':
+                handled = this._onTab(e);
+                break;
+            case 'ENTER':
+                handled = this._onEnter(e);
+                break;
+            case 'DELETE':
+                handled = this._onDelete(e);
+                break;
+        }
+        if (handled) {
+            e.preventDefault();
+            this._preventTextInEditableDiv();
+            this.context.invoke('editor.saveRange');
+            this.context.invoke('editor.afterCommand');
 
-            if (e.key === "Dead" || e.key === "Unidentified") {
-                this._accented = true;
-            }
-
-            // Record undo only if either:
-            clearTimeout(this.lastCharIsVisibleTime);
-            // e.key is punctuation or space
-            var stopChars = [' ', ',', ';', ':', '?', '.', '!'];
-            if (stopChars.indexOf(e.key) !== -1) {
-                this.lastCharVisible = false;
-            }
-            // or not on top of history stack (record undo after undo)
-            var history = this.context.invoke('HistoryPlugin.getHistoryStep');
-            if (history && history.stack.length && history.stackOffset < history.stack.length - 1) {
-                this.lastCharVisible = false;
-            }
-            // or no new char for 500ms
-            this.lastCharIsVisibleTime = setTimeout(function () {
-                self.lastCharIsVisible = false;
-            }, 500);
-            if (!this.lastCharIsVisible) {
-                this.lastCharIsVisible = true;
-                this.context.invoke('HistoryPlugin.recordUndo');
-            }
-
-            if (e.key !== "Dead") {
-                this._onVisibleChar(e, this._accented);
-            }
-        } else {
-            this.lastCharIsVisible = false;
-            this.context.invoke('editor.clearTarget');
-            this.context.invoke('MediaPlugin.hidePopovers');
-            this.context.invoke('editor.beforeCommand');
-            switch (e.keyCode) {
-                case 8: // BACKSPACE
-                    handled = this._onBackspace(e);
-                    break;
-                case 9: // TAB
-                    handled = this._onTab(e);
-                    break;
-                case 13: // ENTER
-                    handled = this._onEnter(e);
-                    break;
-                case 46: // DELETE
-                    handled = this._onDelete(e);
-                    break;
-            }
-            if (handled) {
-                this._preventTextInEditableDiv();
-                this.context.invoke('editor.saveRange');
-                e.preventDefault();
-                this.context.invoke('editor.afterCommand');
+            if (iPhone) {
+                var range = this.context.invoke('editor.createRange');
+                this.editable.blur();
+                this.editable.focus();
+                range.select();
             }
         }
-        if (e.key !== "Dead") {
-            this._accented = false;
-        }
+        return handled;
     },
     /**
      * Handle BACKSPACE keydown event.
@@ -1223,47 +1197,24 @@ var KeyboardPlugin = AbstractPlugin.extend({
         return false;
     },
     /**
-     * Handle visible char keydown event.
+     * Handle char input.
      *
      * @private
      * @param {jQueryEvent} e
-     * @returns {Boolean} true if case is handled and event default must be prevented
      */
-    _onVisibleChar: function (e, accented) {
-        var self = this;
-        e.preventDefault();
-        if (accented) {
-            this.editable.normalize();
-            var baseRange = this.context.invoke('editor.createRange');
+    _onTextInput: function (e) {
+        e.originalEvent.preventDefault();
 
-            var $parent = $(baseRange.sc.parentNode);
-            var parentContenteditable = $parent.attr('contenteditable');
-            $parent.attr('contenteditable', false);
-
-            var accentPlaceholder = this.document.createElement('span');
-            $(baseRange.sc).after(accentPlaceholder);
-            $(accentPlaceholder).attr('contenteditable', true);
-
-            var range = this.context.invoke('editor.setRange', accentPlaceholder, 0);
-            range.select();
-
-            setTimeout(function () {
-                var accentedChar = accentPlaceholder.innerHTML;
-                $(accentPlaceholder).remove();
-                if (parentContenteditable) {
-                    $parent.attr('contenteditable', parentContenteditable);
-                } else {
-                    $parent.removeAttr('contenteditable');
-                }
-                baseRange.select();
-                self.context.invoke('HelperPlugin.insertTextInline', accentedChar);
-            });
-        } else {
-            this.context.invoke('HelperPlugin.insertTextInline', e.key);
+        var text = e.originalEvent.data;
+        if (text.length > 1 && text[0] !== ' ' && text[0] !== '\u00A0') {
+            if (iPhone) {
+                text = ' ' + text;
+            }
         }
-        return true;
+        this.context.invoke('HelperPlugin.insertTextInline', text);
     },
 });
+
 
 registry.add('KeyboardPlugin', KeyboardPlugin);
 
