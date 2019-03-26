@@ -12,6 +12,7 @@ from odoo.addons.mrp.tests.common import TestMrpCommon
 class TestMrpOrder(TestMrpCommon):
 
     def test_access_rights_manager(self):
+        """ Checks an MRP manager can create, confirm and cancel a manufacturing order. """
         man_order_form = Form(self.env['mrp.production'].sudo(self.user_mrp_manager))
         man_order_form.product_id = self.product_4
         man_order_form.product_qty = 5.0
@@ -19,11 +20,13 @@ class TestMrpOrder(TestMrpCommon):
         man_order_form.location_src_id = self.location_1
         man_order_form.location_dest_id = self.warehouse_1.wh_output_stock_loc_id
         man_order = man_order_form.save()
+        man_order.action_confirm()
         man_order.action_cancel()
         self.assertEqual(man_order.state, 'cancel', "Production order should be in cancel state.")
         man_order.unlink()
 
     def test_access_rights_user(self):
+        """ Checks an MRP user can create, confirm and cancel a manufacturing order. """
         man_order_form = Form(self.env['mrp.production'].sudo(self.user_mrp_user))
         man_order_form.product_id = self.product_4
         man_order_form.product_qty = 5.0
@@ -31,12 +34,14 @@ class TestMrpOrder(TestMrpCommon):
         man_order_form.location_src_id = self.location_1
         man_order_form.location_dest_id = self.warehouse_1.wh_output_stock_loc_id
         man_order = man_order_form.save()
+        man_order.action_confirm()
         man_order.action_cancel()
         self.assertEqual(man_order.state, 'cancel', "Production order should be in cancel state.")
         man_order.unlink()
 
     def test_basic(self):
-        """ Basic order test: no routing (thus no workorders), no lot """
+        """ Checks a basic manufacturing order: no routing (thus no workorders), no lot and
+        consume strictly what's needed. """
         self.product_1.type = 'product'
         self.product_2.type = 'product'
         inventory = self.env['stock.inventory'].create({
@@ -90,55 +95,6 @@ class TestMrpOrder(TestMrpCommon):
         first_move = man_order.move_raw_ids.filtered(lambda move: move.product_id == self.product_1)
         self.assertEqual(first_move.product_qty, test_quantity / self.bom_1.product_qty * self.product_4.uom_id.factor_inv * 4)
 
-        # waste some material, create a scrap
-        # scrap = self.env['stock.scrap'].with_context(
-        #     active_model='mrp.production', active_id=man_order.id
-        # ).create({})
-        # scrap = self.env['stock.scrap'].create({
-        #     'production_id': man_order.id,
-        #     'product_id': first_move.product_id.id,
-        #     'product_uom_id': first_move.product_uom.id,
-        #     'scrap_qty': 5.0,
-        # })
-        # check created scrap
-
-
-        # procurements = self.env['procurement.order'].search([('move_dest_id', 'in', man_order.move_raw_ids.ids)])
-        # print procurements
-        # procurements = self.env['procurement.order'].search([('production_id', '=', man_order.id)])
-        # print procurements
-        # for proc in self.env['procurement.order'].browse(procurements):
-        #     date_planned = self.mrp_production_test1.date_planned
-        #     if proc.product_id.type not in ('product', 'consu'):
-        #         continue
-        #     if proc.product_id.id == order_line.product_id.id:
-        #         self.assertEqual(proc.date_planned, date_planned, "Planned date does not correspond")
-        #       # procurement state should be `confirmed` at this stage, except if procurement_jit is installed, in which
-        #       # case it could already be in `running` or `exception` state (not enough stock)
-        #         expected_states = ('confirmed', 'running', 'exception')
-        #         self.assertEqual(proc.state in expected_states, 'Procurement state is `%s` for %s, expected one of %s' % (proc.state, proc.product_id.name, expected_states))
-
-        # Change production quantity
-        qty_wizard = self.env['change.production.qty'].create({
-            'mo_id': man_order.id,
-            'product_qty': 3.0,
-        })
-        # qty_wizard.change_prod_qty()
-
-        # # I check qty after changed in production order.
-        # #self.assertEqual(self.mrp_production_test1.product_qty, 3, "Qty is not changed in order.")
-        # move = self.mrp_production_test1.move_finished_ids[0]
-        # self.assertEqual(move.product_qty, self.mrp_production_test1.product_qty, "Qty is not changed in move line.")
-
-        # # I run scheduler.
-        # self.env['procurement.order'].run_scheduler()
-
-        # # The production order is Waiting Goods, will force production which should set consume lines as available
-        # self.mrp_production_test1.button_plan()
-        # # I check that production order in ready state after forcing production.
-
-        # #self.assertEqual(self.mrp_production_test1.availability, 'assigned', 'Production order availability should be set as available')
-
         # produce product
         produce_form = Form(self.env['mrp.product.produce'].with_context({
             'active_id': man_order.id,
@@ -148,12 +104,12 @@ class TestMrpOrder(TestMrpCommon):
         produce_wizard = produce_form.save()
         produce_wizard.do_produce()
 
-        # man_order.button_mark_done()
         man_order.button_mark_done()
         self.assertEqual(man_order.state, 'done', "Production order should be in done state.")
 
     def test_explode_from_order(self):
-        #
+        # FIXME: move to test_workorder_operation.py + make sure everything still makes sense...
+
         # bom3 produces 2 Dozen of Doors (p6), aka 24
         # To produce 24 Units of Doors (p6)
         # - 2 Units of Tools (p5) -> need 4
@@ -295,8 +251,7 @@ class TestMrpOrder(TestMrpCommon):
         self.assertEqual(door_wo_2.state, 'done', "Workorder should be in done state.")
 
     def test_production_avialability(self):
-        """
-            Test availability of production order.
+        """ Checks the availability of a production order through mutliplte calls to `action_assign`.
         """
         self.bom_3.bom_line_ids.filtered(lambda x: x.product_id == self.product_5).unlink()
         self.bom_3.bom_line_ids.filtered(lambda x: x.product_id == self.product_4).unlink()
@@ -338,7 +293,7 @@ class TestMrpOrder(TestMrpCommon):
         self.assertEqual(production_2.reservation_state, 'assigned', 'Production order should be availability for assigned state')
 
     def test_empty_routing(self):
-        """ Check what happens when you work with an empty routing"""
+        """ Checks an empty routing isn't usable on a manufacturing order"""
         routing = self.env['mrp.routing'].create({'name': 'Routing without operations',
                                         'location_id': self.warehouse_1.wh_input_stock_loc_id.id,})
         self.bom_3.routing_id = routing.id
@@ -352,6 +307,7 @@ class TestMrpOrder(TestMrpCommon):
 
     def test_multiple_post_inventory(self):
         """ Check the consumed quants of the produced quants when intermediate calls to `post_inventory` during a MO."""
+        # FIXME: this test is kinf of useless without proper asserts
 
         # create a bom for `custom_laptop` with components that aren't tracked
         unit = self.ref("uom.product_uom_unit")
@@ -432,7 +388,9 @@ class TestMrpOrder(TestMrpCommon):
         mo_custom_laptop.post_inventory()
 
     def test_rounding(self):
-        """ In previous versions we had rounding and efficiency fields.  We check if we can still do the same, but with only the rounding on the UoM"""
+        """ Checks we round up when bringing goods to produce and round half-up when producing.
+        This implementation allows to implement an efficiency notion (see rev 347f140fe63612ee05e).
+        """
         self.product_6.uom_id.rounding = 1.0
         bom_eff = self.env['mrp.bom'].create({'product_id': self.product_6.id,
                                     'product_tmpl_id': self.product_6.product_tmpl_id.id,
@@ -466,7 +424,7 @@ class TestMrpOrder(TestMrpCommon):
         self.assertEqual(production.move_raw_ids[1].quantity_done, 34, 'Should use half-up rounding when producing')
 
     def test_product_produce_1(self):
-        """ Check that no produce line are created when the consumed products are not tracked """
+        """ Checks the production wizard contains lines even for untracked products. """
         self.stock_location = self.env.ref('stock.stock_location_stock')
         mo, bom, p_final, p1, p2 = self.generate_mo()
         self.assertEqual(len(mo), 1, 'MO should have been created')
@@ -485,13 +443,14 @@ class TestMrpOrder(TestMrpCommon):
         product_produce.do_produce()
 
     def test_product_produce_2(self):
-        """ Check that line are created when the consumed products are
-        tracked by serial and the lot proposed are correct. """
+        """ Checks that, for a BOM where one of the components is tracked by serial number and the
+        other is not tracked, when creating a manufacturing order for two finished products and
+        reserving, the produce wizards proposes the corrects lines when producing one at a time.
+        """
         self.stock_location = self.env.ref('stock.stock_location_stock')
         mo, bom, p_final, p1, p2 = self.generate_mo(tracking_base_1='serial', qty_base_1=1, qty_final=2)
         self.assertEqual(len(mo), 1, 'MO should have been created')
 
-        bom.consumption = 'flexible'
         lot_p1_1 = self.env['stock.production.lot'].create({
             'name': 'lot1',
             'product_id': p1.id,
@@ -510,34 +469,45 @@ class TestMrpOrder(TestMrpCommon):
             'active_id': mo.id,
             'active_ids': [mo.id],
         }))
-        product_produce = produce_form.save()
 
-        self.assertEqual(len(product_produce.workorder_line_ids), 3, 'You should have 3 produce lines. One for each serial to consume')
-        product_produce.qty_producing = 1
-        produce_line_1 = product_produce.workorder_line_ids[0]
-        produce_line_1.qty_done = 1
-        remaining_lot = (lot_p1_1 | lot_p1_2) - produce_line_1.lot_id
+        self.assertEqual(len(produce_form.workorder_line_ids), 3, 'You should have 3 produce lines. One for each serial to consume and for the untracked product.')
+        produce_form.qty_producing = 1
+
+        # get the proposed lot
+        consumed_lots = self.env['stock.production.lot']
+        for workorder_line in produce_form.workorder_line_ids._records:
+            if workorder_line['product_id'] == p1.id:
+                consumed_lots |= self.env['stock.production.lot'].browse(workorder_line['lot_id'])
+        consumed_lots.ensure_one()
+        product_produce = produce_form.save()
         product_produce.do_produce()
+
+        remaining_lot = (lot_p1_1 | lot_p1_2) - consumed_lots
+        remaining_lot.ensure_one()
 
         produce_form = Form(self.env['mrp.product.produce'].with_context({
             'active_id': mo.id,
             'active_ids': [mo.id],
         }))
         product_produce = produce_form.save()
-        self.assertEqual(len(product_produce.workorder_line_ids), 2, 'You should have 2 produce lines since one has already be consumed.')
+        self.assertEqual(len(product_produce.workorder_line_ids), 2, 'You should have 2 produce lines left.')
         for line in product_produce.workorder_line_ids.filtered(lambda x: x.lot_id):
             self.assertEqual(line.lot_id, remaining_lot, 'Wrong lot proposed.')
 
     def test_product_produce_3(self):
-        """ Check that line are created when the consumed products are
-        tracked by serial and the lot proposed are correct. """
+        """ Checks that, for a BOM where one of the components is tracked by lot and the other is
+        not tracked, when creating a manufacturing order for 1 finished product and reserving, the
+        produce wizard proposes the corrects lines. Then, checks the generated move lines when over
+        consuming.
+        """
+        # FIXME: some asserts on the quants after overproducing would be nice
         self.stock_location = self.env.ref('stock.stock_location_stock')
         self.stock_shelf_1 = self.env.ref('stock.stock_location_components')
         self.stock_shelf_2 = self.env.ref('stock.stock_location_14')
         mo, _, p_final, p1, p2 = self.generate_mo(tracking_base_1='lot', qty_base_1=10, qty_final=1)
         self.assertEqual(len(mo), 1, 'MO should have been created')
 
-        mo.bom_id.consumption = 'flexible'
+        mo.bom_id.consumption = 'flexible'  # Because we will over consume.
         first_lot_for_p1 = self.env['stock.production.lot'].create({
             'name': 'lot1',
             'product_id': p1.id,
@@ -593,6 +563,7 @@ class TestMrpOrder(TestMrpCommon):
 
     def test_product_produce_4(self):
         """ Possibility to produce with a given raw material in multiple locations. """
+        # FIXME sle: how is it possible to consume before producing in the interface?
         self.stock_location = self.env.ref('stock.stock_location_stock')
         self.stock_shelf_1 = self.env.ref('stock.stock_location_components')
         self.stock_shelf_2 = self.env.ref('stock.stock_location_14')
@@ -618,14 +589,14 @@ class TestMrpOrder(TestMrpCommon):
         }).create({
             'qty_producing': 1.0,
         })
-        line_values = product_produce._update_workorder_lines()
+        line_values = product_produce._update_workorder_lines()  # FIXME replace by an onchange?
         product_produce.workorder_line_ids |= product_produce.workorder_line_ids.create(line_values['to_create'])
         product_produce.do_produce()
 
         ml_p1 = mo.move_raw_ids.filtered(lambda x: x.product_id == p1).mapped('move_line_ids')
         self.assertEqual(len(ml_p1), 4)
         for ml in ml_p1:
-            self.assertIn(ml.qty_done, [1.0, 2.0], 'Quantity done should be 1.0, 2.0 or 3.0')
+            self.assertIn(ml.qty_done, [1.0, 2.0], 'Quantity done should be 1.0, 2.0 or 3.0')  # FIXME sle ahwat
         self.assertEqual(sum(ml_p1.mapped('qty_done')), 6.0, 'Total qty consumed should be 6.0')
         self.assertEqual(sum(ml_p1.mapped('product_uom_qty')), 5.0, 'Total qty reserved should be 5.0')
 
@@ -637,6 +608,17 @@ class TestMrpOrder(TestMrpCommon):
         then edit the finished quantity and update the Manufacturing
         order quantity. Then check if the produced quantity do not
         change and it is possible to close the MO.
+        """
+
+        """ Change the quantity to produce on the manufacturing order after 
+        product tracket by lot
+        open produce, j'en fais 5
+        unlock , j'en ai produis 4 en fait
+        change qty to do 4
+        coherent, 
+        
+        this test should not be named test_product_produce
+
         """
         self.stock_location = self.env.ref('stock.stock_location_stock')
         mo, bom, p_final, p1, p2 = self.generate_mo(tracking_base_1='lot')
@@ -665,8 +647,6 @@ class TestMrpOrder(TestMrpCommon):
         })
         produce_wizard._onchange_qty_producing()
 
-        for produce_line in produce_wizard.workorder_line_ids:
-            produce_line.qty_done = produce_line.qty_to_consume
         produce_wizard.do_produce()
 
         mo.move_finished_ids.move_line_ids.qty_done -= 1
@@ -680,14 +660,15 @@ class TestMrpOrder(TestMrpCommon):
         mo.button_mark_done()
 
     def test_product_produce_6(self):
-        """ Build some final products and change the quantity to produce
-        directly in the wizard. The component line should be updated .
+        """ Checks that, for a BOM with two components, when creating a manufacturing order for one
+        finished products and without reserving, the produce wizards proposes the corrects lines
+        even if we change the quantity to produce multiple times.
         """
         self.stock_location = self.env.ref('stock.stock_location_stock')
         mo, bom, p_final, p1, p2 = self.generate_mo(qty_final=1)
         self.assertEqual(len(mo), 1, 'MO should have been created')
 
-        mo.bom_id.consumption = 'flexible'
+        mo.bom_id.consumption = 'flexible'  # Because we'll over-consume with a product not defined in the BOM
         mo.action_assign()
 
         produce_form = Form(self.env['mrp.product.produce'].with_context({
@@ -711,7 +692,9 @@ class TestMrpOrder(TestMrpCommon):
         produce_wizard.do_produce()
 
     def test_product_produce_7(self):
-        """ Check that no produce line are created when the consumed products are not tracked """
+        """ Checks the constraints of a strict BOM without tracking when playing around in the
+        produce wizard.
+        """
         self.stock_location = self.env.ref('stock.stock_location_stock')
         mo, bom, p_final, p1, p2 = self.generate_mo()
         self.assertEqual(len(mo), 1, 'MO should have been created')
