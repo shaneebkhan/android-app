@@ -172,6 +172,13 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
             });
     },
     set_driver_connection_status: function (status, driver) {
+        if (status && status.reason && status !== this.iot_devices_status[driver] &&
+            ['connected', 'connecting', 'processing'].indexOf(status.value) < 0) {
+            this.pos.chrome.do_notify(
+                _.str.capitalize(driver) + " " + status.value,
+                "Reason: " + status.reason
+            );
+        }
         this.iot_devices_status[driver] = status;
         this.set_connection_status();
     },

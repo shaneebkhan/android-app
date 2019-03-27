@@ -10,6 +10,7 @@ var core = require('web.core');
 var ajax = require('web.ajax');
 var CrashManager = require('web.CrashManager');
 var BarcodeEvents = require('barcodes.BarcodeEvents').BarcodeEvents;
+var NotificationService = require('web.NotificationService');
 
 
 var _t = core._t;
@@ -567,6 +568,9 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         this.widget = {};   // contains references to subwidgets instances
 
         this.cleanup_dom();
+
+        this.notificationService = new NotificationService();
+
         this.pos.ready.then(function(){
             self.build_chrome();
             self.build_widgets();
@@ -579,6 +583,11 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         }).guardedCatch(function (err) { // error when loading models data from the backend
             self.loading_error(err);
         });
+    },
+
+    start: function () {
+        this._super.apply(this, arguments);
+        this.notificationService.start();
     },
 
     cleanup_dom:  function() {
