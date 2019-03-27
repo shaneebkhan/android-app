@@ -643,6 +643,33 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
                     this._super(error);
                 }
             },
+            handleLostConnection: function () {
+                var selfHandle = this;
+                if (!this.isConnected) {
+                    // already handled, nothing to do.  This can happen when several
+                    // rpcs are done in parallel and fail because of a lost connection.
+                    return;
+                }
+                this.isConnected = false;
+                var delay = 2000;
+                core.bus.trigger('connection_lost');
+        
+                setTimeout(function checkConnection() {
+                    $.ajax({
+                        url: self.pos.proxy.host + '/hw_proxy/hello',
+                        method: 'GET',
+                        timeout: 1000,
+                        shadow: true,
+                    }).then(function () {
+                        core.bus.trigger('connection_restored');
+                        selfHandle.isConnected = true;
+                    }).fail(function () {
+                        // exponential backoff, with some jitter
+                        delay = (delay * 1.5) + 500*Math.random();
+                        setTimeout(checkConnection, delay);
+                    });
+                }, delay);
+            },
         });
     },
 
