@@ -17,12 +17,12 @@
                 <div class="col-12 col-lg-6" t-foreach="certificates" t-as="certificate">
                     <div class="card mb-2">
                         <div class="card-body o_wprofile_slides_course_card_body p-0 d-flex">
-                            <div class="pl-5 pr-4 rounded-left" t-attf-style="background-image:url(/web/image/slide.slide/#{certificate.slide_id.id}/image_medium); background-position: center"/>
+                            <div class="pl-5 pr-4 rounded-left" t-attf-style="background-image:url(/web/image/slide.slide/#{certificate['slide_id'].id}/image_medium); background-position: center"/>
                             <div class="p-2 w-100">
-                                <h5 class="mt-0 mb-1" t-field="certificate.survey_id.title"/>
+                                <h5 class="mt-0 mb-1" t-esc="certificate['survey_id'].title"/>
                                 <div t-if="user.id == uid">
-                                    <small class="font-weight-bold">Score : <span t-field="certificate.quizz_score"/> %</small>
-                                   <a role="button" class="float-right" t-att-href="'/survey/%s/get_certification' % certificate.survey_id.id">
+                                    <small class="font-weight-bold">Score : <span t-esc="certificate['quizz_score']"/> %</small>
+                                   <a role="button" class="float-right" t-att-href="'/survey/%s/get_certification' % certificate['survey_id'].id">
                                         <i class="fa fa-download"/>
                                     </a>
                                 </div>
@@ -39,13 +39,13 @@
 
     <template id="top3_user_card" inherit_id="website_profile.top3_user_card">
         <xpath expr="//div[hasclass('o_wprofile_top3_card_footer')]//div[last()]" position="after">
-            <div class="col py-3"><b t-esc="user['certification_count']"/> <span class="text-muted">Certifications</span></div>
+            <div t-if="user.get('certification_count')" class="col py-3"><b t-esc="user['certification_count']"/> <span class="text-muted">Certifications</span></div>
         </xpath>
     </template>
 
     <template id="all_user_card" inherit_id="website_profile.all_user_card">
         <xpath expr="//td[hasclass('all_user_badge_count')]" position="after">
-            <td class="align-middle text-right pr-3 text-nowrap all_user_certification_count">
+            <td t-if="user.get('certification_count')" class="align-middle text-right pr-3 text-nowrap all_user_certification_count">
                 <b t-esc="user['certification_count']"/> <span class="text-muted small font-weight-bold">Certifications</span>
             </td>
         </xpath>
