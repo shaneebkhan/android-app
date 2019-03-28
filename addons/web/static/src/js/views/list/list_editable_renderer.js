@@ -453,13 +453,17 @@ ListRenderer.include({
         }
     },
     /**
-     * Returns the relative colspan according to the field type.
+     * Returns the relative colspan according to the widget or the field type.
      * @see _renderHeader
      *
      * @param {Object} column a `field` arch node
      */
     _getFieldColspan: function (column) {
         var fieldType = this.state.fields[column.attrs.name].type;
+        var widget = this.state.fieldsInfo.list[column.attrs.name].Widget.prototype;
+        if ('colspan' in widget) {
+            return widget.colspan;
+        }
         switch (fieldType) {
             case 'binary': return 1;
             case 'boolean': return 0.5;
