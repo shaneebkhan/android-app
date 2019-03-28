@@ -414,8 +414,9 @@ class WebsiteSlides(WebsiteProfile):
         # documentation mode may display less slides than content by category but overhead of
         # computation is reasonable
         values['slide_promoted'] = request.env['slide.slide'].sudo().search(domain, limit=1, order=order)
+        category_slides_domain = domain + [('id', '!=', values.get('slide_promoted').id)] if values.get('slide_promoted') else domain
         values['category_data'] = channel._get_categorized_slides(
-            domain, order,
+            category_slides_domain, order,
             force_void=not category,
             limit=False if channel.channel_type != 'documentation' else self._slides_per_page if category else self._slides_per_category,
             offset=pager['offset'])

@@ -558,12 +558,14 @@
                 <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3" t-if="category['name'] != 'Uncategorized'">
                     <t t-set="is_empty_editable" t-value="not category['slides'] and channel.can_publish"/>
                     <h5 t-attf-class="m-0 #{'text-muted' if is_empty_editable else ''}"><t t-esc="category['name']"/></h5>
-                    <a t-if="category['id'] and not is_empty_editable" t-att-href="'/slides/%s/category/%s' % (slug(channel), category['slug_name'])">View all</a>
-                    <a t-elif="not is_empty_editable" t-att-href="'/slides/%s?uncategorized=1' % (slug(channel))">View all</a>
+                    <t t-if="category['total_slides'] > len(category['slides'])">
+                        <a t-if="category['id'] and not is_empty_editable" t-att-href="'/slides/%s/category/%s' % (slug(channel), category['slug_name'])">View all</a>
+                        <a t-elif="not is_empty_editable" t-att-href="'/slides/%s?uncategorized=1' % (slug(channel))">View all</a>
+                    </t>
                 </div>
                 <div class="row mx-n2">
                     <t t-foreach="category['slides']" t-as="slide">
-                        <t t-if="(slide.id != slide_promoted.id) and (slide_promoted and not search) ">
+                        <t t-if="slide_promoted and not search">
                             <div class="col-12 col-sm-6 col-lg-3 px-2 d-flex flex-grow-1" t-call="website_slides.lesson_card"/>
                         </t>
                         <t t-elif="search_slide_type or search">
