@@ -170,6 +170,10 @@ var ProxyDevice  = core.Class.extend(mixins.PropertiesMixin,{
             .then(function (status) {
                 self.set_driver_connection_status(status.state, 'printer');
             });
+        this.pos.config.iface_scan_via_proxy && this.message('default_scanner_status', {})
+            .then(function (status) {
+                self.set_driver_connection_status(status.state, 'scanner');
+            });
     },
     set_driver_connection_status: function (status, driver) {
         if (status && status.reason && status !== this.iot_devices_status[driver] &&
@@ -677,23 +681,30 @@ var BarcodeReader = core.Class.extend({
         }
         this.remote_active = 1;
 
-        function waitforbarcode(){
-            return self.proxy.connection.rpc('/hw_proxy/scanner',{},{shadow: true, timeout:7500})
-                .then(function(barcode){
-                    if(!self.remote_scanning){
-                        self.remote_active = 0;
-                        return;
-                    }
-                    self.scan(barcode);
-                    waitforbarcode();
-                },
-                function(){
-                    if(!self.remote_scanning){
-                        self.remote_active = 0;
-                        return;
-                    }
-                    setTimeout(waitforbarcode,5000);
-                });
+        function disconnected(){
+            if(!self.remote_scanning){
+                self.remote_active = 0;
+                return;
+            }
+            self.proxy.set_driver_connection_status({ status: 'disconnected' }, 'scanner');
+            setTimeout(waitforbarcode,5000);
+        }
+
+        function waitforbarcode() {
+            return self.pos.config.iface_scan_via_proxy &&
+                self.proxy.connection.rpc('/hw_proxy/default_barcode_scanner', {}, { shadow: true, timeout: 60000 })
+                .then(function (barcode) {
+                        if (!self.remote_scanning) {
+                            self.remote_active = 0;
+                            return;
+                        } else if (barcode === undefined) {
+                            disconnected();
+                            return;
+                        }
+                        self.proxy.set_driver_connection_status({ status: 'connected' }, 'scanner');
+                        self.scan(barcode);
+                        waitforbarcode();
+                    }, disconnected);
         }
         waitforbarcode();
     },

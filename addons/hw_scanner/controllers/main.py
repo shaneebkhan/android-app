@@ -27,7 +27,6 @@ except ImportError:
 class ScannerDevice():
     def __init__(self, path):
         self.evdev = evdev.InputDevice(path)
-        self.evdev.grab()
 
         self.barcode = []
         self.shift = False
