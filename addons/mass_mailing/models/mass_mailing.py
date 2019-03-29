@@ -782,7 +782,7 @@ class MassMailing(models.Model):
 
     @api.multi
     def retry_failed_mail(self):
-        failed_mails = self.env['mail.mail'].search([('mailing_id', 'in', self.ids), ('state', '=', 'exception')])
+        failed_mails = self.env['mail.mail'].sudo().search([('mailing_id', 'in', self.ids), ('state', '=', 'exception')])
         failed_mails.mapped('statistics_ids').unlink()
         failed_mails.sudo().unlink()
         res_ids = self.get_recipients()

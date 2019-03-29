@@ -960,7 +960,7 @@ class MailThread(models.AbstractModel):
         if bounce_from:
             bounce_mail_values['email_from'] = 'MAILER-DAEMON <%s>' % bounce_from
         bounce_mail_values.update(mail_values)
-        self.env['mail.mail'].create(bounce_mail_values).send()
+        self.env['mail.mail'].sudo().create(bounce_mail_values).send()
 
     @api.model
     def message_route_verify(self, message, message_dict, route,

@@ -23,8 +23,8 @@ class MailMail(models.Model):
         mails = super(MailMail, self).create(values_list)
         for mail_index, values in enumerate(values_list):
             if values.get('statistics_ids'):
-                mail_sudo = mails[mail_index].sudo()
-                mail_sudo.statistics_ids.write({'message_id': mail_sudo.message_id, 'state': 'outgoing'})
+                mail = mails[mail_index]
+                mail.statistics_ids.write({'message_id': mail.message_id, 'state': 'outgoing'})
         return mails
 
     def _get_tracking_url(self):
