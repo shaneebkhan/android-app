@@ -13,6 +13,7 @@ var testUtils = require('web.test_utils');
 var widgetRegistry = require('web.widget_registry');
 var Widget = require('web.Widget');
 
+var _t = core._t;
 var createView = testUtils.createView;
 
 
@@ -1224,22 +1225,38 @@ QUnit.module('Views', {
     });
 
     QUnit.test('row height should not change when switching mode', async function (assert) {
+        // Warning: this test is css dependant
         assert.expect(3);
 
-        // Warning: this test is css dependant
+        var multiLang = _t.database.multi_lang;
+        _t.database.multi_lang = true;
+
+        this.data.foo.fields.foo.translate = true;
+        this.data.foo.fields.boolean = {type: 'boolean', string: 'Bool'};
+        var currencies = {};
+        _.each(this.data.res_currency.records, function (currency) {
+            currencies[currency.id] = currency;
+        });
+
         var list = await createView({
             View: ListView,
             model: 'foo',
             data: this.data,
             arch: '<tree editable="top">' +
-                        '<field name="foo"/>' +
+                        '<field name="foo" required="1"/>' +
                         '<field name="int_field" readonly="1"/>' +
+                        '<field name="boolean"/>' +
+                        '<field name="date"/>' +
                         '<field name="text"/>' +
+                        '<field name="amount"/>' +
+                        '<field name="currency_id" invisible="1"/>' +
                         '<field name="m2o"/>' +
                         '<field name="m2m" widget="many2many_tags"/>' +
                     '</tree>',
+            session: {
+                currencies: currencies,
+            },
         });
-
         var startHeight = list.$('.o_data_row:first').height();
 
         // start edition of first row
@@ -1256,6 +1273,7 @@ QUnit.module('Views', {
         assert.strictEqual(startHeight, editionHeight);
         assert.strictEqual(startHeight, readonlyHeight);
 
+        _t.database.multi_lang = multiLang;
         list.destroy();
     });
 
