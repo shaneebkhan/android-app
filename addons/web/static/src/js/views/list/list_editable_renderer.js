@@ -466,17 +466,17 @@ ListRenderer.include({
         }
         switch (fieldType) {
             case 'binary': return 1;
-            case 'boolean': return 0.5;
-            case 'char': return 2;
-            case 'date': return 1.5;
-            case 'datetime': return 2;
-            case 'float': return 1.5;
+            case 'boolean': return 0.4;
+            case 'char': return 1;
+            case 'date': return 1;
+            case 'datetime': return 1.5;
+            case 'float': return 1;
             case 'html': return 3;
-            case 'integer': return 1;
-            case 'many2many': return 2;
+            case 'integer': return 0.8;
+            case 'many2many': return 2.2;
             case 'many2one': return 1.5;
             case 'monetary': return 1.2;
-            case 'one2many': return 1.5;
+            case 'one2many': return 2.2;
             case 'reference': return 1.5;
             case 'selection': return 1.5;
             case 'text': return 3;
