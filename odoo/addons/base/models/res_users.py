@@ -376,10 +376,10 @@ class Users(models.Model):
     def onchange_parent_id(self):
         return self.partner_id.onchange_parent_id()
 
-    def _read_from_database(self, field_names, inherited_field_names=[]):
-        super(Users, self)._read_from_database(field_names, inherited_field_names)
+    def _read(self, fields):
+        super(Users, self)._read(fields)
         canwrite = self.check_access_rights('write', raise_exception=False)
-        if not canwrite and set(USER_PRIVATE_FIELDS).intersection(field_names):
+        if not canwrite and set(USER_PRIVATE_FIELDS).intersection(fields):
             for record in self:
                 for f in USER_PRIVATE_FIELDS:
                     try:
@@ -923,8 +923,8 @@ class GroupsImplied(models.Model):
         return groups
 
     @api.multi
-    def write(self, values):
-        res = super(GroupsImplied, self).write(values)
+    def _write(self, values):
+        res = super(GroupsImplied, self)._write(values)
         if values.get('users') or values.get('implied_ids'):
             # add all implied groups (to all users of each group)
             for group in self:
@@ -1018,8 +1018,8 @@ class GroupsView(models.Model):
         return user
 
     @api.multi
-    def write(self, values):
-        res = super(GroupsView, self).write(values)
+    def _write(self, values):
+        res = super(GroupsView, self)._write(values)
         self._update_user_groups_view()
         # actions.get_bindings() depends on action records
         self.env['ir.actions.actions'].clear_caches()

@@ -938,10 +938,9 @@ class ModuleDependency(models.Model):
         for dep in self:
             dep.depend_id = name_mod.get(dep.name)
 
-    @api.one
-    @api.depends('depend_id.state')
     def _compute_state(self):
-        self.state = self.depend_id.state or 'unknown'
+        for module in self:
+            module.state = module.depend_id.state or 'unknown'
 
 
 class ModuleExclusion(models.Model):
@@ -954,12 +953,10 @@ class ModuleExclusion(models.Model):
     # the module that excludes it
     module_id = fields.Many2one('ir.module.module', 'Module', ondelete='cascade')
 
-    # the module corresponding to the exclusion, and its status
+    # the module corresponding to the exclusion, and its status, must be stored as it's used in a @depends
     exclusion_id = fields.Many2one('ir.module.module', 'Exclusion Module', compute='_compute_exclusion')
     state = fields.Selection(DEP_STATES, string='Status', compute='_compute_state')
 
-    @api.multi
-    @api.depends('name')
     def _compute_exclusion(self):
         # retrieve all modules corresponding to the exclusion names
         names = list(set(excl.name for excl in self))
@@ -970,7 +967,6 @@ class ModuleExclusion(models.Model):
         for excl in self:
             excl.exclusion_id = name_mod.get(excl.name)
 
-    @api.one
-    @api.depends('exclusion_id.state')
     def _compute_state(self):
-        self.state = self.exclusion_id.state or 'unknown'
+        for module in self:
+            module.state = module.exclusion_id.state or 'unknown'

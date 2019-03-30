@@ -161,6 +161,7 @@ class AccountInvoice(models.Model):
     @api.one
     def _get_outstanding_info_JSON(self):
         self.outstanding_credits_debits_widget = json.dumps(False)
+        self.has_outstanding = False
         if self.state == 'open':
             domain = [('account_id', '=', self.account_id.id),
                       ('partner_id', '=', self.env['res.partner']._find_accounting_partner(self.partner_id).id),
@@ -439,7 +440,10 @@ class AccountInvoice(models.Model):
                     vendor_display_name = _('From: ') + invoice.source_email
                     invoice.invoice_icon = '@'
                 else:
-                    vendor_display_name = ('Created by: ') + invoice.create_uid.name
+                    # FP TODO: fix that shit, create_uid should have a default
+                    # value that works in onchange
+                    creator = invoice.create_uid or self.env.user
+                    vendor_display_name = _('Created by: ') + creator.name
                     invoice.invoice_icon = '#'
             invoice.vendor_display_name = vendor_display_name
 
