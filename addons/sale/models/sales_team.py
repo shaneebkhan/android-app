@@ -9,6 +9,8 @@ from odoo import api, fields, models, _
 class CrmTeam(models.Model):
     _inherit = 'crm.team'
 
+    use_quotations = fields.Boolean(string='Quotations', help="Check this box if you send quotations to your customers rather than confirming orders straight away. "
+                                                              "This will add specific action buttons to your dashboard.")
     invoiced = fields.Integer(
         compute='_compute_invoiced',
         string='Invoiced This Month', readonly=True,
@@ -59,7 +61,7 @@ class CrmTeam(models.Model):
             ('team_id', 'in', self.ids),
             ('order_line.qty_to_invoice', '>', 0),
         ], ['team_id'], ['team_id'])
-        data_map = {datum['team_id'][0]: datum['team_id_count'] for datum in sale_order_data }
+        data_map = {datum['team_id'][0]: datum['team_id_count'] for datum in sale_order_data}
         for team in self:
             team.sales_to_invoice_count = data_map.get(team.id,0.0)
 
@@ -72,10 +74,10 @@ class CrmTeam(models.Model):
             ('date', '>=', date.today().replace(day=1)),
             ('type', 'in', ['out_invoice', 'out_refund']),
         ], ['amount_untaxed_signed', 'team_id'], ['team_id'])
-        data_map = { datum['team_id'][0]: datum['amount_untaxed_signed'] for datum in invoice_data}
+        data_map = {datum['team_id'][0]: datum['amount_untaxed_signed'] for datum in invoice_data}
         for team in self:
             team.invoiced = data_map.get(team.id,0.0)
-    
+
     def _graph_get_model(self):
         if self._context.get('in_sales_app'):
             return 'sale.report'
@@ -110,7 +112,7 @@ class CrmTeam(models.Model):
         if self._context.get('in_sales_app'):
             return self.env.ref('sale.action_order_report_so_salesteam').read()[0]
         return super(CrmTeam, self).action_primary_channel_button()
-            
+
     @api.multi
     def update_invoiced_target(self, value):
         return self.write({'invoiced_target': round(float(value or 0))})

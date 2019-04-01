@@ -32,8 +32,7 @@
                             <div class="o_setting_right_pane">
                                 <label for="generate_lead_from_alias" string="Manual Assignation of Incoming Emails"/>
                                 <div class="text-muted">
-                                    Generate leads from incoming emails and assign them
-                                    to a Sales Team manually
+                                    A lead will be created for each email sent to the following address
                                 </div>
                                 <div class="content-group" attrs="{'invisible': [('generate_lead_from_alias','=',False)]}">
                                     <div class="mt16">
