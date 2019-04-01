@@ -62,6 +62,7 @@
         <link rel="stylesheet" type="text/css" href="/web/static/lib/select2/select2.css"/>
         <link rel="stylesheet" type="text/css" href="/web/static/lib/select2-bootstrap-css/select2-bootstrap.css"/>
         <link rel="stylesheet" type="text/scss" href="/web/static/lib/tempusdominus/tempusdominus.scss"/>
+        <link rel="stylesheet" type="text/css" href="/web/static/lib/daterangepicker/daterangepicker.css"/>
 
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/fonts.scss"/>
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/ui.scss"/>
@@ -115,6 +116,7 @@
         <script type="text/javascript" src="/web/static/lib/select2/select2.js"></script>
         <script type="text/javascript" src="/web/static/lib/clipboard/clipboard.js"></script>
         <script type="text/javascript" src="/web/static/lib/jSignature/jSignatureCustom.js"></script>
+        <script type="text/javascript" src="/web/static/lib/daterangepicker/daterangepicker.js"></script>
 
         <script type="text/javascript" src="/web/static/lib/qweb/qweb2.js"></script>
         <script type="text/javascript" src="/web/static/src/js/libs/autocomplete.js"></script>
