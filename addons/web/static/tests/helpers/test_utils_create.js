@@ -159,7 +159,6 @@ async function createView(params) {
             fields: viewInfo.fields,
             model: params.model,
         });
-
         view = new params.View(viewInfo, viewOptions);
     }
 
