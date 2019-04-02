@@ -1,0 +1,23 @@
+// Restore date range picker style
+.daterangepicker {
+    select {
+        &.hourselect, &.minuteselect, &.secondselect, &.ampmselect {
+            display: initial;
+            -webkit-appearance: menulist-button;
+            -moz-appearance: menulist-button;
+            appearance: menulist-button;
+        }
+    }
+    td.in-range {
+        background-color: gray('200');
+    }
+    td.available:hover, th.available:hover {
+        background-color: gray('200');
+    }
+    td.active, td.active:hover {
+        background-color: $o-brand-primary;
+    }
+    .drp-selected {
+        display: none;
+    }
+}
