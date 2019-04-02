@@ -65,12 +65,9 @@ var PivotView = AbstractView.extend({
             if (field.attrs.interval) {
                 name += ':' + field.attrs.interval;
             }
-
             if (field.attrs.widget) {
                 widgets[name] = field.attrs.widget;
             }
-
-
             if (field.attrs.invisible && py.eval(field.attrs.invisible)) {
                 delete measures[name];
                 return;
@@ -82,15 +79,12 @@ var PivotView = AbstractView.extend({
             // the measure should be allowed.  However, be careful if you define
             // a measure in your pivot view: non stored functional fields will
             // probably not work (their aggregate will always be 0).
-
-            if (field.attrs.type === 'measure' && !(field.attrs.name in measures)) {
-                measures[field.attrs.name] = self.fields[field.attrs.name];
+            if (field.attrs.type === 'measure' && !(name in measures)) {
+                measures[name] = self.fields[name];
             }
-
             if (field.attrs.string) {
               measures[name].string = field.attrs.string;
             }
-
             if (field.attrs.type === 'measure' || 'operator' in field.attrs) {
                 activeMeasures.push(name);
                 measures[name] = self.fields[name];
