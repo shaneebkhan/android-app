@@ -146,10 +146,15 @@ class Channel(models.Model):
         self.can_upload = self.can_see and (not self.upload_group_ids or bool(self.upload_group_ids & self.env.user.groups_id))
 
     @api.multi
+    def get_base_url(self):
+        icp = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return self.website_id and self.website_id._get_http_domain() or icp
+
+    @api.multi
     @api.depends('name')
     def _compute_website_url(self):
         super(Channel, self)._compute_website_url()
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        base_url = self.get_base_url()
         for channel in self:
             if channel.id:  # avoid to perform a slug on a not yet saved record in case of an onchange.
                 channel.website_url = '%s/slides/%s' % (base_url, slug(channel))
@@ -374,7 +379,7 @@ class Slide(models.Model):
     @api.depends('name')
     def _compute_website_url(self):
         super(Slide, self)._compute_website_url()
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        base_url = self.channel_id.get_base_url()
         for slide in self:
             if slide.id:  # avoid to perform a slug on a not yet saved record in case of an onchange.
                 # link_tracker is not in dependencies, so use it to shorten url only if installed.
