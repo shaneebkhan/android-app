@@ -6,9 +6,9 @@
         <script src="/web/static/lib/Chart/Chart.js"></script>
         <script type="text/javascript" src="/web/static/src/js/fields/field_utils.js"></script>
 
-        <script type="text/javascript" src="/survey/static/src/js/survey_result.js" />
-        <script type="text/javascript" src="/survey/static/src/js/survey.js" />
         <script type="text/javascript" src="/survey/static/src/js/survey_timer.js" />
+        <script type="text/javascript" src="/survey/static/src/js/survey_form.js" />
+        <script type="text/javascript" src="/survey/static/src/js/survey_result.js" />
         <script type="text/javascript" src="/survey/static/src/js/tour_test_survey.js"></script>
         <script type="text/javascript" src="/survey/static/src/js/tour_test_certification_success.js"></script>
         <script type="text/javascript" src="/survey/static/src/js/tour_test_certification_failure.js"></script>
