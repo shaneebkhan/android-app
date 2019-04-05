@@ -80,7 +80,7 @@ class ProductTemplate(models.Model):
         'Public Price', related='list_price', readonly=False,
         digits=dp.get_precision('Product Price'))
     standard_price = fields.Float(
-        'Cost', compute='_compute_standard_price',
+        'Value', compute='_compute_standard_price',
         inverse='_set_standard_price', search='_search_standard_price',
         digits=dp.get_precision('Product Price'), groups="base.group_user",
         help = "Cost used for stock valuation in standard price and as a first price to set in average/FIFO.")

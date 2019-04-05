@@ -105,7 +105,7 @@ class ProductProduct(models.Model):
     is_product_variant = fields.Boolean(compute='_compute_is_product_variant')
 
     standard_price = fields.Float(
-        'Cost', company_dependent=True,
+        'Value', company_dependent=True,
         digits=dp.get_precision('Product Price'),
         groups="base.group_user",
         help = "Cost used for stock valuation in standard price and as a first price to set in average/fifo. "
