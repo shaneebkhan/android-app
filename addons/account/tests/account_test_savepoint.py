@@ -132,6 +132,7 @@ class AccountingSavepointCase(SavepointCase):
             'price_include': True,
             'include_base_amount': True,
          })
+        cls.parent_tax_purchase_1 = cls.company_parent.account_purchase_tax_id
 
         cls.parent_acc_tax_1 = cls.parent_tax_sale_1.account_id
         cls.parent_acc_tax_2 = cls.parent_acc_tax_1.copy()
