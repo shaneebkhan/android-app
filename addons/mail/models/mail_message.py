@@ -477,19 +477,22 @@ class Message(models.Model):
         # fetch notification status
         notif_dict = {}
         notifs = self.env['mail.notification'].sudo().search([('mail_message_id', 'in', list(mid for mid in message_tree))])
-        for notif in notifs.filtered(lambda x: not x.is_read):
+        for notif in notifs:
             mid = notif.mail_message_id.id
             if not notif_dict.get(mid):
-                notif_dict[mid] = {'partner_id': list()}
-            notif_dict[mid]['partner_id'].append(notif.res_partner_id.id)
+                notif_dict[mid] = {'history_partner_ids': list(), 'needaction_partner_ids': list()}
 
+            if notif.is_read:
+                notif_dict[mid]['history_partner_ids'].append(notif.res_partner_id.id)
+            else:
+                notif_dict[mid]['needaction_partner_ids'].append(notif.res_partner_id.id)
         for message in message_values:
-            message['needaction_partner_ids'] = notif_dict.get(message['id'], dict()).get('partner_id', [])
+            message['needaction_partner_ids'] = notif_dict.get(message['id'], dict()).get('needaction_partner_ids', [])
+            message['history_partner_ids'] = notif_dict.get(message['id'], dict()).get('history_partner_ids', [])
             message['is_note'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == note_id
             message['is_discussion'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == com_id
             message['is_notification'] = message['is_note'] and not message['model'] and not message['res_id']
             message['subtype_description'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['description']
-            message['is_history'] = notifs.filtered(lambda x: (x.mail_message_id.id == message['id']) and (x.res_partner_id == self.env.user.partner_id)).is_read
             if message['model'] and self.env[message['model']]._original_module:
                 message['module_icon'] = modules.module.get_module_icon(self.env[message['model']]._original_module)
         return message_values

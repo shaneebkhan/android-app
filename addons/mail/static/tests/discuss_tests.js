@@ -41,10 +41,6 @@ QUnit.module('Discuss', {
                         string: "Need Action",
                         type: 'boolean',
                     },
-                    is_history: {
-                        string: "Is history",
-                        type: 'boolean',
-                    },
                     needaction_partner_ids: {
                         string: "Partners with Need Action",
                         type: 'many2many',
@@ -52,6 +48,11 @@ QUnit.module('Discuss', {
                     },
                     starred_partner_ids: {
                         string: "Favorited By",
+                        type: 'many2many',
+                        relation: 'res.partner',
+                    },
+                    history_partner_ids: {
+                        string: "Partners with History",
                         type: 'many2many',
                         relation: 'res.partner',
                     },
@@ -1562,7 +1563,8 @@ QUnit.test('messages marked as read move to "History" mailbox', async function (
         mockRPC: function (route, args) {
             if (args.method === 'mark_all_as_read') {
                 _.each(this.data['mail.message'].records, function (message) {
-                    message.is_history = true;
+                    message.history_partner_ids = [3];
+                    message.needaction_partner_ids = [];
                 });
                 var notificationData = {
                     type: 'mark_as_read',
@@ -1641,7 +1643,8 @@ QUnit.test('all messages in "Inbox" in "History" after marked all as read', asyn
             if (args.method === 'mark_all_as_read') {
                 var messageIDs = [];
                 for (var i = 0; i < messagesData.length; i++) {
-                    this.data['mail.message'].records[i].is_history = true;
+                    this.data['mail.message'].records[i].history_partner_ids = [3];
+                    this.data['mail.message'].records[i].needaction_partner_ids = [];
                     this.data['mail.message'].records[i].needaction = false;
                     messageIDs.push(i);
                 }
