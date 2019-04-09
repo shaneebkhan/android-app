@@ -943,6 +943,55 @@ QUnit.module('relational_fields', {
         form.destroy();
     });
 
+    QUnit.test('overflowing status are put in More dropdown', async function (assert) {
+        assert.expect(3);
+
+        // force the width of the webclient in this test
+        var style = document.createElement('style');
+        style.innerHTML =
+            '.o_web_client {' +
+                'width: 500px;' +
+            '}';
+        var ref = document.querySelector('script');
+        ref.parentNode.insertBefore(style, ref);
+
+        this.data.partner.fields.stage = {
+            type: "selection",
+            selection: _.map([1, 2, 3, 4, 5, 6, 7, 8, 9], function (id) {
+                return ['stage' + id, "Stage" + id];
+            }),
+            default: 'stage8',
+            string: "Stages",
+        };
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form>' +
+                    '<header><field name="stage" widget="statusbar"/></header>' +
+                '</form>',
+            res_id: 1,
+        });
+
+        assert.containsOnce(form, '.o_statusbar_status .dropdown-menu');
+
+        var statusBar = form.$('.o_statusbar_status').get(0);
+        var moreButton = form.$('.o_statusbar_status > button.dropdown-toggle').get(0);
+        var statusbarWidth = statusBar.offsetWidth;
+        var moreButtonWidth = moreButton.offsetWidth;
+        var statusButtonsWidth = 0;
+        form.$('.o_statusbar_status > button:not(.dropdown-toggle)').each(function () {
+            statusButtonsWidth += this.offsetWidth;
+        });
+
+        // all visible buttons must be displayed in a single row
+        assert.strictEqual((statusButtonsWidth + moreButtonWidth), statusbarWidth);
+        assert.strictEqual(statusBar.offsetHeight, moreButton.offsetHeight);
+
+        style.remove();
+        form.destroy();
+    });
+
     QUnit.module('FieldSelection');
 
     QUnit.test('widget selection in a list view', async function (assert) {

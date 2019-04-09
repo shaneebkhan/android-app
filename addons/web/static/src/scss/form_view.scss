@@ -164,6 +164,7 @@
         }
 
         > .o_statusbar_buttons {
+            flex: 1 0 auto;
             flex-flow: row wrap;
 
             > .btn {

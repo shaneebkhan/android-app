@@ -803,7 +803,7 @@
             </t>
         </div>
     </t>
-    <t t-foreach="selection_unfolded.reverse()" t-as="i">
+    <t t-foreach="selection_unfolded" t-as="i">
         <t t-call="FieldStatus.content.button"/>
     </t>
 </t>

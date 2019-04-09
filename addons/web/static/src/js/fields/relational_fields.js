@@ -2411,6 +2411,27 @@ var FieldStatus = AbstractField.extend({
         // instead of options.
         // If not set, the statusbar is not clickable.
         this.isClickable = !!this.attrs.clickable || !!this.nodeOptions.clickable;
+
+        // the rendering of this widget depends on the available space, so we
+        // trigger a re-rendering when the user resizes the page
+        this._onResizeHandler = _.debounce(this._render.bind(this), 100);
+    },
+    /**
+     * Called each time this widget is inserted into the DOM. We need to hook
+     * on this to redraw the buttons according to their width and the available
+     * space.
+     */
+    on_attach_callback: function () {
+        this.inDOM = true;
+        this._reflow();
+        core.bus.on('resize', this, this._onResizeHandler);
+    },
+    /**
+     * Called each time this widget is removed from the DOM.
+     */
+    on_detach_callback: function () {
+        this.inDOM = false;
+        core.bus.off('resize', this, this._onResizeHandler);
     },
 
     //--------------------------------------------------------------------------
@@ -2451,18 +2472,69 @@ var FieldStatus = AbstractField.extend({
         }
     },
     /**
+     * Called when the widget has been rendered and inserted into the DOM. We
+     * compute buttons to display and those to put in the optional 'More'
+     * dropdown according to the available space and the width of each button.
+     *
+     * @private
+     */
+    _reflow: function () {
+        var visibleIDs = [];
+
+        // force the widget to be visible to correctly compute its size (as it
+        // could became visible later on)
+        var isInvisible = this.$el.hasClass('o_invisible_modifier');
+        this.$el.removeClass('o_invisible_modifier');
+
+        var availableWidth = this.el.offsetWidth;
+        // deduct width of 'More' button
+        availableWidth -= this.$('button.dropdown-toggle').get(0).offsetWidth;
+        // deduct width of selected status (as it must be visible)
+        var selectedValue = _.findWhere(this.status_information, {selected: true});
+        if (selectedValue) {
+            availableWidth -= this.$('button[data-value=' + selectedValue.id + ']').get(0).offsetWidth;
+            visibleIDs.push(selectedValue.id);
+        }
+        for (var i = 0; i < this.status_information.length; i++) {
+            var status = this.status_information[i];
+            if (!status.selected && !status.fold) {
+                availableWidth -= this.$('button[data-value=' + status.id + ']').get(0).offsetWidth;
+                if (availableWidth < 0) {
+                    break;
+                }
+                visibleIDs.push(status.id);
+            }
+        }
+        var selections = _.partition(this.status_information, function (info) {
+            return visibleIDs.indexOf(info.id) >= 0;
+        });
+        this.$el.html(qweb.render("FieldStatus.content", {
+            selection_unfolded: selections[0].reverse(),
+            selection_folded: selections[1],
+            clickable: this.isClickable,
+        }));
+
+        if (isInvisible) {
+            this.$el.addClass('o_invisible_modifier');
+        }
+    },
+    /**
+     * We first do a 'fake' rendering such that we can then compute the width
+     * of each button (including the potential 'More' button). Then, when the
+     * widget will be in the DOM, we will compute the list of buttons that must
+     * be put in the 'More' dropdown (see @reflow).
+     *
      * @override _render from AbstractField
      * @private
      */
     _render: function () {
-        var selections = _.partition(this.status_information, function (info) {
-            return (info.selected || !info.fold);
-        });
         this.$el.html(qweb.render("FieldStatus.content", {
-            selection_unfolded: selections[0],
-            selection_folded: selections[1],
-            clickable: this.isClickable,
+            selection_unfolded: this.status_information, // render all buttons outside the 'More' dropdown
+            selection_folded: [{id: -1}], // to force the rendering of the 'More' button
         }));
+        if (this.inDOM) {
+            this._reflow();
+        }
     },
 
     //--------------------------------------------------------------------------

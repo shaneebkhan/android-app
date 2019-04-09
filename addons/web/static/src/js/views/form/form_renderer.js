@@ -58,6 +58,9 @@ var FormRenderer = BasicRenderer.extend({
      */
     on_detach_callback: function () {
         this._isInDom = false;
+        _.forEach(this.allFieldWidgets, function (widgets){
+            _.invoke(widgets, 'on_detach_callback');
+        });
         this._super.apply(this, arguments);
     },
 
