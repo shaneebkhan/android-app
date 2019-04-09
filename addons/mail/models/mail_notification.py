@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models
 from odoo.tools.translate import _
 
@@ -36,6 +38,7 @@ class Notification(models.Model):
             ("UNKNOWN", "Unknown error"),
             ], string='Failure type')
     failure_reason = fields.Text('Failure reason', copy=False)
+    read_date = fields.Date('Read Date', copy=False)
 
     @api.model_cr
     def init(self):
@@ -51,4 +54,17 @@ class Notification(models.Model):
         else:
             return _("Unknown error") + ": %s" % (self.failure_reason or '')
 
+    @api.multi
+    def write(self, vals):
+        if vals.get('is_read'):
+            vals['read_date'] = fields.Datetime.now()
+        return super(Notification, self).write(vals)
 
+    @api.model
+    def _delete_notifications(self, days_before=180):
+        domain = [
+            ('is_read', '=', True),
+            ('read_date', '<', fields.Date.today() + relativedelta(days=-days_before)),
+            ('res_partner_id.partner_share', '=', False)
+        ]
+        return self.search(domain).unlink()

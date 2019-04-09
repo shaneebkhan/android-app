@@ -4,6 +4,7 @@
 import logging
 import re
 
+from collections import defaultdict
 from operator import itemgetter
 from email.utils import formataddr
 from openerp.http import request
@@ -199,12 +200,12 @@ class Message(models.Model):
         partner_id = self.env.user.partner_id.id
         msg_domain = [('needaction_partner_ids', 'in', partner_id), ('needaction', '=', True)]
         unread_messages = self.search(expression.AND([msg_domain, domain]))
+        ids = unread_messages.ids
         notifications = self.env['mail.notification'].sudo().search([
-            ('mail_message_id', 'in', unread_messages.ids),
+            ('mail_message_id', 'in', ids),
             ('res_partner_id', '=', partner_id),
             ('is_read', '=', False)])
         notifications.write({'is_read': True})
-        ids = unread_messages.mapped('id')
 
         notification = {'type': 'mark_as_read', 'message_ids': ids}
         self.env['bus.bus'].sendone((self._cr.dbname, 'res.partner', partner_id), notification)
@@ -475,24 +476,24 @@ class Message(models.Model):
         note_id = self.env['ir.model.data'].xmlid_to_res_id('mail.mt_note')
 
         # fetch notification status
-        notif_dict = {}
         notifs = self.env['mail.notification'].sudo().search([('mail_message_id', 'in', list(mid for mid in message_tree))])
+        notif_dict = defaultdict(lambda: defaultdict(list))
         for notif in notifs:
             mid = notif.mail_message_id.id
-            if not notif_dict.get(mid):
-                notif_dict[mid] = {'history_partner_ids': list(), 'needaction_partner_ids': list()}
-
             if notif.is_read:
                 notif_dict[mid]['history_partner_ids'].append(notif.res_partner_id.id)
             else:
                 notif_dict[mid]['needaction_partner_ids'].append(notif.res_partner_id.id)
+
         for message in message_values:
-            message['needaction_partner_ids'] = notif_dict.get(message['id'], dict()).get('needaction_partner_ids', [])
-            message['history_partner_ids'] = notif_dict.get(message['id'], dict()).get('history_partner_ids', [])
-            message['is_note'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == note_id
-            message['is_discussion'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == com_id
+            message.update({
+                'needaction_partner_ids': notif_dict[message['id']]['needaction_partner_ids'],
+                'history_partner_ids': notif_dict[message['id']]['history_partner_ids'],
+                'is_note': message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == note_id,
+                'is_discussion': message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['id'] == com_id,
+                'subtype_description': message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['description']
+            })
             message['is_notification'] = message['is_note'] and not message['model'] and not message['res_id']
-            message['subtype_description'] = message['subtype_id'] and subtypes_dict[message['subtype_id'][0]]['description']
             if message['model'] and self.env[message['model']]._original_module:
                 message['module_icon'] = modules.module.get_module_icon(self.env[message['model']]._original_module)
         return message_values
