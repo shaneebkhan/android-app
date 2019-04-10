@@ -32,7 +32,6 @@ class IrLogging(models.Model):
     func = fields.Char(string='Function', required=True)
     line = fields.Char(required=True)
 
-    @api.model_cr
     def init(self):
         super(IrLogging, self).init()
         self._cr.execute("ALTER TABLE ir_logging DROP CONSTRAINT IF EXISTS ir_logging_write_uid_fkey")

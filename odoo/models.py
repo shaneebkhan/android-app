@@ -271,7 +271,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         """
         pass
 
-    @api.model_cr_context
     def _reflect(self):
         """ Reflect the model and its fields in the models 'ir.model' and
         'ir.model.fields'. Also create entries in 'ir.model.data' if the key
@@ -2269,7 +2268,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         else:
             return '"%s"."%s"' % (alias, fname)
 
-    @api.model_cr
     def _parent_store_compute(self):
         """ Compute parent_path field from scratch. """
         if not self._parent_store:
@@ -2308,7 +2306,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         self.invalidate_cache(['parent_path'])
         return True
 
-    @api.model_cr
     def _check_removed_columns(self, log=False):
         # iterate on the database columns to drop the NOT NULL constraints of
         # fields which were required but have been removed (or will be added by
@@ -2331,7 +2328,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             if row['attnotnull']:
                 tools.drop_not_null(cr, self._table, row['attname'])
 
-    @api.model_cr_context
     def _init_column(self, column_name):
         """ Initialize the value of the given column for existing rows. """
         # get the default value; ideally, we should use default_get(), but it
@@ -2363,7 +2359,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         self.env.cr.execute('SELECT 1 FROM "%s" LIMIT 1' % self._table)
         return self.env.cr.rowcount
 
-    @api.model_cr_context
     def _auto_init(self):
         """ Initialize the database schema of ``self``:
             - create the corresponding table,
@@ -2429,14 +2424,12 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         if must_create_table:
             self._execute_sql()
 
-    @api.model_cr
     def init(self):
         """ This method is called after :meth:`~._auto_init`, and may be
             overridden to create or modify a model's database schema.
         """
         pass
 
-    @api.model_cr
     def _create_parent_columns(self):
         tools.create_column(self._cr, self._table, 'parent_path', 'VARCHAR')
         if 'parent_path' not in self._fields:
@@ -2444,7 +2437,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         elif not self._fields['parent_path'].index:
             _logger.error('parent_path field on model %s must be indexed! Add index=True to the field definition)', self._name)
 
-    @api.model_cr
     def _add_sql_constraints(self):
         """
 
@@ -2472,7 +2464,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             else:
                 process(key, definition)
 
-    @api.model_cr
     def _execute_sql(self):
         """ Execute the SQL code from the _sql attribute (if any)."""
         if hasattr(self, "_sql"):
@@ -4484,7 +4475,6 @@ Fields:
         """
         return cls._transient
 
-    @api.model_cr
     def _transient_clean_rows_older_than(self, seconds):
         assert self._transient, "Model %s is not transient, it cannot be vacuumed!" % self._name
         # Never delete rows used in last 5 minutes
@@ -4496,7 +4486,6 @@ Fields:
         ids = [x[0] for x in self._cr.fetchall()]
         self.sudo().browse(ids).unlink()
 
-    @api.model_cr
     def _transient_clean_old_rows(self, max_count):
         # Check how many rows we have in the table
         self._cr.execute("SELECT count(*) AS row_count FROM " + self._table)
@@ -4639,7 +4628,6 @@ Fields:
         for record in self:
             record.active = not record.active
 
-    @api.model_cr
     def _register_hook(self):
         """ stuff to do right after the registry is built """
         pass

@@ -104,7 +104,6 @@ class L10nInPaymentReport(models.AbstractModel):
             AND tax.tax_group_id in (SELECT res_id FROM ir_model_data WHERE module='l10n_in' AND name in ('cgst_group','sgst_group','igst_group','gst_group'))
             AND ac.internal_type IN ('receivable', 'payable') AND am.state = 'posted'"""
 
-    @api.model_cr
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
         self.env.cr.execute("""CREATE or REPLACE VIEW %s AS (

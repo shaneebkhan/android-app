@@ -1809,7 +1809,6 @@ class AccountInvoiceLine(models.Model):
             res['arch'] = etree.tostring(doc, encoding='unicode')
         return res
 
-    @api.v8
     def get_invoice_line_account(self, type, product, fpos, company):
         accounts = product.product_tmpl_id.get_product_accounts(fpos)
         if type in ('out_invoice', 'out_refund'):
