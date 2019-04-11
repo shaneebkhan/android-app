@@ -117,13 +117,18 @@ class MailController(http.Controller):
         return True
 
     @http.route('/mail/read_followers', type='json', auth='user')
-    def read_followers(self, follower_ids, res_model):
+    def read_followers(self, follower_ids):
         followers = []
         is_editable = request.env.user.has_group('base.group_no_one')
         partner_id = request.env.user.partner_id
         follower_id = None
         follower_recs = request.env['mail.followers'].sudo().browse(follower_ids)
         res_ids = follower_recs.mapped('res_id')
+        res_models = set(follower_recs.mapped('res_model'))
+        if len(res_models) > 1:
+            raise AccessError("Read_followers can only have one res_model")
+        res_model = res_models.pop()
+        request.env[res_model].check_access_rights("read")
         request.env[res_model].browse(res_ids).check_access_rule("read")
         for follower in follower_recs:
             is_uid = partner_id == follower.partner_id
@@ -132,8 +137,8 @@ class MailController(http.Controller):
                 'id': follower.id,
                 'name': follower.partner_id.name or follower.channel_id.name,
                 'email': follower.partner_id.email if follower.partner_id else None,
-                'res_model': 'res.partner' if follower.partner_id else 'mail.channel',
-                'res_id': follower.partner_id.id or follower.channel_id.id,
+                'partner_id': follower.partner_id.id,
+                'channel_id': follower.channel_id.id,
                 'is_editable': is_editable,
                 'is_uid': is_uid,
                 'active': follower.partner_id.active or bool(follower.channel_id),

@@ -39,15 +39,15 @@
             <a class="dropdown-item o_mail_redirect"
                href="#"
                t-att-title="record.title"
-               t-att-data-oe-model="record.res_model"
-               t-att-data-oe-id="record.res_id"><t t-esc="record.name"/></a>
+               t-att-data-oe-model="record.partner_id ? 'res.partner' : 'mail.channel'"
+               t-att-data-oe-id="record.partner_id ? record.partner_id : record.channel_id"><t t-esc="record.name"/></a>
             <img t-att-src="record.avatar_url" alt="Avatar"/>
             <i t-if="record.is_editable" class="fa fa-pencil o_edit_subtype d-none"
                title="Edit subscription"
                aria-label="Edit subscription" role="img"
                t-att-data-follower-id="record.id"
                t-att-data-oe-id="record.res_id"
-               t-att-data-oe-model="record.res_model"/>
+               t-att-data-oe-model="record.partner_id ? 'res.partner' : 'mail.channel'"/>
             <i t-if="widget.isEditable" class="fa fa-remove o_remove_follower"
                aria-label="Remove this follower" role="img"
                title="Remove this follower"/>

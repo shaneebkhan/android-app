@@ -120,7 +120,7 @@ var Followers = AbstractField.extend({
             }
 
             $follower_li = $(QWeb.render('mail.Followers.partner', {
-                'record': _.extend(record, {'avatar_url': '/web/image/' + record.res_model + '/' + record.res_id + '/image_small'}),
+                'record': record,
                 'widget': self})
             );
             $follower_li.appendTo($followers_list);
@@ -206,11 +206,19 @@ var Followers = AbstractField.extend({
         if (missing_ids.length) {
             def = this._rpc({
                     route: '/mail/read_followers',
-                    params: { follower_ids: missing_ids, res_model: this.model }
+                    params: { follower_ids: missing_ids}
                 });
         }
         return Promise.resolve(def).then(function (results) {
             if (results) {
+                _.each(results.followers, function (record) {
+                    if (record.partner_id) {
+                        record.avatar_url = '/web/image/res.partner/' + record.partner_id + '/image_small';
+                    }
+                    else {
+                        record.avatar_url = '/web/image/mail.channel/' + record.channel_id + '/image_small';
+                    }
+                });
                 self.followers = _.uniq(results.followers.concat(self.followers), 'id');
                 if (results.subtypes) { //read_followers will return False if current user is not in the list
                     self.subtypes = results.subtypes;
