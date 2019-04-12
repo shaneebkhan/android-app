@@ -169,6 +169,112 @@ QUnit.module('relational_fields', {
         form.destroy();
     });
 
+    QUnit.test("o_m2o_hidden hide element if used in kanban view in a mobile environment", async function (assert) {
+        assert.expect(4);
+
+        var form = await createView({
+            View: FormView,
+            arch:
+                '<form>' +
+                    '<sheet>' +
+                        '<field name="parent_id"/>' +
+                    '</sheet>' +
+                '</form>',
+            archs: {
+                'partner,false,kanban': '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div class="oe_kanban_global_click">' +
+                            '<field name="display_name"/>' +
+                        '</div>' +
+                        '<div class="o_sibling_tags o_m2o_hidden">' +
+                            '<field name="sibling_ids"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                '</kanban>',
+                'partner,false,search': '<search></search>',
+            },
+            data: this.data,
+            model: 'partner',
+            res_id: 2,
+            viewOptions: {mode: 'edit'},
+        });
+
+        var $input = form.$('.o_field_many2one input');
+
+        assert.doesNotHaveClass($input, 'ui-autocomplete-input',
+            "autocomplete should not be visible in a mobile environment");
+
+        await testUtils.dom.click($input);
+
+        var $modal = $('.o_modal_full .modal-lg');
+        assert.equal($modal.length, 1, 'there should be one modal opened in full screen');
+        assert.containsOnce($modal, '.o_kanban_view',
+            'kanban view should be open in SelectCreateDialog');
+        assert.isNotVisible($modal.find('.o_kanban_view .o_sibling_tags:first'),
+            'o_sibling_tags div should be hidden');
+
+        form.destroy();
+    });
+
+    QUnit.test("kanban_view_ref attribute opens specific kanban view given as a reference in a mobile environment", async function (assert) {
+        assert.expect(5);
+
+        var form = await createView({
+            View: FormView,
+            arch:
+                '<form>' +
+                    '<sheet>' +
+                        '<field name="parent_id" kanban_view_ref="2"/>' +
+                    '</sheet>' +
+                '</form>',
+            archs: {
+                'partner,1,kanban': '<kanban class="kanban1">' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div class="oe_kanban_global_click">' +
+                            '<field name="display_name"/>' +
+                        '</div>' +
+                    '</t></templates>' +
+                '</kanban>',
+                'partner,2,kanban': '<kanban class="kanban2">' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div class="oe_kanban_global_click">' +
+                            '<div>' +
+                                '<field name="display_name"/>' +
+                            '</div>' +
+                            '<div>' +
+                                '<field name="trululu"/>' +
+                            '</div>' +
+                        '</div>' +
+                    '</t></templates>' +
+                '</kanban>',
+                'partner,false,search': '<search></search>',
+            },
+            data: this.data,
+            model: 'partner',
+            res_id: 2,
+            viewOptions: {mode: 'edit'},
+        });
+
+        var $input = form.$('.o_field_many2one input');
+
+        assert.doesNotHaveClass($input, 'ui-autocomplete-input',
+            "autocomplete should not be visible in a mobile environment");
+
+        await testUtils.dom.click($input);
+
+        var $modal = $('.o_modal_full .modal-lg');
+        assert.equal($modal.length, 1, 'there should be one modal opened in full screen');
+        assert.containsOnce($modal, '.o_kanban_view',
+            'kanban view should be open in SelectCreateDialog');
+        assert.hasClass($modal.find('.o_kanban_view'), 'kanban2',
+            'kanban view with id 2 should be opened as it is given as kanban_view_ref');
+        assert.strictEqual($modal.find('.o_kanban_view .o_kanban_record:first').text(),
+            'first recordaaa',
+            'kanban with two fields should be opened');
+
+        form.destroy();
+    });
+
     QUnit.module('FieldMany2Many');
 
     QUnit.test("many2many_tags in a mobile environment", async function (assert) {
