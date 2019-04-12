@@ -135,13 +135,13 @@ class MailController(http.Controller):
             follower_id = follower.id if is_uid else follower_id
             followers.append({
                 'id': follower.id,
-                'name': follower.partner_id.name or follower.channel_id.name,
-                'email': follower.partner_id.email if follower.partner_id else None,
+                'name': follower.name,
+                'email': follower.email,
                 'partner_id': follower.partner_id.id,
                 'channel_id': follower.channel_id.id,
                 'is_editable': is_editable,
                 'is_uid': is_uid,
-                'active': follower.partner_id.active or bool(follower.channel_id),
+                'active': follower.active,
             })
         return {
             'followers': followers,

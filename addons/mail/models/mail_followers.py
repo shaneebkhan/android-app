@@ -34,6 +34,9 @@ class Followers(models.Model):
     subtype_ids = fields.Many2many(
         'mail.message.subtype', string='Subtype',
         help="Message subtypes followed, meaning subtypes that will be pushed onto the user's Wall.")
+    name = fields.Char('Name', compute='_compute_fields', required=True, index=True)
+    email = fields.Char('Email', compute='_compute_fields', required=True, index=True)
+    active = fields.Boolean('Active', compute='_compute_fields', required=True, index=True)
 
     #
     # Modifying followers change access rights to individual documents. As the
@@ -75,6 +78,17 @@ class Followers(models.Model):
     # --------------------------------------------------
     # Private tools methods to fetch followers data
     # --------------------------------------------------
+
+    @api.depends('partner_id', 'channel_id')
+    def _compute_fields(self):
+        for follower in self:
+            if follower.partner_id:
+                follower.name = follower.partner_id.name
+                follower.email = follower.partner_id.email
+                follower.active = follower.partner_id.active
+            else:
+                follower.name = follower.channel_id.name
+                follower.active = bool(follower.channel_id)
 
     def _get_recipient_data(self, records, subtype_id, pids=None, cids=None):
         """ Private method allowing to fetch recipients data based on a subtype.
