@@ -6,6 +6,7 @@ var concurrency = require('web.concurrency');
 var core = require('web.core');
 var Dialog = require('web.Dialog');
 var field_registry = require('web.field_registry');
+var session = require('web.session');
 
 var _t = core._t;
 var QWeb = core.qweb;
@@ -43,7 +44,6 @@ var Followers = AbstractField.extend({
         this.subtypes = [];
         this.data_subtype = {};
         this._isFollower = undefined;
-        var session = this.getSession();
         this.partnerID = session.partner_id;
 
         this.dp = new concurrency.DropPrevious();
@@ -209,8 +209,15 @@ var Followers = AbstractField.extend({
                     params: { follower_ids: missing_ids}
                 });
         }
+        var partner_id = this.partnerID;
         return Promise.resolve(def).then(function (results) {
             if (results) {
+                var result_trigger_up = false;
+                self.trigger_up('read_followers', {
+                    result: function(res){
+                        result_trigger_up = res;
+                    },
+                });
                 _.each(results.followers, function (record) {
                     if (record.partner_id) {
                         record.avatar_url = '/web/image/res.partner/' + record.partner_id + '/image_small';
@@ -218,6 +225,7 @@ var Followers = AbstractField.extend({
                     else {
                         record.avatar_url = '/web/image/mail.channel/' + record.channel_id + '/image_small';
                     }
+                    record.is_editable = result_trigger_up;
                 });
                 self.followers = _.uniq(results.followers.concat(self.followers), 'id');
                 if (results.subtypes) { //read_followers will return False if current user is not in the list
@@ -228,7 +236,7 @@ var Followers = AbstractField.extend({
             self.followers = _.filter(self.followers, function (follower) {
                 return _.contains(self.value.res_ids, follower.id);
             });
-            var user_follower = _.filter(self.followers, function (rec) { return rec.is_uid; });
+            var user_follower = _.filter(self.followers, function (rec) { return partner_id === rec.partner_id; });
             self._isFollower = user_follower.length >= 1;
         });
     },

@@ -119,8 +119,6 @@ class MailController(http.Controller):
     @http.route('/mail/read_followers', type='json', auth='user')
     def read_followers(self, follower_ids):
         followers = []
-        is_editable = request.env.user.has_group('base.group_no_one')
-        partner_id = request.env.user.partner_id
         follower_id = None
         follower_recs = request.env['mail.followers'].sudo().browse(follower_ids)
         res_ids = follower_recs.mapped('res_id')
@@ -131,16 +129,14 @@ class MailController(http.Controller):
         request.env[res_model].check_access_rights("read")
         request.env[res_model].browse(res_ids).check_access_rule("read")
         for follower in follower_recs:
-            is_uid = partner_id == follower.partner_id
-            follower_id = follower.id if is_uid else follower_id
+            if request.env.user.partner_id == follower.partner_id:
+                follower_id = follower.id
             followers.append({
                 'id': follower.id,
-                'name': follower.name,
-                'email': follower.email,
                 'partner_id': follower.partner_id.id,
                 'channel_id': follower.channel_id.id,
-                'is_editable': is_editable,
-                'is_uid': is_uid,
+                'name': follower.name,
+                'email': follower.email,
                 'active': follower.active,
             })
         return {

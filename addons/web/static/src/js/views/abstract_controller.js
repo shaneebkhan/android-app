@@ -28,6 +28,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         open_record: '_onOpenRecord',
         search: '_onSearch',
         switch_view: '_onSwitchView',
+        read_followers: '_onReadFollowers',
     },
     events: {
         'click a[type="action"]': '_onActionClicked',
@@ -575,6 +576,9 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         ev.data.controllerID = this.controllerID;
     },
 
+    _onReadFollowers: function (ev){
+        ev.data.result(this.activeActions['edit']);
+    },
 });
 
 return AbstractController;
