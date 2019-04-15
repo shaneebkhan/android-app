@@ -1165,13 +1165,9 @@ class AccountMoveLine(models.Model):
                 }
                 bank = self.env["account.bank.statement.line"].browse(vals.get('statement_line_id')).statement_id
                 if bank.currency_id != bank.company_id.currency_id:
-                    ctx = {}
-                    if 'date' in vals:
-                        ctx['date'] = vals['date']
-                    elif 'date_maturity' in vals:
-                        ctx['date'] = vals['date_maturity']
+                    date = vals.get('date_maturity') or vals.get('date') or fields.Date.today()
                     temp['currency_id'] = bank.currency_id.id
-                    temp['amount_currency'] = bank.company_id.currency_id.with_context(ctx).compute(tax_vals['amount'], bank.currency_id, round=True)
+                    temp['amount_currency'] = bank.company_id.currency_id._convert(tax_vals['amount'], bank.currency_id, bank.company_id, date, round=True)
                 if vals.get('tax_exigible'):
                     temp['tax_exigible'] = True
                     temp['account_id'] = tax.cash_basis_account.id or account_id

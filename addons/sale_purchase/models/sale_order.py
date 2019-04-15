@@ -215,12 +215,13 @@ class SaleOrderLine(models.Model):
 
         purchase_qty_uom = self.product_uom._compute_quantity(product_quantity, self.product_id.uom_po_id)
 
+        date = purchase_order.date_order and purchase_order.date_order.date()
         # determine vendor (real supplier, sharing the same partner as the one from the PO, but with more accurate informations like validity, quantity, ...)
         # Note: one partner can have multiple supplier info for the same product
         supplierinfo = self.product_id._select_seller(
             partner_id=purchase_order.partner_id,
             quantity=purchase_qty_uom,
-            date=purchase_order.date_order and purchase_order.date_order.date(), # and purchase_order.date_order[:10],
+            date=date, # and purchase_order.date_order[:10],
             uom_id=self.product_id.uom_po_id
         )
         fpos = purchase_order.fiscal_position_id
@@ -233,7 +234,7 @@ class SaleOrderLine(models.Model):
         if supplierinfo:
             price_unit = self.env['account.tax'].sudo()._fix_tax_included_price_company(supplierinfo.price, self.product_id.supplier_taxes_id, taxes, self.company_id)
             if purchase_order.currency_id and supplierinfo.currency_id != purchase_order.currency_id:
-                price_unit = supplierinfo.currency_id.compute(price_unit, purchase_order.currency_id)
+                price_unit = supplierinfo.currency_id._convert(price_unit, purchase_order.currency_id, self.company_id, date)
 
         # purchase line description in supplier lang
         product_in_supplier_lang = self.product_id.with_context({

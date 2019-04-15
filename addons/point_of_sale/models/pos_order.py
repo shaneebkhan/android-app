@@ -313,7 +313,6 @@ class PosOrder(models.Model):
                 if currency_id != cur_company:
                     round_tax = False if rounding_method == 'round_globally' else True
                     amount_tax = currency_id._convert(tax['amount'], cur_company, order.company_id, date_order, round=round_tax)
-                    # amount_tax = currency_id.with_context(date=date_order).compute(tax['amount'], cur_company, round=round_tax)
                 else:
                     amount_tax = tax['amount']
                 data = {
