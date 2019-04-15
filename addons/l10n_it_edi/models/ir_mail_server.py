@@ -97,7 +97,7 @@ class FetchmailServer(models.Model):
         return super(FetchmailServer, self.filtered(lambda s: not s.l10n_it_is_pec)).fetch_mail()
 
     def _attachment_invoice(self, msg_txt):
-        body, attachments = self.env['mail.thread']._message_extract_payload(msg_txt)
+        body, attachments = self.env['mail.thread']._message_parse_extract_payload(msg_txt)
         from_address = tools.decode_smtp_header(msg_txt.get('from'))
         for attachment in attachments:
             split_attachment = attachment.fname.rpartition('.')
