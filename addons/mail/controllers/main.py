@@ -141,25 +141,31 @@ class MailController(http.Controller):
             })
         return {
             'followers': followers,
-            'subtypes': self.read_subscription_data(res_model, follower_id) if follower_id else None
+            'subtypes': self.read_subscription_data(follower_id) if follower_id else None
         }
 
     @http.route('/mail/read_subscription_data', type='json', auth='user')
-    def read_subscription_data(self, res_model, follower_id):
+    def read_subscription_data(self, follower_id):
+        follower = request.env['mail.followers'].browse(follower_id)
+
+        return self._read_subscription_data(follower)
+
+    def _read_subscription_data(self, follower):
         """ Computes:
             - message_subtype_data: data about document subtypes: which are
                 available, which are followed if any """
-        followers = request.env['mail.followers'].browse(follower_id)
-
+        follower.ensure_one()
+        res_model = follower.res_model
         # find current model subtypes, add them to a dictionary
         subtypes = request.env['mail.message.subtype'].search(['&', ('hidden', '=', False), '|', ('res_model', '=', res_model), ('res_model', '=', False)])
+        followed_subtypes_ids = set(follower.subtype_ids.ids)
         subtypes_list = [{
             'name': subtype.name,
             'res_model': subtype.res_model,
             'sequence': subtype.sequence,
             'default': subtype.default,
             'internal': subtype.internal,
-            'followed': subtype.id in followers.mapped('subtype_ids').ids,
+            'followed': subtype.id in followed_subtypes_ids,
             'parent_model': subtype.parent_id.res_model,
             'id': subtype.id
         } for subtype in subtypes]

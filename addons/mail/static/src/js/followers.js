@@ -264,7 +264,7 @@ var Followers = AbstractField.extend({
     _unfollow: function (ids) {
         var self = this;
         return new Promise(function (resolve, reject) {
-            var follower = _.find(self.followers, { res_id: ids.partner_ids ? ids.partner_ids[0] : ids.channel_ids[0] });
+            var follower = _.find(self.followers, { partner_id: ids.partner_ids ? ids.partner_ids[0] : ids.channel_ids[0] });
             var text = _.str.sprintf(_t("If you remove a follower, he won't be notified of any email or discussion on this document. Do you really want to remove %s?"), follower.name);
             Dialog.confirm(this, text, {
                 title: _t("Warning"),
@@ -369,7 +369,7 @@ var Followers = AbstractField.extend({
         var follower_id = $currentTarget.data('follower-id'); // id of model mail_follower
         this._rpc({
                 route: '/mail/read_subscription_data',
-                params: {res_model: this.model, follower_id: follower_id},
+                params: {follower_id: follower_id},
             })
             .then(function (data) {
                 var res_id = $currentTarget.data('oe-id'); // id of model res_partner or mail_channel
