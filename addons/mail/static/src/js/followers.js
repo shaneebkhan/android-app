@@ -113,7 +113,7 @@ var Followers = AbstractField.extend({
         $(QWeb.render('mail.Followers.add_more', {widget: this})).appendTo($followers_list);
         var $follower_li;
         _.each(this.followers, function (record) {
-            if(!record.active) {
+            if(!record.is_active) {
                 record.title = _.str.sprintf(_t('%s \n(inactive)'), record.name);
             } else {
                 record.title = record.name;

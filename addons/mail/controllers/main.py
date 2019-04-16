@@ -137,7 +137,7 @@ class MailController(http.Controller):
                 'channel_id': follower.channel_id.id,
                 'name': follower.name,
                 'email': follower.email,
-                'active': follower.active,
+                'is_active': follower.is_active,
             })
         return {
             'followers': followers,
