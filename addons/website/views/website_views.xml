@@ -25,6 +25,7 @@
             <field name="arch" type="xml">
                 <form string="Website Settings">
                     <sheet>
+                        <field name="logo" widget="image" class="oe_avatar"/>
                         <div name="domain">
                             <group name="domain">
                                 <field name="name"/>

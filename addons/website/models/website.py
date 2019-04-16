@@ -80,6 +80,12 @@ class Website(models.Model):
     def _default_social_twitter(self):
         return self.env.ref('base.main_company').social_twitter
 
+    def _default_logo(self):
+        image_path = get_resource_path('website', 'static/src/img', 'res_website_logo.png')
+        with tools.file_open(image_path, 'rb') as f:
+            return base64.b64encode(f.read())
+
+    logo = fields.Binary(default=_default_logo)
     social_twitter = fields.Char('Twitter Account', default=_default_social_twitter)
     social_facebook = fields.Char('Facebook Account', default=_default_social_facebook)
     social_github = fields.Char('GitHub Account', default=_default_social_github)
