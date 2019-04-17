@@ -4,6 +4,31 @@ from odoo import api, models, _
 from odoo.exceptions import UserError
 
 
+from odoo import fields # api, fields, models
+from odoo.http import request
+
+
+class EventRegistration(models.Model):
+    _inherit = 'event.registration'
+
+    @api.model
+    def _default_country(self):
+        country = self.env['res.country']
+        if request and hasattr(request, 'website'):
+            country_code = request.session.get('geoip', {}).get('country_code')
+            country = country_code and request.env['res.country'].search([('code', '=', country_code)]) or country
+        return country
+
+    @api.constrains('partner_id')
+    def _onchange_partner(self):
+        if self.partner_id:
+            partner_is_public = any([u._is_public() for u in self.partner_id.with_context(active_test=False).user_ids])
+            if not partner_is_public:
+                self.country_id = self.partner_id.country_id
+
+    country_id = fields.Many2one('res.country', string='Country', default=_default_country)
+
+
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
