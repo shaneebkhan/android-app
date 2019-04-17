@@ -3,14 +3,14 @@ odoo.define("pos_restaurant.DB", function(require) {
     var db = require("point_of_sale.DB");
 
     db.include({
-        insert_validated_order: function(order) {
-
+        init: function(options) {
+            this._super(options);
+            this.confirmed_orders = [];
         },
-        
-        remove_order: function(order_id) {
-            var order = this.get_order(order_id);
+
+        insert_validated_order: function(order) {
             var order_to_save = _.pick(
-                order,
+                order.data,
                 "uid",
                 "amount_total",
                 "creation_date",
@@ -21,6 +21,17 @@ odoo.define("pos_restaurant.DB", function(require) {
 
             // TODO replace user_id with name
             // TODO replace partner_id with name
+
+            this.confirmed_orders.push(order_to_save);
+
+            console.log("confirmed orders", this.confirmed_orders);
+        },
+
+        // After an order is synced it'll be removed. We save a copy
+        // of it for the tipping interface.
+        remove_order: function(order_id) {
+            var order = this.get_order(order_id);
+            this.insert_validated_order(order);
 
             this._super(order_id);
         }

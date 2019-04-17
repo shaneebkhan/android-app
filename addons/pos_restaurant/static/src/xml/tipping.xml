@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-extend="Chrome">
+        <t t-jquery=".pos-rightheader .oe_status" t-operation="after">
+            <span class="placeholder-TippingWidget"></span>
+        </t>
+    </t>
+    <t t-name="TippingWidget">
+        <div class="oe_status">
+            <div class="oe_icon oe_green">
+                <i class="fa fa-fw fa-heart" role="img" aria-label="Adjust tips" title="Adjust tips"></i>
+            </div>
+        </div>
+    </t>
+    <t t-name="TippingScreenWidget">
+        <div class="clientlist-screen screen">
+            <div class="screen-content">
+                <section class="top-content">
+                    <span class="button back">
+                        <i class="fa fa-angle-double-left"></i>
+                        Cancel
+                    </span>
+                    <span class="searchbox">
+                        <input placeholder="Search Customers" />
+                        <span class="search-clear"></span>
+                    </span>
+                    <span class="searchbox"></span>
+                </section>
+                <section class="full-content">
+                    <div class="window">
+                        <section class="subwindow">
+                            <div class="subwindow-container">
+                                <div class="subwindow-container-fix touch-scrollable scrollable-y">
+                                    <table class="client-list">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Address</th>
+                                                <th>Phone</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="client-list-contents">
+                                            <tr t-foreach="widget.pos.db.confirmed_orders" t-as="order">
+                                                <td t-esc="order.uid"/>
+                                                <td>test</td>
+                                                <td>test</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </t>
+</templates>
