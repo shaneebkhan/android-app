@@ -1,6 +1,7 @@
 odoo.define("pos_restaurant.DB", function(require) {
     "use strict";
     var db = require("point_of_sale.DB");
+    var models = require("point_of_sale.models");
 
     db.include({
         init: function(options) {
@@ -10,7 +11,7 @@ odoo.define("pos_restaurant.DB", function(require) {
 
         insert_validated_order: function(order) {
             var order_to_save = _.pick(
-                order.data,
+                order,
                 "uid",
                 "amount_total",
                 "creation_date",
@@ -31,9 +32,36 @@ odoo.define("pos_restaurant.DB", function(require) {
         // of it for the tipping interface.
         remove_order: function(order_id) {
             var order = this.get_order(order_id);
-            this.insert_validated_order(order);
+            this.insert_validated_order(order.data);
 
             this._super(order_id);
+        }
+    });
+
+    models.load_models({
+        model: "pos.order",
+        fields: [
+            "pos_reference",
+            "amount_total",
+            "date_order",
+            "partner_id.display_name",
+            "table_id.name",
+            "user_id.display_name"
+        ],
+        domain: function(self) {
+            return [["session_id", "=", self.pos_session.id]];
+        },
+        loaded: function(self, orders) {
+            orders.forEach(function(order) {
+                self.db.insert_validated_order({
+                    uid: order.pos_reference,
+                    amount_total: order.amount_total,
+                    creation_date: order.date_order, // TODO make date equivalent to what POS generates
+                    partner_id: order.partner_id && order.partner_id[1],
+                    table: order.table_id && order.table_id[1],
+                    user_id: order.user_id && order.user_id[1]
+                });
+            });
         }
     });
 });

@@ -21,7 +21,7 @@
                         Cancel
                     </span>
                     <span class="searchbox">
-                        <input placeholder="Search Customers" />
+                        <input placeholder="Search"/>
                         <span class="search-clear"></span>
                     </span>
                     <span class="searchbox"></span>
@@ -34,16 +34,24 @@
                                     <table class="list-table">
                                         <thead>
                                             <tr>
-                                                <th>Name</th>
-                                                <th>Address</th>
-                                                <th>Phone</th>
+                                                <th>Ref</th>
+                                                <th>Waiter</th>
+                                                <th>Time</th>
+                                                <th>Table</th>
+                                                <th>Customer</th>
+                                                <th>Amount</th>
+                                                <th>Tip</th>
                                             </tr>
                                         </thead>
                                         <tbody class="list-table-contents">
-                                            <tr t-foreach="widget.pos.db.confirmed_orders" t-as="order">
+                                            <tr t-foreach="widget.filtered_confirmed_orders" t-as="order">
                                                 <td t-esc="order.uid"/>
-                                                <td>test</td>
-                                                <td>test</td>
+                                                <td t-esc="order.user_id"/>
+                                                <td t-esc="order.creation_date"/>
+                                                <td t-esc="order.table"/>
+                                                <td t-esc="order.partner_id"/>
+                                                <td t-esc="order.amount_total"/>
+                                                <td>0.0</td>
                                             </tr>
                                         </tbody>
                                     </table>
