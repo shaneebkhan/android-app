@@ -43,7 +43,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
             var self = this;
             this._super();
 
-            this.$el.find("tr").click(function(_) {
+            this.$el.find("tr").click(function() {
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
                     value: 333,
@@ -53,11 +53,16 @@ odoo.define("pos_restaurant.tipping", function(require) {
                         // TODO do async RPC to adjust tip
                         // TODO re-render
 
-                        var search_box = self.parent.el.querySelector(".searchbox input");
+                        var search_box = self.parent.el.querySelector(
+                            ".searchbox input"
+                        );
                         search_box.focus();
 
                         // search_box.select() doesn't work on iOS
-                        search_box.setSelectionRange(0, search_box.value.length);
+                        search_box.setSelectionRange(
+                            0,
+                            search_box.value.length
+                        );
                     }
                 });
             });
@@ -66,6 +71,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
     var TippingScreenWidget = ScreenWidget.extend({
         template: "TippingScreenWidget",
+        auto_back: true,
 
         init: function(parent, options) {
             this._super(parent, options);
@@ -94,7 +100,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
             var search_timeout = undefined;
 
             // use keydown because keypress isn't triggered for backspace
-            this.$(".searchbox input").on("keydown", function(_) {
+            this.$(".searchbox input").on("keydown", function() {
                 var searchbox = this;
                 clearTimeout(search_timeout);
 
