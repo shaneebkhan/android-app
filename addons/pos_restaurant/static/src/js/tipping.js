@@ -1,10 +1,13 @@
 odoo.define("pos_restaurant.tipping", function(require) {
     "use strict";
 
+    var core = require("web.core");
     var ScreenWidget = require("point_of_sale.screens").ScreenWidget;
     var PosBaseWidget = require("point_of_sale.BaseWidget");
     var chrome = require("point_of_sale.chrome");
     var gui = require("point_of_sale.gui");
+
+    var _t = core._t;
 
     var TippingWidget = PosBaseWidget.extend({
         template: "TippingWidget",
@@ -34,6 +37,30 @@ odoo.define("pos_restaurant.tipping", function(require) {
         init: function(parent, options) {
             this._super(parent, options);
             this.parent = parent;
+        },
+
+        renderElement: function() {
+            var self = this;
+            this._super();
+
+            this.$el.find("tr").click(function(_) {
+                self.gui.show_popup("number", {
+                    title: _t("Adjust tip"),
+                    value: 333,
+                    confirm: function(value) {
+                        console.log(`set tip to ${value}`);
+
+                        // TODO do async RPC to adjust tip
+                        // TODO re-render
+
+                        var search_box = self.parent.el.querySelector(".searchbox input");
+                        search_box.focus();
+
+                        // search_box.select() doesn't work on iOS
+                        search_box.setSelectionRange(0, search_box.value.length);
+                    }
+                });
+            });
         }
     });
 
