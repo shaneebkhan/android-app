@@ -43,17 +43,7 @@
                                                 <th>Tip</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="list-table-contents">
-                                            <tr t-foreach="widget.filtered_confirmed_orders" t-as="order">
-                                                <td t-esc="order.uid"/>
-                                                <td t-esc="order.user_id"/>
-                                                <td t-esc="order.creation_date"/>
-                                                <td t-esc="order.table"/>
-                                                <td t-esc="order.partner_id"/>
-                                                <td t-esc="order.amount_total"/>
-                                                <td>0.0</td>
-                                            </tr>
-                                        </tbody>
+                                        <tbody class="list-table-contents"/>
                                     </table>
                                 </div>
                             </div>
@@ -62,5 +52,19 @@
                 </section>
             </div>
         </div>
+    </t>
+
+    <t t-name="TippingScreenList">
+        <tbody class="list-table-contents">
+            <tr t-foreach="widget.parent.filtered_confirmed_orders" t-as="order">
+                <td t-esc="order.uid"/>
+                <td t-esc="order.user_id"/>
+                <td t-esc="order.creation_date"/>
+                <td t-esc="order.table"/>
+                <td t-esc="order.partner_id"/>
+                <td t-esc="order.amount_total"/>
+                <td>0.0</td>
+            </tr>
+        </tbody>
     </t>
 </templates>

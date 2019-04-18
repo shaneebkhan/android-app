@@ -28,12 +28,25 @@ odoo.define("pos_restaurant.tipping", function(require) {
         }
     });
 
+    var TippingScreenList = PosBaseWidget.extend({
+        template: "TippingScreenList",
+
+        init: function(parent, options) {
+            this._super(parent, options);
+            this.parent = parent;
+        }
+    });
+
     var TippingScreenWidget = ScreenWidget.extend({
         template: "TippingScreenWidget",
 
         init: function(parent, options) {
             this._super(parent, options);
             this.filtered_confirmed_orders = [];
+            this.tipping_screen_list_widget = new TippingScreenList(
+                this,
+                options
+            );
         },
 
         show: function() {
@@ -44,30 +57,45 @@ odoo.define("pos_restaurant.tipping", function(require) {
             // re-render the template when showing it to have the
             // latest orders.
             this.renderElement();
+            this.render_orders();
 
             this.$(".back").click(function() {
                 self.gui.back();
             });
 
             var search_timeout = undefined;
-            this.$(".searchbox input").on("keypress", function(event) {
+
+            // use keydown because keypress isn't triggered for backspace
+            this.$(".searchbox input").on("keydown", function(_) {
                 var searchbox = this;
                 clearTimeout(search_timeout);
 
+                console.log("got ", searchbox.value);
                 search_timeout = setTimeout(function() {
                     self.search(searchbox.value);
                 }, 70);
             });
         },
 
-        search: function(term) {
-            this.filtered_confirmed_orders = _.filter(this.pos.db.confirmed_orders, function(order) {
-                return _.values(order, function(value) {
-                    return value.indexOf(term) !== -1;
-                });
-            });
+        render_orders: function() {
+            this.tipping_screen_list_widget.renderElement();
+            this.$el
+                .find(".list-table-contents")
+                .replaceWith(this.tipping_screen_list_widget.el);
+        },
 
-            this.renderElement();
+        search: function(term) {
+            this.filtered_confirmed_orders = _.filter(
+                this.pos.db.confirmed_orders,
+                function(order) {
+                    return _.some(_.values(order), function(value) {
+                        return String(value).indexOf(term) !== -1;
+                    });
+                }
+            );
+
+            console.log(this.filtered_confirmed_orders);
+            this.render_orders();
         },
 
         // todo is this still necessary?
