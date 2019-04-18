@@ -43,6 +43,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
         init: function(parent, options) {
             this._super(parent, options);
             this.filtered_confirmed_orders = [];
+            this.current_search = "";
             this.tipping_screen_list_widget = new TippingScreenList(
                 this,
                 options
@@ -70,9 +71,16 @@ odoo.define("pos_restaurant.tipping", function(require) {
                 var searchbox = this;
                 clearTimeout(search_timeout);
 
-                console.log("got ", searchbox.value);
+                console.log("got ", self.current_search);
                 search_timeout = setTimeout(function() {
-                    self.search(searchbox.value);
+                    if (self.current_search != searchbox.value) {
+                        self.current_search = searchbox.value;
+                        self.search(self.current_search);
+                    } else {
+                        console.log(
+                            "skipping re-render cause search term didn't change"
+                        );
+                    }
                 }, 70);
             });
         },
@@ -84,17 +92,28 @@ odoo.define("pos_restaurant.tipping", function(require) {
                 .replaceWith(this.tipping_screen_list_widget.el);
         },
 
+        // TODO JOV: document
         search: function(term) {
-            this.filtered_confirmed_orders = _.filter(
-                this.pos.db.confirmed_orders,
-                function(order) {
-                    return _.some(_.values(order), function(value) {
-                        return String(value).indexOf(term) !== -1;
-                    });
-                }
-            );
+            var self = this;
 
-            console.log(this.filtered_confirmed_orders);
+            term = term.toLowerCase();
+            this.filtered_confirmed_orders = this.pos.db.confirmed_orders;
+
+            term.split(" ").forEach(function(term) {
+                self.filtered_confirmed_orders = _.filter(
+                    self.filtered_confirmed_orders,
+                    function(order) {
+                        return _.some(_.values(order), function(value) {
+                            return (
+                                String(value)
+                                    .toLowerCase()
+                                    .indexOf(term) !== -1
+                            );
+                        });
+                    }
+                );
+            });
+
             this.render_orders();
         },
 

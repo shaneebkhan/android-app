@@ -21,7 +21,7 @@
                         Cancel
                     </span>
                     <span class="searchbox">
-                        <input placeholder="Search"/>
+                        <input placeholder="Search" type="search"/>
                         <span class="search-clear"></span>
                     </span>
                     <span class="searchbox"></span>
