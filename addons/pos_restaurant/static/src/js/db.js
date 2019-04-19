@@ -64,10 +64,7 @@ odoo.define("pos_restaurant.DB", function(require) {
 
                     // mimic _symbol_set
                     amount_total: parseFloat(
-                        round_pr(
-                            order.amount_total,
-                            self.currency.rounding
-                        ).toFixed(self.currency.decimals)
+                        round_pr(order.amount_total, self.currency.rounding).toFixed(self.currency.decimals)
                     ),
 
                     tip_amount: order.tip_amount,

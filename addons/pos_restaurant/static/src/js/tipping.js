@@ -51,9 +51,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
-                    value: self.format_currency_no_symbol(
-                        self.order.tip_amount
-                    ),
+                    value: self.format_currency_no_symbol(self.order.tip_amount),
                     confirm: function(value) {
                         value = Number(value);
                         rpc.query({
@@ -69,16 +67,11 @@ odoo.define("pos_restaurant.tipping", function(require) {
                         self.order.tip_amount = value;
                         self.renderElement();
 
-                        var search_box = self.parent.parent.el.querySelector(
-                            ".searchbox input"
-                        );
+                        var search_box = self.parent.parent.el.querySelector(".searchbox input");
                         search_box.focus();
 
                         // search_box.select() doesn't work on iOS
-                        search_box.setSelectionRange(
-                            0,
-                            search_box.value.length
-                        );
+                        search_box.setSelectionRange(0, search_box.value.length);
 
                         $this.removeClass("highlight");
                     },
@@ -105,17 +98,13 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this._super();
 
             this.$el.find(".list-table-contents").append(
-                this.parent.filtered_confirmed_orders.reduce(function(
-                    acc,
-                    order
-                ) {
+                this.parent.filtered_confirmed_orders.reduce(function(acc, order) {
                     var tipping_order = new TippingScreenOrder(self, {
                         order: order
                     });
                     tipping_order.renderElement();
                     return acc.add(tipping_order.$el);
-                },
-                $())
+                }, $())
             );
         }
     });
@@ -128,10 +117,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this._super(parent, options);
             this.filtered_confirmed_orders = [];
             this.current_search = "";
-            this.tipping_screen_list_widget = new TippingScreenList(
-                this,
-                options
-            );
+            this.tipping_screen_list_widget = new TippingScreenList(this, options);
         },
 
         show: function() {
@@ -161,9 +147,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
                         self.current_search = searchbox.value;
                         self.search(self.current_search);
                     } else {
-                        console.log(
-                            "skipping re-render cause search term didn't change"
-                        );
+                        console.log("skipping re-render cause search term didn't change");
                     }
                 }, 70);
             });
@@ -171,9 +155,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
         render_orders: function() {
             this.tipping_screen_list_widget.renderElement();
-            this.$el
-                .find(".list-table")
-                .replaceWith(this.tipping_screen_list_widget.el);
+            this.$el.find(".list-table").replaceWith(this.tipping_screen_list_widget.el);
         },
 
         // TODO JOV: document
@@ -184,18 +166,15 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this.filtered_confirmed_orders = this.pos.db.confirmed_orders;
 
             term.split(" ").forEach(function(term) {
-                self.filtered_confirmed_orders = _.filter(
-                    self.filtered_confirmed_orders,
-                    function(order) {
-                        return _.some(_.values(order), function(value) {
-                            return (
-                                String(value)
-                                    .toLowerCase()
-                                    .indexOf(term) !== -1
-                            );
-                        });
-                    }
-                );
+                self.filtered_confirmed_orders = _.filter(self.filtered_confirmed_orders, function(order) {
+                    return _.some(_.values(order), function(value) {
+                        return (
+                            String(value)
+                                .toLowerCase()
+                                .indexOf(term) !== -1
+                        );
+                    });
+                });
             });
 
             this.render_orders();
@@ -204,10 +183,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
         // todo is this still necessary?
         close: function() {
             this._super();
-            if (
-                this.pos.config.iface_vkeyboard &&
-                this.chrome.widget.keyboard
-            ) {
+            if (this.pos.config.iface_vkeyboard && this.chrome.widget.keyboard) {
                 this.chrome.widget.keyboard.hide();
             }
         }
