@@ -6,6 +6,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
     var PosBaseWidget = require("point_of_sale.BaseWidget");
     var chrome = require("point_of_sale.chrome");
     var gui = require("point_of_sale.gui");
+    var rpc = require("web.rpc");
 
     var _t = core._t;
 
@@ -44,13 +45,30 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this._super();
 
             this.$el.find("tr").click(function() {
+                var $this = $(this);
+                $this.addClass("highlight");
+
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
                     value: 333,
                     confirm: function(value) {
-                        console.log(`set tip to ${value}`);
+                        // TODO maybe create a separate widget for
+                        // each line to avoid this
+                        var order_ref = $this
+                            .find("td")
+                            .first()
+                            .text();
 
                         // TODO do async RPC to adjust tip
+                        rpc.query({
+                            model: "pos.order",
+                            method: "set_tip",
+                            args: [order_ref, value]
+                        }).catch(function() {
+                            // TODO
+                            console.error("ERROR");
+                        });
+
                         // TODO re-render
 
                         var search_box = self.parent.el.querySelector(
@@ -63,6 +81,11 @@ odoo.define("pos_restaurant.tipping", function(require) {
                             0,
                             search_box.value.length
                         );
+
+                        $this.removeClass("highlight");
+                    },
+                    cancel: function() {
+                        $this.removeClass("highlight");
                     }
                 });
             });
