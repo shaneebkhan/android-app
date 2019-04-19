@@ -51,9 +51,9 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
-                    value: 333,
+                    value: self.order.amount_total,
                     confirm: function(value) {
-                        // TODO do async RPC to adjust tip
+                        value = Number(value);
                         rpc.query({
                             model: "pos.order",
                             method: "set_tip",
@@ -63,7 +63,8 @@ odoo.define("pos_restaurant.tipping", function(require) {
                             console.error("ERROR");
                         });
 
-                        // TODO re-render
+                        self.order.amount_total = value;
+                        self.renderElement();
 
                         var search_box = self.parent.parent.el.querySelector(
                             ".searchbox input"

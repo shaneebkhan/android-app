@@ -65,7 +65,7 @@
             <td t-esc="widget.order.creation_date"/>
             <td t-esc="widget.order.table"/>
             <td t-esc="widget.order.partner_id"/>
-            <td t-esc="widget.order.amount_total"/>
+            <td t-esc="widget.format_currency_no_symbol(widget.order.amount_total)"/>
             <td>0.0</td>
         </tr>
     </t>
