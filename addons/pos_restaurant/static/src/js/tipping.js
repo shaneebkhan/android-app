@@ -51,7 +51,9 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
-                    value: self.format_currency_no_symbol(self.order.tip_amount),
+                    value: self.format_currency_no_symbol(
+                        self.order.tip_amount
+                    ),
                     confirm: function(value) {
                         value = Number(value);
                         rpc.query({
@@ -102,11 +104,19 @@ odoo.define("pos_restaurant.tipping", function(require) {
             var self = this;
             this._super();
 
-            this.$el.find(".list-table-contents").append(this.parent.filtered_confirmed_orders.reduce(function(acc, order) {
-                var tipping_order = new TippingScreenOrder(self, {order: order});
-                tipping_order.renderElement();
-                return acc.add(tipping_order.$el);
-            }, $()));
+            this.$el.find(".list-table-contents").append(
+                this.parent.filtered_confirmed_orders.reduce(function(
+                    acc,
+                    order
+                ) {
+                    var tipping_order = new TippingScreenOrder(self, {
+                        order: order
+                    });
+                    tipping_order.renderElement();
+                    return acc.add(tipping_order.$el);
+                },
+                $())
+            );
         }
     });
 

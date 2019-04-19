@@ -2,7 +2,7 @@ odoo.define("pos_restaurant.DB", function(require) {
     "use strict";
     var db = require("point_of_sale.DB");
     var models = require("point_of_sale.models");
-    var utils = require('web.utils');
+    var utils = require("web.utils");
 
     var round_pr = utils.round_precision;
 
@@ -53,7 +53,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             "table_id.name",
             "user_id.display_name"
         ],
-        order: [{name: "date_order", asc: false}],
+        order: [{ name: "date_order", asc: false }],
         domain: function(self) {
             return [["session_id", "=", self.pos_session.id]];
         },
@@ -63,7 +63,12 @@ odoo.define("pos_restaurant.DB", function(require) {
                     uid: order.pos_reference,
 
                     // mimic _symbol_set
-                    amount_total: parseFloat(round_pr(order.amount_total, self.currency.rounding).toFixed(self.currency.decimals)),
+                    amount_total: parseFloat(
+                        round_pr(
+                            order.amount_total,
+                            self.currency.rounding
+                        ).toFixed(self.currency.decimals)
+                    ),
 
                     tip_amount: order.tip_amount,
                     creation_date: order.date_order, // TODO make date equivalent to what POS generates
