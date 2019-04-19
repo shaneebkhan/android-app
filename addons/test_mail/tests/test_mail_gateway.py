@@ -586,7 +586,7 @@ class TestMailgateway(BaseFunctionalTest, MockEmails):
                           MAIL_TEMPLATE, self.email_from, 'noone@test.com',
                           subject='spam', extra='')
 
-    @mute_logger('odoo.addons.mail.models.mail_thread', 'odoo.models')
+    # @mute_logger('odoo.addons.mail.models.mail_thread', 'odoo.models')
     def test_message_process_fallback(self):
         """ Incoming email with model that accepting incoming emails as fallback """
         record = self.format_and_process(
