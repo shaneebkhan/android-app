@@ -31,20 +31,7 @@
                         <section class="subwindow">
                             <div class="subwindow-container">
                                 <div class="subwindow-container-fix touch-scrollable scrollable-y">
-                                    <table class="list-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Ref</th>
-                                                <th>Waiter</th>
-                                                <th>Time</th>
-                                                <th>Table</th>
-                                                <th>Customer</th>
-                                                <th>Amount</th>
-                                                <th>Tip</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="list-table-contents"/>
-                                    </table>
+                                    <table class="list-table"/>
                                 </div>
                             </div>
                         </section>
@@ -55,16 +42,31 @@
     </t>
 
     <t t-name="TippingScreenList">
-        <tbody class="list-table-contents">
-            <tr t-foreach="widget.parent.filtered_confirmed_orders" t-as="order">
-                <td t-esc="order.uid"/>
-                <td t-esc="order.user_id"/>
-                <td t-esc="order.creation_date"/>
-                <td t-esc="order.table"/>
-                <td t-esc="order.partner_id"/>
-                <td t-esc="order.amount_total"/>
-                <td>0.0</td>
-            </tr>
-        </tbody>
+        <table class="list-table">
+            <thead>
+                <tr>
+                    <th>Ref</th>
+                    <th>Waiter</th>
+                    <th>Time</th>
+                    <th>Table</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Tip</th>
+                </tr>
+            </thead>
+            <tbody class="list-table-contents"/>
+        </table>
+    </t>
+
+    <t t-name="TippingScreenOrder">
+        <tr>
+            <td t-esc="widget.order.uid"/>
+            <td t-esc="widget.order.user_id"/>
+            <td t-esc="widget.order.creation_date"/>
+            <td t-esc="widget.order.table"/>
+            <td t-esc="widget.order.partner_id"/>
+            <td t-esc="widget.order.amount_total"/>
+            <td>0.0</td>
+        </tr>
     </t>
 </templates>

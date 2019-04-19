@@ -32,19 +32,20 @@ odoo.define("pos_restaurant.tipping", function(require) {
         }
     });
 
-    var TippingScreenList = PosBaseWidget.extend({
-        template: "TippingScreenList",
+    var TippingScreenOrder = PosBaseWidget.extend({
+        template: "TippingScreenOrder",
 
         init: function(parent, options) {
             this._super(parent, options);
             this.parent = parent;
+            this.order = options.order;
         },
 
         renderElement: function() {
             var self = this;
             this._super();
 
-            this.$el.find("tr").click(function() {
+            this.$el.click(function() {
                 var $this = $(this);
                 $this.addClass("highlight");
 
@@ -52,18 +53,11 @@ odoo.define("pos_restaurant.tipping", function(require) {
                     title: _t("Adjust tip"),
                     value: 333,
                     confirm: function(value) {
-                        // TODO maybe create a separate widget for
-                        // each line to avoid this
-                        var order_ref = $this
-                            .find("td")
-                            .first()
-                            .text();
-
                         // TODO do async RPC to adjust tip
                         rpc.query({
                             model: "pos.order",
                             method: "set_tip",
-                            args: [order_ref, value]
+                            args: [self.order.uid, value]
                         }).catch(function() {
                             // TODO
                             console.error("ERROR");
@@ -71,7 +65,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                         // TODO re-render
 
-                        var search_box = self.parent.el.querySelector(
+                        var search_box = self.parent.parent.el.querySelector(
                             ".searchbox input"
                         );
                         search_box.focus();
@@ -89,6 +83,28 @@ odoo.define("pos_restaurant.tipping", function(require) {
                     }
                 });
             });
+        }
+    });
+
+    // TODO JOV: remove this, it has no state. This can be handled by
+    // TippingScreenWidget.
+    var TippingScreenList = PosBaseWidget.extend({
+        template: "TippingScreenList",
+
+        init: function(parent, options) {
+            this._super(parent, options);
+            this.parent = parent;
+        },
+
+        renderElement: function() {
+            var self = this;
+            this._super();
+
+            this.$el.find(".list-table-contents").append(this.parent.filtered_confirmed_orders.reduce(function(acc, order) {
+                var tipping_order = new TippingScreenOrder(self, {order: order});
+                tipping_order.renderElement();
+                return acc.add(tipping_order.$el);
+            }, $()));
         }
     });
 
@@ -144,7 +160,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
         render_orders: function() {
             this.tipping_screen_list_widget.renderElement();
             this.$el
-                .find(".list-table-contents")
+                .find(".list-table")
                 .replaceWith(this.tipping_screen_list_widget.el);
         },
 
