@@ -2,6 +2,9 @@ odoo.define("pos_restaurant.DB", function(require) {
     "use strict";
     var db = require("point_of_sale.DB");
     var models = require("point_of_sale.models");
+    var utils = require('web.utils');
+
+    var round_pr = utils.round_precision;
 
     db.include({
         init: function(options) {
@@ -55,7 +58,10 @@ odoo.define("pos_restaurant.DB", function(require) {
             orders.forEach(function(order) {
                 self.db.insert_validated_order({
                     uid: order.pos_reference,
-                    amount_total: order.amount_total,
+
+                    // mimic _symbol_set
+                    amount_total: parseFloat(round_pr(order.amount_total, self.currency.rounding).toFixed(self.currency.decimals)),
+
                     creation_date: order.date_order, // TODO make date equivalent to what POS generates
                     partner_id: order.partner_id && order.partner_id[1],
                     table: order.table_id && order.table_id[1],

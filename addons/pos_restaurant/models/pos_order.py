@@ -10,6 +10,44 @@ class PosOrder(models.Model):
 
     table_id = fields.Many2one('restaurant.table', string='Table', help='The table where this order was served')
     customer_count = fields.Integer(string='Guests', help='The amount of customers that have been served by this order.')
+    tip_amount = fields.Float(compute='_compute_tip_amount', inverse='_set_tip_amount', help='The total amount tipped, this is computed using the configured tip product.')
+
+    def _compute_tip_amount(self):
+        for order in self:
+            tip_product = order.config_id.tip_product_id
+            lines = order.lines.filtered(lambda line: line.product_id == tip_product)
+            order.tip_amount = sum(lines.mapped('price_subtotal_incl'))
+
+    def _set_tip_amount(self):
+        for order in self:
+            tip_product = order.config_id.tip_product_id
+            tip_line = order.lines.filtered(lambda line: line.product_id == tip_product)
+            tip_line = tip_line[0] if tip_line else False
+
+            if not tip_line:
+                tip_line = self.env['pos.order.line'].create({
+                    'name': 'Tip',
+                    'product_id': tip_product.id,
+                    'price_unit': order.tip_amount,
+                    'price_subtotal': 0,  # will be calculated by _compute_amount_line_all
+                    'price_subtotal_incl': 0,  # will be calculated by _compute_amount_line_all
+                    'tax_ids': [(6, 0, [tip_product.taxes_id.id])] if tip_product.taxes_id else []
+                })
+                order.lines |= tip_line
+
+            if tip_line.qty != 1:
+                # TODO what do i do
+                pass
+
+            tip_line.price_unit = order.tip_amount
+
+            new_amounts = tip_line._compute_amount_line_all()
+            tip_line.write({
+                'price_subtotal_incl': new_amounts['price_subtotal_incl'],
+                'price_subtotal': new_amounts['price_subtotal']
+            })
+
+            order._onchange_amount_all()
 
     @api.model
     def _order_fields(self, ui_order):
@@ -24,33 +62,5 @@ class PosOrder(models.Model):
         if not order:
             raise ValidationError(_('Reference %s does not exist.') % pos_reference)
 
-        tip_product = order.config_id.tip_product_id
-        tip_line = order.lines.filtered(lambda line: line.product_id == tip_product)
-        tip_line = tip_line[0] if tip_line else False
-
-        if not tip_line:
-            tip_line = self.env['pos.order.line'].create({
-                'name': 'Tip',
-                'product_id': tip_product.id,
-                'price_unit': new_tip,
-                'price_subtotal': 0,  # will be calculated by _compute_amount_line_all
-                'price_subtotal_incl': 0,  # will be calculated by _compute_amount_line_all
-                'tax_ids': [(6, 0, [tip_product.taxes_id.id])] if tip_product.taxes_id else []
-            })
-            order.lines |= tip_line
-
-        if tip_line.qty != 1:
-            # TODO what do i do
-            pass
-
-        tip_line.price_unit = new_tip
-
-        new_amounts = tip_line._compute_amount_line_all()
-        tip_line.write({
-            'price_subtotal_incl': new_amounts['price_subtotal_incl'],
-            'price_subtotal': new_amounts['price_subtotal']
-        })
-
-        tip_line.order_id._onchange_amount_all()
-
+        order.tip_amount = new_tip
         return True

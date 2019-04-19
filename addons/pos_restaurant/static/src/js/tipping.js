@@ -51,7 +51,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                 self.gui.show_popup("number", {
                     title: _t("Adjust tip"),
-                    value: self.order.amount_total,
+                    value: self.format_currency_no_symbol(self.order.amount_total),
                     confirm: function(value) {
                         value = Number(value);
                         rpc.query({
@@ -63,6 +63,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
                             console.error("ERROR");
                         });
 
+                        // TODO save tip somehow
                         self.order.amount_total = value;
                         self.renderElement();
 
