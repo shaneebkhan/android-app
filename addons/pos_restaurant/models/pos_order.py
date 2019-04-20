@@ -35,10 +35,7 @@ class PosOrder(models.Model):
                 })
                 order.lines |= tip_line
 
-            if tip_line.qty != 1:
-                # TODO what do i do
-                pass
-
+            tip_line.qty = 1
             tip_line.price_unit = order.tip_amount
 
             new_amounts = tip_line._compute_amount_line_all()
@@ -48,6 +45,9 @@ class PosOrder(models.Model):
             })
 
             order._onchange_amount_all()
+
+            if not order.test_paid():
+                order.state = 'draft'
 
     @api.model
     def _order_fields(self, ui_order):
