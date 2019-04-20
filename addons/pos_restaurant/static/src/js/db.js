@@ -40,7 +40,8 @@ odoo.define("pos_restaurant.DB", function(require) {
             this.insert_validated_order(
                 _.extend(order.data, {
                     waiter_name: "boingboing",
-                    amount_total_without_tip: 123
+                    amount_total_without_tip: 123,
+                    tip_amount: 0
                 })
             );
 
