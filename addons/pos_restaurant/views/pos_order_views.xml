@@ -10,6 +10,9 @@
                 <field name="table_id"/>
                 <field name="customer_count"/>
             </xpath>
+            <field name="pos_reference" position="after">
+                <field name="tip_amount"/>
+            </field>
         </field>
     </record>
 

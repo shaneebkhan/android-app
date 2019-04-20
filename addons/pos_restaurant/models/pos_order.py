@@ -10,7 +10,7 @@ class PosOrder(models.Model):
 
     table_id = fields.Many2one('restaurant.table', string='Table', help='The table where this order was served')
     customer_count = fields.Integer(string='Guests', help='The amount of customers that have been served by this order.')
-    tip_amount = fields.Float(compute='_compute_tip_amount', inverse='_set_tip_amount', help='The total amount tipped, this is computed using the configured tip product.')
+    tip_amount = fields.Float(string='Tip Amount', compute='_compute_tip_amount', inverse='_set_tip_amount', help='The total amount tipped, this is computed using the configured tip product. This is the amount that will be captured when the session is closed.')
 
     def _compute_tip_amount(self):
         for order in self:
@@ -58,7 +58,7 @@ class PosOrder(models.Model):
 
     @api.model
     def set_tip(self, pos_reference, new_tip):
-        order = self.search([('pos_reference', '=', pos_reference)], limit=1)
+        order = self.search([('pos_reference', 'like', pos_reference)], limit=1)
         if not order:
             raise ValidationError(_('Reference %s does not exist.') % pos_reference)
 
