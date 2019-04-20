@@ -129,15 +129,18 @@ odoo.define("pos_restaurant.tipping", function(require) {
         render_orders: function() {
             var self = this;
 
-            this.$el.find(".list-table-contents").empty().append(
-                this.filtered_confirmed_orders.reduce(function(acc, order) {
-                    var tipping_order = new TippingScreenOrder(self, {
-                        order: order
-                    });
-                    tipping_order.renderElement();
-                    return acc.add(tipping_order.$el);
-                }, $())
-            );
+            this.$el
+                .find(".list-table-contents")
+                .empty()
+                .append(
+                    this.filtered_confirmed_orders.map(function(order) {
+                        var tipping_order = new TippingScreenOrder(self, {
+                            order: order
+                        });
+                        tipping_order.renderElement();
+                        return tipping_order.$el;
+                    })
+                );
         },
 
         // TODO JOV: document
