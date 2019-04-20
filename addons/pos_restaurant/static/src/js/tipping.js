@@ -67,7 +67,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
                         self.order.tip_amount = value;
                         self.renderElement();
 
-                        var search_box = self.parent.parent.el.querySelector(".searchbox input");
+                        var search_box = self.parent.el.querySelector(".searchbox input");
                         search_box.focus();
 
                         // search_box.select() doesn't work on iOS
@@ -83,32 +83,6 @@ odoo.define("pos_restaurant.tipping", function(require) {
         }
     });
 
-    // TODO JOV: remove this, it has no state. This can be handled by
-    // TippingScreenWidget.
-    var TippingScreenList = PosBaseWidget.extend({
-        template: "TippingScreenList",
-
-        init: function(parent, options) {
-            this._super(parent, options);
-            this.parent = parent;
-        },
-
-        renderElement: function() {
-            var self = this;
-            this._super();
-
-            this.$el.find(".list-table-contents").append(
-                this.parent.filtered_confirmed_orders.reduce(function(acc, order) {
-                    var tipping_order = new TippingScreenOrder(self, {
-                        order: order
-                    });
-                    tipping_order.renderElement();
-                    return acc.add(tipping_order.$el);
-                }, $())
-            );
-        }
-    });
-
     var TippingScreenWidget = ScreenWidget.extend({
         template: "TippingScreenWidget",
         auto_back: true,
@@ -117,7 +91,6 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this._super(parent, options);
             this.filtered_confirmed_orders = [];
             this.current_search = "";
-            this.tipping_screen_list_widget = new TippingScreenList(this, options);
         },
 
         show: function() {
@@ -154,8 +127,17 @@ odoo.define("pos_restaurant.tipping", function(require) {
         },
 
         render_orders: function() {
-            this.tipping_screen_list_widget.renderElement();
-            this.$el.find(".list-table").replaceWith(this.tipping_screen_list_widget.el);
+            var self = this;
+
+            this.$el.find(".list-table-contents").empty().append(
+                this.filtered_confirmed_orders.reduce(function(acc, order) {
+                    var tipping_order = new TippingScreenOrder(self, {
+                        order: order
+                    });
+                    tipping_order.renderElement();
+                    return acc.add(tipping_order.$el);
+                }, $())
+            );
         },
 
         // TODO JOV: document

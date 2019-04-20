@@ -31,7 +31,20 @@
                         <section class="subwindow">
                             <div class="subwindow-container">
                                 <div class="subwindow-container-fix touch-scrollable scrollable-y">
-                                    <table class="list-table"/>
+                                    <table class="list-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Waiter</th>
+                                                <th>Time</th>
+                                                <th>Table</th>
+                                                <th>Customer</th>
+                                                <th>Amount w/o tip</th>
+                                                <th>Tip</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="list-table-contents"/>
+                                    </table>
                                 </div>
                             </div>
                         </section>
@@ -39,23 +52,6 @@
                 </section>
             </div>
         </div>
-    </t>
-
-    <t t-name="TippingScreenList">
-        <table class="list-table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Waiter</th>
-                    <th>Time</th>
-                    <th>Table</th>
-                    <th>Customer</th>
-                    <th>Amount w/o tip</th>
-                    <th>Tip</th>
-                </tr>
-            </thead>
-            <tbody class="list-table-contents"/>
-        </table>
     </t>
 
     <t t-name="TippingScreenOrder">
