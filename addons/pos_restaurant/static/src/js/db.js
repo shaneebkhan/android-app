@@ -69,7 +69,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             "partner_name",
             "table_name"
         ],
-        order: [{ name: "date_order", asc: false }],
+        order: [{ name: "date_order" }],
         domain: function(self) {
             return [["session_id", "=", self.pos_session.id]];
         },
