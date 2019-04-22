@@ -12,6 +12,9 @@ class PosOrder(models.Model):
     customer_count = fields.Integer(string='Guests', help='The amount of customers that have been served by this order.')
     tip_amount = fields.Float(string='Tip Amount', compute='_compute_tip_amount', inverse='_set_tip_amount', help='The total amount tipped, this is computed using the configured tip product. This is the amount that will be captured when the session is closed.')
 
+    table_name = fields.Char(related='table_id.name', help='Used to easily load this in the POS.')
+    partner_name = fields.Char(related='partner_id.name', help='Used to easily load this in the POS.')
+
     def _compute_tip_amount(self):
         for order in self:
             tip_product = order.config_id.tip_product_id

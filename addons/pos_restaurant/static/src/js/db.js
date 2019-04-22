@@ -4,6 +4,7 @@ odoo.define("pos_restaurant.DB", function(require) {
     var utils = require("web.utils");
     var db = require("point_of_sale.DB");
     var models = require("point_of_sale.models");
+    var field_utils = require("web.field_utils");
 
     var _t = core._t;
     var round_pr = utils.round_precision;
@@ -21,7 +22,7 @@ odoo.define("pos_restaurant.DB", function(require) {
                 "amount_total_without_tip",
                 "tip_amount",
                 "creation_date",
-                "partner_id",
+                "partner_name",
                 "table",
                 "waiter_name"
             );
@@ -41,7 +42,9 @@ odoo.define("pos_restaurant.DB", function(require) {
                 _.extend(order.data, {
                     waiter_name: "boingboing",
                     amount_total_without_tip: 123,
-                    tip_amount: 0
+                    tip_amount: 0,
+                    creation_date: field_utils.format.datetime(moment(order.creation_date), {}, { timezone: false }),
+                    partner_name: order.data.partner_id && this.get_partner_by_id(order.data.partner_id).name
                 })
             );
 
@@ -56,9 +59,9 @@ odoo.define("pos_restaurant.DB", function(require) {
             "amount_total",
             "date_order",
             "tip_amount",
-            "partner_id.display_name", // TODO: create computed field
-            "table_id.name", // TODO: create computed field
-            "waiter_name"
+            "partner_name",
+            "table_name",
+            "waiter_name" // TODO: create this
         ],
         order: [{ name: "date_order", asc: false }],
         domain: function(self) {
@@ -77,9 +80,9 @@ odoo.define("pos_restaurant.DB", function(require) {
                     ),
 
                     tip_amount: order.tip_amount,
-                    creation_date: order.date_order, // TODO make date equivalent to what POS generates
-                    partner_id: order.partner_id && order.partner_id[1],
-                    table: order.table_id && order.table_id[1],
+                    creation_date: field_utils.format.datetime(moment(order.date_order), {}, { timezone: false }),
+                    partner_name: order.partner_name,
+                    table: order.table_name,
                     waiter_name: order.waiter_name
                 });
             });

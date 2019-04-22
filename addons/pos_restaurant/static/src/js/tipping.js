@@ -63,7 +63,6 @@ odoo.define("pos_restaurant.tipping", function(require) {
                             console.error("ERROR");
                         });
 
-                        // TODO save tip somehow
                         self.order.tip_amount = value;
                         self.renderElement();
 

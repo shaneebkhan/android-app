@@ -60,7 +60,7 @@
             <td t-esc="widget.order.waiter_name"/>
             <td t-esc="widget.order.creation_date"/>
             <td t-esc="widget.order.table"/>
-            <td t-esc="widget.order.partner_id"/>
+            <td t-esc="widget.order.partner_name || ''"/>
             <td t-esc="widget.format_currency_no_symbol(widget.order.amount_total_without_tip)"/>
             <td t-esc="widget.format_currency_no_symbol(widget.order.tip_amount)"/>
         </tr>
