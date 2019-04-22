@@ -9,6 +9,16 @@ odoo.define("pos_restaurant.DB", function(require) {
     var _t = core._t;
     var round_pr = utils.round_precision;
 
+    var _super_order = models.Order.prototype;
+    models.Order = models.Order.extend({
+        export_as_JSON: function() {
+            var res = _super_order.export_as_JSON.apply(this, arguments);
+            return _.extend(res, {
+                tip_amount: this.get_tip()
+            });
+        }
+    });
+
     db.include({
         init: function(options) {
             this._super(options);
@@ -27,24 +37,21 @@ odoo.define("pos_restaurant.DB", function(require) {
                 "waiter_name"
             );
 
-            // TODO replace partner_id with name
-
             this.confirmed_orders.push(order_to_save);
-
             console.log("confirmed orders", this.confirmed_orders);
         },
 
         // After an order is synced it'll be removed. We save a copy
         // of it for the tipping interface.
         remove_order: function(order_id) {
-            var order = this.get_order(order_id);
+            var order = this.get_order(order_id).data;
             this.insert_validated_order(
-                _.extend(order.data, {
+                _.extend(order, {
                     waiter_name: "boingboing",
-                    amount_total_without_tip: 123,
-                    tip_amount: 0,
+                    amount_total_without_tip: order.amount_total - (order.tip_amount || 0),
+                    tip_amount: order.tip_amount || 0,
                     creation_date: field_utils.format.datetime(moment(order.creation_date), {}, { timezone: false }),
-                    partner_name: order.data.partner_id && this.get_partner_by_id(order.data.partner_id).name
+                    partner_name: order.partner_id && this.get_partner_by_id(order.partner_id).name
                 })
             );
 
