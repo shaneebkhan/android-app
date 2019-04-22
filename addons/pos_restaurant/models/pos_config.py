@@ -16,6 +16,9 @@ class PosConfig(models.Model):
     is_order_printer = fields.Boolean('Order Printer')
     module_pos_restaurant = fields.Boolean(default=True)
 
+    handle_tip_adjustments = fields.Boolean('Handle Tip Adjustments')
+    default_authorized_tip_amount = fields.Monetary('Default Authorized Tip Amount', help='Amount that will be authorized by default when processing credit card payments.')
+
     @api.onchange('iface_tipproduct')
     def _onchange_tipproduct(self):
         if self.iface_tipproduct:

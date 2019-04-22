@@ -124,6 +124,28 @@
                     </div>
                 </div>
             </div>
+            <div id="payments" position="inside">
+                <div class="col-12 col-lg-6 o_setting_box"
+                     title="Handle American-style tips."
+                     attrs="{'invisible': [('module_pos_restaurant', '=', False)]}">
+                    <div class="o_setting_left_pane">
+                        <field name="handle_tip_adjustments"/>
+                    </div>
+                    <div class="o_setting_right_pane">
+                        <label for="default_authorized_tip_amount" string="Adjust Tips After Payment"/>
+                        <span class="fa fa-lg fa-cutlery" title="For bars and restaurants" role="img" aria-label="For bars and restaurants"/>
+                        <div class="text-muted">
+                            Adjust credit card tips after payment (common in the US)
+                        </div>
+                        <div class="content-group" attrs="{'invisible': [('handle_tip_adjustments', '=', False)]}">
+                            <div class="mt16">
+                                <label string="Default Authorized Tip Amount" for="default_authorized_tip_amount" class="o_light_label"/>
+                                <field name="default_authorized_tip_amount"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </field>
     </record>
 
