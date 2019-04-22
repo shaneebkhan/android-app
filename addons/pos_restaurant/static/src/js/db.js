@@ -33,8 +33,7 @@ odoo.define("pos_restaurant.DB", function(require) {
                 "tip_amount",
                 "creation_date",
                 "partner_name",
-                "table",
-                "waiter_name"
+                "table"
             );
 
             // add this to the beginning because the tipping screen
@@ -49,7 +48,6 @@ odoo.define("pos_restaurant.DB", function(require) {
             var order = this.get_order(order_id).data;
             this.insert_validated_order(
                 _.extend(order, {
-                    waiter_name: "boingboing",
                     amount_total_without_tip: order.amount_total - (order.tip_amount || 0),
                     tip_amount: order.tip_amount || 0,
                     creation_date: field_utils.format.datetime(moment(order.creation_date), {}, { timezone: false }),
@@ -69,8 +67,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             "date_order",
             "tip_amount",
             "partner_name",
-            "table_name",
-            "waiter_name" // TODO: create this
+            "table_name"
         ],
         order: [{ name: "date_order", asc: false }],
         domain: function(self) {
@@ -92,7 +89,6 @@ odoo.define("pos_restaurant.DB", function(require) {
                     creation_date: field_utils.format.datetime(moment(order.date_order), {}, { timezone: false }),
                     partner_name: order.partner_name,
                     table: order.table_name,
-                    waiter_name: order.waiter_name
                 });
             });
         }

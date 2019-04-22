@@ -35,7 +35,6 @@
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
-                                                <th>Waiter</th>
                                                 <th>Time</th>
                                                 <th>Table</th>
                                                 <th>Customer</th>
@@ -57,7 +56,6 @@
     <t t-name="TippingScreenOrder">
         <tr>
             <td t-esc="widget.order.uid"/>
-            <td t-esc="widget.order.waiter_name"/>
             <td t-esc="widget.order.creation_date"/>
             <td t-esc="widget.order.table"/>
             <td t-esc="widget.order.partner_name || ''"/>
