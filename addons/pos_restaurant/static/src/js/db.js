@@ -37,7 +37,9 @@ odoo.define("pos_restaurant.DB", function(require) {
                 "waiter_name"
             );
 
-            this.confirmed_orders.push(order_to_save);
+            // add this to the beginning because the tipping screen
+            // shows orders from new to old.
+            this.confirmed_orders.unshift(order_to_save);
             console.log("confirmed orders", this.confirmed_orders);
         },
 
