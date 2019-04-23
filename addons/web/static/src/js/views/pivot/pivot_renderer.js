@@ -2,12 +2,14 @@ odoo.define('web.PivotRenderer', function (require) {
 "use strict";
 
 var AbstractRenderer = require('web.AbstractRenderer');
-var core = require('web.core');
-var field_utils = require('web.field_utils');
 var config = require('web.config');
+var core = require('web.core');
+var dataComparisonUtils = require('web.dataComparisonUtils');
+var field_utils = require('web.field_utils');
 
-var QWeb = core.qweb;
 var _t = core._t;
+var computeVariation = dataComparisonUtils.computeVariation;
+var QWeb = core.qweb;
 
 var PivotRenderer = AbstractRenderer.extend({
     tagName: 'table',
@@ -25,41 +27,37 @@ var PivotRenderer = AbstractRenderer.extend({
      */
     init: function (parent, state, params) {
         this._super.apply(this, arguments);
-        this.compare = state.compare;
         this.fieldWidgets = params.widgets || {};
-        this.timeRangeDescription = params.timeRangeDescription;
-        this.comparisonTimeRangeDescription = params.comparisonTimeRangeDescription;
         this.paddingLeftHeaderTabWidth = config.device.isMobile ? 5 : 30;
-    },
-
-    //--------------------------------------------------------------------------
-    // Public
-    //--------------------------------------------------------------------------
-
-    /**
-     * @override
-     * @param {Object} state
-     * @param {Object} params
-     */
-    updateState: function (state, params) {
-        if (params.context !== undefined) {
-            var timeRangeMenuData = params.context.timeRangeMenuData;
-            if (timeRangeMenuData) {
-                this.timeRangeDescription = timeRangeMenuData.timeRangeDescription;
-                this.comparisonTimeRangeDescription = timeRangeMenuData.comparisonTimeRangeDescription;
-            } else {
-                this.timeRangeDescription = undefined;
-                this.comparisonTimeRangeDescription = undefined;
-            }
-        }
-        this.compare = state.compare;
-        return this._super.apply(this, arguments);
     },
 
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
+    _getTreeDimension: function (tree) {
+        var height = 1;
+        var leafCount = 0;
+        this._traverseTree(tree, function (subTree) {
+            height = Math.max(height, subTree.root.value.length + 1);
+            if (_.isEmpty(subTree.directSubtrees)) {
+                leafCount++;
+            }
+        });
+        return {
+            height: height,
+            leafCount: leafCount
+        };
+    },
+    _getTreeLeafCount: function (tree) {
+        var leafCount = 0;
+        this._traverseTree(tree, function (subTree) {
+            if (_.isEmpty(subTree.directSubtrees)) {
+                leafCount++;
+            }
+        });
+        return leafCount;
+    },
     /**
      * Used to determine whether or not to display the no content helper.
      *
@@ -67,7 +65,7 @@ var PivotRenderer = AbstractRenderer.extend({
      * @returns {boolean}
      */
     _hasContent: function () {
-        return this.state.has_data && this.state.measures.length;
+        return this.state.hasData && this.state.measures.length;
     },
     /**
      * @override
@@ -81,229 +79,297 @@ var PivotRenderer = AbstractRenderer.extend({
             return this._super.apply(this, arguments);
         }
 
+        var $fragment = $(document.createDocumentFragment());
+        var $table = $('<table>').appendTo($fragment);
+        var $thead = $('<thead>').appendTo($table);
+        var $tbody = $('<tbody>').appendTo($table);
+
+        this._renderHeaders($thead);
+        this._renderRows($tbody);
+
+        // todo: make sure the next line does something
+        $table.find('.o_pivot_header_cell_opened,.o_pivot_header_cell_closed').tooltip();
+
         if (!this.$el.is('table')) {
             // coming from the no content helper, so the root element has to be
             // re-rendered before rendering and appending its content
             this.renderElement();
         }
-        var $fragment = $(document.createDocumentFragment());
-        var $table = $('<table>').appendTo($fragment);
-        var $thead = $('<thead>').appendTo($table);
-        var $tbody = $('<tbody>').appendTo($table);
-        var nbr_measures = this.state.measures.length;
-        var nbrCols = (this.state.mainColWidth === 1) ?
-            nbr_measures :
-            (this.state.mainColWidth + 1) * nbr_measures;
-        var i;
-        if (this.compare) {
-            for (i=0; i < 3 * nbrCols + 1; i++) {
-                $table.prepend($('<col>'));
-            }
-        } else {
-            for (i=0; i < nbrCols + 1; i++) {
-                $table.prepend($('<col>'));
-            }
-        }
-        this._renderHeaders($thead, this.state.headers, nbrCols);
-        this._renderRows($tbody, this.state.rows);
-        // todo: make sure the next line does something
-        $table.find('.o_pivot_header_cell_opened,.o_pivot_header_cell_closed').tooltip();
         this.$el.html($table.contents());
         return this._super.apply(this, arguments);
+    },
+
+    _renderHeaders: function ($thead) {
+        var self = this;
+        var $cell;
+        var $variation;
+
+        var groupbyLabels = _.map(this.state.colGroupBys, function (gb) {
+            return self.state.fields[gb.split(':')[0]].string;
+        });
+
+        var sortedColumn = this.state.sortedColumn || {};
+
+        var dimensions = this._getTreeDimension(this.state.colGroupTree);
+        var height = dimensions.height;
+        var leafCount = dimensions.leafCount;
+        var measureCount = this.state.measures.length;
+        var originCount = this.state.origins.length;
+        var rowCount = height + 1 + (originCount > 1 ? 1 : 0);
+
+        // index heigth corresponds to the row of measures.
+        // index heigth + 1 corresponds to origins/variation.
+        var rows = (new Array(rowCount)).fill(0).map(function () {
+            return $('<tr>');
+        });
+
+        this.representedColGroupIds = [];
+
+        function addOrder ($cell) {
+            $cell.addClass('o_pivot_sort_order_' + sortedColumn.order);
+            if (sortedColumn.order === 'asc') {
+                $cell.attr('aria-sorted', 'ascending');
+            } else {
+                $cell.attr('aria-sorted', 'descending');
+            }
+        }
+
+        function addOriginHeaders (groupId, measure) {
+            self.state.origins.forEach(function (origin, originIndex) {
+                $cell = $('<th>')
+                    .text(origin)
+                    .attr('colspan', 1)
+                    .attr('rowspan', 1)
+                    .data('originIndexes', [originIndex])
+                    .data('measure', measure)
+                    .data('groupId', groupId)
+                    .addClass('o_pivot_origin_row text-muted');
+                if (sortedColumn.measure === measure &&
+                    sortedColumn.groupId === groupId &&
+                    !sortedColumn.originIndexes[1] &&
+                    sortedColumn.originIndexes[0] === originIndex) {
+                    addOrder($cell);
+                }
+                rows[height + 1].append($cell);
+
+                if (originIndex > 0) {
+                    $variation = $('<th>')
+                        .text(_t('Variation'))
+                        .attr('colspan', 1)
+                        .attr('rowspan', 1)
+                        .data('originIndexes', [originIndex - 1, originIndex])
+                        .data('measure', measure)
+                        .data('groupId', groupId)
+                        .addClass('o_pivot_origin_row text-muted');
+                    if (sortedColumn.groupId === groupId &&
+                        sortedColumn.measure === measure &&
+                        sortedColumn.originIndexes[1] &&
+                        sortedColumn.originIndexes[1] === originIndex) {
+                        addOrder($variation);
+                    }
+                    rows[height + 1].append($variation);
+                }
+            });
+        }
+
+        function addMeasureHeaders (groupId) {
+            self.state.measures.forEach(function (measure) {
+                $cell = $('<th>')
+                    .text(self.state.fields[measure].string)
+                    .attr('colspan', 2 * originCount - 1)
+                    .attr('rowspan', 1)
+                    .data('measure', measure)
+                    .data('groupId', groupId)
+                    .addClass('o_pivot_measure_row text-muted');
+                if (sortedColumn.groupId === groupId &&
+                    sortedColumn.measure === measure) {
+                    addOrder($cell);
+                }
+                rows[height].append($cell);
+
+                if (originCount > 1) {
+                    addOriginHeaders(groupId, measure);
+                }
+            });
+        }
+
+        $cell = $('<th>')
+                    .text("")
+                    .attr('colspan', 1)
+                    .attr('rowspan', rowCount);
+        rows[0].append($cell);
+
+        this._traverseTree(this.state.colGroupTree, function (subTree) {
+            var rowIndex = subTree.root.value.length;
+            var groupId = [[], subTree.root.value];
+            var key = JSON.stringify(groupId);
+            var isLeaf = _.isEmpty(subTree.directSubtrees);
+            var title = subTree.root.label[subTree.root.label.length - 1] || _t('Total');
+            var colspan = self._getTreeLeafCount(subTree) * measureCount * (2 * originCount - 1);
+            var rowspan = !isLeaf ? 1 : height - rowIndex;
+            $cell = $('<th>')
+                        .text(title)
+                        .attr('colspan', colspan)
+                        .attr('rowspan', rowspan)
+                        .data('id', key)
+                        .data('type', 'col')
+                        .addClass('o_pivot_header_cell_' +  (isLeaf ? 'closed': 'opened'));
+            if (rowIndex > 1) {
+                $cell.attr('title', groupbyLabels[rowIndex-1]);
+            }
+            if (rowspan > 1) {
+                $cell.css('padding', 0);
+            }
+            rows[rowIndex].append($cell);
+
+            if (isLeaf) {
+                self.representedColGroupIds.push(groupId);
+                addMeasureHeaders(key);
+            }
+        });
+
+        // We want to represent the group 'Total' if there is more that one leaf.
+        if (leafCount > 1) {
+            $cell = $('<th>')
+                        .text("")
+                        .attr('colspan', measureCount * (2 * originCount - 1))
+                        .attr('rowspan', height);
+            rows[0].append($cell);
+
+            this.representedColGroupIds.push([[], []]);
+            addMeasureHeaders(JSON.stringify([[], []]));
+        }
+
+        rows.forEach(function ($row) {
+            $thead.append($row);
+        });
     },
     /**
      * @private
      * @param {jQueryElement} $thead
      * @param {jQueryElement} headers
      */
-    _renderHeaders: function ($thead, headers, nbrCols) {
-        var self = this;
-        var i, j, cell, $row, $cell;
-        var measure, dataType;
-        var id, measureCellIds = [];
-
-        var groupbyLabels = _.map(this.state.colGroupBys, function (gb) {
-            return self.state.fields[gb.split(':')[0]].string;
-        });
-
-        for (i = 0; i < headers.length; i++) {
-            $row = $('<tr>');
-            for (j = 0; j < headers[i].length; j++) {
-                cell = headers[i][j];
-                if (i == 0 && j == 0) {
-                    $cell = $('<th>')
-                        .text(cell.title)
-                        .attr('rowspan', cell.height + 1)
-                        .attr('colspan', cell.width);
-                } else {
-                    $cell = $('<th>')
-                        .text(cell.title)
-                        .attr('rowspan', cell.height)
-                        .attr('colspan', (cell.width && self.compare) ? 3 * cell.width : cell.width || (self.compare && cell.measure && 3));
-                }
-                if (i > 0) {
-                    $cell.attr('title', groupbyLabels[i-1]);
-                }
-                if (cell.expanded !== undefined) {
-                    $cell.addClass(cell.expanded ? 'o_pivot_header_cell_opened' : 'o_pivot_header_cell_closed');
-                    $cell.data('id', cell.id);
-                }
-                if (cell.measure) {
-                    measure = cell.measure;
-                    measureCellIds.push(cell.id);
-                    $cell.addClass('o_pivot_measure_row text-muted')
-                        .text(this.state.fields[measure].string);
-                    $cell.data('id', cell.id).data('measure', measure);
-                    if (cell.id === this.state.sortedColumn.id &&
-                        measure === this.state.sortedColumn.measure) {
-                        $cell.addClass('o_pivot_measure_row_sorted_' + this.state.sortedColumn.order);
-                        if (this.state.sortedColumn.order == 'asc') {
-                            $cell.attr('aria-sorted', 'ascending');
-                        } else {
-                            $cell.attr('aria-sorted', 'descending');
-                        }
-                    }
-                }
-                $row.append($cell);
-
-                $cell.toggleClass('d-none d-md-table-cell', (cell.expanded !== undefined) || (cell.measure !== undefined && j < headers[i].length - this.state.measures.length));
-                if (cell.height > 1) {
-                    $cell.css('padding', 0);
-                }
-            }
-            $thead.append($row);
-        }
-        if (this.compare) {
-            var colLabels = [this.timeRangeDescription, this.comparisonTimeRangeDescription, _t('Variation')];
-            var dataTypes = ['data', 'comparisonData', 'variation'];
-            $row = $('<tr>');
-            for (i = 0; i < 3 * nbrCols; i++) {
-                id = measureCellIds[~~(i / 3)];
-                measure = this.state.measures[(~~(i / 3)) % this.state.measures.length];
-                dataType = dataTypes[i % 3];
-                $cell = $('<th>')
-                    .addClass('o_pivot_measure_row text-muted')
-                    .data('data_type', dataType)
-                    .data('id', id)
-                    .data('measure', measure)
-                    .text(colLabels[i % 3])
-                    .attr('rowspan', 1)
-                    .attr('colspan', 1);
-                if (dataType === this.state.sortedColumn.dataType &&
-                    id === this.state.sortedColumn.id &&
-                    measure === this.state.sortedColumn.measure) {
-                    $cell.addClass('o_pivot_measure_row_sorted_' + this.state.sortedColumn.order);
-                    if (this.state.sortedColumn.order === 'asc') {
-                        $cell.attr('aria-sorted', 'ascending');
-                    } else {
-                        $cell.attr('aria-sorted', 'descending');
-                    }
-                }
-                $row.append($cell);
-            }
-            $thead.append($row);
-        }
+    _renderHeadersOld: function ($thead, headers) {
+        // What is this class used for?
+        // $cell.toggleClass('d-none d-md-table-cell', (cell.expanded !== undefined) || (cell.measure !== undefined && j < headers[i].length - this.state.measures.length));
     },
-    /**
-     * @private
-     * @param {jQueryElement} $tbody
-     * @param {jQueryElement} rows
-     */
-    _renderRows: function ($tbody, rows) {
+    _renderRows: function ($tbody) {
         var self = this;
-        var i, j, value, measure, name, formatter, $row, $cell, $header;
-        var nbrMeasures = this.state.measures.length;
-        var length = rows[0].values.length;
-        var shouldDisplayTotal = this.state.mainColWidth > 1;
+        var $row;
+        var $cell;
+        var $variation;
+        var previousValue;
+        var value;
+        var variation;
 
         var groupbyLabels = _.map(this.state.rowGroupBys, function (gb) {
             return self.state.fields[gb.split(':')[0]].string;
         });
-        var measureTypes = this.state.measures.map(function (name) {
-            var type = self.state.fields[name].type;
-            return type === 'many2one' ? 'integer' : type;
-        });
-        for (i = 0; i < rows.length; i++) {
-            $row = $('<tr>');
-            $header = $('<td>')
-                .text(rows[i].title)
-                .data('id', rows[i].id)
-                .css('padding-left', (5 + rows[i].indent * self.paddingLeftHeaderTabWidth) + 'px')
-                .addClass(rows[i].expanded ? 'o_pivot_header_cell_opened' : 'o_pivot_header_cell_closed');
-            if (rows[i].indent > 0) $header.attr('title', groupbyLabels[rows[i].indent - 1]);
-            $header.appendTo($row);
-            for (j = 0; j < length; j++) {
-                value = rows[i].values[j];
-                name = this.state.measures[j % nbrMeasures];
-                formatter = field_utils.format[this.fieldWidgets[name] || measureTypes[j % nbrMeasures]];
-                measure = this.state.fields[name];
-                if (this.compare) {
-                    if (value instanceof Object) {
-                        for (var origin in value) {
-                            $cell = $('<td>')
-                                .data('id', rows[i].id)
-                                .data('col_id', rows[i].col_ids[Math.floor(j / nbrMeasures)])
-                                .data('type' , origin)
-                                .toggleClass('o_empty', false)
-                                .addClass('o_pivot_cell_value text-right');
-                            if (origin === 'data') {
-                                $cell.append($('<div>', {class: 'o_value'}).html(formatter(
-                                    value[origin],
-                                    measure
-                                )));
-                            } else if (origin === 'comparisonData') {
-                                $cell.append($('<div>', {class: 'o_comparison_value'}).html(formatter(
-                                    value[origin],
-                                    measure
-                                )));
-                            } else {
-                                $cell.append($('<div>', {class: 'o_variation' + value[origin].signClass}).html(
-                                    field_utils.format.percentage(
-                                        value[origin].magnitude,
-                                        measure
-                                    )
-                                ));
-                            }
-                            if (((j >= length - this.state.measures.length) && shouldDisplayTotal) || i === 0){
-                                $cell.css('font-weight', 'bold');
-                            }
-                            $cell.toggleClass('d-none d-md-table-cell', j < length - nbrMeasures);
-                            $row.append($cell);
-                        }
-                    } else {
-                        for (var l=0; l < 3; l++) {
-                            $cell = $('<td>')
-                                .data('id', rows[i].id)
-                                .toggleClass('o_empty', true)
-                                .addClass('o_pivot_cell_value text-right');
-                            $row.append($cell);
-                        }
-                    }
-                } else {
-                    $cell = $('<td>')
-                                .data('id', rows[i].id)
-                                .data('col_id', rows[i].col_ids[Math.floor(j / nbrMeasures)])
-                                .toggleClass('o_empty', !value)
-                                .addClass('o_pivot_cell_value text-right');
-                    if (value !== undefined) {
-                        $cell.append($('<div>', {class: 'o_value'}).html(formatter(value, measure)));
-                    }
-                    if (((j >= length - this.state.measures.length) && shouldDisplayTotal) || i === 0){
-                        $cell.css('font-weight', 'bold');
-                    }
-                    $row.append($cell);
 
-                    $cell.toggleClass('d-none d-md-table-cell', j < length - nbrMeasures);
-                }
+        var measureTypes = this.state.measures.reduce(
+            function (acc, measureName) {
+                var type = self.state.fields[measureName].type;
+                acc[measureName] = type === 'many2one' ? 'integer' : type;
+                return acc;
+            },
+            {}
+        );
+
+        this._traverseTree(this.state.rowGroupTree, function (subTree) {
+            $row = $('<tr>');
+
+            var root = subTree.root;
+            var rowGroupId = [root.value, []];
+            var title = root.label[root.label.length - 1] || _t('Total');
+            var indent = root.label.length;
+            var paddingLeft =  (5 +  indent * self.paddingLeftHeaderTabWidth) + 'px';
+            var isLeaf = _.isEmpty(subTree.directSubtrees);
+
+            var $header = $('<td>')
+                .text(title)
+                .data('id', JSON.stringify(rowGroupId))
+                .data('type', 'row')
+                .css('padding-left', paddingLeft)
+                .addClass('o_pivot_header_cell_' +  (isLeaf ? 'closed': 'opened'));
+            if (indent > 0) {
+                $header.attr('title', groupbyLabels[indent - 1]);
             }
+            $row.append($header);
+
+            self.representedColGroupIds.forEach(
+                function (colGroupId) {
+                    self.state.measures.forEach(function (measure) {
+                        self.state.origins.forEach(function (origin, originIndex) {
+                            var groupIntersectionId  = [rowGroupId[0], colGroupId[1]];
+                            var key = JSON.stringify(groupIntersectionId);
+                            $cell = $('<td>')
+                                        .data('id', key)
+                                        .data('originIndex', originIndex)
+                                        .addClass('o_pivot_cell_value text-right');
+
+                            var groupIntersectionMeasurements = self.state.measurements[key];
+                            if (groupIntersectionMeasurements) {
+                                var formatter = field_utils.format[self.fieldWidgets[measure] || measureTypes[measure]];
+                                var measureField = self.state.fields[measure];
+                                value = groupIntersectionMeasurements[originIndex][measure];
+                                $cell.append($('<div>', {class: 'o_value'}).html(formatter(value, measureField)));
+                                if (!groupIntersectionId[0].length || !groupIntersectionId[1].length) {
+                                    $cell.css('font-weight', 'bold');
+                                }
+                            } else {
+                                $cell.toggleClass('o_empty');
+                            }
+                            $row.append($cell);
+
+                            if (originIndex > 0) {
+                                $variation = $('<td>')
+                                        .addClass('o_pivot_cell_value text-right');
+                                if (groupIntersectionMeasurements) {
+                                    variation = computeVariation(previousValue, value);
+                                    var $div = $('<div>')
+                                        .addClass('o_variation' + variation.signClass)
+                                        .html(field_utils.format.percentage(variation.magnitude, measure));
+                                    $variation.append($div);
+                                }
+                                else {
+                                    $variation.toggleClass('o_empty');
+                                }
+                                $row.append($variation);
+                            }
+                            previousValue = value;
+                        });
+                    });
+                }
+            );
             $tbody.append($row);
-        }
+        });
+    },
+    /**
+     * @private @static
+     * @param {any} root
+     * @param {any} f
+     * @param {any} arg1
+     * @param {any} arg2
+     * @param {any} arg3
+     * @returns
+     */
+    _traverseTree: function (tree, f, arg1, arg2, arg3) {
+        var self = this;
+        f(tree, arg1, arg2, arg3);
+
+        var subTreeKeys = tree.sortedKeys || Object.keys(tree.directSubtrees);
+
+        subTreeKeys.forEach(function (subTreeKey) {
+            var subTree = tree.directSubtrees[subTreeKey];
+            self._traverseTree(subTree, f, arg1, arg2, arg3);
+        });
     },
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
 
+    // Did not work. We should make it work again!
     /**
      * @private
      * @param {MouseEvent} ev
