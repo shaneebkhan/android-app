@@ -132,7 +132,6 @@ class AccountingSavepointCase(SavepointCase):
             'price_include': True,
             'include_base_amount': True,
          })
-        cls.parent_tax_purchase_1 = cls.company_parent.account_purchase_tax_id
 
         cls.parent_acc_tax_1 = cls.parent_tax_sale_1.account_id
         cls.parent_acc_tax_2 = cls.parent_acc_tax_1.copy()
@@ -148,17 +147,51 @@ class AccountingSavepointCase(SavepointCase):
             'cash_basis_base_account_id': cls.parent_acc_tax_3.id,
          })
 
+        cls.parent_tax_purchase_1 = cls.company_parent.account_purchase_tax_id
+        cls.parent_tax_purchase_2 = cls.parent_tax_purchase_1.copy()
+        cls.parent_tax_purchase_3 = cls.parent_tax_purchase_2.copy()
+        cls.parent_tax_purchase_1_incl = cls.parent_tax_purchase_3.copy()
+        cls.parent_tax_purchase_1_incl.write({
+            'name': '%s incl' % cls.parent_tax_purchase_1.name,
+            'description': '%s incl' % cls.parent_tax_purchase_1.description,
+            'amount': cls.parent_tax_purchase_1.amount,
+            'price_include': True,
+            'include_base_amount': True,
+         })
+
+        cls.parent_tax_purchase_1_not_exigible = cls.parent_tax_purchase_3.copy()
+        cls.parent_tax_purchase_1_not_exigible.write({
+            'name': '%s exigible on payment' % cls.parent_tax_purchase_1.name,
+            'description': '%s exigible on payment' % cls.parent_tax_purchase_1.description,
+            'amount': cls.parent_tax_purchase_1.amount,
+            'tax_exigibility': 'on_payment',
+            'cash_basis_account_id': cls.parent_acc_tax_2.id,
+            'cash_basis_base_account_id': cls.parent_acc_tax_3.id,
+         })
+
         # Fiscal position definition.
         cls.parent_fp_1 = cls.env['account.fiscal.position'].create({
             'name': 'parent_fp_1',
-            'tax_ids': [(0, None, {
-                'tax_src_id': cls.parent_tax_sale_1.id,
-                'tax_dest_id': cls.parent_tax_sale_3.id,
-            })],
-            'account_ids': [(0, None, {
-                'account_src_id': cls.parent_acc_revenue_1.id,
-                'account_dest_id': cls.parent_acc_revenue_3.id,
-            })],
+            'tax_ids': [
+                (0, None, {
+                    'tax_src_id': cls.parent_tax_sale_1.id,
+                    'tax_dest_id': cls.parent_tax_sale_3.id,
+                }),
+                (0, None, {
+                    'tax_src_id': cls.parent_tax_purchase_1.id,
+                    'tax_dest_id': cls.parent_tax_purchase_3.id,
+                }),
+            ],
+            'account_ids': [
+                (0, None, {
+                    'account_src_id': cls.parent_acc_revenue_1.id,
+                    'account_dest_id': cls.parent_acc_revenue_3.id,
+                }),
+                (0, None, {
+                    'account_src_id': cls.parent_acc_expense_1.id,
+                    'account_dest_id': cls.parent_acc_expense_3.id,
+                }),
+            ],
         })
 
         # Payment terms definition.
@@ -188,6 +221,7 @@ class AccountingSavepointCase(SavepointCase):
         cls.partner_a = cls.env['res.partner'].create({
             'name': 'partner_a',
             'property_payment_term_id': cls.pay_terms_immediate.id,
+            'property_supplier_payment_term_id': cls.pay_terms_immediate.id,
             'property_account_receivable_id': cls.parent_acc_receivable_1.id,
             'property_account_payable_id': cls.parent_acc_payable_1.id,
             'company_id': False,
@@ -195,6 +229,7 @@ class AccountingSavepointCase(SavepointCase):
         cls.partner_b = cls.env['res.partner'].create({
             'name': 'partner_b',
             'property_payment_term_id': cls.pay_terms_advance.id,
+            'property_supplier_payment_term_id': cls.pay_terms_advance.id,
             'property_account_position_id': cls.parent_fp_1.id,
             'property_account_receivable_id': cls.parent_acc_receivable_2.id,
             'property_account_payable_id': cls.parent_acc_payable_2.id,
@@ -211,6 +246,7 @@ class AccountingSavepointCase(SavepointCase):
             'lst_price': 1000.0,
             'standard_price': 800.0,
             'taxes_id': [(6, 0, cls.parent_tax_sale_1.ids)],
+            'supplier_taxes_id': [(6, 0, cls.parent_tax_purchase_1.ids)],
             'uom_id': cls.uom_unit.id,
         })
         cls.product_a.product_tmpl_id.property_account_income_id = cls.parent_acc_revenue_1.id
@@ -220,6 +256,7 @@ class AccountingSavepointCase(SavepointCase):
             'lst_price': 2000.0,
             'standard_price': 1500.0,
             'taxes_id': [(6, 0, cls.parent_tax_sale_2.ids)],
+            'supplier_taxes_id': [(6, 0, cls.parent_tax_purchase_2.ids)],
             'uom_id': cls.uom_dozen.id,
         })
         cls.product_b.product_tmpl_id.property_account_income_id = cls.parent_acc_revenue_2.id,
