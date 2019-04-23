@@ -70,13 +70,13 @@
             }
         }
 
-        .o_pivot_measure_row_sorted_asc::after {
-            @include o-caret-down;
+        .o_pivot_sort_order_asc::after {
+            @include o-caret-up;
             margin-left: 5px;
         }
 
-        .o_pivot_measure_row_sorted_desc::after {
-            @include o-caret-up;
+        .o_pivot_sort_order_desc::after {
+            @include o-caret-down;
             margin-left: 5px;
         }
     }
