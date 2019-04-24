@@ -223,7 +223,7 @@ odoo.define('website_form_editor', function (require) {
                 // Make a nice array to render the select input
                 var fields_array = _.map(fields, function (v, k) { return {id: k, name: v.name, display_name: v.string}; });
                 // Filter the fields to remove the ones already in the form
-                var fields_in_form = _.map(self.$target.find('.col-form-label'), function (label) { return label.getAttribute('for'); });
+                var fields_in_form = _.map(self.$target.closest('form.s_website_form').find('.col-form-label'), function (label) { return label.getAttribute('for'); });
                 var available_fields = _.filter(fields_array, function (field) { return !_.contains(fields_in_form, field.name); });
                 // Render the select input
                 var field_selection = qweb.render("website_form.field_many2one", {
@@ -323,8 +323,18 @@ odoo.define('website_form_editor', function (require) {
 
         append_field: function (field) {
             var self = this;
+            // Copy formatting classes of the current row (field)
+            var $label = this.$target.find('label.col-form-label').parent();
+            field.formatInfo = {
+                lableClass: $label.attr('class') || '',
+                contentClass: $label.next().attr('class') || '',
+            };
             this.render_field(field).then(function (field){
-                self.$target.find(".form-group:has('.o_website_form_send')").before(field);
+                if (self.$target.hasClass('form-field')) {
+                    self.$target.after(field);
+                } else {
+                    self.$target.find(".form-group:has('.o_website_form_send')").before(field);
+                }
             });
         },
 
