@@ -50,7 +50,7 @@ odoo.define("website_blog.tour", function (require) {
         },
     }, {
         trigger: "button[data-action=save]",
-        extra_trigger: "#blog_content section:first p:first:not(:containsExact(" + _t("Start writing here...") + "))",
+        extra_trigger: "#o_wblog_post_content section:first p:first:not(:containsExact(" + _t("Start writing here...") + "))",
         content: _t("<b>Click on Save</b> to record your changes."),
         position: "bottom",
     }, {

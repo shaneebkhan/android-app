@@ -47,10 +47,11 @@ class WebsiteBlog(http.Controller):
         '/blog',
         '/blog/page/<int:page>',
     ], type='http', auth="public", website=True)
-    def blogs(self, page=1, **post):
+    def blogs(self, page=1, tag=None, **post):
         domain = request.website.website_domain()
+
         Blog = request.env['blog.blog']
-        blogs = Blog.search(domain, limit=2)
+        blogs = Blog.search(domain, order="create_date asc")
         if len(blogs) == 1:
             return werkzeug.utils.redirect('/blog/%s' % slug(blogs[0]), code=302)
 
@@ -63,12 +64,45 @@ class WebsiteBlog(http.Controller):
             page=page,
             step=self._blog_post_per_page,
         )
+        date_begin, date_end = post.get('date_begin'), post.get('date_end')
+        if date_begin and date_end:
+            domain += [("post_date", ">=", date_begin), ("post_date", "<=", date_end)]
+
+        # retrocompatibility to accept tag as slug
+        active_tag_ids = tag and [int(unslug(t)[1]) for t in tag.split(',')] or []
+        if active_tag_ids:
+            domain += [('tag_ids', 'in', active_tag_ids)]
+        if date_begin and date_end:
+            domain += [("post_date", ">=", date_begin), ("post_date", "<=", date_end)]
+
+        # function to create the string list of tag ids.
+        def tags_list(tag_ids, current_tag):
+            tag_ids = list(tag_ids) # required to avoid using the same list
+            if current_tag in tag_ids:
+                tag_ids.remove(current_tag)
+            else:
+                tag_ids.append(current_tag)
+            tag_ids = request.env['blog.tag'].browse(tag_ids).exists()
+            return ','.join(slug(tag) for tag in tag_ids)
+
         posts = BlogPost.search(domain, offset=(page - 1) * self._blog_post_per_page, limit=self._blog_post_per_page)
+
+        first_published_blog_post = (p for p in posts if (p.website_published == True ) ).__next__()
+
         blog_url = QueryURL('', ['blog', 'tag'])
-        return request.render("website_blog.latest_blogs", {
-            'posts': posts,
+        return request.render("website_blog.blog_post_short", {
+            'blog_posts': posts,
             'pager': pager,
+            'blogs': blogs,
             'blog_url': blog_url,
+            'nav_list': self.nav_list(),
+            'date_begin': date_begin,
+            'date_end': date_end,
+            'tags_list' : tags_list,
+            'active_tag_ids': active_tag_ids,
+            'first_published_blog_post': first_published_blog_post,
+            'first_published_blog_post_cover_properties': json.loads(first_published_blog_post.cover_properties),
+            'blog_posts_cover_properties': [json.loads(b.cover_properties) for b in posts],
         })
 
     @http.route([
@@ -86,6 +120,7 @@ class WebsiteBlog(http.Controller):
          - 'blogs': all blogs for navigation
          - 'pager': pager of posts
          - 'active_tag_ids' :  list of active tag ids,
+         - 'tag': current tag, if tag_id in parameters
          - 'tags_list' : function to built the comma-separated tag list ids (for the url),
          - 'tags': all tags, for navigation
          - 'state_info': state of published/unpublished filter
@@ -130,6 +165,9 @@ class WebsiteBlog(http.Controller):
         blog_url = QueryURL('', ['blog', 'tag'], blog=blog, tag=tag, date_begin=date_begin, date_end=date_end)
 
         blog_posts = BlogPost.search(domain, order="post_date desc")
+
+        first_published_blog_post = (p for p in blog_posts if (p.website_published == True ) ).__next__()
+
         pager = request.website.pager(
             url=request.httprequest.path.partition('/page/')[0],
             total=len(blog_posts),
@@ -164,13 +202,17 @@ class WebsiteBlog(http.Controller):
             'other_tags': other_tags,
             'state_info': {"state": state, "published": published_count, "unpublished": unpublished_count},
             'active_tag_ids': active_tag_ids,
+            'tag': tag,
             'tags_list' : tags_list,
             'blog_posts': blog_posts,
+            'first_published_blog_post': first_published_blog_post,
+            'first_published_blog_post_cover_properties': json.loads(first_published_blog_post.cover_properties),
             'blog_posts_cover_properties': [json.loads(b.cover_properties) for b in blog_posts],
             'pager': pager,
             'nav_list': self.nav_list(blog),
             'blog_url': blog_url,
-            'date': date_begin,
+            'date_begin': date_begin,
+            'date_end': date_end,
             'tag_category': tag_category,
         }
         response = request.render("website_blog.blog_post_short", values)
@@ -191,7 +233,7 @@ class WebsiteBlog(http.Controller):
     @http.route([
             '''/blog/<model("blog.blog", "[('website_id', 'in', (False, current_website_id))]"):blog>/post/<model("blog.post", "[('blog_id','=',blog[0])]"):blog_post>''',
     ], type='http', auth="public", website=True)
-    def blog_post(self, blog, blog_post, tag_id=None, page=1, enable_editor=None, **post):
+    def blog_post(self, blog, blog_post, tag_id=None, page=1, enable_editor=None, is_transitioning=False, **post):
         """ Prepare all values to display the blog.
 
         :return dict values: values for the templates, containing
@@ -224,6 +266,9 @@ class WebsiteBlog(http.Controller):
         pager_end = page * self._post_comment_per_page
         comments = blog_post.website_message_ids[pager_begin:pager_end]
 
+        domain = request.website.website_domain()
+        blogs = blog.search(domain, order="create_date asc")
+
         tag = None
         if tag_id:
             tag = request.env['blog.tag'].browse(int(tag_id))
@@ -255,11 +300,13 @@ class WebsiteBlog(http.Controller):
             'blog': blog,
             'blog_post': blog_post,
             'blog_post_cover_properties': json.loads(blog_post.cover_properties),
+            'blogs': blogs,
             'main_object': blog_post,
             'nav_list': self.nav_list(blog),
             'enable_editor': enable_editor,
             'next_post': next_post,
             'next_post_cover_properties': json.loads(next_post.cover_properties) if next_post else {},
+            'is_transitioning': is_transitioning,
             'date': date_begin,
             'blog_url': blog_url,
             'pager': pager,
