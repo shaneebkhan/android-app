@@ -9,7 +9,7 @@ class TestMassMailing(models.TransientModel):
     _description = 'Sample Mail Wizard'
 
     email_to = fields.Char(string='Recipients', required=True,
-                           help='Comma-separated list of email addresses.', default=lambda self: self.env['mail.message']._get_default_from())
+                           help='Comma-separated list of email addresses.', default=lambda self: self.env.user.email_formatted)
     mass_mailing_id = fields.Many2one('mail.mass_mailing', string='Mailing', required=True, ondelete='cascade')
 
     @api.multi

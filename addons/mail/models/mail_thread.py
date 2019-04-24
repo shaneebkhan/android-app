@@ -1960,9 +1960,7 @@ class MailThread(models.AbstractModel):
                     mail_auto_delete=mail_auto_delete, model_description=model_description, **kwargs)
 
         # 0: Find the message's author, because we need it for private discussion
-        author_id = kwargs.get('author_id')
-        if author_id is None:  # keep False values
-            author_id = self.env['mail.message']._get_default_author().id
+        author_id, email_from = self.env['mail.message']._determine_author_id_and_email_from(kwargs.get('author_id'), kwargs.get('email_from'))
 
         # 2: Private message: add recipients (recipients and author of parent message) - current author
         #   + legacy-code management (! we manage only 4 and 6 commands)
@@ -2020,6 +2018,7 @@ class MailThread(models.AbstractModel):
         values = kwargs
         values.update({
             'author_id': author_id,
+            'email_from': email_from,
             'model': model,
             'res_id': model and self.ids[0] or False,
             'body': body,
