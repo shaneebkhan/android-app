@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <template id="label_transfer_template_view">
+        <template id="label_transfer_template_view_zpl">
             <t t-foreach="docs" t-as="picking">
 
                 <t t-foreach="picking.move_lines" t-as="move">
@@ -30,6 +30,61 @@
 </t>
 ^XZ
                             </t>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <template id="label_transfer_template_view_pdf">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="picking">
+                    <t t-foreach="picking.move_lines" t-as="move">
+                        <t t-foreach="move.move_line_ids" t-as="move_line">
+                            <div class="page">
+                                <table class="table table-condensed w-25" style="page-break-inside:avoid;" t-if="picking.move_lines">
+                                    <tr>
+                                        <th class="text-left">
+                                            <span t-esc="move.product_id.display_name"/>
+                                        </th>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            Quantity:
+                                            <span t-esc="move_line.product_uom_qty" t-if="move_line.state !='done'"/>
+                                            <span t-esc="move_line.qty_done"  t-if="move_line.state =='done'"/>
+                                            <span t-esc="move_line.product_uom_id.name" groups="uom.group_uom"/>
+                                        </td>
+                                    </tr>
+                                    <t t-if="move_line.product_id.tracking != 'none'">
+                                        <tr>
+                                            <td class="text-center align-middle">
+                                                <t t-if="move_line.lot_name or move_line.lot_id">
+                                                    <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('Code128', move_line.lot_name, 200, 35)" alt="Barcode"/>
+                                                    <span t-esc="move_line.lot_name or move_line.lot_id.name"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">No barcode available</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="move_line.product_id.tracking == 'none'">
+                                        <tr>
+                                            <td class="text-center align-middle">
+                                                <t t-if="move_line.product_id.barcode">
+                                                        <img t-att-src="'/report/barcode/?type=%s&amp;value=%s&amp;width=%s&amp;height=%s' % ('Code128', move_line.product_id.barcode, 200, 35)" alt="Barcode"/>
+                                                        <span t-esc="move_line.product_id.barcode"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span class="text-muted">No barcode available</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <td/>
+                                </table>
+                            </div>
                         </t>
                     </t>
                 </t>
