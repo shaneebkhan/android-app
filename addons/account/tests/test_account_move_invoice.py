@@ -7303,7 +7303,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_total': 1150.0,
         }])
 
-    def test_out_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
+    def test_in_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
         move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a

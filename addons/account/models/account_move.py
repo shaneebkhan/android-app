@@ -380,7 +380,7 @@ class AccountMove(models.Model):
         if self.invoice_vendor_bill_id:
             # Copy invoice lines.
             for line in self.invoice_vendor_bill_id.invoice_line_ids:
-                new_line = self.env['account.move.line'].new(line.copy_data())
+                new_line = self.env['account.move.line'].new(line.copy_data()[0])
                 new_line.recompute_tax_line = True
 
             # Copy payment terms.
