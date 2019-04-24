@@ -1396,17 +1396,17 @@ class TestReconciliationExec(TestReconciliation):
         with self.assertRaises(UserError): #you need edition mode to be able to change it
             st_line.with_context(edition_mode=False).process_reconciliation(
                 counterpart_aml_dicts=[],
-                new_aml_dicts = [{
+                new_aml_dicts=[{
                   'debit': 0,
                   'credit': 50,
                   'name': 'exchange difference',
                   'account_id': self.diff_income_account.id
                 }],
             )
-            
+
         st_line.with_context(edition_mode=True).process_reconciliation(
             counterpart_aml_dicts=[],
-            new_aml_dicts = [{
+            new_aml_dicts=[{
               'debit': 0,
               'credit': 50,
               'name': 'exchange difference',

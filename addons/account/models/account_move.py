@@ -1702,7 +1702,12 @@ class AccountMove(models.Model):
     def button_draft(self):
         if any(move.state != 'cancel' for move in self):
             raise UserError(_('Only cancelled journal entries can be reset to draft.'))
-        self.write({'state': 'draft'})
+        if self.ids:
+            self.check_access_rights('write')
+            self.check_access_rule('write')
+            self._check_lock_date()
+            self._cr.execute('UPDATE account_move SET state=%s WHERE id IN %s', ('draft', tuple(self.ids)))
+            self.invalidate_cache()
 
     @api.multi
     def button_cancel(self):
