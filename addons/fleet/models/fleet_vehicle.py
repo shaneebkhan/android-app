@@ -67,9 +67,9 @@ class FleetVehicle(models.Model):
     horsepower_tax = fields.Float('Horsepower Taxation')
     power = fields.Integer('Power', help='Power in kW of the vehicle')
     co2 = fields.Float('CO2 Emissions', help='CO2 emissions of the vehicle')
-    image = fields.Binary(related='model_id.image', string="Logo", readonly=False)
-    image_medium = fields.Binary(related='model_id.image_medium', string="Logo (medium)", readonly=False)
-    image_small = fields.Binary(related='model_id.image_small', string="Logo (small)", readonly=False)
+    image = fields.Image(related='model_id.image', string="Logo", store=False)
+    image_medium = fields.Image(related='model_id.image_medium', string="Logo (medium)", store=False)
+    image_small = fields.Image(related='model_id.image_small', string="Logo (small)", store=False)
     contract_renewal_due_soon = fields.Boolean(compute='_compute_contract_reminder', search='_search_contract_renewal_due_soon',
         string='Has Contracts to renew', multi='contract_info')
     contract_renewal_overdue = fields.Boolean(compute='_compute_contract_reminder', search='_search_get_overdue_contract_reminder',

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models, tools, _
+from odoo import api, fields, models, _
 from odoo.addons import decimal_precision as dp
 from odoo.addons.website.models import ir_http
 from odoo.tools.translate import html_translate
@@ -120,26 +120,16 @@ class ProductPublicCategory(models.Model):
     # category, then we display a default image on the other, so that the
     # buttons have consistent styling.
     # In this case, the default image is set by the js code.
-    image = fields.Binary(help="This field holds the image used as image for the category, limited to 1024x1024px.")
+    image = fields.Image(size='big', avoid_if_small=True, help="This field holds the image used as image for the category, limited to 1024x1024px.")
     website_description = fields.Html('Category Description', sanitize_attributes=False, translate=html_translate)
-    image_medium = fields.Binary(string='Medium-sized image',
+    image_medium = fields.Image(string='Medium-sized image', related='image', size='medium',
                                  help="Medium-sized image of the category. It is automatically "
                                  "resized as a 128x128px image, with aspect ratio preserved. "
                                  "Use this field in form views or some kanban views.")
-    image_small = fields.Binary(string='Small-sized image',
+    image_small = fields.Image(string='Small-sized image', related='image', size='small',
                                 help="Small-sized image of the category. It is automatically "
                                 "resized as a 64x64px image, with aspect ratio preserved. "
                                 "Use this field anywhere a small image is required.")
-
-    @api.model
-    def create(self, vals):
-        tools.image_resize_images(vals)
-        return super(ProductPublicCategory, self).create(vals)
-
-    @api.multi
-    def write(self, vals):
-        tools.image_resize_images(vals)
-        return super(ProductPublicCategory, self).write(vals)
 
     @api.constrains('parent_id')
     def check_parent_id(self):

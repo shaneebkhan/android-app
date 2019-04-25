@@ -178,7 +178,7 @@ class SaleOrder(models.Model):
     company_id = fields.Many2one('res.company', 'Company', default=lambda self: self.env['res.company']._company_default_get('sale.order'))
     team_id = fields.Many2one('crm.team', 'Sales Team', change_default=True, default=_get_default_team, oldname='section_id')
 
-    signature = fields.Binary('Signature', help='Signature received through the portal.', copy=False, attachment=True)
+    signature = fields.Image('Signature', help='Signature received through the portal.', copy=False)
     signed_by = fields.Char('Signed By', help='Name of the person that signed the SO.', copy=False)
     signed_on = fields.Datetime('Signed On', help='Date of the signature.', copy=False)
 

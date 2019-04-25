@@ -102,13 +102,13 @@ class Channel(models.Model):
              "Note that they will be able to manage their subscription manually "
              "if necessary.")
     # image: all image fields are base64 encoded and PIL-supported
-    image = fields.Binary("Photo", default=_get_default_image,
+    image = fields.Image("Photo", default=_get_default_image, size='big', avoid_if_small=True,
         help="This field holds the image used as photo for the group, limited to 1024x1024px.")
-    image_medium = fields.Binary('Medium-sized photo',
+    image_medium = fields.Image('Medium-sized photo', related='image', size='medium',
         help="Medium-sized photo of the group. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary('Small-sized photo',
+    image_small = fields.Image('Small-sized photo', related='image', size='small',
         help="Small-sized photo of the group. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
@@ -219,7 +219,6 @@ class Channel(models.Model):
             defaults = self.default_get(['image'])
             vals['image'] = defaults['image']
 
-        tools.image_resize_images(vals)
         # Create channel and alias
         channel = super(Channel, self.with_context(
             alias_model_name=self._name, alias_parent_model_name=self._name, mail_create_nolog=True, mail_create_nosubscribe=True)
@@ -258,7 +257,6 @@ class Channel(models.Model):
             if not self.env.user.has_group('base.group_system'):
                 raise UserError("You do not possess the rights to modify fields related to moderation on one of the channels you are modifying.")
 
-        tools.image_resize_images(vals)
         result = super(Channel, self).write(vals)
 
         if vals.get('group_ids'):

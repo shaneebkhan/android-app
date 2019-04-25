@@ -64,6 +64,8 @@ def image_resize_image(base64_source, size=IMAGE_BIG_SIZE, encoding='base64', fi
     """
     if not base64_source:
         return False
+    if isinstance(base64_source, str):
+        base64_source = base64_source.encode('ascii')
     # Return unmodified content if no resize or we etect first 6 bits of '<'
     # (0x3C) for SVG documents - This will bypass XML files as well, but it's
     # harmless for these purposes
@@ -299,66 +301,6 @@ def is_image_size_above(base64_source, encoding='base64', size=IMAGE_BIG_SIZE):
     image = Image.open(image_stream)
     width, height = image.size
     return width > size[0] or height > size[1]
-
-
-def image_get_resized_images(base64_source,
-        big_name='image', large_name='image_large', medium_name='image_medium', small_name='image_small',
-        avoid_resize_big=True, avoid_resize_large=True, avoid_resize_medium=True, avoid_resize_small=True,
-        preserve_aspect_ratio=False, upper_limit=False):
-    """ Standard tool function that returns a dictionary containing the
-        big, medium, large and small versions of the source image.
-
-        :param {..}_name: key of the resized image in the return dictionary;
-            'image', 'image_large', 'image_medium' and 'image_small' by default.
-            Set a key to False to not include it.
-
-        Refer to image_resize_image for the other parameters.
-
-        :return return_dict: dictionary with resized images, depending on
-            previous parameters.
-    """
-    return_dict = dict()
-    if isinstance(base64_source, str):
-        base64_source = base64_source.encode('ascii')
-    if big_name:
-        return_dict[big_name] = image_resize_image_big(base64_source, avoid_if_small=avoid_resize_big, preserve_aspect_ratio=preserve_aspect_ratio, upper_limit=upper_limit)
-    if large_name:
-        return_dict[large_name] = image_resize_image_large(base64_source, avoid_if_small=avoid_resize_large, preserve_aspect_ratio=preserve_aspect_ratio, upper_limit=upper_limit)
-    if medium_name:
-        return_dict[medium_name] = image_resize_image_medium(base64_source, avoid_if_small=avoid_resize_medium, preserve_aspect_ratio=preserve_aspect_ratio, upper_limit=upper_limit)
-    if small_name:
-        return_dict[small_name] = image_resize_image_small(base64_source, avoid_if_small=avoid_resize_small, preserve_aspect_ratio=preserve_aspect_ratio, upper_limit=upper_limit)
-    return return_dict
-
-
-def image_resize_images(vals,
-        return_big=True, return_large=False, return_medium=True, return_small=True,
-        big_name='image', large_name='image_large', medium_name='image_medium', small_name='image_small',
-        preserve_aspect_ratio=False, upper_limit=False):
-    """ Update ``vals`` with image fields resized as expected. """
-    big_image = vals.get(big_name)
-    large_image = vals.get(large_name)
-    medium_image = vals.get(medium_name)
-    small_image = vals.get(small_name)
-
-    biggest_image = big_image or large_image or medium_image or small_image
-
-    if biggest_image:
-        vals.update(image_get_resized_images(biggest_image,
-            big_name=return_big and big_name, large_name=return_large and large_name, medium_name=return_medium and medium_name, small_name=return_small and small_name,
-            avoid_resize_big=True, avoid_resize_large=True,
-            avoid_resize_medium=(not big_image and not large_image),
-            avoid_resize_small=(not big_image and not large_image and not medium_image),
-            preserve_aspect_ratio=preserve_aspect_ratio, upper_limit=upper_limit))
-    elif any(f in vals for f in [big_name, large_name, medium_name, small_name]):
-        if return_big:
-            vals[big_name] = False
-        if return_large:
-            vals[large_name] = False
-        if return_medium:
-            vals[medium_name] = False
-        if return_small:
-            vals[small_name] = False
 
 
 def limited_image_resize(content, width=None, height=None, crop=False, upper_limit=False, avoid_if_small=False):

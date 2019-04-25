@@ -222,13 +222,13 @@ class Partner(models.Model):
     company_name = fields.Char('Company Name')
 
     # image: all image fields are base64 encoded and PIL-supported
-    image = fields.Binary("Image",
+    image = fields.Image("Image", size='big', avoid_if_small=True, preserve_aspect_ratio=True,
         help="This field holds the image used as avatar for this contact, limited to 1024x1024px",)
-    image_medium = fields.Binary("Medium-sized image",
+    image_medium = fields.Image("Medium-sized image", related='image', size='medium',
         help="Medium-sized image of this contact. It is automatically "\
              "resized as a 128x128px image, with aspect ratio preserved. "\
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary("Small-sized image",
+    image_small = fields.Image("Small-sized image", related='image', size='small',
         help="Small-sized image of this contact. It is automatically "\
              "resized as a 64x64px image, with aspect ratio preserved. "\
              "Use this field anywhere a small image is required.")
@@ -554,9 +554,6 @@ class Partner(models.Model):
                     if len(companies) > 1 or company not in companies:
                         raise UserError(
                             ("The selected company is not compatible with the companies of the related user(s)"))
-        # no padding on the big image, because it's used as website logo
-        tools.image_resize_images(vals, return_big=False)
-        tools.image_resize_images(vals, return_medium=False, return_small=False, preserve_aspect_ratio=True)
 
         result = True
         # To write in SUPERUSER on field is_company and avoid access rights problems.
@@ -583,9 +580,6 @@ class Partner(models.Model):
             # cannot be easily performed if default images are in the way
             if not vals.get('image'):
                 vals['image'] = self._get_default_image(vals.get('type'), vals.get('is_company'), vals.get('parent_id'))
-            # no padding on the big image, because it's used as website logo
-            tools.image_resize_images(vals, return_big=False)
-            tools.image_resize_images(vals, return_medium=False, return_small=False, preserve_aspect_ratio=True)
         partners = super(Partner, self).create(vals_list)
 
         if self.env.context.get('_partners_skip_fields_sync'):

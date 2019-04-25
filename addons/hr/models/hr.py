@@ -170,16 +170,16 @@ class Employee(models.Model):
     job_title = fields.Char("Job Title")
 
     # image: all image fields are base64 encoded and PIL-supported
-    image = fields.Binary(
-        "Photo", default=_default_image,
+    image = fields.Image(
+        "Photo", default=_default_image, size='big', avoid_if_small=True,
         help="This field holds the image used as photo for the employee, limited to 1024x1024px.")
-    image_medium = fields.Binary(
-        "Medium-sized photo",
+    image_medium = fields.Image(
+        "Medium-sized photo", related='image', size='medium',
         help="Medium-sized photo of the employee. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary(
-        "Small-sized photo",
+    image_small = fields.Image(
+        "Small-sized photo", related='image', size='small',
         help="Small-sized photo of the employee. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
@@ -274,7 +274,6 @@ class Employee(models.Model):
     def create(self, vals):
         if vals.get('user_id'):
             vals.update(self._sync_user(self.env['res.users'].browse(vals['user_id'])))
-        tools.image_resize_images(vals)
         employee = super(Employee, self).create(vals)
         url = '/web#%s' % url_encode({'action': 'hr.plan_wizard_action', 'active_id': employee.id, 'active_model': 'hr.employee'})
         employee._message_log(_('<b>Congratulations !</b> May I recommand you to setup an <a href="%s">onboarding plan ?</a>') % (url))
@@ -292,7 +291,6 @@ class Employee(models.Model):
                 self.env['res.partner.bank'].browse(account_id).partner_id = vals['address_home_id']
         if vals.get('user_id'):
             vals.update(self._sync_user(self.env['res.users'].browse(vals['user_id'])))
-        tools.image_resize_images(vals)
         res = super(Employee, self).write(vals)
         if vals.get('department_id') or vals.get('user_id'):
             department_id = vals['department_id'] if vals.get('department_id') else self[:1].department_id.id

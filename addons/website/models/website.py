@@ -85,7 +85,7 @@ class Website(models.Model):
     social_youtube = fields.Char('Youtube Account', default=_default_social_youtube)
     social_googleplus = fields.Char('Google+ Account', default=_default_social_googleplus)
     social_instagram = fields.Char('Instagram Account', default=_default_social_instagram)
-    social_default_image = fields.Binary(string="Default Social Share Image", help="If set, replaces the company logo as the default social share image.")
+    social_default_image = fields.Image(string="Default Social Share Image", help="If set, replaces the company logo as the default social share image.")
 
     google_analytics_key = fields.Char('Google Analytics Key')
     google_management_client_id = fields.Char('Google Client ID')
@@ -100,7 +100,7 @@ class Website(models.Model):
     partner_id = fields.Many2one(related='user_id.partner_id', relation='res.partner', string='Public Partner', readonly=False)
     menu_id = fields.Many2one('website.menu', compute='_compute_menu', string='Main Menu')
     homepage_id = fields.Many2one('website.page', string='Homepage')
-    favicon = fields.Binary(string="Website Favicon", help="This field holds the image used to display a favicon on the website.")
+    favicon = fields.Image(string="Website Favicon", help="This field holds the image used to display a favicon on the website.")
     theme_id = fields.Many2one('ir.module.module', help='Installed theme')
 
     specific_user_account = fields.Boolean('Specific User Account', help='If True, new accounts will be associated to the current website')

@@ -8,7 +8,7 @@ from dateutil import relativedelta
 import pprint
 
 from odoo import api, exceptions, fields, models, _
-from odoo.tools import consteq, float_round, image_resize_images, image_resize_image, ustr
+from odoo.tools import consteq, float_round, image_resize_image, ustr
 from odoo.addons.base.models import ir_module
 from odoo.exceptions import ValidationError
 from odoo import api, SUPERUSER_ID
@@ -150,15 +150,15 @@ class PaymentAcquirer(models.Model):
     module_id = fields.Many2one('ir.module.module', string='Corresponding Module')
     module_state = fields.Selection(selection=ir_module.STATES, string='Installation State', related='module_id.state', readonly=False)
 
-    image = fields.Binary(
-        "Image", help="This field holds the image used for this provider, limited to 1024x1024px")
-    image_medium = fields.Binary(
-        "Medium-sized image",
+    image = fields.Image(
+        "Image", size='big', avoid_if_small=True, help="This field holds the image used for this provider, limited to 1024x1024px")
+    image_medium = fields.Image(
+        "Medium-sized image", related='image', size='medium',
         help="Medium-sized image of this provider. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary(
-        "Small-sized image",
+    image_small = fields.Image(
+        "Small-sized image", related='image', size='small',
         help="Small-sized image of this provider. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
@@ -274,16 +274,6 @@ class PaymentAcquirer(models.Model):
             acquirer.journal_id = self.env['account.journal'].create(acquirer._prepare_account_journal_vals())
             journals += acquirer.journal_id
         return journals
-
-    @api.model
-    def create(self, vals):
-        image_resize_images(vals)
-        return super(PaymentAcquirer, self).create(vals)
-
-    @api.multi
-    def write(self, vals):
-        image_resize_images(vals)
-        return super(PaymentAcquirer, self).write(vals)
 
     @api.multi
     def toggle_website_published(self):
@@ -501,28 +491,12 @@ class PaymentIcon(models.Model):
 
     name = fields.Char(string='Name')
     acquirer_ids = fields.Many2many('payment.acquirer', string="Acquirers", help="List of Acquirers supporting this payment icon.")
-    image = fields.Binary(
-        "Image", help="This field holds the image used for this payment icon, limited to 1024x1024px")
+    image = fields.Image(
+        "Image", size='small', help="This field holds the image used for this payment icon, limited to 64x64px")
 
-    image_payment_form = fields.Binary(
-        "Image displayed on the payment form", attachment=True)
+    image_payment_form = fields.Image(
+        "Image displayed on the payment form", related='image', width=45, height=30)
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if 'image' in vals:
-                image = ustr(vals['image'] or '').encode('utf-8')
-                vals['image_payment_form'] = image_resize_image(image, size=(45,30))
-                vals['image'] = image_resize_image(image, size=(64,64))
-        return super(PaymentIcon, self).create(vals_list)
-
-    @api.multi
-    def write(self, vals):
-        if 'image' in vals:
-            image = ustr(vals['image'] or '').encode('utf-8')
-            vals['image_payment_form'] = image_resize_image(image, size=(45,30))
-            vals['image'] = image_resize_image(image, size=(64,64))
-        return super(PaymentIcon, self).write(vals)
 
 class PaymentTransaction(models.Model):
     """ Transaction Model. Each specific acquirer can extend the model by adding

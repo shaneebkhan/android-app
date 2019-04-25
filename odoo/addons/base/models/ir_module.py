@@ -293,7 +293,7 @@ class Module(models.Model):
     views_by_module = fields.Text(string='Views', compute='_get_views', store=True)
     application = fields.Boolean('Application', readonly=True)
     icon = fields.Char('Icon URL')
-    icon_image = fields.Binary(string='Icon', compute='_get_icon_image')
+    icon_image = fields.Image(string='Icon', compute='_get_icon_image')
     to_buy = fields.Boolean('Odoo Enterprise Module', default=False)
 
     _sql_constraints = [

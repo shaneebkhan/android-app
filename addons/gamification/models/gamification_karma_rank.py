@@ -3,7 +3,7 @@
 
 from werkzeug.exceptions import Forbidden
 
-from odoo import api, tools, fields, models
+from odoo import api, fields, models
 from odoo.tools.translate import html_translate
 
 
@@ -24,22 +24,20 @@ class KarmaRank(models.Model):
         help="Motivational phrase to reach this rank")
     karma_min = fields.Integer(string='Required Karma', help='Minimum karma needed to reach this rank')
     user_ids = fields.One2many('res.users', 'rank_id', string='Users', help="Users having this rank")
-    image = fields.Binary('Rank Icon')
-    image_medium = fields.Binary(
-        "Medium-sized rank icon",
+    image = fields.Image('Rank Icon', size='big', avoid_if_small=True)
+    image_medium = fields.Image(
+        "Medium-sized rank icon", related='image', size='medium',
         help="Medium-sized icon of the rank. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary(
-        "Small-sized rank icon",
+    image_small = fields.Image(
+        "Small-sized rank icon", related='image', size='small',
         help="Small-sized icon of the rank. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
 
     @api.model_create_multi
     def create(self, values_list):
-        for vals in values_list:
-            tools.image_resize_images(vals)
         res = super(KarmaRank, self).create(values_list)
         users = self.env['res.users'].sudo().search([('karma', '>', 0)])
         users._recompute_rank()
@@ -47,7 +45,6 @@ class KarmaRank(models.Model):
 
     @api.multi
     def write(self, vals):
-        tools.image_resize_images(vals)
         res = super(KarmaRank, self).write(vals)
         users = self.env['res.users'].sudo().search([('karma', '>', 0)])
         users._recompute_rank()

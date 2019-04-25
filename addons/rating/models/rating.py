@@ -43,7 +43,7 @@ class Rating(models.Model):
     rated_partner_id = fields.Many2one('res.partner', string="Rated person", help="Owner of the rated resource")
     partner_id = fields.Many2one('res.partner', string='Customer', help="Author of the rating")
     rating = fields.Float(string="Rating Number", group_operator="avg", default=0, help="Rating value: 0=Unhappy, 10=Happy")
-    rating_image = fields.Binary('Image', compute='_compute_rating_image')
+    rating_image = fields.Image('Image', compute='_compute_rating_image')
     rating_text = fields.Selection([
         ('satisfied', 'Satisfied'),
         ('not_satisfied', 'Not satisfied'),

@@ -4,7 +4,7 @@
 import logging
 from datetime import date
 
-from odoo import api, tools, fields, models, _, exceptions
+from odoo import api, fields, models, _, exceptions
 
 _logger = logging.getLogger(__name__)
 
@@ -70,14 +70,14 @@ class GamificationBadge(models.Model):
     name = fields.Char('Badge', required=True, translate=True)
     active = fields.Boolean('Active', default=True)
     description = fields.Text('Description', translate=True)
-    image = fields.Binary("Image", help="This field holds the image used for the badge.")
-    image_medium = fields.Binary(
-        "Medium-sized badge image",
+    image = fields.Image("Image", size='big', avoid_if_small=True, help="This field holds the image used for the badge.")
+    image_medium = fields.Image(
+        "Medium-sized badge image", related='image', size='medium',
         help="Medium-sized image of the badge. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved. "
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary(
-        "Small-sized badge image",
+    image_small = fields.Image(
+        "Small-sized badge image", related='image', size='small',
         help="Small-sized image of the badge. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
@@ -136,17 +136,6 @@ class GamificationBadge(models.Model):
     remaining_sending = fields.Integer(
         "Remaining Sending Allowed", compute='_remaining_sending_calc',
         help="If a maximum is set")
-
-    @api.model_create_multi
-    def create(self, values_list):
-        for vals in values_list:
-            tools.image_resize_images(vals)
-        return super(GamificationBadge, self).create(values_list)
-
-    @api.multi
-    def write(self, vals):
-        tools.image_resize_images(vals)
-        return super(GamificationBadge, self).write(vals)
 
     @api.depends('owner_ids')
     def _get_owners_info(self):

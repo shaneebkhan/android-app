@@ -43,13 +43,13 @@ class ImLivechatChannel(models.Model):
     nbr_channel = fields.Integer('Number of conversation', compute='_compute_nbr_channel', store=False, readonly=True)
 
     # images fields
-    image = fields.Binary('Image', default=_default_image,
+    image = fields.Image('Image', default=_default_image, size='big', avoid_if_small=True,
         help="This field holds the image used as photo for the group, limited to 1024x1024px.")
-    image_medium = fields.Binary('Medium',
+    image_medium = fields.Image('Medium', related='image', size='medium',
         help="Medium-sized photo of the group. It is automatically "\
              "resized as a 128x128px image, with aspect ratio preserved. "\
              "Use this field in form views or some kanban views.")
-    image_small = fields.Binary('Thumbnail',
+    image_small = fields.Image('Thumbnail', related='image', size='small',
         help="Small-sized photo of the group. It is automatically "\
              "resized as a 64x64px image, with aspect ratio preserved. "\
              "Use this field anywhere a small image is required.")
@@ -85,16 +85,6 @@ class ImLivechatChannel(models.Model):
     def _compute_nbr_channel(self):
         for record in self:
             record.nbr_channel = len(record.channel_ids)
-
-    @api.model
-    def create(self, vals):
-        tools.image_resize_images(vals)
-        return super(ImLivechatChannel, self).create(vals)
-
-    @api.multi
-    def write(self, vals):
-        tools.image_resize_images(vals)
-        return super(ImLivechatChannel, self).write(vals)
 
     # --------------------------
     # Action Methods

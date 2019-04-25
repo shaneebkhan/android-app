@@ -36,10 +36,10 @@ class Company(models.Model):
     partner_id = fields.Many2one('res.partner', string='Partner', required=True)
     report_header = fields.Text(string='Company Tagline', help="Appears by default on the top right corner of your printed documents (report header).")
     report_footer = fields.Text(string='Report Footer', translate=True, help="Footer text displayed at the bottom of all reports.")
-    logo = fields.Binary(related='partner_id.image', default=_get_logo, string="Company Logo", readonly=False)
+    logo = fields.Image(related='partner_id.image', default=_get_logo, string="Company Logo", store=False, readonly=True)
     # logo_web: do not store in attachments, since the image is retrieved in SQL for
     # performance reasons (see addons/web/controllers/main.py, Binary.company_logo)
-    logo_web = fields.Binary(compute='_compute_logo_web', store=True, attachment=False)
+    logo_web = fields.Binary(related='partner_id.image', width=180, store=True, attachment=False, readonly=True)
     currency_id = fields.Many2one('res.currency', string='Currency', required=True, default=lambda self: self._get_user_currency())
     user_ids = fields.Many2many('res.users', 'res_company_users_rel', 'cid', 'user_id', string='Accepted Users')
     account_no = fields.Char(string='Account No.')
@@ -116,11 +116,6 @@ class Company(models.Model):
     def _inverse_country(self):
         for company in self:
             company.partner_id.country_id = company.country_id
-
-    @api.depends('partner_id', 'partner_id.image')
-    def _compute_logo_web(self):
-        for company in self:
-            company.logo_web = tools.image_resize_image(company.partner_id.image, (180, None))
 
     @api.onchange('state_id')
     def _onchange_state(self):

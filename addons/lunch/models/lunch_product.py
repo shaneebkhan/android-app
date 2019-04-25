@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models, tools
+from odoo import api, fields, models
 
 from odoo.addons import decimal_precision as dp
 from odoo.tools import formatLang
@@ -92,29 +92,19 @@ class LunchProduct(models.Model):
     currency_id = fields.Many2one('res.currency', related='company_id.currency_id')
 
     # image: all image fields are base64 encoded and PIL-supported
-    image = fields.Binary(
-        "Image",
+    image = fields.Image(
+        "Image", size='big', avoid_if_small=True,
         help="This field holds the image used as image for the product, limited to 1024x1024px.")
-    image_medium = fields.Binary(
-        "Medium-sized image",
+    image_medium = fields.Image(
+        "Medium-sized image", related='image', size='medium',
         help="Medium-sized image of the product. It is automatically "
              "resized as a 128x128px image, with aspect ratio preserved, "
              "only when the image exceeds one of those sizes. Use this field in form views or some kanban views.")
-    image_small = fields.Binary(
-        "Small-sized image",
+    image_small = fields.Image(
+        "Small-sized image", related='image', size='small',
         help="Small-sized image of the product. It is automatically "
              "resized as a 64x64px image, with aspect ratio preserved. "
              "Use this field anywhere a small image is required.")
 
     new_until = fields.Date('New Until')
     favorite_user_ids = fields.Many2many('res.users', 'lunch_product_favorite_user_rel', 'product_id', 'user_id')
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for values in vals_list:
-            tools.image_resize_images(values)
-        return super(LunchProduct, self).create(vals_list)
-
-    def write(self, values):
-        tools.image_resize_images(values)
-        return super(LunchProduct, self).write(values)
