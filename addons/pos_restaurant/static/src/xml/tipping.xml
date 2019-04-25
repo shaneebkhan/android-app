@@ -21,7 +21,7 @@
                         Back
                     </span>
                     <span class="searchbox">
-                        <input placeholder="Search" type="search"/>
+                        <input placeholder="Search orders" type="search" class="search-input"/>
                         <span class="search-clear"></span>
                     </span>
                     <span class="searchbox"></span>

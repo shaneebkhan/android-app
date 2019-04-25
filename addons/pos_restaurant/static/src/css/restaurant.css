@@ -318,3 +318,8 @@
     margin-right: 4px;
 }
 
+/* ------ TIPPING SCREEN ------- */
+
+.pos .list-screen .searchbox input.search-input {
+    width: 200px;
+}
