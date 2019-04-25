@@ -141,6 +141,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Change the product set on the line.
@@ -256,6 +257,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
+            'residual': 2300.0,
         }])
 
     def test_out_invoice_line_onchange_account_1(self):
@@ -375,6 +377,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # One product line, custom account from aml tab.
@@ -491,6 +494,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_line_onchange_quantity_1(self):
@@ -610,6 +614,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
+            'residual': 2300.0,
         }])
 
     def test_out_invoice_line_onchange_quantity_2(self):
@@ -729,6 +734,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 0.0,
             'amount_tax': 0.0,
             'amount_total': 0.0,
+            'residual': 0.0,
         }])
 
     def test_out_invoice_line_onchange_price_unit_1(self):
@@ -848,6 +854,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
+            'residual': 2300.0,
         }])
 
         # Edit balance, check impact to the price_unit.
@@ -964,6 +971,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])
 
     def test_out_invoice_line_onchange_discount_1(self):
@@ -1083,6 +1091,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
+            'residual': 575.0,
         }])
 
         # One more product line having 100% discount.
@@ -1245,6 +1254,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
+            'residual': 575.0,
         }])
 
         move_form = Form(move)
@@ -1411,6 +1421,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])
 
     def test_out_invoice_line_onchange_uom_1(self):
@@ -1529,6 +1540,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 12000.0,
             'amount_tax': 1800.0,
             'amount_total': 13800.0,
+            'residual': 13800.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_1_stackable_amounts(self):
@@ -1674,6 +1686,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 300.0,
             'amount_total': 1300.0,
+            'residual': 1300.0,
         }])
 
         # One more product line with two taxes: 15% tax + 15% tax.
@@ -1866,6 +1879,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 900.0,
             'amount_total': 3900.0,
+            'residual': 3900.0,
         }])
 
         # Edit tax line manually.
@@ -2052,6 +2066,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 1050.0,
             'amount_total': 4050.0,
+            'residual': 4050.0,
         }])
 
         # Remove a tax line.
@@ -2214,6 +2229,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 600.0,
             'amount_total': 3600.0,
+            'residual': 3600.0,
         }])
 
         # Remove product line. Taxes are recomputed.
@@ -2352,6 +2368,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 300.0,
             'amount_total': 1300.0,
+            'residual': 1300.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_2_price_include(self):
@@ -2472,6 +2489,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
@@ -2591,6 +2609,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_payment_term_1(self):
@@ -2732,6 +2751,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Set a custom name / account for payment term lines.
@@ -2873,6 +2893,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Set an immediate payment terms.
@@ -2987,6 +3008,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_amls_1(self):
@@ -3154,6 +3176,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
+            'residual': 575.0,
         }])
 
     def test_out_invoice_onchange_partner_1(self):
@@ -3294,6 +3317,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_fiscal_position_1_applied_after(self):
@@ -3414,6 +3438,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_fiscal_position_2_applied_before(self):
@@ -3534,6 +3559,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_cash_rounding_1(self):
@@ -3715,6 +3741,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 10.0,
             'amount_tax': 1.5,
             'amount_total': 11.5,
+            'residual': 11.5,
         }])
 
         # Change the cash rounding by the one affecting the biggest tax.
@@ -3853,6 +3880,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 9.99,
             'amount_tax': 1.46,
             'amount_total': 11.45,
+            'residual': 11.45,
         }])
 
     def test_out_invoice_onchange_journal_1(self):
@@ -3972,6 +4000,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Reset the journal to the default one and then, the default currency.
@@ -4086,6 +4115,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_currency_1(self):
@@ -4206,6 +4236,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Change the date having a different currency rate.
@@ -4320,6 +4351,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
         # Create a new line. Standard price must be converted to the new currency.
@@ -4481,6 +4513,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 4000.0,
             'amount_tax': 600.0,
             'amount_total': 4600.0,
+            'residual': 4600.0,
         }])
 
     def test_out_invoice_onchange_invoice_sequence_number_1(self):
@@ -4647,6 +4680,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_out_invoice_create_invoice_line_ids_2_multi_currency(self):
@@ -4774,6 +4808,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])
 
     # -------------------------------------------------------------------------
@@ -4892,6 +4927,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
         ])
         self.assertAmlsValues(move.line_ids, [
@@ -4916,6 +4952,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
             {
                 'name': self.parent_tax_purchase_1.name,
@@ -4938,6 +4975,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
             {
                 'name': 'product_a',
@@ -4960,6 +4998,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
         ])
         self.assertRecordValues(move, [{
@@ -4973,6 +5012,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Change the product set on the line.
@@ -5003,6 +5043,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
         ])
         self.assertAmlsValues(move.line_ids, [
@@ -5027,6 +5068,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
             {
                 'name': self.parent_tax_purchase_2.name,
@@ -5049,6 +5091,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
             {
                 'name': 'product_b',
@@ -5071,6 +5114,7 @@ class TestAccountMove(AccountingSavepointCase):
                 'analytic_tag_ids': [],
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
             },
         ])
         self.assertRecordValues(move, [{
@@ -5084,6 +5128,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1500.0,
             'amount_tax': 225.0,
             'amount_total': 1725.0,
+            'residual': 1725.0,
         }])
 
     def test_in_invoice_line_onchange_account_1(self):
@@ -5203,6 +5248,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # One product line, custom account from aml tab.
@@ -5319,6 +5365,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_line_onchange_quantity_1(self):
@@ -5438,6 +5485,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1600.0,
             'amount_tax': 240.0,
             'amount_total': 1840.0,
+            'residual': 1840.0,
         }])
 
     def test_in_invoice_line_onchange_quantity_2(self):
@@ -5557,6 +5605,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 0.0,
             'amount_tax': 0.0,
             'amount_total': 0.0,
+            'residual': 0.0,
         }])
 
     def test_in_invoice_line_onchange_price_unit_1(self):
@@ -5676,6 +5725,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
+            'residual': 2300.0,
         }])
 
         # Edit balance, check impact to the price_unit.
@@ -5792,6 +5842,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])
 
     def test_in_invoice_line_onchange_discount_1(self):
@@ -5911,6 +5962,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 400.0,
             'amount_tax': 60.0,
             'amount_total': 460.0,
+            'residual': 460.0,
         }])
 
         # One more product line having 100% discount.
@@ -6073,6 +6125,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 400.0,
             'amount_tax': 60.0,
             'amount_total': 460.0,
+            'residual': 460.0,
         }])
 
         move_form = Form(move)
@@ -6239,6 +6292,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])
 
     def test_in_invoice_line_onchange_uom_1(self):
@@ -6357,6 +6411,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 9600.0,
             'amount_tax': 1440.0,
             'amount_total': 11040.0,
+            'residual': 11040.0,
         }])
 
     def test_in_invoice_line_onchange_taxes_1_stackable_amounts(self):
@@ -6502,6 +6557,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 240.0,
             'amount_total': 1040.0,
+            'residual': 1040.0,
         }])
 
         # One more product line with two taxes: 15% tax + 15% tax.
@@ -6694,6 +6750,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2800.0,
             'amount_tax': 840.0,
             'amount_total': 3640.0,
+            'residual': 3640.0,
         }])
 
 
@@ -6881,6 +6938,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2800.0,
             'amount_tax': 1020.0,
             'amount_total': 3820.0,
+            'residual': 3820.0,
         }])
 
         # Remove a tax line.
@@ -7043,6 +7101,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 2800.0,
             'amount_tax': 600.0,
             'amount_total': 3400.0,
+            'residual': 3400.0,
         }])
 
         # Remove product line. Taxes are recomputed.
@@ -7181,6 +7240,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 240.0,
             'amount_total': 1040.0,
+            'residual': 1040.0,
         }])
 
     def test_in_invoice_line_onchange_taxes_2_price_include(self):
@@ -7301,6 +7361,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
+            'residual': 1150.0,
         }])
 
     def test_in_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
@@ -7420,6 +7481,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_payment_term_1(self):
@@ -7561,6 +7623,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Set a custom name / account for payment term lines.
@@ -7702,6 +7765,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Set an immediate payment terms.
@@ -7816,6 +7880,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_amls_1(self):
@@ -7983,6 +8048,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 300.0,
             'amount_tax': 45.0,
             'amount_total': 345.0,
+            'residual': 345.0,
         }])
 
     def test_in_invoice_onchange_partner_1(self):
@@ -8123,6 +8189,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_fiscal_position_1_applied_after(self):
@@ -8243,6 +8310,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_fiscal_position_2_applied_before(self):
@@ -8363,6 +8431,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_cash_rounding_1(self):
@@ -8544,6 +8613,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 10.0,
             'amount_tax': 1.5,
             'amount_total': 11.5,
+            'residual': 11.5,
         }])
 
         # Change the cash rounding by the one affecting the biggest tax.
@@ -8682,6 +8752,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 9.99,
             'amount_tax': 1.46,
             'amount_total': 11.45,
+            'residual': 11.45,
         }])
 
     def test_in_invoice_onchange_journal_1(self):
@@ -8801,6 +8872,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Reset the journal to the default one and then, the default currency.
@@ -8915,6 +8987,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_onchange_currency_1(self):
@@ -9035,6 +9108,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Change the date having a different currency rate.
@@ -9149,6 +9223,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
         # Create a new line. Standard price must be converted to the new currency.
@@ -9310,6 +9385,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3200.0,
             'amount_tax': 480.0,
             'amount_total': 3680.0,
+            'residual': 3680.0,
         }])
 
     def test_in_invoice_onchange_invoice_sequence_number_1(self):
@@ -9351,13 +9427,12 @@ class TestAccountMove(AccountingSavepointCase):
     def test_in_invoice_onchange_past_invoice_1(self):
         move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
+        move_form.partner_id = self.partner_a
         move_form.invoice_payment_term_id = self.pay_terms_advance
         move_form.currency_id = self.gold_currency
-        move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
             line_form.product_id = self.product_a
         old_move = move_form.save()
-        # old_move.post()
 
         move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
@@ -9374,19 +9449,20 @@ class TestAccountMove(AccountingSavepointCase):
                 'product_uom_id': self.uom_unit.id,
                 'quantity': 1.0,
                 'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
+                'price_unit': 1600.0,
+                'price_subtotal': 1600.0,
+                'price_total': 1840.0,
                 'tax_ids': self.parent_tax_purchase_1.ids,
                 'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 800.0,
-                'debit': 400.0,
+                'currency_id': self.gold_currency.id,
+                'amount_currency': 1600.0,
+                'debit': 800.0,
                 'credit': 0.0,
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'tax_exigible': True,
             },
         ])
         self.assertAmlsValues(move.line_ids, [
@@ -9398,15 +9474,15 @@ class TestAccountMove(AccountingSavepointCase):
                 'product_uom_id': False,
                 'quantity': 1.0,
                 'discount': 0.0,
-                'price_unit': -644.0,
-                'price_subtotal': -644.0,
-                'price_total': -644.0,
+                'price_unit': -1288.0,
+                'price_subtotal': -1288.0,
+                'price_total': -1288.0,
                 'tax_ids': [],
                 'tax_line_id': False,
                 'currency_id': self.gold_currency.id,
-                'amount_currency': -644.0,
+                'amount_currency': -1288.0,
                 'debit': 0.0,
-                'credit': 322.0,
+                'credit': 644.0,
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'balance',
@@ -9421,15 +9497,15 @@ class TestAccountMove(AccountingSavepointCase):
                 'product_uom_id': False,
                 'quantity': 1.0,
                 'discount': 0.0,
-                'price_unit': -276.0,
-                'price_subtotal': -276.0,
-                'price_total': -276.0,
+                'price_unit': -552.0,
+                'price_subtotal': -552.0,
+                'price_total': -552.0,
                 'tax_ids': [],
                 'tax_line_id': False,
                 'currency_id': self.gold_currency.id,
-                'amount_currency': -276.0,
+                'amount_currency': -552.0,
                 'debit': 0.0,
-                'credit': 138.0,
+                'credit': 276.0,
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'balance',
@@ -9444,14 +9520,14 @@ class TestAccountMove(AccountingSavepointCase):
                 'product_uom_id': False,
                 'quantity': 1.0,
                 'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
+                'price_unit': 240.0,
+                'price_subtotal': 240.0,
+                'price_total': 240.0,
                 'tax_ids': [],
                 'tax_line_id': self.parent_tax_purchase_1.id,
                 'currency_id': self.gold_currency.id,
-                'amount_currency': 120.0,
-                'debit': 60.0,
+                'amount_currency': 240.0,
+                'debit': 120.0,
                 'credit': 0.0,
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
@@ -9467,14 +9543,14 @@ class TestAccountMove(AccountingSavepointCase):
                 'product_uom_id': self.uom_unit.id,
                 'quantity': 1.0,
                 'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
+                'price_unit': 1600.0,
+                'price_subtotal': 1600.0,
+                'price_total': 1840.0,
                 'tax_ids': self.parent_tax_purchase_1.ids,
                 'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 800.0,
-                'debit': 400.0,
+                'currency_id': self.gold_currency.id,
+                'amount_currency': 1600.0,
+                'debit': 800.0,
                 'credit': 0.0,
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
@@ -9491,9 +9567,10 @@ class TestAccountMove(AccountingSavepointCase):
             'fiscal_position_id': False,
             'invoice_payment_ref': '/',
             'invoice_payment_term_id': self.pay_terms_advance.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
+            'amount_untaxed': 1600.0,
+            'amount_tax': 240.0,
+            'amount_total': 1840.0,
+            'residual': 1840.0,
         }])
 
 
@@ -9625,6 +9702,7 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
+            'residual': 920.0,
         }])
 
     def test_in_invoice_create_invoice_line_ids_2_multi_currency(self):
@@ -9752,4 +9830,5 @@ class TestAccountMove(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
+            'residual': 3450.0,
         }])

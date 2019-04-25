@@ -713,6 +713,9 @@ class AccountMove(models.Model):
 
         if field_has_changed('currency_id') or field_has_changed('date'):
             recompute_all_taxes = True
+
+            # Currency has changed so 'amount_currency' must be recomputed.
+            self.line_ids._onchange_price_subtotal()
         if field_has_changed('invoice_cash_rounding_id') \
                 or field_has_changed('invoice_payment_term_id') \
                 or field_has_changed('invoice_payment_ref') \
@@ -967,17 +970,14 @@ class AccountMove(models.Model):
             total_currency = total_untaxed_currency + total_tax_currency
 
             if (move.type == 'misc' and total < 0.0) or move.type in ('out_invoice', 'in_refund', 'in_receipt'):
-                total *= -1
-                total_currency *= -1
-                total_tax *= -1
-                total_tax_currency *= -1
-                total_untaxed *= -1
-                total_untaxed_currency *= -1
+                sign = -1
+            else:
+                sign = 1
 
-            move.amount_untaxed = total_untaxed_currency if len(currencies) == 1 else total_untaxed
-            move.amount_tax = total_tax_currency if len(currencies) == 1 else total_tax
-            move.amount_total = total_currency if len(currencies) == 1 else total
-            move.residual = total_residual_currency if len(currencies) == 1 else total_residual
+            move.amount_untaxed = sign * (total_untaxed_currency if len(currencies) == 1 else total_untaxed)
+            move.amount_tax = sign * (total_tax_currency if len(currencies) == 1 else total_tax)
+            move.amount_total = sign * (total_currency if len(currencies) == 1 else total)
+            move.residual = -sign * (total_residual_currency if len(currencies) == 1 else total_residual)
 
             currency = len(currencies) == 1 and currencies.pop() or move.company_id.currency_id
             is_paid = currency and currency.is_zero(move.residual) or not move.residual
