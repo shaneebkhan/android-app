@@ -102,7 +102,7 @@ Best Regards,'''))
     account_dashboard_onboarding_state = fields.Selection([('not_done', "Not done"), ('just_done', "Just done"), ('done', "Done"), ('closed', "Closed")], string="State of the account dashboard onboarding panel", default='not_done')
     invoice_terms = fields.Text(string='Default Terms and Conditions', translate=True)
 
-    @api.constrains('account_opening_date', 'fiscalyear_last_day', 'fiscalyear_last_month')
+    @api.constrains('account_opening_move_id', 'fiscalyear_last_day', 'fiscalyear_last_month')
     def _check_fiscalyear_last_day(self):
         # if the user explicitly chooses the 29th of February we allow it:
         # there is no "fiscalyear_last_year" so we do not know his intentions.
