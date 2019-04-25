@@ -12,7 +12,7 @@ class AccountMove(models.Model):
     @api.multi
     def button_draft(self):
         # OVERRIDE to update the cancel date.
-        res = super(AccountMove, self).button_cancel()
+        res = super(AccountMove, self).button_draft()
         if self.type == 'out_invoice':
             self.env['membership.membership_line'].search([
                 ('account_invoice_line', 'in', self.mapped('invoice_line_ids').ids)

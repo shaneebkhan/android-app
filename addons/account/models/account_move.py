@@ -1706,12 +1706,7 @@ class AccountMove(models.Model):
     def button_draft(self):
         if any(move.state != 'cancel' for move in self):
             raise UserError(_('Only cancelled journal entries can be reset to draft.'))
-        if self.ids:
-            self.check_access_rights('write')
-            self.check_access_rule('write')
-            self._check_lock_date()
-            self._cr.execute('UPDATE account_move SET state=%s WHERE id IN %s', ('draft', tuple(self.ids)))
-            self.invalidate_cache()
+        self.write({'state': 'draft'})
 
     @api.multi
     def button_cancel(self):
@@ -1723,7 +1718,6 @@ class AccountMove(models.Model):
 
         for move in self:
             if not move.journal_id.update_posted and move.id not in excluded_move_ids:
-                import pudb; pudb.set_trace()
                 raise UserError(_('You cannot modify a posted entry of this journal.\nFirst you should set the journal to allow cancelling entries.'))
             # We remove all the analytics entries for this journal
             move.mapped('line_ids.analytic_line_ids').unlink()
@@ -2620,6 +2614,7 @@ class AccountMoveLine(models.Model):
         for line in self:
             err_msg = _('Move name (id): %s (%s)') % (line.move_id.name, str(line.move_id.id))
             if line.move_id.state != 'draft':
+                import pudb; pudb.set_trace()
                 raise UserError(_(
                     'You cannot do this modification on a posted journal entry, you can just change some non legal fields. You must revert the journal entry to cancel it.\n%s.') % err_msg)
             if line.reconciled and not (line.debit == 0 and line.credit == 0):
