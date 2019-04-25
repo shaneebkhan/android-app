@@ -355,7 +355,11 @@ class AccountMove(models.Model):
                 self.invoice_partner_bank_id = partner_bank_result
             return {'domain': {'invoice_partner_bank_id': [('partner_id', '=', self.company_id.partner_id.id)]}}
 
-    @api.onchange('line_ids', 'invoice_line_ids', 'invoice_payment_term_id', 'invoice_date_due', 'invoice_cash_rounding_id')
+    @api.onchange('invoice_line_ids', 'line_ids')
+    def _onchange_line_ids(self):
+        pass
+
+    @api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_cash_rounding_id')
     def _onchange_force_onchange(self):
         pass
 
@@ -1719,6 +1723,7 @@ class AccountMove(models.Model):
 
         for move in self:
             if not move.journal_id.update_posted and move.id not in excluded_move_ids:
+                import pudb; pudb.set_trace()
                 raise UserError(_('You cannot modify a posted entry of this journal.\nFirst you should set the journal to allow cancelling entries.'))
             # We remove all the analytics entries for this journal
             move.mapped('line_ids.analytic_line_ids').unlink()
