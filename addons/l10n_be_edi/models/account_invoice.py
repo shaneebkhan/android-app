@@ -164,7 +164,6 @@ class AccountMove(models.Model):
                     invoice_line_form.tax_ids.clear()
                     for etax in taxes_elements:
                         elements = etax.xpath('cbc:Percent', namespaces=namespaces)
-                        import pudb; pudb.set_trace()
                         if elements:
                             tax = self.env['account.tax'].search([
                                 ('amount', '=', float(elements[0].text)),
