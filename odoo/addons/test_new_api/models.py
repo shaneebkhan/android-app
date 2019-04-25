@@ -471,6 +471,21 @@ class ComputeCascade(models.Model):
             record.baz = "<%s>" % (record.bar or "")
 
 
+class ModelImage(models.Model):
+    _name = 'test_new_api.model_image'
+    _description = 'Test Image field'
+
+    name = fields.Char(required=True)
+
+    image_original = fields.Image('Image Original')
+    image = fields.Image('Image', related='image_original')
+    image_256 = fields.Image('Image 256', related='image_original', width=256, height=256, store=False)
+    image_64 = fields.Image('Image 64', related='image_original', width=64, height=64)
+    image_32 = fields.Image('Image 32', related='image_64', width=32, height=32)
+
+    image_512 = fields.Image('Image 512', width=512, height=512)
+
+
 class BinarySvg(models.Model):
     _name = 'test_new_api.binary_svg'
     _description = 'Test SVG upload'

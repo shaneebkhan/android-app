@@ -1,7 +1,11 @@
 #
 # test cases for new-style fields
 #
+import base64
 from datetime import date, datetime, time
+import io
+
+from PIL import Image
 
 from odoo import fields
 from odoo.exceptions import AccessError, UserError
@@ -1151,6 +1155,40 @@ class TestFields(common.TransactionCase):
         field = self.env['test_new_api.monetary_inherits']._fields['amount']
         self.assertEqual(field.related, ('monetary_id', 'amount'))
         self.assertEqual(field.currency_field, 'base_currency_id')
+
+    def test_94_image(self):
+        f = io.BytesIO()
+        Image.new('RGB', (1920, 1080), '#4169E1').save(f, 'PNG')
+        f.seek(0)
+        image_original = base64.b64encode(f.read())
+
+        record = self.env['test_new_api.model_image'].create({'name': 'image', 'image_original': image_original, 'image_512': image_original})
+
+        # test create (no resize)
+        self.assertEqual(record.image_original, image_original)
+        # test create (resize)
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record.image_512))).size, (512, 512))
+        # test related, no change
+        self.assertEqual(record.image, image_original)
+        # test resize (no store)
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record.image_256))).size, (256, 256))
+        # test resize (store)
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record.image_64))).size, (64, 64))
+        # test double relation
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record.image_32))).size, (32, 32))
+
+        # test inverse
+        record2 = self.env['test_new_api.model_image'].create({'name': 'image', 'image_64': image_original})
+        record2.invalidate_cache()  # because of cache bug fixed in master
+        self.assertEqual(record2.image_original, image_original)
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record2.image_64))).size, (64, 64))
+
+        # test double inverse
+        record3 = self.env['test_new_api.model_image'].create({'name': 'image', 'image_32': image_original})
+        record3.invalidate_cache()  # because of cache bug fixed in master
+        self.assertEqual(record3.image_original, image_original)
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record3.image_64))).size, (64, 64))
+        self.assertEqual(Image.open(io.BytesIO(base64.b64decode(record3.image_32))).size, (32, 32))
 
 
 class TestX2many(common.TransactionCase):

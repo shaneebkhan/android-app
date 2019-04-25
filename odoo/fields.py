@@ -27,6 +27,7 @@ from .tools import float_repr, float_round, frozendict, html_sanitize, human_siz
     ustr, OrderedSet, pycompat, sql, date_utils, groupby
 from .tools import DEFAULT_SERVER_DATE_FORMAT as DATE_FORMAT
 from .tools import DEFAULT_SERVER_DATETIME_FORMAT as DATETIME_FORMAT
+from .tools.image import image_resize_image, IMAGE_BIG_SIZE, IMAGE_LARGE_SIZE, IMAGE_MEDIUM_SIZE, IMAGE_SMALL_SIZE
 from .tools.translate import html_translate, _
 from .tools.mimetypes import guess_mimetype
 
@@ -1877,6 +1878,78 @@ class Binary(Field):
                     ])
             else:
                 atts.unlink()
+
+
+class Image(Binary):
+    _slots = {
+        'width': 0,
+        'height': 0,
+        'avoid_if_small': False,
+        'preserve_aspect_ratio': False,
+    }
+
+    def __init__(self, string=Default, **kwargs):
+        """Override to handle the `size` helper and to define appropriate
+        default attributes, which is to store the related images by default
+        because recomputing the resize on the fly is not performant."""
+        if 'related' in kwargs:
+            kwargs.update({
+                'store': kwargs.get('store', True),
+                'readonly': kwargs.get('readonly', False),
+                'copy': kwargs.get('copy', True),
+            })
+        size = kwargs.pop('size', False)
+        if size:
+            if size == 'big':
+                width, height = IMAGE_BIG_SIZE
+            elif size == 'large':
+                width, height = IMAGE_LARGE_SIZE
+            elif size == 'medium':
+                width, height = IMAGE_MEDIUM_SIZE
+            elif size == 'small':
+                width, height = IMAGE_SMALL_SIZE
+            kwargs.update({
+                'width': width,
+                'height': height,
+            })
+        super(Image, self).__init__(string=string, **kwargs)
+
+    def _compute_related(self, records):
+        """Override to resize the image to the correct size."""
+        super(Image, self)._compute_related(records)
+        for record in records:
+            record[self.name] = self._image_process(record[self.name])
+
+    def read(self, records):
+        """Override to recompute stored related image based on the original if
+        the related image is empty and the original exists."""
+        super(Image, self).read(records)
+        if self.related and self.store:
+            for record in records:
+                if not record[self.name]:
+                    related_record, related_field = self.traverse_related(record)
+                    if related_record[related_field.name]:
+                        related_record.write({
+                            related_field.name: related_record[related_field.name],
+                        })
+                        self.read(record)
+
+    def create(self, record_values):
+        """Override to resize the image to the correct size before saving it."""
+        new_record_values = []
+        for record, value in record_values:
+            new_record_values.append((record, self._image_process(value)))
+        super(Image, self).create(new_record_values)
+
+    def write(self, records, value):
+        """Override to resize the image to the correct size before saving it."""
+        value = self._image_process(value)
+        super(Image, self).write(records, value)
+
+    def _image_process(self, value):
+        if self.width or self.height:
+            value = image_resize_image(value, size=(self.width, self.height), avoid_if_small=self.avoid_if_small, preserve_aspect_ratio=self.preserve_aspect_ratio)
+        return value
 
 
 class Selection(Field):
