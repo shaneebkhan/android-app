@@ -95,6 +95,10 @@ odoo.define("pos_restaurant.tipping", function(require) {
         show: function() {
             var self = this;
             this._super();
+
+            // this screen is not related to orders, so hide this widget
+            this.chrome.widget.order_selector.hide();
+
             this.filtered_confirmed_orders = this.pos.db.confirmed_orders;
 
             // re-render the template when showing it to have the
@@ -167,6 +171,8 @@ odoo.define("pos_restaurant.tipping", function(require) {
         // todo is this still necessary?
         close: function() {
             this._super();
+            this.chrome.widget.order_selector.show();
+
             if (this.pos.config.iface_vkeyboard && this.chrome.widget.keyboard) {
                 this.chrome.widget.keyboard.hide();
             }
