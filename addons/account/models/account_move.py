@@ -1012,7 +1012,7 @@ class AccountMove(models.Model):
             for line in move.line_ids:
                 to_write.append((1, line.id, {
                     'debit': line.balance > 0.0 and balance or 0.0,
-                    'credit': line.balance < 0.0 and -balance or 0.0,
+                    'credit': line.balance < 0.0 and balance or 0.0,
                     'amount_currency': line.balance > 0.0 and amount_currency or -amount_currency,
                 }))
 
