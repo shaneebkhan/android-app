@@ -359,7 +359,7 @@ class AccountMove(models.Model):
     def _onchange_line_ids(self):
         pass
 
-    @api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_cash_rounding_id')
+    @api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_cash_rounding_id', 'invoice_vendor_bill_id')
     def _onchange_force_onchange(self):
         pass
 
@@ -384,7 +384,9 @@ class AccountMove(models.Model):
         if self.invoice_vendor_bill_id:
             # Copy invoice lines.
             for line in self.invoice_vendor_bill_id.invoice_line_ids:
-                new_line = self.env['account.move.line'].new(line.copy_data()[0])
+                copied_vals = line.copy_data()[0]
+                copied_vals['move_id'] = self.id
+                new_line = self.env['account.move.line'].new(copied_vals)
                 new_line.recompute_tax_line = True
 
             # Copy payment terms.
