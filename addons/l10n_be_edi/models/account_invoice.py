@@ -40,31 +40,34 @@ class AccountMove(models.Model):
         self.ensure_one()
         namespaces = self._get_ubl_namespaces(tree)
 
-        with Form(self) as invoice_form:
+        elements = tree.xpath('//cbc:InvoiceTypeCode', namespaces=namespaces)
+        if elements:
+            type_code = elements[0].text
+            type = 'in_refund' if type_code == '381' else 'in_invoice'
+        else:
+            type = 'in_invoice'
+
+        default_journal = self.with_context(type=type)._get_default_journal()
+
+        with Form(self.with_context(type=type, default_journal_id=default_journal.id)) as invoice_form:
             # Reference
             elements = tree.xpath('//cbc:ID', namespaces=namespaces)
             if elements:
-                invoice_form.reference = elements[0].text
+                invoice_form.ref = elements[0].text
             elements = tree.xpath('//cbc:InstructionID', namespaces=namespaces)
             if elements:
-                invoice_form.name = elements[0].text
+                invoice_form.invoice_payment_ref = elements[0].text
 
             # Dates
             elements = tree.xpath('//cbc:IssueDate', namespaces=namespaces)
             if elements:
-                invoice_form.date_invoice = elements[0].text
+                invoice_form.invoice_date = elements[0].text
             elements = tree.xpath('//cbc:PaymentDueDate', namespaces=namespaces)
             if elements:
-                invoice_form.date_due = elements[0].text
+                invoice_form.invoice_date_due = elements[0].text
             # allow both cbc:PaymentDueDate and cbc:DueDate
             elements = tree.xpath('//cbc:DueDate', namespaces=namespaces)
-            invoice_form.date_due = invoice_form.date_due or elements and elements[0].text
-
-            # Type
-            elements = tree.xpath('//cbc:InvoiceTypeCode', namespaces=namespaces)
-            if elements:
-                type_code = elements[0].text
-            invoice_form.type = 'in_refund' if type_code == '381' else 'in_invoice'
+            invoice_form.invoice_date_due = invoice_form.invoice_date_due or elements and elements[0].text
 
             # Currency
             elements = tree.xpath('//cbc:DocumentCurrencyCode', namespaces=namespaces)
@@ -76,7 +79,7 @@ class AccountMove(models.Model):
             # Incoterm
             elements = tree.xpath('//cbc:TransportExecutionTerms/cac:DeliveryTerms/cbc:ID', namespaces=namespaces)
             if elements:
-                invoice_form.incoterm_id = self.env['account.incoterms'].search([('code', '=', elements[0].text)])
+                invoice_form.invoice_incoterm_id = self.env['account.incoterms'].search([('code', '=', elements[0].text)], limit=1)
 
             # Partner
             partner_element = tree.xpath('//cac:AccountingSupplierParty/cac:Party', namespaces=namespaces)
@@ -138,8 +141,8 @@ class AccountMove(models.Model):
                     # Name
                     elements = eline.xpath('cac:Item/cbc:Description', namespaces=namespaces)
                     invoice_line_form.name = elements and elements[0].text or ''
-                    invoice_line_form.name = invoice_line_form.name.replace('%month%', str(fields.Date.to_date(invoice_form.date_invoice).month))  # TODO: full name in locale
-                    invoice_line_form.name = invoice_line_form.name.replace('%year%', str(fields.Date.to_date(invoice_form.date_invoice).year))
+                    invoice_line_form.name = invoice_line_form.name.replace('%month%', str(fields.Date.to_date(invoice_form.invoice_date).month))  # TODO: full name in locale
+                    invoice_line_form.name = invoice_line_form.name.replace('%year%', str(fields.Date.to_date(invoice_form.invoice_date).year))
 
                     # Product
                     elements = eline.xpath('cac:Item/cac:SellersItemIdentification/cbc:ID', namespaces=namespaces)
@@ -161,6 +164,7 @@ class AccountMove(models.Model):
                     invoice_line_form.tax_ids.clear()
                     for etax in taxes_elements:
                         elements = etax.xpath('cbc:Percent', namespaces=namespaces)
+                        import pudb; pudb.set_trace()
                         if elements:
                             tax = self.env['account.tax'].search([
                                 ('amount', '=', float(elements[0].text)),
@@ -169,7 +173,7 @@ class AccountMove(models.Model):
                             if tax:
                                 invoice_line_form.tax_ids.add(tax)
 
-        return invoice_form.save
+        return invoice_form.save()
 
     @api.model
     def _get_xml_decoders(self):

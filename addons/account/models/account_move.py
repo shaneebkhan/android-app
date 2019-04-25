@@ -2594,18 +2594,18 @@ class AccountMoveLine(models.Model):
         values = super(AccountMoveLine, self).default_get(default_fields)
 
         if 'account_id' in default_fields \
-            and self._context.get('journal_id') \
+            and self._context.get('default_journal_id') \
             and not values.get('account_id') \
             and self._context.get('type') in ('out_invoice', 'in_refund', 'out_receipt'):
             # Fill missing 'account_id'.
-            journal = self.env['account.journal'].browse(self._context['journal_id'])
+            journal = self.env['account.journal'].browse(self._context['default_journal_id'])
             values['account_id'] = journal.default_credit_account_id.id
         elif 'account_id' in default_fields \
-            and self._context.get('journal_id') \
+            and self._context.get('default_journal_id') \
             and not values.get('account_id') \
             and self._context.get('type') in ('in_invoice', 'out_refund', 'in_receipt'):
             # Fill missing 'account_id'.
-            journal = self.env['account.journal'].browse(self._context['journal_id'])
+            journal = self.env['account.journal'].browse(self._context['default_journal_id'])
             values['account_id'] = journal.default_debit_account_id.id
         elif self._context.get('line_ids'):
             line_ids = self.move_id.resolve_2many_commands('line_ids', self._context['line_ids'],
