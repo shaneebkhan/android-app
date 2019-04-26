@@ -133,7 +133,6 @@ class TestValuationReconciliation(ValuationReconciliationTestCase):
             'reason': 'test_invoice_shipment_refund',
             'refund_method': 'cancel',
             'date': '2018-03-15',
-            'invoice_date': '2018-03-15',
         })
         refund_invoice = self.env['account.move'].browse(refund_invoice_wiz.reverse_moves()['res_id'])
 
