@@ -122,6 +122,7 @@ class AccountingSavepointCase(SavepointCase):
 
         # Taxes definition.
         cls.parent_tax_sale_1 = cls.company_parent.account_sale_tax_id
+        cls.parent_tax_sale_1.refund_account_id = cls.parent_tax_sale_1.account_id.copy()
         cls.parent_tax_sale_2 = cls.parent_tax_sale_1.copy()
         cls.parent_tax_sale_3 = cls.parent_tax_sale_2.copy()
         cls.parent_tax_sale_1_incl = cls.parent_tax_sale_3.copy()
