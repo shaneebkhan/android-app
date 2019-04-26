@@ -155,6 +155,9 @@ class AccountMove(models.Model):
     # ==== Onchange fields ====
     recompute_taxes = fields.Boolean(store=False)
 
+    amount_by_group = fields.Binary(string="Tax amount by group",
+        compute='_compute_invoice_taxes_by_group',
+        help="type: [(name, amount, base, formated amount, formated base)]")
     # =========================================================
     # Invoice related fields
     # =========================================================
@@ -1211,6 +1214,28 @@ class AccountMove(models.Model):
             else:
                 move.invoice_payments_widget = json.dumps(False)
 
+    @api.depends('line_ids.price_subtotal', 'line_ids.tax_base_amount', 'line_ids.tax_line_id', 'partner_id', 'currency_id')
+    def _compute_invoice_taxes_by_group(self):
+        ''' Helper to get the taxes grouped according their account.tax.group.
+        This method is only used when printing the invoice.
+        '''
+        for move in self:
+            lang_env = move.with_context(lang=move.partner_id.lang).env
+            tax_lines = move.line_ids.filtered(lambda line: line.tax_line_id)
+            res = {}
+            for line in tax_lines:
+                res.setdefault(line.tax_line_id.tax_group_id, {'base': 0.0, 'amount': 0.0})
+                res[line.tax_line_id.tax_group_id]['amount'] += line.price_subtotal
+                res[line.tax_line_id.tax_group_id]['base'] += line.tax_base_amount
+            res = sorted(res.items(), key=lambda l: l[0].sequence)
+            move.amount_by_group = [(
+                group.name, amounts['amount'],
+                amounts['base'],
+                formatLang(lang_env, amounts['amount'], currency_obj=move.currency_id),
+                formatLang(lang_env, amounts['base'], currency_obj=move.currency_id),
+                len(res),
+            ) for group, amounts in res]
+
     # -------------------------------------------------------------------------
     # CONSTRAINS METHODS
     # -------------------------------------------------------------------------
@@ -1568,28 +1593,6 @@ class AccountMove(models.Model):
             }[self.type]
         else:
             return ('%s' % self.name) + (show_ref and self.ref and '(%s)' % self.ref or '')
-
-    @api.multi
-    def _get_invoice_taxes_by_group(self):
-        ''' Helper to get the taxes grouped according their account.tax.group.
-        This method is only used when printing the invoice.
-        '''
-        self.ensure_one()
-        lang_env = self.with_context(lang=self.partner_id.lang).env
-        tax_lines = self.line_ids.filtered(lambda line: line.tax_line_id)
-        res = {}
-        for line in tax_lines:
-            res.setdefault(line.tax_line_id.tax_group_id, {'base': 0.0, 'amount': 0.0})
-            res[line.tax_line_id.tax_group_id]['amount'] += line.price_subtotal
-            res[line.tax_line_id.tax_group_id]['base'] += line.tax_base_amount
-        res = sorted(res.items(), key=lambda l: l[0].sequence)
-        return [(
-            group.name, amounts['amount'],
-            amounts['base'],
-            formatLang(lang_env, amounts['amount'], currency_obj=self.currency_id),
-            formatLang(lang_env, amounts['base'], currency_obj=self.currency_id),
-            len(res),
-        ) for group, amounts in res]
 
     @api.multi
     def _get_invoice_delivery_partner_id(self):
