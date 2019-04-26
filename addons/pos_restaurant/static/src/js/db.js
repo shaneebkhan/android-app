@@ -29,6 +29,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             var order_to_save = _.pick(
                 order,
                 "uid",
+                "amount_total",
                 "amount_total_without_tip",
                 "tip_amount",
                 "creation_date",
@@ -77,6 +78,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             orders.forEach(function(order) {
                 self.db.insert_validated_order({
                     uid: order.pos_reference.replace(_t("Order "), ""),
+                    amount_total: order.amount_total,
 
                     // mimic _symbol_set
                     amount_total_without_tip: parseFloat(
