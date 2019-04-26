@@ -11,9 +11,25 @@ class AccountMoveReversal(models.TransientModel):
     _name = 'account.move.reversal'
     _description = 'Account Move Reversal'
 
+    @api.model
+    def _get_default_move(self):
+        if self._context.get('active_id'):
+            move = self.env['account.move'].browse(self._context['active_id'])
+            if move.state != 'posted' or move.type in ('out_refund', 'in_refund'):
+                raise UserError(_('Only posted journal entries being not already a refund can be reversed.'))
+            return move
+        return self.env['account.move']
+
+    @api.model
+    def _get_default_reason(self):
+        move = self._get_default_move()
+        return move and move.invoice_payment_ref or False
+
+    move_id = fields.Many2one('account.move', string='Journal Entry',
+        default=_get_default_move,
+        domain=[('state', '=', 'posted'), ('type', 'not in', ('out_refund', 'in_refund'))])
     date = fields.Date(string='Reversal date', default=fields.Date.context_today, required=True)
-    invoice_date = fields.Date(string='Credit Note Date', default=fields.Date.context_today, required=True)
-    reason = fields.Char(string='Reason', required=True)
+    reason = fields.Char(string='Reason', required=True, default=_get_default_reason)
     refund_method = fields.Selection(selection=[
             ('refund', 'Create a draft credit note'),
             ('cancel', 'Cancel: create credit note and reconcile'),
@@ -22,29 +38,16 @@ class AccountMoveReversal(models.TransientModel):
         help='Choose how you want to credit this invoice. You cannot Modify and Cancel if the invoice is already reconciled')
     journal_id = fields.Many2one('account.journal', string='Use Specific Journal', help='If empty, uses the journal of the journal entry to be reversed.')
 
-    @api.model
-    def default_get(self, default_fields):
-        # OVERRIDE
-        # Retrieve the value of the extended_state field.
-        res = super(AccountMoveReversal, self).default_get(default_fields)
-
-        moves = self.env['account.move'].browse(self._context['active_ids'])
-
-        # Check for inconsistent move types.
-        if any(move.state != 'posted' or move.type in ('out_refund', 'in_refund') for move in moves):
-            raise UserError(_('Only posted journal entries being not already a refund can be reversed.'))
-
-        return res
-
     @api.multi
     def reverse_moves(self):
-        moves = self.env['account.move'].browse(self._context['active_ids'])
+        moves = self.move_id or self.env['account.move'].browse(self._context['active_ids'])
 
         # Create default values.
         default_values_list = []
         for move in moves:
             default_values_list.append({
                 'ref': _('Reversal of: %s') % move.name,
+                'invoice_payment_ref': self.reason,
                 'date': self.date or move.date,
                 'journal_id': self.journal_id and self.journal_id.id or move.journal_id.id,
             })
@@ -77,4 +80,3 @@ class AccountMoveReversal(models.TransientModel):
                 'domain': [('id', 'in', new_moves.ids)],
             })
         return action
-

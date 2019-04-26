@@ -30,10 +30,10 @@
                              </div>
                          </group>
                          <group>
-                             <field name="reason"/>
+                             <field name="move_id" readonly="context.get('active_id')"/>
                          </group>
                          <group>
-                             <field name="invoice_date"/>
+                             <field name="reason"/>
                              <field name="date"/>
                          </group>
                     </group>
