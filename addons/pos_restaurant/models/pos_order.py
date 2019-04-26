@@ -11,6 +11,7 @@ class PosOrder(models.Model):
     table_id = fields.Many2one('restaurant.table', string='Table', help='The table where this order was served')
     customer_count = fields.Integer(string='Guests', help='The amount of customers that have been served by this order.')
     tip_amount = fields.Float(string='Tip Amount', compute='_compute_tip_amount', inverse='_set_tip_amount', help='The total amount tipped, this is computed using the configured tip product. This is the amount that will be captured when the session is closed.')
+    is_tipped = fields.Boolean(string='Is Tipped', compute='_compute_is_tipped', help='Whether or not an order has been processed in the tipping interface.')
 
     table_name = fields.Char(related='table_id.name', help='Used to easily load this in the POS.')
     partner_name = fields.Char(related='partner_id.name', help='Used to easily load this in the POS.')
@@ -51,6 +52,11 @@ class PosOrder(models.Model):
 
             if not order.test_paid():
                 order.state = 'draft'
+
+    def _compute_is_tipped(self):
+        for order in self:
+            tip_product = order.config_id.tip_product_id
+            order.is_tipped = any(order.lines.filtered(lambda line: line.product_id == tip_product))
 
     @api.model
     def _order_fields(self, ui_order):

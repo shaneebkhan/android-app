@@ -63,6 +63,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
                             console.error("ERROR");
                         });
 
+                        self.order.is_tipped = true;
                         self.order.tip_amount = value;
                         self.renderElement();
 

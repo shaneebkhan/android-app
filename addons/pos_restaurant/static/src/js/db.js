@@ -11,6 +11,11 @@ odoo.define("pos_restaurant.DB", function(require) {
 
     var _super_order = models.Order.prototype;
     models.Order = models.Order.extend({
+        initialize: function() {
+            _super_order.initialize.apply(this, arguments);
+            this.is_tipped = false;
+        },
+
         export_as_JSON: function() {
             var res = _super_order.export_as_JSON.apply(this, arguments);
             return _.extend(res, {
@@ -32,6 +37,7 @@ odoo.define("pos_restaurant.DB", function(require) {
                 "amount_total",
                 "amount_total_without_tip",
                 "tip_amount",
+                "is_tipped",
                 "creation_date",
                 "partner_name",
                 "table"
@@ -51,6 +57,7 @@ odoo.define("pos_restaurant.DB", function(require) {
                 _.extend(order, {
                     amount_total_without_tip: order.amount_total - (order.tip_amount || 0),
                     tip_amount: order.tip_amount || 0,
+                    is_tipped: order.is_tipped,
                     creation_date: field_utils.format.datetime(moment(order.creation_date), {}, { timezone: false }),
                     partner_name: order.partner_id && this.get_partner_by_id(order.partner_id).name
                 })
@@ -67,6 +74,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             "amount_total",
             "date_order",
             "tip_amount",
+            "is_tipped",
             "partner_name",
             "table_name"
         ],
@@ -88,9 +96,10 @@ odoo.define("pos_restaurant.DB", function(require) {
                     ),
 
                     tip_amount: order.tip_amount,
+                    is_tipped: order.is_tipped,
                     creation_date: field_utils.format.datetime(moment(order.date_order), {}, { timezone: false }),
                     partner_name: order.partner_name,
-                    table: order.table_name,
+                    table: order.table_name
                 });
             });
         }

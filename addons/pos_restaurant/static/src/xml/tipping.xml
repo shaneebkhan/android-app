@@ -61,7 +61,7 @@
             <td t-esc="widget.order.table"/>
             <td t-esc="widget.order.partner_name || ''"/>
             <td class="pos-right-align" t-esc="widget.format_currency_no_symbol(widget.order.amount_total_without_tip)"/>
-            <td class="pos-right-align" t-esc="widget.format_currency_no_symbol(widget.order.tip_amount)"/>
+            <td class="pos-right-align" t-esc="widget.order.is_tipped ? widget.format_currency_no_symbol(widget.order.tip_amount) : ''"/>
             <td class="pos-right-align" t-esc="widget.format_currency_no_symbol(widget.order.amount_total)"/>
         </tr>
     </t>
