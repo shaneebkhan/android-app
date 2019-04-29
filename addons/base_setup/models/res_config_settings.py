@@ -69,6 +69,7 @@ class ResConfigSettings(models.TransientModel):
             'res_id': self.env.company.id,
             'target': 'current',
         }
+
     @api.multi
     def open_default_user(self):
         action = self.env.ref('base.action_res_users').read()[0]
@@ -92,19 +93,3 @@ class ResConfigSettings(models.TransientModel):
         if not self.external_report_layout_id:
             return False
         return self._prepare_report_view_action(self.external_report_layout_id.key)
-
-    @api.multi
-    def change_report_template(self):
-        self.ensure_one()
-        template = self.env.ref('base.view_company_document_template_form')
-        return {
-            'name': _('Choose Your Document Layout'),
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_id': self.env.company.id,
-            'res_model': 'res.company',
-            'views': [(template.id, 'form')],
-            'view_id': template.id,
-            'target': 'new',
-        }

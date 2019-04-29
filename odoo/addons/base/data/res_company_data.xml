@@ -11,5 +11,5 @@
         <record id="main_partner" model="res.partner">
             <field name="company_id" ref="main_company"/>
         </record>
-    </data>
+    </data> 
 </odoo>

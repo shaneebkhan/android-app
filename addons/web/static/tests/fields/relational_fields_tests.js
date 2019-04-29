@@ -38,6 +38,12 @@ QUnit.module('relational_fields', {
                     user_id: {string: "User", type: 'many2one', relation: 'user'},
                     reference: {string: "Reference Field", type: 'reference', selection: [
                         ["product", "Product"], ["partner_type", "Partner Type"], ["partner", "Partner"]]},
+                    fonts: {
+                        type: "selection",
+                        selection: [['Lato', "Lato"], ['Oswald', "Oswald"]],
+                        default: 'Lato',
+                        string: "Fonts",
+                    }
                 },
                 records: [{
                     id: 1,
@@ -2128,6 +2134,35 @@ QUnit.module('relational_fields', {
         });
 
         assert.containsOnce(form, 'span.o_readonly_modifier', "should have 1 possible value in readonly mode");
+        form.destroy();
+    });
+
+    QUnit.module('FieldSelectionFont');
+
+    QUnit.test('FieldSelectionFont displays the correct fonts on options', async function (assert) {
+        assert.expect(4);
+
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form>' +
+                    '<field name="fonts" widget="font"/>' +
+                '</form>',
+        });
+        var options = form.$('.o_field_widget[name="fonts"] > option');
+
+        assert.strictEqual(form.$('.o_field_widget[name="fonts"]').css('fontFamily'), 'Lato',
+            "Widget font should be default (Lato)");
+        assert.strictEqual($(options[0]).css('fontFamily'), 'Lato',
+            "Option 0 should have the correct font (Lato)");
+        assert.strictEqual($(options[1]).css('fontFamily'), 'Oswald',
+            "Option 1 should have the correct font (Oswald)");
+            
+        await testUtils.fields.editSelect(form.$('.o_field_widget[name="fonts"]'), '"Oswald"');
+        assert.strictEqual(form.$('.o_field_widget[name="fonts"]').css('fontFamily'), 'Oswald',
+            "Widget font should be updated (Oswald)");
+
         form.destroy();
     });
 

@@ -18,6 +18,9 @@
 
         <link href="/web/static/lib/fontawesome/css/font-awesome.css" rel="stylesheet" type="text/css"/>
 
+        <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/report_fonts.scss" />
+        <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/res_company.scss"/>
+
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/report.scss"/>
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/layout_standard.scss"/>
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/layout_background.scss"/>
@@ -35,7 +38,7 @@
     <template id="report_assets_pdf">
         <link href="/web/static/src/css/reset.min.css" rel="stylesheet"/>
     </template>
-
+    
     <!-- Private templates used internally by reports -->
 
     <template id="report_layout" name="Report layout">&lt;!DOCTYPE html&gt;
@@ -403,6 +406,7 @@
             </t>
         </t>
     </template>
+
     <report id="action_report_internalpreview"
         model="res.company"
         name="web.preview_internalreport"
