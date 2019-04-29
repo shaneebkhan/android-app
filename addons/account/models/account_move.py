@@ -1623,7 +1623,7 @@ class AccountMove(models.Model):
                 'credit': balance < 0.0 and -balance or 0.0,
             })
 
-            if line_vals.get('tax_line_id') and move_vals['type'] in ('out_invoice', 'in_invoice'):
+            if line_vals.get('tax_line_id') and move_vals['type'] in ('out_refund', 'in_refund'):
                 tax_line_id = self.env['account.tax'].browse(line_vals['tax_line_id'])
                 line_vals['account_id'] = self.env['account.move.line']._get_default_tax_account(tax_line_id, balance).id
         return move_vals

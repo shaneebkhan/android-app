@@ -15,14 +15,6 @@ _logger = logging.getLogger(__name__)
 class TestAccountMove(AccountingSavepointCase):
 
     # -------------------------------------------------------------------------
-    # HELPERS
-    # -------------------------------------------------------------------------
-
-    def assertAmlsValues(self, lines, expected_values_list):
-        lines = lines.sorted(lambda line: (line.name or '', line.balance))
-        self.assertRecordValues(lines, expected_values_list)
-
-    # -------------------------------------------------------------------------
     # TESTS out_invoice ONCHANGE
     # -------------------------------------------------------------------------
 

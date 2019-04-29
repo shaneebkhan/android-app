@@ -7,6 +7,14 @@ from odoo.tests import tagged
 class AccountingSavepointCase(SavepointCase):
 
     # -------------------------------------------------------------------------
+    # HELPERS
+    # -------------------------------------------------------------------------
+
+    def assertAmlsValues(self, lines, expected_values_list):
+        lines = lines.sorted(lambda line: (line.name or '', line.balance))
+        self.assertRecordValues(lines, expected_values_list)
+
+    # -------------------------------------------------------------------------
     # DATA GENERATION
     # -------------------------------------------------------------------------
 
