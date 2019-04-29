@@ -595,7 +595,7 @@ class test_m2o(ImporterCase):
         result = self.import_(['value'], [[name2]])
         self.assertEqual(
             result['messages'],
-            [message(u"Found multiple matches for field 'Value' (2 matches)",
+            [message(u"Found multiple matches for field 'Value/Export: integer' (2 matches)",
                      type='warning')])
         self.assertEqual(len(result['ids']), 1)
         self.assertEqual([
@@ -617,7 +617,7 @@ class test_m2o(ImporterCase):
                 [record1.id],
         ])
         self.assertEqual(result['messages'], [
-            message(u"No matching record found for name '%s' in field 'Value'" % id,
+            message(u"No matching record found for name '%s' in field 'Value/Export: integer'" % id,
                     from_=index, to_=index, record=index,
                     moreinfo=moreaction(res_model='export.integer'))
             for index, id in enumerate([record1.id, record2.id, record1.id])])
@@ -648,21 +648,21 @@ class test_m2o(ImporterCase):
         result = self.import_(['value'], [['nameisnoexist:3']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for name 'nameisnoexist:3' "
-            u"in field 'Value'", moreinfo=moreaction(
+            u"in field 'Value/Export: integer'", moreinfo=moreaction(
                 res_model='export.integer'))])
         self.assertIs(result['ids'], False)
 
         result = self.import_(['value/id'], [['noxidhere']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for external id 'noxidhere' "
-            u"in field 'Value'", moreinfo=moreaction(
+            u"in field 'Value/Export: integer'", moreinfo=moreaction(
                 res_model='ir.model.data', domain=[('model','=','export.integer')]))])
         self.assertIs(result['ids'], False)
 
         result = self.import_(['value/.id'], [['66']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for database id '66' "
-            u"in field 'Value'", moreinfo=moreaction(
+            u"in field 'Value/Export: integer'", moreinfo=moreaction(
                 res_model='ir.model.data', domain=[('model','=','export.integer')]))])
         self.assertIs(result['ids'], False)
 
@@ -679,7 +679,7 @@ class test_m2o(ImporterCase):
         result = self.import_(['value'], [[101]])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for name '101' "
-            u"in field 'Value'", moreinfo=moreaction(
+            u"in field 'Value/Export: integer'", moreinfo=moreaction(
                 res_model='export.integer'))])
         self.assertIs(result['ids'], False)
         context = {
@@ -725,7 +725,7 @@ class test_m2m(ImporterCase):
         result = self.import_(['value/.id'], [['42']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for database id '42' in field "
-            u"'Value'", moreinfo=moreaction(
+            u"'Value/Export Many to Many Other'", moreinfo=moreaction(
                 res_model='ir.model.data', domain=[('model','=','export.many2many.other')]))])
         self.assertIs(result['ids'], False)
 
@@ -751,7 +751,7 @@ class test_m2m(ImporterCase):
         result = self.import_(['value/id'], [['noxidforthat']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for external id 'noxidforthat' in field"
-            u" 'Value'", moreinfo=moreaction(
+            u" 'Value/Export Many to Many Other'", moreinfo=moreaction(
                 res_model='ir.model.data', domain=[('model','=','export.many2many.other')]))])
         self.assertIs(result['ids'], False)
 
@@ -779,7 +779,7 @@ class test_m2m(ImporterCase):
         result = self.import_(['value'], [['wherethem2mhavenonames']])
         self.assertEqual(result['messages'], [message(
             u"No matching record found for name 'wherethem2mhavenonames' in "
-            u"field 'Value'", moreinfo=moreaction(
+            u"field 'Value/Export Many to Many Other'", moreinfo=moreaction(
                 res_model='export.many2many.other'))])
         self.assertIs(result['ids'], False)
 
@@ -813,7 +813,7 @@ class test_o2m(ImporterCase):
             ['const', 'value'],
             [['5', s]])
         self.assertEqual(result['messages'], [message(
-            u"No matching record found for name '%s' in field 'Value'" % s,
+            u"No matching record found for name '%s' in field 'Value/Export One to Many Child'" % s,
             moreinfo=moreaction(res_model='export.one2many.child'))])
         self.assertIs(result['ids'], False)
 
