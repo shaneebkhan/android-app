@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+from lxml import etree
 from psycopg2 import OperationalError, Error
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
-from odoo.tools.float_utils import float_compare, float_is_zero
+from odoo.tools.float_utils import float_compare, float_is_zero, float_round
 
 import logging
 
@@ -52,6 +53,8 @@ class StockQuant(models.Model):
         help='Quantity of reserved products in this quant, in the default unit of measure of the product',
         readonly=True, required=True)
     in_date = fields.Datetime('Incoming Date', readonly=True)
+    inventory_quantity = fields.Float('Inventoried Quantity', compute='_compute_inventory_quantity',
+        store=True, groups='stock.group_stock_manager')
 
     def action_view_stock_moves(self):
         self.ensure_one()
@@ -88,6 +91,128 @@ class StockQuant(models.Model):
     @api.one
     def _compute_name(self):
         self.name = '%s: %s%s' % (self.lot_id.name or self.product_id.code or '', self.quantity, self.product_id.uom_id.name)
+
+    @api.depends('quantity')
+    def _compute_inventory_quantity(self):
+        for quant in self:
+            quant.inventory_quantity = quant.quantity
+
+    @api.model
+    def fields_get(self, allfields=None, attributes=None):
+        """ Override to handle the "inventory mode" and tell the webclient some fields are editable.
+        An override of `create` and `write` will make the changes using sudo.
+        """
+        res = super(StockQuant, self).fields_get(allfields=allfields, attributes=attributes)
+        if self._is_inventory_mode():
+            for field in self._get_inventory_fields_write():
+                res[field]['readonly'] = False
+        return res
+
+    @api.model
+    def fields_view_get(self, view_id=None, view_type='form', toolbar=False, submenu=False):
+        """ Override to handle the "inventory mode" and tell the webclient the user can create lines.
+        An override of `create` and `write` will make the changes using sudo.
+        """
+        res = super(StockQuant, self).fields_view_get(view_id=view_id, view_type=view_type, toolbar=toolbar, submenu=submenu)
+        if res['type'] == 'tree' and self._is_inventory_mode():
+            doc = etree.fromstring(res['arch'])
+            tree_node = doc.xpath("//tree")
+            tree_node[0].set('create', 'true')
+            tree_node[0].set('editable', 'top')
+            res['arch'] = etree.tostring(doc, encoding='unicode')
+        return res
+
+    @api.model
+    def create(self, vals):
+        """ Override to handle the "inventory mode" and create a quant as superuser the conditions
+        are met.
+        """
+        if self._is_inventory_mode() and 'inventory_quantity' in vals:
+            allowed_fields = self._get_inventory_fields_create()
+            if any([field for field in vals.keys() if field not in allowed_fields]):
+                raise UserError(_("Quant's creation is restricted outside of the inventory mode."))
+            inventory_quantity = vals.pop('inventory_quantity')
+
+            # Create an empty quant or write on a similar one.
+            product = self.env['product.product'].browse(vals['product_id'])
+            location = self.env['stock.location'].browse(vals['location_id'])
+            lot_id = self.env['stock.production.lot'].browse(vals.get('lot_id'))
+            package_id = self.env['stock.quant.package'].browse(vals.get('package_id'))
+            owner_id = self.env['res.partner'].browse(vals.get('owner_id'))
+            quant = self._gather(product, location, lot_id=lot_id, package_id=package_id, owner_id=owner_id, strict=True)
+            if not quant:
+                quant = self.sudo().create(vals)
+            # Set the `inventory_quantity` field to create the necessary move.
+            quant.inventory_quantity = inventory_quantity
+            return quant
+        return super(StockQuant, self).create(vals)
+
+    def write(self, vals):
+        """ Override to handle the "inventory mode" and create the inventory move. """
+        if self._is_inventory_mode() and 'inventory_quantity' in vals:
+            allowed_fields = self._get_inventory_fields_write()
+            if any([field for field in vals.keys() if field not in allowed_fields]):
+                raise UserError(_("Quant's edition is restricted outside of the inventory mode."))
+            inventory_quantity = vals.pop('inventory_quantity')
+
+            for quant in self:
+                # Get the quantity to create a move for.
+                rounding = quant.product_id.uom_id.rounding
+                diff = float_round(inventory_quantity - quant.quantity, precision_rounding=rounding)
+                diff_float_compared = float_compare(diff, 0, precision_rounding=rounding)
+                # Create and vaidate a move so that the quant matches its `inventory_quantity`.
+                if diff_float_compared == 0:
+                    continue
+                elif diff_float_compared > 0:
+                    move_vals = self._get_inventory_move_values(diff, self.product_id.property_stock_inventory, self.location_id)
+                else:
+                    move_vals = self._get_inventory_move_values(-diff, self.location_id, self.product_id.property_stock_inventory, out=True)
+                move = self.env['stock.move'].with_context(inventory_mode=False).create(move_vals)
+                move._action_done()
+            return True
+        return super(StockQuant, self).write(vals)
+
+    @api.model
+    def _is_inventory_mode(self):
+        """ Used to control whether a quant was written on or created during an "inventory
+        session", meaning a mode where we need to create the stock.move record necessary
+        to be consistent with the `inventory_quantity` field.
+        """
+        return self.env.context.get('inventory_mode') is True and self.env.user.user_has_groups('stock.group_stock_manager')
+
+    @api.model
+    def _get_inventory_fields_create(self):
+        return ['product_id', 'location_id', 'lot_id', 'package_id', 'owner_id']
+
+    @api.model
+    def _get_inventory_fields_write(self):
+        return ['inventory_quantity']
+
+    def _get_inventory_move_values(self, qty, location_id, location_dest_id, out=False):
+        self.ensure_one()
+        move_line_vals = {
+            'product_id': self.product_id.id,
+            'product_uom_id': self.product_uom_id.id,
+            'qty_done': qty,
+            'location_id': location_id.id,
+            'location_dest_id': location_dest_id.id,
+            'company_id': self.company_id.id,
+            'lot_id': self.lot_id.id,
+            'package_id': out and self.package_id.id or False,
+            'result_package_id': not out and self.package_id.id or False,
+            'owner_id': self.owner_id.id,
+        }
+        return {
+            'name': _('Product Quantity Updated'),
+            'product_id': self.product_id.id,
+            'product_uom': self.product_uom_id.id,
+            'product_uom_qty': qty,
+            'company_id': self.company_id.id,
+            'state': 'confirmed',
+            'location_id': location_id.id,
+            'location_dest_id': location_dest_id.id,
+            'move_line_ids': [(0, 0, move_line_vals)]
+        }
 
     @api.model
     def _get_removal_strategy(self, product_id, location_id):

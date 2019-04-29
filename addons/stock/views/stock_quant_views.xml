@@ -84,6 +84,7 @@
                 <field name="quantity" string="On Hand"/>
                 <field name="product_uom_id" groups="uom.group_uom"/>
                 <field name='company_id' groups="base.group_multi_company"/>
+                <field name="inventory_quantity" string="On Hand" groups="stock.group_stock_manager" invisible="not context.get('inventory_mode')"/>
             </tree>
         </field>
     </record>
@@ -118,6 +119,7 @@
         <field name="view_type">form</field>
         <field name="view_mode">tree,form,pivot,graph</field>
         <field name="context">{
+            'inventory_mode': True,
             'search_default_internal_loc': 1,
             'search_default_productgroup': 1,
             'search_default_locationgroup': 1
