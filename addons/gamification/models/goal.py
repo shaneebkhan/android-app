@@ -86,7 +86,6 @@ class GoalDefinition(models.Model):
                 # dummy search to make sure the domain is valid
                 Obj.search_count(domain)
             except (ValueError, SyntaxError) as e:
-                import pudb; pudb.set_trace()
                 msg = e
                 if isinstance(e, SyntaxError):
                     msg = (e.msg + '\n' + e.text)
