@@ -6,35 +6,38 @@
             <field name="model">account.move.reversal</field>
             <field name="arch" type="xml">
                 <form string="Reverse Journal Entry">
+                    <field name="residual" invisible="1"/>
+                    <field name="move_type" invisible="1"/>
                     <group>
-                         <group>
-                             <field name="refund_method" widget="radio"/>
+                         <group attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'in_invoice'))]}">
+                            <field name="refund_method" widget="radio" attrs="{'readonly': [('residual', '=', 0)]}"/>
+                         </group>
+                         <group attrs="{'invisible': [('move_type', 'not in', ('out_invoice', 'in_invoice'))]}">
+                            <div attrs="{'invisible':[('refund_method', '!=', 'refund')]}" class="oe_grey" colspan="4">
+                               You will be able to edit and validate this
+                               credit note directly or keep it draft,
+                               waiting for the document to be issued by
+                               your supplier/customer.
+                            </div>
+                            <div attrs="{'invisible':[('refund_method', '!=', 'cancel')]}" class="oe_grey" colspan="4">
+                               Use this option if you want to cancel an invoice you should not
+                               have issued. The credit note will be created, validated and reconciled
+                               with the invoice. You will not be able to modify the credit note.
+                            </div>
+                            <div attrs="{'invisible':[('refund_method', '!=', 'modify')]}" class="oe_grey" colspan="4">
+                               Use this option if you want to cancel an invoice and create a new
+                               one. The credit note will be created, validated and reconciled
+                               with the current invoice. A new draft invoice will be created
+                               so that you can edit it.
+                            </div>
                          </group>
                          <group>
-                             <div attrs="{'invisible':[('refund_method', '!=', 'refund')]}" class="oe_grey" colspan="4">
-                                You will be able to edit and validate this
-                                credit note directly or keep it draft,
-                                waiting for the document to be issued by
-                                your supplier/customer.
-                             </div>
-                             <div attrs="{'invisible':[('refund_method', '!=', 'cancel')]}" class="oe_grey" colspan="4">
-                                Use this option if you want to cancel an invoice you should not
-                                have issued. The credit note will be created, validated and reconciled
-                                with the invoice. You will not be able to modify the credit note.
-                             </div>
-                             <div attrs="{'invisible':[('refund_method', '!=', 'modify')]}" class="oe_grey" colspan="4">
-                                Use this option if you want to cancel an invoice and create a new
-                                one. The credit note will be created, validated and reconciled
-                                with the current invoice. A new draft invoice will be created
-                                so that you can edit it.
-                             </div>
-                         </group>
-                         <group>
-                             <field name="move_id" readonly="context.get('active_id')"/>
-                         </group>
-                         <group>
-                             <field name="reason"/>
+                             <field name="move_id" readonly="context.get('active_id')" invisible="context.get('active_id')" />
+                             <field name="reason" attrs="{'invisible': [('move_type', '==', 'misc')], 'reason': [('move_type', '==', 'misc')]}"/>
                              <field name="date"/>
+                         </group>
+                         <group>
+                            <field name="journal_id" attrs="{'invisible': [('move_type', 'not in', ('misc'))]}" />
                          </group>
                     </group>
                     <footer>

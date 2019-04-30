@@ -29,14 +29,19 @@ class AccountMoveReversal(models.TransientModel):
         default=_get_default_move,
         domain=[('state', '=', 'posted'), ('type', 'not in', ('out_refund', 'in_refund'))])
     date = fields.Date(string='Reversal date', default=fields.Date.context_today, required=True)
-    reason = fields.Char(string='Reason', required=True, default=_get_default_reason)
+    reason = fields.Char(string='Reason', default=_get_default_reason)
     refund_method = fields.Selection(selection=[
             ('refund', 'Create a draft credit note'),
-            ('cancel', 'Cancel: create credit note and reconcile'),
-            ('modify', 'Modify: create credit note, reconcile and create a new draft invoice')
+            ('cancel', 'Create credit note and reconcile (modify)'),
+            ('modify', 'Create credit note, reconcile and create a new draft invoice (cancel)')
         ], default='refund', string='Credit Method', required=True,
-        help='Choose how you want to credit this invoice. You cannot Modify and Cancel if the invoice is already reconciled')
+        help='Choose how you want to credit this invoice. You cannot "modify" nor "cancel" if the invoice is already reconciled.')
     journal_id = fields.Many2one('account.journal', string='Use Specific Journal', help='If empty, uses the journal of the journal entry to be reversed.')
+
+    # related fields
+    residual = fields.Monetary(related='move_id.residual')
+    currency_id = fields.Many2one(related='move_id.currency_id')
+    move_type = fields.Selection(related='move_id.type')
 
     @api.multi
     def reverse_moves(self):
