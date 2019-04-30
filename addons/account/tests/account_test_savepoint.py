@@ -7,14 +7,6 @@ from odoo.tests import tagged
 class AccountingSavepointCase(SavepointCase):
 
     # -------------------------------------------------------------------------
-    # HELPERS
-    # -------------------------------------------------------------------------
-
-    def assertAmlsValues(self, lines, expected_values_list):
-        lines = lines.sorted(lambda line: (line.name or '', line.balance))
-        self.assertRecordValues(lines, expected_values_list)
-
-    # -------------------------------------------------------------------------
     # DATA GENERATION
     # -------------------------------------------------------------------------
 
@@ -115,6 +107,10 @@ class AccountingSavepointCase(SavepointCase):
         cls.parent_acc_payable_2 = cls.parent_acc_payable_1.copy()
 
         # Journal definition.
+        cls.parent_journal_misc_1 = cls.env['account.journal'].search([
+            ('company_id', '=', cls.company_parent.id),
+            ('type', '=', 'general')
+        ], limit=1)
         cls.parent_journal_sale_1 = cls.env['account.journal'].search([
             ('company_id', '=', cls.company_parent.id),
             ('type', '=', 'sale')
@@ -270,3 +266,11 @@ class AccountingSavepointCase(SavepointCase):
         })
         cls.product_b.product_tmpl_id.property_account_income_id = cls.parent_acc_revenue_2.id,
         cls.product_b.product_tmpl_id.property_account_expense_id = cls.parent_acc_expense_2.id,
+
+    # -------------------------------------------------------------------------
+    # HELPERS
+    # -------------------------------------------------------------------------
+
+    def assertAmlsValues(self, lines, expected_values_list):
+        lines = lines.sorted(lambda line: (line.name or '', line.balance))
+        self.assertRecordValues(lines, expected_values_list)

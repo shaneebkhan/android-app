@@ -2391,6 +2391,7 @@ class AccountMoveLine(models.Model):
     def _compute_balance(self):
         for line in self:
             line.balance = line.debit - line.credit
+        self._inverse_balance()
 
     @api.multi
     def _inverse_balance(self):

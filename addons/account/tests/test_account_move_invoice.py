@@ -19445,7 +19445,7 @@ class TestAccountMove(AccountingSavepointCase):
         }])
 
     # -------------------------------------------------------------------------
-    # TESTS Miscellaneous operations.
+    # TESTS Miscellaneous operations
     # -------------------------------------------------------------------------
 
     def test_misc_tax_lock_date_1(self):
