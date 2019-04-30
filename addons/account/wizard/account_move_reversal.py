@@ -58,7 +58,7 @@ class AccountMoveReversal(models.TransientModel):
         elif self.refund_method == 'modify':
             new_moves = moves._reverse_moves(default_values_list, cancel=True)
             moves_vals_list = []
-            for move in moves:
+            for move in moves.with_context(include_business_fields=True):
                 moves_vals_list.append(move.copy_data({
                     'invoice_payment_ref': move.name,
                     'date': self.date or move.date,
