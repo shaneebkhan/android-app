@@ -1,7 +1,10 @@
-#Accounting tests written in python should extend the class AccountingTestCase.
-#See its doc for more info.
+# -*- coding: utf-8 -*-
 
-from . import test_account_move_invoice
+from . import test_account_move_misc
+from . import test_account_move_out_invoice
+from . import test_account_move_out_refund
+from . import test_account_move_in_invoice
+from . import test_account_move_in_refund
 from . import test_account_move_closed_period
 from . import test_bank_statement_reconciliation
 from . import test_fiscal_position
