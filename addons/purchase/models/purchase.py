@@ -716,7 +716,7 @@ class PurchaseOrderLine(models.Model):
             'price_unit': self.price_unit,
             'quantity': qty,
             'partner_id': move.partner_id.id,
-            'analytic_account_id': self.analytic_account_id.id,
+            'analytic_account_id': self.account_analytic_id.id,
             'analytic_tag_ids': [(6, 0, self.analytic_tag_ids.ids)],
             'tax_ids': [(6, 0, self.taxes_id.ids)],
         }
