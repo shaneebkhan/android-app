@@ -306,8 +306,7 @@ class AccountMove(models.Model):
 
     @api.onchange('journal_id')
     def _onchange_journal(self):
-        field_names = self._context.get('field_names', set())
-        if self.journal_id and 'currency_id' not in field_names:
+        if self.journal_id:
             # Don't trigger '_onchange_currency' if the currency is the same.
             new_currency = self.journal_id.currency_id or self.journal_id.company_id.currency_id
             if new_currency != self.currency_id:
@@ -504,8 +503,8 @@ class AccountMove(models.Model):
                         'display_type': 'tax',
                     })
                     taxes_lines += tax_line
-                tax_line._inverse_amount_currency()
-                tax_line._inverse_balance()
+                tax_line._onchange_amount_currency()
+                tax_line._onchange_balance()
 
             # Drop taxes lines that are no longer required.
             for key, value in taxes_map.items():
@@ -605,8 +604,8 @@ class AccountMove(models.Model):
                     total_balance += diff_balance
                     total_amount_currency += diff_amount_currency
 
-                rounding_lines._inverse_amount_currency()
-                rounding_lines._inverse_balance()
+                rounding_lines._onchange_amount_currency()
+                rounding_lines._onchange_balance()
             else:
                 self.line_ids -= rounding_lines
 
@@ -692,8 +691,8 @@ class AccountMove(models.Model):
                     })
                 terms_lines_to_keep += candidate
 
-            terms_lines_to_keep._inverse_amount_currency()
-            terms_lines_to_keep._inverse_balance()
+            terms_lines_to_keep._onchange_amount_currency()
+            terms_lines_to_keep._onchange_balance()
             self.line_ids -= terms_lines - terms_lines_to_keep
             terms_lines = terms_lines_to_keep
 
@@ -1917,7 +1916,6 @@ class AccountMoveLine(models.Model):
     balance = fields.Monetary(string='Balance', store=True,
         currency_field='company_currency_id',
         compute='_compute_balance',
-        inverse='_inverse_balance',
         help="Technical field holding the debit - credit in order to open meaningful graph views from reports")
     debit_cash_basis = fields.Monetary(store=True,
         currency_field='company_currency_id',
@@ -1930,8 +1928,6 @@ class AccountMoveLine(models.Model):
         compute='_compute_cash_basis',
         help="Technical field holding the debit_cash_basis - credit_cash_basis in order to open meaningful graph views from reports")
     amount_currency = fields.Monetary(string='Balance in Currency', store=True, copy=True,
-        compute='_compute_amount_currency',
-        inverse='_inverse_amount_currency',
         help="The amount expressed in an optional other currency if it is a multi-currency entry.")
     amount_residual = fields.Monetary(string='Residual Amount', store=True,
         currency_field='company_currency_id',
@@ -2182,6 +2178,102 @@ class AccountMoveLine(models.Model):
         else:
             return False
 
+    @api.model
+    def _get_computed_business_vals(self, price_unit, quantity, discount, currency, product, partner, taxes):
+        res = {}
+
+        # Compute 'price_subtotal'.
+        price_unit_wo_discount = price_unit * (1 - (discount / 100.0))
+        subtotal = quantity * price_unit_wo_discount
+
+        # Compute 'price_total'.
+        if taxes:
+            taxes_res = taxes.compute_all(price_unit_wo_discount,
+                quantity=quantity, currency=currency, product=product, partner=partner)
+            res['price_subtotal'] = taxes_res['total_excluded']
+            res['price_total'] = taxes_res['total_included']
+        else:
+            res['price_total'] = res['price_subtotal'] = subtotal
+        return res
+
+    @api.model
+    def _get_computed_accounting_vals(self, price_subtotal, move_type, currency, company, date):
+        if move_type in ('out_refund', 'in_invoice', 'in_receipt'):
+            sign = 1
+        elif move_type in ('in_refund', 'out_invoice', 'out_receipt'):
+            sign = -1
+        else:
+            sign = 1
+        price_subtotal *= sign
+
+        if currency and currency != company.currency_id:
+            # Multi-currencies.
+            # Use an OrderedDict as the currency_id must be set before the amount_currency when updating a record.
+            amount_currency = price_subtotal
+            balance = currency._convert(price_subtotal, company.currency_id, company, date)
+            return {
+                'amount_currency': amount_currency,
+                'debit': balance > 0.0 and balance or 0.0,
+                'credit': balance < 0.0 and -balance or 0.0,
+            }
+        else:
+            # Single-currency.
+            return {
+                'amount_currency': 0.0,
+                'debit': price_subtotal > 0.0 and price_subtotal or 0.0,
+                'credit': price_subtotal < 0.0 and -price_subtotal or 0.0,
+            }
+
+    @api.model
+    def _get_inversed_accounting_vals(self, price_unit, quantity, discount, balance, move_type, currency, taxes):
+        if move_type in ('out_refund', 'in_invoice', 'in_receipt'):
+            sign = 1
+        elif move_type in ('in_refund', 'out_invoice', 'out_receipt'):
+            sign = -1
+        else:
+            sign = 1
+        balance *= sign
+
+        if taxes:
+            # Inverse taxes. E.g:
+            #
+            # Price Unit    | Taxes         | Originator Tax    |Price Subtotal     | Price Total
+            # -----------------------------------------------------------------------------------
+            # 110           | 10% incl, 5%  |                   | 100               | 115
+            # 10            |               | 10% incl          | 10                | 10
+            # 5             |               | 5%                | 5                 | 5
+            #
+            # When setting the balance to -200, the expected result is:
+            #
+            # Price Unit    | Taxes         | Originator Tax    |Price Subtotal     | Price Total
+            # -----------------------------------------------------------------------------------
+            # 110           | 10% incl, 5%  |                   | 100               | 115
+            # 10            |               | 10% incl          | 10                | 10
+            # 5             |               | 5%                | 5                 | 5
+            taxes_res = taxes.with_context(force_price_include=False).compute_all(balance, currency=currency)
+            for tax_res in taxes_res['taxes']:
+                tax = self.env['account.tax'].browse(tax_res['id'])
+                if tax.price_include:
+                    balance += tax_res['amount']
+
+        discount_factor = 1 - (discount / 100.0)
+        if balance and discount_factor:
+            # discount != 100%
+            vals = {
+                'quantity': quantity or 1.0,
+                'price_unit': balance / discount_factor / (quantity or 1.0),
+            }
+        elif balance and not discount_factor:
+            # discount == 100%
+            vals = {
+                'quantity': quantity or 1.0,
+                'discount': 0.0,
+                'price_unit': balance / (quantity or 1.0),
+            }
+        else:
+            vals = {}
+        return vals
+
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
     # -------------------------------------------------------------------------
@@ -2224,52 +2316,47 @@ class AccountMoveLine(models.Model):
         if not self.display_type in ('line_section', 'line_note'):
             self.tax_ids = self._get_computed_taxes()
 
-    @api.model
-    def _compute_from_price_subtotal(self, price_subtotal, move_type, currency, company, date):
-        if move_type in ('out_refund', 'in_invoice', 'in_receipt'):
-            sign = 1
-        elif move_type in ('in_refund', 'out_invoice', 'out_receipt'):
-            sign = -1
-        else:
-            sign = 1
-        price_subtotal = sign * price_subtotal
-
-        if currency and currency != company.currency_id:
-            # Multi-currencies.
-            # Use an OrderedDict as the currency_id must be set before the amount_currency when updating a record.
-            amount_currency = price_subtotal
-            balance = currency._convert(price_subtotal, company.currency_id, company, date)
-            return {
-                'amount_currency': amount_currency,
-                'debit': balance > 0.0 and balance or 0.0,
-                'credit': balance < 0.0 and -balance or 0.0,
-            }
-        else:
-            # Single-currency.
-            return {
-                'debit': price_subtotal > 0.0 and price_subtotal or 0.0,
-                'credit': price_subtotal < 0.0 and -price_subtotal or 0.0,
-            }
-
     @api.onchange('price_subtotal', 'currency_id')
     def _onchange_price_subtotal(self):
         ''' Recompute 'amount_currency' OR 'debit' / 'credit' based on the 'price_subtotal'. '''
         for line in self:
-            line.update(line._compute_from_price_subtotal(
+            line.update(line._get_computed_accounting_vals(
                 line.price_subtotal,
                 line.move_id.type,
                 line.currency_id,
                 line.move_id.company_id,
-                line.date)
-            )
+                line.date
+            ))
 
     @api.onchange('debit', 'credit')
     def _onchange_balance(self):
-        self._inverse_balance()
+        for line in self:
+            if line.currency_id:
+                continue
+            line.update(line._get_inversed_accounting_vals(
+                line.price_unit,
+                line.quantity,
+                line.discount,
+                line.balance,
+                line.move_id.type,
+                line.currency_id,
+                line.tax_ids,
+            ))
 
     @api.onchange('amount_currency', 'currency_id')
     def _onchange_amount_currency(self):
-        self._inverse_amount_currency()
+        for line in self:
+            if not line.currency_id:
+                continue
+            line.update(line._get_inversed_accounting_vals(
+                line.price_unit,
+                line.quantity,
+                line.discount,
+                line.amount_currency,
+                line.move_id.type,
+                line.currency_id,
+                line.tax_ids,
+            ))
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
@@ -2278,18 +2365,15 @@ class AccountMoveLine(models.Model):
     @api.depends('quantity', 'discount', 'price_unit', 'tax_ids')
     def _compute_price(self):
         for line in self:
-            # Compute 'price_subtotal'.
-            price_unit = line.price_unit * (1 - (line.discount / 100.0))
-            subtotal = line.quantity * price_unit
-
-            # Compute 'price_total'.
-            if line.tax_ids:
-                taxes_res = line.tax_ids.compute_all(price_unit,
-                    quantity=line.quantity, currency=line.currency_id, product=line.product_id, partner=line.partner_id)
-                line.price_subtotal = taxes_res['total_excluded']
-                line.price_total = taxes_res['total_included']
-            else:
-                line.price_total = line.price_subtotal = subtotal
+            line.update(line._get_computed_business_vals(
+                line.price_unit,
+                line.quantity,
+                line.discount,
+                line.currency_id,
+                line.product_id,
+                line.partner_id,
+                line.tax_ids,
+            ))
 
     @api.depends('currency_id')
     def _compute_amount_currency(self):
@@ -2375,13 +2459,6 @@ class AccountMoveLine(models.Model):
         else:
             self.write(vals)
 
-    @api.multi
-    def _inverse_amount_currency(self):
-        for line in self:
-            if not line.currency_id:
-                continue
-            line._inverse_from_price_subtotal(line.amount_currency)
-
     @api.depends('currency_id')
     def _compute_always_set_currency_id(self):
         for line in self:
@@ -2391,14 +2468,6 @@ class AccountMoveLine(models.Model):
     def _compute_balance(self):
         for line in self:
             line.balance = line.debit - line.credit
-        self._inverse_balance()
-
-    @api.multi
-    def _inverse_balance(self):
-        for line in self:
-            if line.currency_id:
-                continue
-            line._inverse_from_price_subtotal(line.balance)
 
     @api.depends('debit', 'credit', 'amount_currency', 'currency_id', 'matched_debit_ids', 'matched_credit_ids', 'matched_debit_ids.amount', 'matched_credit_ids.amount', 'move_id.state')
     def _amount_residual(self):
@@ -2528,11 +2597,54 @@ class AccountMoveLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """ :context's key `check_move_validity`: check data consistency after move line creation. Eg. set to false to disable verification that the move
-                debit-credit == 0 while creating the move lines composing the move.
-        """
-        # Compute 'tax_exigible' if not specified.
+        # OVERRIDE
+        ACCOUNTING_FIELDS = ('debit', 'credit', 'amount_currency')
+        BUSINESS_FIELDS = ('price_unit', 'quantity', 'discount', 'tax_ids')
+
         for vals in vals_list:
+            if not vals.get('move_id'):
+                continue
+
+            move = self.env['account.move'].browse(vals['move_id'])
+            currency = self.env['res.currency'].browse(vals.get('currency_id'))
+            partner = self.env['res.partner'].browse(vals.get('partner_id'))
+            taxes = self.resolve_2many_commands('tax_ids', vals.get('tax_ids', []), fields=['id'])
+            taxes = self.env['account.tax'].browse(t['id'] for t in taxes)
+
+            # Ensure consistency between accounting & business fields.
+            if any(field in vals for field in ACCOUNTING_FIELDS):
+                if vals.get('currency_id'):
+                    balance = vals.get('amount_currency', 0.0)
+                else:
+                    balance = vals.get('debit', 0.0) - vals.get('credit', 0.0)
+                vals.update(self._get_inversed_accounting_vals(
+                    vals.get('price_unit', 0.0),
+                    vals.get('quantity', 0.0),
+                    vals.get('discount', 0.0),
+                    balance,
+                    move.type,
+                    currency,
+                    taxes
+                ))
+            elif any(field in vals for field in BUSINESS_FIELDS):
+                price_subtotal = self._get_computed_business_vals(
+                    vals.get('price_unit', 0.0),
+                    vals.get('quantity', 0.0),
+                    vals.get('discount', 0.0),
+                    currency,
+                    self.env['product.product'].browse(vals.get('product_id')),
+                    partner,
+                    taxes
+                )['price_subtotal']
+                vals.update(self._get_computed_accounting_vals(
+                    price_subtotal,
+                    move.type,
+                    currency,
+                    move.company_id,
+                    move.date,
+                ))
+
+            # Ensure consistency between taxes & tax exigibility fields.
             if 'tax_exigible' in vals:
                 continue
             if vals.get('tax_line_id'):
@@ -2552,6 +2664,10 @@ class AccountMoveLine(models.Model):
 
     @api.multi
     def write(self, vals):
+        # OVERRIDE
+        ACCOUNTING_FIELDS = ('debit', 'credit', 'amount_currency')
+        BUSINESS_FIELDS = ('price_unit', 'quantity', 'discount', 'tax_ids')
+
         if ('account_id' in vals) and self.env['account.account'].browse(vals['account_id']).deprecated:
             raise UserError(_('You cannot use a deprecated account.'))
         if any(key in vals for key in ('account_id', 'journal_id', 'date', 'move_id', 'debit', 'credit')):
@@ -2577,6 +2693,38 @@ class AccountMoveLine(models.Model):
                 if line.move_id.id not in move_ids:
                     move_ids.add(line.move_id.id)
             self.env['account.move'].browse(list(move_ids))._post_validate()
+
+        for line in self:
+            # Ensure consistency between accounting & business fields.
+            if any(field in vals for field in ACCOUNTING_FIELDS):
+                price_subtotal = line.currency_id and line.amount_currency or line.debit - line.credit
+                super(AccountMoveLine, line).write(self._get_inversed_accounting_vals(
+                    line.price_unit,
+                    line.quantity,
+                    line.discount,
+                    price_subtotal,
+                    line.move_id.type,
+                    line.currency_id,
+                    line.tax_ids,
+                ))
+            elif any(field in vals for field in BUSINESS_FIELDS):
+                price_subtotal = self._get_computed_business_vals(
+                    line.price_unit,
+                    line.quantity,
+                    line.discount,
+                    line.currency_id,
+                    line.product_id,
+                    line.partner_id,
+                    line.tax_ids,
+                )['price_subtotal']
+                super(AccountMoveLine, line).write(self._get_computed_accounting_vals(
+                    price_subtotal,
+                    line.move_id.type,
+                    line.currency_id,
+                    line.move_id.company_id,
+                    line.move_id.date,
+                ))
+
         return result
 
     @api.multi
