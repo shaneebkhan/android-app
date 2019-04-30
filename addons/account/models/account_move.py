@@ -974,7 +974,7 @@ class AccountMove(models.Model):
             total = total_untaxed + total_tax
             total_currency = total_untaxed_currency + total_tax_currency
 
-            if (move.type == 'misc' and total < 0.0) or move.type in ('out_invoice', 'in_refund', 'in_receipt'):
+            if (move.type == 'misc' and total < 0.0) or move.type in ('out_invoice', 'in_refund', 'out_receipt'):
                 sign = -1
             else:
                 sign = 1
