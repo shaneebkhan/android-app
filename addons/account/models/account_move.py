@@ -2602,10 +2602,14 @@ class AccountMoveLine(models.Model):
         BUSINESS_FIELDS = ('price_unit', 'quantity', 'discount', 'tax_ids')
 
         for vals in vals_list:
-            if not vals.get('move_id'):
+            if not vals.get('move_id') or vals.get('display_type'):
                 continue
 
             move = self.env['account.move'].browse(vals['move_id'])
+
+            if move.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+                continue
+
             currency = self.env['res.currency'].browse(vals.get('currency_id'))
             partner = self.env['res.partner'].browse(vals.get('partner_id'))
             taxes = self.resolve_2many_commands('tax_ids', vals.get('tax_ids', []), fields=['id'])
@@ -2695,6 +2699,9 @@ class AccountMoveLine(models.Model):
             self.env['account.move'].browse(list(move_ids))._post_validate()
 
         for line in self:
+            if line.display_type or line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+                continue
+
             # Ensure consistency between accounting & business fields.
             if any(field in vals for field in ACCOUNTING_FIELDS):
                 price_subtotal = line.currency_id and line.amount_currency or line.debit - line.credit
