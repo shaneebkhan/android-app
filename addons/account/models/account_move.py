@@ -2320,6 +2320,9 @@ class AccountMoveLine(models.Model):
     def _onchange_price_subtotal(self):
         ''' Recompute 'amount_currency' OR 'debit' / 'credit' based on the 'price_subtotal'. '''
         for line in self:
+            if line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+                continue
+
             line.update(line._get_computed_accounting_vals(
                 line.price_subtotal,
                 line.move_id.type,
@@ -2328,10 +2331,12 @@ class AccountMoveLine(models.Model):
                 line.date
             ))
 
-    @api.onchange('debit', 'credit')
+    @api.multi
     def _onchange_balance(self):
         for line in self:
             if line.currency_id:
+                continue
+            if line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
                 continue
             line.update(line._get_inversed_accounting_vals(
                 line.price_unit,
@@ -2343,10 +2348,24 @@ class AccountMoveLine(models.Model):
                 line.tax_ids,
             ))
 
+    @api.onchange('debit')
+    def _onchange_debit(self):
+        if self.debit:
+            self.credit = 0.0
+        self._onchange_balance()
+
+    @api.onchange('credit')
+    def _onchange_credit(self):
+        if self.credit:
+            self.debit = 0.0
+        self._onchange_balance()
+
     @api.onchange('amount_currency', 'currency_id')
     def _onchange_amount_currency(self):
         for line in self:
             if not line.currency_id:
+                continue
+            if line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
                 continue
             line.update(line._get_inversed_accounting_vals(
                 line.price_unit,
@@ -2399,65 +2418,6 @@ class AccountMoveLine(models.Model):
                 'balance': balance_taxes_res,
                 'amount_currency': amount_currency_taxes_res,
             })
-
-    @api.multi
-    def _inverse_from_price_subtotal(self, price_subtotal):
-        self.ensure_one()
-
-        move_type = self.move_id.type
-        if move_type in ('out_refund', 'in_invoice', 'in_receipt'):
-            sign = 1
-        elif move_type in ('in_refund', 'out_invoice', 'out_receipt'):
-            sign = -1
-        else:
-            sign = 1
-        price_subtotal *= sign
-
-        if self.tax_ids:
-            # Inverse taxes. E.g:
-            #
-            # Price Unit    | Taxes         | Originator Tax    |Price Subtotal     | Price Total
-            # -----------------------------------------------------------------------------------
-            # 110           | 10% incl, 5%  |                   | 100               | 115
-            # 10            |               | 10% incl          | 10                | 10
-            # 5             |               | 5%                | 5                 | 5
-            #
-            # When setting the balance to -200, the expected result is:
-            #
-            # Price Unit    | Taxes         | Originator Tax    |Price Subtotal     | Price Total
-            # -----------------------------------------------------------------------------------
-            # 110           | 10% incl, 5%  |                   | 100               | 115
-            # 10            |               | 10% incl          | 10                | 10
-            # 5             |               | 5%                | 5                 | 5
-            currency = self.currency_id or self.move_id.company_id.currency_id
-            taxes_res = self.tax_ids.with_context(force_price_include=False).compute_all(price_subtotal, currency=currency)
-            for tax_res in taxes_res['taxes']:
-                tax = self.env['account.tax'].browse(tax_res['id'])
-                if tax.price_include:
-                    price_subtotal += tax_res['amount']
-
-        discount_factor = 1 - (self.discount / 100.0)
-        if price_subtotal and discount_factor:
-            # discount != 100%
-            vals = {
-                'quantity': self.quantity or 1.0,
-                'price_unit': price_subtotal / discount_factor / (self.quantity or 1.0),
-            }
-        elif price_subtotal and not discount_factor:
-            # discount == 100%
-            vals = {
-                'quantity': self.quantity or 1.0,
-                'discount': 0.0,
-                'price_unit': price_subtotal / (self.quantity or 1.0),
-            }
-        else:
-            return
-
-        # This method is called both from 'onchange' and 'write'.
-        if self.env.in_onchange:
-            self.update(vals)
-        else:
-            self.write(vals)
 
     @api.depends('currency_id')
     def _compute_always_set_currency_id(self):
@@ -2604,7 +2564,7 @@ class AccountMoveLine(models.Model):
         for vals in vals_list:
             move = self.env['account.move'].browse(vals['move_id'])
 
-            if not vals.get('display_type') and move.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+            if move.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
                 currency = self.env['res.currency'].browse(vals.get('currency_id'))
                 partner = self.env['res.partner'].browse(vals.get('partner_id'))
                 taxes = self.resolve_2many_commands('tax_ids', vals.get('tax_ids', []), fields=['id'])
@@ -2694,7 +2654,7 @@ class AccountMoveLine(models.Model):
             self.env['account.move'].browse(list(move_ids))._post_validate()
 
         for line in self:
-            if line.display_type or line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+            if line.move_id.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
                 continue
 
             # Ensure consistency between accounting & business fields.

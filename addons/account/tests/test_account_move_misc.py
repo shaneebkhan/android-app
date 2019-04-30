@@ -15,7 +15,107 @@ _logger = logging.getLogger(__name__)
 class TestAccountMove(AccountingSavepointCase):
 
     # -------------------------------------------------------------------------
-    # TESTS Miscellaneous operations
+    # TESTS Miscellaneous operations ONCHANGE
+    # -------------------------------------------------------------------------
+
+    def test_misc_onchange_1_default_get(self):
+        move_form = Form(self.env['account.move'])
+        move_form.date = fields.Date.from_string('2019-01-01')
+        with move_form.line_ids.new() as line_form:
+            line_form.account_id = self.parent_acc_revenue_1
+            line_form.partner_id = self.partner_a
+            line_form.debit = 50.0
+        with move_form.line_ids.new() as line_form:
+            # account_id & partner_id should be set by the default_get.
+            # credit should be reset to 0.0 by setting the debit.
+            line_form.debit = 50.0
+        with move_form.line_ids.new() as line_form:
+            # credit should be set by the default_get.
+            line_form.account_id = self.parent_acc_revenue_2
+            line_form.partner_id = self.partner_b
+        move = move_form.save()
+
+        self.assertAmlsValues(move.line_ids, [
+            {
+                'name': False,
+                'product_id': False,
+                'account_id': self.parent_acc_revenue_2.id,
+                'partner_id': self.partner_b.id,
+                'product_uom_id': False,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': 0.0,
+                'price_subtotal': 0.0,
+                'price_total': 0.0,
+                'tax_ids': [],
+                'tax_line_id': False,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 0.0,
+                'credit': 100.0,
+                'analytic_account_id': False,
+                'analytic_tag_ids': [],
+                'display_type': False,
+                'date_maturity': False,
+                'tax_exigible': True,
+            },
+            {
+                'name': False,
+                'product_id': False,
+                'account_id': self.parent_acc_revenue_1.id,
+                'partner_id': self.partner_a.id,
+                'product_uom_id': False,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': 0.0,
+                'price_subtotal': 0.0,
+                'price_total': 0.0,
+                'tax_ids': [],
+                'tax_line_id': False,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 50.0,
+                'credit': 0.0,
+                'analytic_account_id': False,
+                'analytic_tag_ids': [],
+                'display_type': False,
+                'date_maturity': False,
+                'tax_exigible': True,
+            },
+            {
+                'name': False,
+                'product_id': False,
+                'account_id': self.parent_acc_revenue_1.id,
+                'partner_id': self.partner_a.id,
+                'product_uom_id': False,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': 0.0,
+                'price_subtotal': 0.0,
+                'price_total': 0.0,
+                'tax_ids': [],
+                'tax_line_id': False,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 50.0,
+                'credit': 0.0,
+                'analytic_account_id': False,
+                'analytic_tag_ids': [],
+                'display_type': False,
+                'date_maturity': False,
+                'tax_exigible': True,
+            },
+        ])
+        self.assertRecordValues(move, [{
+            'currency_id': self.company_parent.currency_id.id,
+            'journal_id': self.parent_journal_misc_1.id,
+            'date': fields.Date.from_string('2019-01-01'),
+            'amount_total': 100.0,
+            'residual': 0.0,
+        }])
+
+    # -------------------------------------------------------------------------
+    # TESTS Miscellaneous operations MISC
     # -------------------------------------------------------------------------
 
     def test_misc_tax_lock_date_1(self):
