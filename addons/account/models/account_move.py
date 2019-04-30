@@ -2602,51 +2602,46 @@ class AccountMoveLine(models.Model):
         BUSINESS_FIELDS = ('price_unit', 'quantity', 'discount', 'tax_ids')
 
         for vals in vals_list:
-            if not vals.get('move_id') or vals.get('display_type'):
-                continue
-
             move = self.env['account.move'].browse(vals['move_id'])
 
-            if move.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
-                continue
+            if not vals.get('display_type') and move.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+                currency = self.env['res.currency'].browse(vals.get('currency_id'))
+                partner = self.env['res.partner'].browse(vals.get('partner_id'))
+                taxes = self.resolve_2many_commands('tax_ids', vals.get('tax_ids', []), fields=['id'])
+                taxes = self.env['account.tax'].browse(t['id'] for t in taxes)
 
-            currency = self.env['res.currency'].browse(vals.get('currency_id'))
-            partner = self.env['res.partner'].browse(vals.get('partner_id'))
-            taxes = self.resolve_2many_commands('tax_ids', vals.get('tax_ids', []), fields=['id'])
-            taxes = self.env['account.tax'].browse(t['id'] for t in taxes)
-
-            # Ensure consistency between accounting & business fields.
-            if any(field in vals for field in ACCOUNTING_FIELDS):
-                if vals.get('currency_id'):
-                    balance = vals.get('amount_currency', 0.0)
-                else:
-                    balance = vals.get('debit', 0.0) - vals.get('credit', 0.0)
-                vals.update(self._get_inversed_accounting_vals(
-                    vals.get('price_unit', 0.0),
-                    vals.get('quantity', 0.0),
-                    vals.get('discount', 0.0),
-                    balance,
-                    move.type,
-                    currency,
-                    taxes
-                ))
-            elif any(field in vals for field in BUSINESS_FIELDS):
-                price_subtotal = self._get_computed_business_vals(
-                    vals.get('price_unit', 0.0),
-                    vals.get('quantity', 0.0),
-                    vals.get('discount', 0.0),
-                    currency,
-                    self.env['product.product'].browse(vals.get('product_id')),
-                    partner,
-                    taxes
-                )['price_subtotal']
-                vals.update(self._get_computed_accounting_vals(
-                    price_subtotal,
-                    move.type,
-                    currency,
-                    move.company_id,
-                    move.date,
-                ))
+                # Ensure consistency between accounting & business fields.
+                if any(field in vals for field in ACCOUNTING_FIELDS):
+                    if vals.get('currency_id'):
+                        balance = vals.get('amount_currency', 0.0)
+                    else:
+                        balance = vals.get('debit', 0.0) - vals.get('credit', 0.0)
+                    vals.update(self._get_inversed_accounting_vals(
+                        vals.get('price_unit', 0.0),
+                        vals.get('quantity', 0.0),
+                        vals.get('discount', 0.0),
+                        balance,
+                        move.type,
+                        currency,
+                        taxes
+                    ))
+                elif any(field in vals for field in BUSINESS_FIELDS):
+                    price_subtotal = self._get_computed_business_vals(
+                        vals.get('price_unit', 0.0),
+                        vals.get('quantity', 0.0),
+                        vals.get('discount', 0.0),
+                        currency,
+                        self.env['product.product'].browse(vals.get('product_id')),
+                        partner,
+                        taxes
+                    )['price_subtotal']
+                    vals.update(self._get_computed_accounting_vals(
+                        price_subtotal,
+                        move.type,
+                        currency,
+                        move.company_id,
+                        move.date,
+                    ))
 
             # Ensure consistency between taxes & tax exigibility fields.
             if 'tax_exigible' in vals:
