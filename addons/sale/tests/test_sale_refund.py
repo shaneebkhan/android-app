@@ -290,8 +290,12 @@ class TestSaleToInvoice(TestCommonSaleNoChart):
                     self.assertEquals(len(line.invoice_lines), 3, "The line 'ordered service' is invoiced, so it should be linked to 3 invoice lines (invoice and refund)")
 
         # Change unit of ordered product on refund lines
-        invoice_refund.invoice_line_ids.filtered(lambda invl: invl.product_id == self.sol_prod_order.product_id).write({'price_unit': 100})
-        invoice_refund.invoice_line_ids.filtered(lambda invl: invl.product_id == self.sol_serv_order.product_id).write({'price_unit': 50})
+        move_form = Form(invoice_refund)
+        with move_form.invoice_line_ids.edit(0) as line_form:
+            line_form.price_unit = 100
+        with move_form.invoice_line_ids.edit(1) as line_form:
+            line_form.price_unit = 50
+        invoice_refund = move_form.save()
 
         # Validate the refund
         invoice_refund.post()
