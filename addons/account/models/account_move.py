@@ -133,6 +133,9 @@ class AccountMove(models.Model):
     reconcile_model_id = fields.Many2many('account.reconcile.model', compute='_compute_reconcile_model', search='_search_reconcile_model', string="Reconciliation Model", readonly=True)
     to_check = fields.Boolean(string='To Check', default=False,
         help='If this checkbox is ticked, it means that the user was not sure of all the related informations at the time of the creation of the move and that the move needs to be checked again.')
+    amount_by_group = fields.Binary(string="Tax amount by group",
+        compute='_compute_invoice_taxes_by_group',
+        help="type: [(name, amount, base, formated amount, formated base)]")
 
     # ==== Cash basis feature fields ====
     matched_percentage = fields.Float(string='Percentage Matched', store=True, readonly=True, digits=0,
@@ -155,9 +158,6 @@ class AccountMove(models.Model):
     # ==== Onchange fields ====
     recompute_taxes = fields.Boolean(store=False)
 
-    amount_by_group = fields.Binary(string="Tax amount by group",
-        compute='_compute_invoice_taxes_by_group',
-        help="type: [(name, amount, base, formated amount, formated base)]")
     # =========================================================
     # Invoice related fields
     # =========================================================
@@ -237,63 +237,6 @@ class AccountMove(models.Model):
     # ==== Display purpose fields ====
     invoice_filter_type_domain = fields.Char(compute='_compute_invoice_filter_type_domain',
         help="Technical field used to have a dynamic domain on the form view.")
-
-    # -------------------------------------------------------------------------
-    # ONCHANGE SUB-METHODS
-    # -------------------------------------------------------------------------
-
-    @api.model
-    def _search_candidate_records(self, records, searched_values):
-        ''' Helper to find matching record based on some values.
-        This method takes care about relational/monetary/date/datetime fields.
-        :param records:         A records set.
-        :param searched_values: A dictionary of values to match.
-        :return:                A record in records or None.
-        '''
-        for i, record in enumerate(records):
-            match = True
-            for field_name in searched_values.keys():
-                record_value = record[field_name]
-                search_value = searched_values[field_name]
-                field_type = record._fields[field_name].type
-                if field_type == 'monetary':
-                    # Compare monetary field.
-                    currency_field_name = record._fields[field_name].currency_field
-                    record_currency = record[currency_field_name]
-                    if record_currency:
-                        if record_currency.compare_amounts(search_value, record_value):
-                            match = False
-                            break
-                    elif search_value != record_value:
-                        match = False
-                        break
-                elif field_type in ('one2many', 'many2many'):
-                    # Compare x2many relational fields.
-                    # Empty comparison must be an empty list to be True.
-                    if set(record_value.ids) != set(search_value):
-                        match = False
-                        break
-                elif field_type == 'many2one':
-                    # Compare many2one relational fields.
-                    # Every falsy value is allowed to compare with an empty record.
-                    if (record_value or search_value) and record_value.id != search_value:
-                        match = False
-                        break
-                elif field_type == 'date':
-                    if fields.Date.to_string(record_value) != search_value:
-                        match = False
-                        break
-                elif field_type == 'datetime':
-                    if fields.Datetime.to_string(record_value) != search_value:
-                        match = False
-                        break
-                elif (search_value or record_value) and record_value != search_value:
-                    # Compare others fields if not both interpreted as falsy values.
-                    match = False
-                    break
-            if match:
-                return i, record
-        return -1, None
 
     # -------------------------------------------------------------------------
     # ONCHANGE METHODS
@@ -447,9 +390,19 @@ class AccountMove(models.Model):
             for line in base_lines:
                 if not line.tax_ids:
                     continue
-                tax_line_values = ast.literal_eval(line.tax_line_values)
+
+                balance_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
+                    line.balance, currency=line.company_currency_id, partner=line.partner_id)
+                if line.currency_id:
+                    # Multi-currencies mode: Taxes are computed both in company's currency / foreign currency.
+                    amount_currency_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
+                        line.amount_currency, currency=line.currency_id, partner=line.partner_id)
+                else:
+                    # Single-currency mode: Only company's currency is considered.
+                    amount_currency_taxes_res = {'taxes': [{'amount': 0.0} for tax_res in balance_taxes_res['taxes']]}
+
                 tax_exigible = True
-                for b_tax_res, ac_tax_res in zip(tax_line_values['balance']['taxes'], tax_line_values['amount_currency']['taxes']):
+                for b_tax_res, ac_tax_res in zip(balance_taxes_res['taxes'], amount_currency_taxes_res['taxes']):
                     tax = self.env['account.tax'].browse(b_tax_res['id'])
                     if tax.tax_exigibility == 'on_payment':
                         tax_exigible = False
@@ -1890,7 +1843,7 @@ class AccountMove(models.Model):
 
 
 class AccountMoveLine(models.Model):
-    _name = "account.move.line"
+    _name = 'account.move.line'
     _description = "Journal Item"
     _order = "sequence, date desc, id"
 
@@ -1956,8 +1909,6 @@ class AccountMoveLine(models.Model):
              " on taxes, some will become exigible only when the payment is recorded.")
     recompute_tax_line = fields.Boolean(store=False, readonly=True,
         help="Technical field used to know on which lines the taxes must be recomputed.")
-    tax_line_values = fields.Text(readonly=True,
-        compute='_compute_tax_line_values')
     remove_line = fields.Boolean(store=False, readonly=True)
     update_line = fields.Text(store=False, readonly=True)
     display_type = fields.Selection([
@@ -2399,25 +2350,6 @@ class AccountMoveLine(models.Model):
         for line in self:
             if not line.currency_id:
                 line.amount_currency = 0.0
-
-    @api.depends('amount_currency', 'currency_id', 'debit', 'credit', 'tax_ids', 'analytic_account_id', 'analytic_tag_ids')
-    def _compute_tax_line_values(self):
-        for line in self:
-            if not line.tax_ids:
-                continue
-            balance_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
-                line.balance, currency=line.company_currency_id, partner=line.partner_id)
-            if line.currency_id:
-                # Multi-currencies mode: Taxes are computed both in company's currency / foreign currency.
-                amount_currency_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
-                    line.amount_currency, currency=line.currency_id, partner=line.partner_id)
-            else:
-                # Single-currency mode: Only company's currency is considered.
-                amount_currency_taxes_res = {'taxes': [{'amount': 0.0} for tax_res in balance_taxes_res['taxes']]}
-            line.tax_line_values = str({
-                'balance': balance_taxes_res,
-                'amount_currency': amount_currency_taxes_res,
-            })
 
     @api.depends('currency_id')
     def _compute_always_set_currency_id(self):

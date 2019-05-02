@@ -139,7 +139,6 @@ class AccountMove(models.Model):
             record.l10n_ch_isr_valid = record.type == 'out_invoice' and\
                 record.name and \
                 record.l10n_ch_isr_postal and \
-                record.invoice_partner_bank_id and \
                 record.invoice_partner_bank_id.l10n_ch_postal and \
                 record.l10n_ch_currency_name in ['EUR', 'CHF']
 

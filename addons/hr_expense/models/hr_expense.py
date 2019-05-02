@@ -221,7 +221,7 @@ class HrExpense(models.Model):
             account_date = expense.sheet_id.accounting_date or expense.date
             if expense.sheet_id.id not in move_grouped_by_sheet:
                 journal = expense.sheet_id.bank_journal_id if expense.payment_mode == 'company_account' else expense.sheet_id.journal_id
-                move = self.env['account.move'].with_context(default_journal_id=journal.id).create({
+                move = self.env['account.move'].create({
                     'journal_id': journal.id,
                     'date': account_date,
                     'ref': expense.sheet_id.name,

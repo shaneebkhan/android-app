@@ -201,7 +201,6 @@ class PosOrder(models.Model):
 
     def _prepare_invoice_line(self, order_line):
         return {
-            # 'move_id': account_move,
             'product_id': order_line.product_id.id,
             'quantity': order_line.qty if self.amount_total >= 0 else -order_line.qty,
             'discount': order_line.discount,
@@ -523,7 +522,6 @@ class PosOrder(models.Model):
         [('draft', 'New'), ('cancel', 'Cancelled'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced')],
         'Status', readonly=True, copy=False, default='draft')
 
-    invoice_id = fields.Many2one('account.move', string='Invoice', copy=False)
     account_move = fields.Many2one('account.move', string='Journal Entry', readonly=True, copy=False)
     picking_id = fields.Many2one('stock.picking', string='Picking', readonly=True, copy=False)
     picking_type_id = fields.Many2one('stock.picking.type', related='session_id.config_id.picking_type_id', string="Operation Type", readonly=False)

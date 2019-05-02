@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo import fields
 from odoo.tests.common import Form, SavepointCase
 from odoo.tests import tagged
 
@@ -274,3 +275,56 @@ class AccountingSavepointCase(SavepointCase):
     def assertAmlsValues(self, lines, expected_values_list):
         lines = lines.sorted(lambda line: (line.name or '', line.balance))
         self.assertRecordValues(lines, expected_values_list)
+
+    @staticmethod
+    def _search_candidate_records(records, searched_values):
+        ''' Helper to find matching record based on some values.
+        This method takes care about relational/monetary/date/datetime fields.
+        :param records:         A records set.
+        :param searched_values: A dictionary of values to match.
+        :return:                A record in records or None.
+        '''
+        for i, record in enumerate(records):
+            match = True
+            for field_name in searched_values.keys():
+                record_value = record[field_name]
+                search_value = searched_values[field_name]
+                field_type = record._fields[field_name].type
+                if field_type == 'monetary':
+                    # Compare monetary field.
+                    currency_field_name = record._fields[field_name].currency_field
+                    record_currency = record[currency_field_name]
+                    if record_currency:
+                        if record_currency.compare_amounts(search_value, record_value):
+                            match = False
+                            break
+                    elif search_value != record_value:
+                        match = False
+                        break
+                elif field_type in ('one2many', 'many2many'):
+                    # Compare x2many relational fields.
+                    # Empty comparison must be an empty list to be True.
+                    if set(record_value.ids) != set(search_value):
+                        match = False
+                        break
+                elif field_type == 'many2one':
+                    # Compare many2one relational fields.
+                    # Every falsy value is allowed to compare with an empty record.
+                    if (record_value or search_value) and record_value.id != search_value:
+                        match = False
+                        break
+                elif field_type == 'date':
+                    if fields.Date.to_string(record_value) != search_value:
+                        match = False
+                        break
+                elif field_type == 'datetime':
+                    if fields.Datetime.to_string(record_value) != search_value:
+                        match = False
+                        break
+                elif (search_value or record_value) and record_value != search_value:
+                    # Compare others fields if not both interpreted as falsy values.
+                    match = False
+                    break
+            if match:
+                return i, record
+        return -1, None

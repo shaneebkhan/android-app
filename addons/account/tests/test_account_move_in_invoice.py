@@ -140,7 +140,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
 
         # One product line, custom account from aml tab.
         move_form = Form(move)
-        index_product_line, _ = move._search_candidate_records(move.line_ids, {'name': 'product_a'})
+        index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
         with move_form.line_ids.edit(index_product_line) as line_form:
             line_form.account_id = self.parent_acc_payable_1
         move = move_form.save()
@@ -838,7 +838,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
 
         # Edit balance, check impact to the price_unit.
         move_form = Form(move)
-        index_product_line, _ = move._search_candidate_records(move.line_ids, {'name': 'product_a'})
+        index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
         with move_form.line_ids.edit(index_product_line) as line_form:
             line_form.debit = 3000
         move = move_form.save()
@@ -1238,11 +1238,11 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
 
         move_form = Form(move)
         # Edit balance of line having 50% discount.
-        index_50discount_line, _ = move._search_candidate_records(move.line_ids, {'discount': 50.0})
+        index_50discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 50.0})
         with move_form.line_ids.edit(index_50discount_line) as line_form:
             line_form.debit = 1000
         # Edit balance of line having 100% discount.
-        index_100discount_line, _ = move._search_candidate_records(move.line_ids, {'discount': 100.0})
+        index_100discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 100.0})
         with move_form.line_ids.edit(index_100discount_line) as line_form:
             line_form.debit = 2000
         move = move_form.save()
@@ -1677,7 +1677,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
             line_form.price_unit = 2000
         move = move_form.save()
         move_form = Form(move)
-        index_product_line, _ = move._search_candidate_records(move.invoice_line_ids, {'name': 'product_a bis'})
+        index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {'name': 'product_a bis'})
         with move_form.invoice_line_ids.edit(index_product_line) as line_form:
             line_form.tax_ids.add(self.parent_tax_purchase_2)
         move = move_form.save()
@@ -1865,7 +1865,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
         # Edit tax line manually.
         # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
         move_form = Form(move)
-        index_tax_line, _ = move._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_1.id})
+        index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_1.id})
         with move_form.line_ids.edit(index_tax_line) as line_form:
             line_form.debit = 600
         move = move_form.save()
@@ -2052,7 +2052,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
         # Remove a tax line.
         # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
         move_form = Form(move)
-        index_tax_line, _ = move._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_2.id})
+        index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_2.id})
         move_form.line_ids.remove(index=index_tax_line)
         move = move_form.save()
 
@@ -2214,7 +2214,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
 
         # Remove product line. Taxes are recomputed.
         move_form = Form(move)
-        index_product_line, _ = move._search_candidate_records(move.invoice_line_ids, {'debit': 2000.0})
+        index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {'debit': 2000.0})
         move_form.invoice_line_ids.remove(index=index_product_line)
         move = move_form.save()
 
@@ -2737,7 +2737,7 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
         # Set a custom name / account for payment term lines.
         move_form = Form(move)
         move_form.invoice_payment_ref = 'turlututu'
-        index_pay_term_line, _ = move._search_candidate_records(move.line_ids, {'date_maturity': '2019-01-01'})
+        index_pay_term_line, _ = self._search_candidate_records(move.line_ids, {'date_maturity': '2019-01-01'})
         with move_form.line_ids.edit(index_pay_term_line) as line_form:
             line_form.name = 'tsoin tsoin'
             line_form.account_id = self.parent_acc_payable_2

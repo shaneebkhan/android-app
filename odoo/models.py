@@ -5531,9 +5531,6 @@ Fields:
 
         # create a new record with values, and attach ``self`` to it
         with env.do_in_onchange():
-            ovalues = OrderedDict(values)
-            for name in names:
-                ovalues[name] = ovalues.pop(name)
             record = self.new(values)
             # attach ``self`` with a different context (for cache consistency)
             record._origin = self.with_context(__onchange=True)

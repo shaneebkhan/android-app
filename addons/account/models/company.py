@@ -499,20 +499,25 @@ Best Regards,'''))
                         "\nPlease go to Configuration > Journals.")
                 raise RedirectWarning(msg, action.id, _("Go to the journal configuration"))
 
-            with Form(self.env['account.move'].with_context(default_journal_id=journal.id)) as move_form:
-                move_form.name = _('Sample invoice')
-                move_form.partner_id = partner.id
-                with move_form.line_ids.new() as line_form:
-                    line_form.name = _('Sample invoice line name')
-                    line_form.account_id = account.id
-                    line_form.price_unit = 199.99
-                    line_form.quantity = 2
-                with move_form.line_ids.new() as line_form:
-                    line_form.name = _('Sample invoice line name 2')
-                    line_form.account_id = account.id
-                    line_form.price_unit = 25
-                    line_form.quantity = 1
-            return move_form.save()
+            sample_invoice = self.env['account.move'].with_context(type='out_invoice', default_journal_id=journal.id).create({
+                'invoice_payment_ref': _('Sample invoice'),
+                'partner_id': partner.id,
+                'invoice_line_ids': [
+                    (0, 0, {
+                        'name': _('Sample invoice line name'),
+                        'account_id': account.id,
+                        'quantity': 2,
+                        'price_unit': 199.99,
+                    }),
+                    (0, 0, {
+                        'name': _('Sample invoice line name 2'),
+                        'account_id': account.id,
+                        'quantity': 1,
+                        'price_unit': 25.0,
+                    }),
+                ],
+            })
+        return sample_invoice
 
     @api.model
     def action_open_account_onboarding_sample_invoice(self):

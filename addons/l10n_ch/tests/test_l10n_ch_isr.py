@@ -18,7 +18,7 @@ class ISRTest(AccountingTestCase):
             'partner_id': self.env.ref("base.res_partner_2").id,
             'currency_id': self.env.ref(currency_to_use).id,
             'invoice_date': time.strftime('%Y') + '-12-22',
-            'line_ids': [
+            'invoice_line_ids': [
                 (0, 0, {
                     'product_id': self.env.ref("product.product_product_4").id,
                     'quantity': 1,

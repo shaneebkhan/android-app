@@ -423,14 +423,13 @@ class account_payment(models.Model):
 
     @api.multi
     def button_invoices(self):
-        views = [(False, 'form')]
         return {
             'name': _('Paid Invoices'),
             'view_type': 'form',
             'view_mode': 'tree,form',
             'res_model': 'account.move',
             'view_id': False,
-            'views': views,
+            'views': [(False, 'form')],
             'type': 'ir.actions.act_window',
             'domain': [('id', 'in', [x.id for x in self.reconciled_invoice_ids])],
         }
@@ -466,6 +465,28 @@ class account_payment(models.Model):
 
     @api.multi
     def _prepare_payment_moves(self):
+        ''' Prepare the creation of journal entries (account.move) by creating a list of python dictionary to be passed
+        to the 'create' method.
+
+        Example 1: outbound with write-off:
+
+        Account             | Debit     | Credit
+        ---------------------------------------------------------
+        BANK                |   900.0   |
+        RECEIVABLE          |           |   1000.0
+        WRITE-OFF ACCOUNT   |   100.0   |
+
+        Example 2: internal transfer from BANK to CASH:
+
+        Account             | Debit     | Credit
+        ---------------------------------------------------------
+        BANK                |           |   1000.0
+        TRANSFER            |   1000.0  |
+        CASH                |   1000.0  |
+        TRANSFER            |           |   1000.0
+
+        :return: A list of Python dictionary to be passed to env['account.move'].create.
+        '''
         all_move_vals = []
         for payment in self:
             company_currency = payment.company_id.currency_id
@@ -707,7 +728,7 @@ class payment_register(models.TransientModel):
         invoices = self.env['account.move'].browse(active_ids)
 
         # Check all invoices are open
-        if any(invoice.state != 'posted' for invoice in invoices):
+        if any(invoice.state != 'posted' or invoice.invoice_payment_state != 'not_paid' for invoice in invoices):
             raise UserError(_("You can only register payments for open invoices"))
         # Check all invoices are inbound or all invoices are outbound
         outbound_list = [invoice.type in ('in_invoice', 'out_refund') for invoice in invoices]

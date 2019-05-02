@@ -127,12 +127,12 @@ class account_journal(models.Model):
         start_date = (first_day_of_week + timedelta(days=-7))
         for i in range(0,6):
             if i == 0:
-                query += "("+select_sql_clause+" and date < '"+start_date.strftime(DF)+"')"
+                query += "("+select_sql_clause+" and invoice_date_due < '"+start_date.strftime(DF)+"')"
             elif i == 5:
-                query += " UNION ALL ("+select_sql_clause+" and date >= '"+start_date.strftime(DF)+"')"
+                query += " UNION ALL ("+select_sql_clause+" and invoice_date_due >= '"+start_date.strftime(DF)+"')"
             else:
                 next_date = start_date + timedelta(days=7)
-                query += " UNION ALL ("+select_sql_clause+" and date >= '"+start_date.strftime(DF)+"' and date < '"+next_date.strftime(DF)+"')"
+                query += " UNION ALL ("+select_sql_clause+" and invoice_date_due >= '"+start_date.strftime(DF)+"' and invoice_date_due < '"+next_date.strftime(DF)+"')"
                 start_date = next_date
 
         self.env.cr.execute(query, query_args)
@@ -160,9 +160,17 @@ class account_journal(models.Model):
         the bar graph's data as its first element, and the arguments dictionary
         for it as its second.
         """
-        return ("""SELECT sum(residual) as total, min(date) as aggr_date
-               FROM account_move
-               WHERE journal_id = %(journal_id)s and state = 'posted' AND type != 'misc'""", {'journal_id':self.id})
+        return ('''
+            SELECT SUM(
+               (CASE WHEN move.type IN ('out_refund', 'in_refund') THEN -1 else 1 END) * line.amount_residual
+            )
+            FROM account_move_line line
+            JOIN account_move move ON move.id = line.move_id
+            WHERE move.journal_id = %(journal_id)s
+            AND move.state = 'posted'
+            AND move.invoice_payment_state = 'not_paid'
+            AND move.type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
+        ''', {'journal_id': self.id})
 
     @api.multi
     def get_journal_dashboard_datas(self):
@@ -212,9 +220,18 @@ class account_journal(models.Model):
 
             today = fields.Date.today()
             query = '''
-                SELECT amount_total, currency_id AS currency, type, invoice_date, company_id
-                FROM account_move
-                WHERE journal_id = %s AND date <= %s AND state = 'posted' AND type != 'misc';
+                SELECT 
+                    (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * residual AS amount_total, 
+                    currency_id AS currency, 
+                    type, 
+                    invoice_date, 
+                    company_id
+                FROM account_move move
+                WHERE journal_id = %s 
+                AND date <= %s 
+                AND state = 'posted'
+                AND invoice_payment_state = 'not_paid'
+                AND type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
             '''
             self.env.cr.execute(query, (self.id, today))
             late_query_results = self.env.cr.dictfetchall()
@@ -252,9 +269,20 @@ class account_journal(models.Model):
         data as its first element, and the arguments dictionary to use to run
         it as its second.
         """
-        return ("""SELECT state, residual as amount_total, currency_id AS currency, type, invoice_date, company_id
-                  FROM account_move
-                  WHERE journal_id = %(journal_id)s AND state = 'posted' AND type != 'misc';""", {'journal_id':self.id})
+        return ('''
+            SELECT 
+                state
+                (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * residual AS amount_total, 
+                currency_id AS currency, 
+                type, 
+                invoice_date, 
+                company_id
+            FROM account_move move
+            WHERE journal_id = %(journal_id)s 
+            AND state = 'posted'
+            AND invoice_payment_state = 'not_paid'
+            AND type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
+        ''', {'journal_id': self.id})
 
     def _get_draft_bills_query(self):
         """
@@ -262,9 +290,20 @@ class account_journal(models.Model):
         gather the bills in draft state data, and the arguments
         dictionary to use to run it as its second.
         """
-        return ("""SELECT state, amount_total, currency_id AS currency, type, invoice_date, company_id
-                  FROM account_move
-                  WHERE journal_id = %(journal_id)s AND state = 'draft' AND type != 'misc';""", {'journal_id':self.id})
+        return ('''
+            SELECT 
+                state
+                (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * amount_total AS amount_total, 
+                currency_id AS currency, 
+                type, 
+                invoice_date, 
+                company_id
+            FROM account_move move
+            WHERE journal_id = %(journal_id)s 
+            AND state = 'posted'
+            AND invoice_payment_state = 'not_paid'
+            AND type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
+        ''', {'journal_id': self.id})
 
     def _count_results_and_sum_amounts(self, results_dict, target_currency, curr_cache=None):
         """ Loops on a query result to count the total number of invoices and sum
