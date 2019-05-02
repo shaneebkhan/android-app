@@ -335,7 +335,7 @@ class TestPointOfSaleFlow(TestPointOfSaleCommon):
         # I check that the order is marked as paid and there is no invoice
         # attached to it
         self.assertEqual(self.pos_order_pos1.state, 'paid', "Order should be in paid state.")
-        self.assertFalse(self.pos_order_pos1.invoice_id, 'Invoice should not be attached to order.')
+        self.assertFalse(self.pos_order_pos1.account_move, 'Invoice should not be attached to order.')
 
         # I generate an invoice from the order
         res = self.pos_order_pos1.action_pos_order_invoice()

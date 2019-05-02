@@ -257,6 +257,7 @@ class AccountMove(models.Model):
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
+        # Force a call to 'onchange' when changing the partner.
         pass
 
     @api.onchange('date')
@@ -719,6 +720,7 @@ class AccountMove(models.Model):
         # OVERRIDE
 
         def is_invoice_line(command):
+            # Check if the command is about an invoice line.
             display_types = self.env['account.move.line']._get_invoice_line_types()
             if command[0] == 0 and command[2]['display_type'] in display_types:
                 return True
@@ -743,6 +745,8 @@ class AccountMove(models.Model):
             return new_vals
 
         def hack_o2m_command(command):
+            # Hack to simulate the changes comes from Python instead of the user interface to make sure the
+            # correct diff is returned JS-side.
             if command[0] == 0:
                 command = (command[0], command[1], {
                     'update_line': str(serialize_dict(command[2])),
