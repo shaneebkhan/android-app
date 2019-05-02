@@ -15,5 +15,145 @@
         <record id="im_livechat_channel_data" model="im_livechat.channel">
              <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
         </record>
+
+        <record id="mail_channel_livechat_1" model="mail.channel">
+            <field name="name">Visitor, Mitchell Admin</field>
+            <field name="livechat_operator_id" ref="base.partner_admin"/>
+            <field name="livechat_channel_id" ref="im_livechat.im_livechat_channel_data"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1)"/>
+            <field name="channel_type">livechat</field>
+        </record>
+        <record id="mail_channel_livechat_2" model="mail.channel">
+            <field name="name">Visitor, Mitchell Admin</field>
+            <field name="livechat_operator_id" ref="base.partner_admin"/>
+            <field name="livechat_channel_id" ref="im_livechat.im_livechat_channel_data"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3)"/>
+            <field name="channel_type">livechat</field>
+        </record>
+
+        <record id="mail_message_livechat_1" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1)"/>
+            <field name="body">Hi</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_2" model="mail.message">
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1, seconds=-15)"/>
+            <field name="body">Hello, how may I help you?</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_3" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1, seconds=-25)"/>
+            <field name="body">I want to know about CRM application in ODOO</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_4" model="mail.message">
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1, seconds=-33)"/>
+            <field name="body">ODOO CRM application is helping any business to generate leads/ opportunities which in turn helps an organization to generate good revenue</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_5" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1, seconds=-42)"/>
+            <field name="body">OK, Thank you</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_6" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1, seconds=-53)"/>
+            <field name="body">Rating: :-)</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_1])]"/>
+        </record>
+        <record id="mail_message_livechat_7" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3)"/>
+            <field name="body">Hello</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+        <record id="mail_message_livechat_8" model="mail.message">
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3, seconds=-10)"/>
+            <field name="body">Hello, how may I help you?</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+        <record id="mail_message_livechat_9" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3, seconds=-18)"/>
+            <field name="body">I want to know about Sales application in ODOO</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+        <record id="mail_message_livechat_10" model="mail.message">
+            <field name="author_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3, seconds=-27)"/>
+            <field name="body">ODOO sales help all the industries whether it is trading, selling services, online sales(through the website) and point of sale also</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+        <record id="mail_message_livechat_11" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3, seconds=-34)"/>
+            <field name="body">OK, thank you for the information</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+        <record id="mail_message_livechat_12" model="mail.message">
+            <field name="author_id" eval="False"/>
+            <field name="record_name">Visitor</field>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3, seconds=-42)"/>
+            <field name="body">Rating: :-)</field>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="model">mail.channel</field>
+            <field name="channel_ids" eval="[(6, False, [mail_channel_livechat_2])]"/>
+        </record>
+
+        <record id="rating_rating_livechat_1" model="rating.rating">
+            <field name="res_model_id" ref="mail.model_mail_channel"/>
+            <field name="rated_partner_id" ref="base.partner_admin"/>
+            <field name="partner_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=1)"/>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_1"/>
+            <field name="rating" eval="10"/>
+            <field name="consumed" eval="True"/>
+        </record>
+        <record id="rating_rating_livechat_2" model="rating.rating">
+            <field name="res_model_id" ref="mail.model_mail_channel"/>
+            <field name="rated_partner_id" ref="base.partner_admin"/>
+            <field name="partner_id" ref="base.partner_admin"/>
+            <field name="create_date" eval="datetime.now() - timedelta(days=3)"/>
+            <field name="res_id" ref="im_livechat.mail_channel_livechat_2"/>
+            <field name="rating" eval="5"/>
+            <field name="consumed" eval="True"/>
+        </record>
+
     </data>
 </odoo>
