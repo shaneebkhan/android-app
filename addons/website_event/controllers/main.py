@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import fields, http, _
 from odoo.addons.http_routing.models.ir_http import slug
 from odoo.http import request
+from odoo.osv import expression
 
 
 class WebsiteEventController(http.Controller):
@@ -72,9 +73,11 @@ class WebsiteEventController(http.Controller):
                 domain_search["date"] = date[2]
                 if date[0] != 'all':
                     current_date = date[1]
-        if searches["type"] != 'all':
+        if searches["type"] not in ['all', 'none']:
             current_type = EventType.browse(int(searches['type']))
             domain_search["type"] = [("event_type_id", "=", int(searches["type"]))]
+        elif searches["type"] == 'none':
+            domain_search["type"] = [("event_type_id", "=", False)]
 
         if searches["country"] != 'all' and searches["country"] != 'online':
             current_country = request.env['res.country'].browse(int(searches['country']))
@@ -100,6 +103,13 @@ class WebsiteEventController(http.Controller):
             'event_type_id_count': sum([int(type['event_type_id_count']) for type in types]),
             'event_type_id': ("all", _("All Categories"))
         })
+        domain = expression.AND([domain, [('event_type_id', '=', False)]])
+        no_category_count = Event.search_count(domain)
+        if no_category_count:
+            types.append({
+                'event_type_id_count': no_category_count,
+                'event_type_id': ("none", _("Uncategorized"))
+            })
 
         domain = dom_without('country')
         countries = Event.read_group(domain, ["id", "country_id"], groupby="country_id", orderby="country_id")
