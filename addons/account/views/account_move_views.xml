@@ -563,29 +563,42 @@
                                        context="{'line_ids': line_ids, 'journal_id': journal_id, 'default_partner_id': commercial_partner_id, 'default_currency_id': foreign_currency_id}">
                                     <tree editable="bottom" string="Journal Items" decoration-muted="display_type in ('line_section', 'line_note')">
                                         <!-- Displayed fields -->
-                                        <field name="account_id" required="1"/>
+                                        <field name="account_id"
+                                               attrs="{
+                                                    'required': [('display_type', 'not in', ('line_section', 'line_note'))],
+                                                    'invisible': [('display_type', 'in', ('line_section', 'line_note'))],
+                                               }"/>
                                         <field name="partner_id"
                                                domain="['|', ('parent_id', '=', False), ('is_company', '=', True)]"
                                                attrs="{'column_invisible': [('parent.type', '!=', 'misc')]}"/>
                                         <field name="name"/>
                                         <field name="analytic_account_id"
-                                               groups="analytic.group_analytic_accounting"/>
+                                               groups="analytic.group_analytic_accounting"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
                                         <field name="analytic_tag_ids"
                                                groups="analytic.group_analytic_tags"
-                                               widget="many2many_tags"/>
+                                               widget="many2many_tags"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
                                         <field name="amount_currency"
                                                groups="base.group_multi_currency"
                                                attrs="{'column_invisible': [('parent.type', '!=', 'misc')]}"/>
                                         <field name="currency_id" options="{'no_create': True}"
                                                groups="base.group_multi_currency"
                                                attrs="{'column_invisible': [('parent.type', '!=', 'misc')]}"/>
-                                        <field name="debit" sum="Total Debit"/>
-                                        <field name="credit" sum="Total Credit"/>
+                                        <field name="debit"
+                                               sum="Total Debit"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                                        <field name="credit"
+                                               sum="Total Credit"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
                                         <field name="tax_ids" string="Taxes Applied" widget="many2many_tags"
                                                domain="[('type_tax_use', '=?', parent.invoice_filter_type_domain)]"
                                                context="{'append_type_to_tax_name': not parent.invoice_filter_type_domain}"
-                                               options="{'no_create': True}"/>
-                                        <field name="date_maturity" invisible="context.get('view_no_maturity')"/>
+                                               options="{'no_create': True}"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
+                                        <field name="date_maturity"
+                                               invisible="context.get('view_no_maturity')"
+                                               attrs="{'invisible': [('display_type', 'in', ('line_section', 'line_note'))]}"/>
 
                                         <!-- Others fields -->
                                         <field name="payment_id" invisible="1"/>
