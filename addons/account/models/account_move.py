@@ -3236,6 +3236,8 @@ class AccountMoveLine(models.Model):
         where_clause_params = []
         tables = ''
         if domain:
+            domain.append(('display_type', 'not in', ('line_section', 'line_note')))
+
             query = self._where_calc(domain)
 
             # Wrap the query with 'company_id IN (...)' to avoid bypassing company access rights.

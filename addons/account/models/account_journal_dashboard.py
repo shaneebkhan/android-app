@@ -271,17 +271,17 @@ class account_journal(models.Model):
         """
         return ('''
             SELECT 
-                state
-                (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * residual AS amount_total, 
-                currency_id AS currency, 
-                type, 
-                invoice_date, 
-                company_id
+                move.state,
+                (CASE WHEN move.type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * move.residual AS amount_total, 
+                move.currency_id AS currency, 
+                move.type, 
+                move.invoice_date, 
+                move.company_id
             FROM account_move move
-            WHERE journal_id = %(journal_id)s 
-            AND state = 'posted'
-            AND invoice_payment_state = 'not_paid'
-            AND type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
+            WHERE move.journal_id = %(journal_id)s 
+            AND move.state = 'posted'
+            AND move.invoice_payment_state = 'not_paid'
+            AND move.type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
         ''', {'journal_id': self.id})
 
     def _get_draft_bills_query(self):
@@ -292,17 +292,17 @@ class account_journal(models.Model):
         """
         return ('''
             SELECT 
-                state
-                (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * amount_total AS amount_total, 
-                currency_id AS currency, 
-                type, 
-                invoice_date, 
-                company_id
+                move.state,
+                (CASE WHEN move.type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * move.amount_total AS amount_total, 
+                move.currency_id AS currency, 
+                move.type, 
+                move.invoice_date, 
+                move.company_id
             FROM account_move move
-            WHERE journal_id = %(journal_id)s 
-            AND state = 'posted'
-            AND invoice_payment_state = 'not_paid'
-            AND type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
+            WHERE move.journal_id = %(journal_id)s 
+            AND move.state = 'posted'
+            AND move.invoice_payment_state = 'not_paid'
+            AND move.type IN ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt');
         ''', {'journal_id': self.id})
 
     def _count_results_and_sum_amounts(self, results_dict, target_currency, curr_cache=None):
