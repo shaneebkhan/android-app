@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class PosConfig(models.Model):
@@ -45,3 +46,8 @@ class PosConfig(models.Model):
     def _onchange_is_order_printer(self):
         if not self.is_order_printer:
             self.printer_ids = [(5, 0, 0)]
+
+    @api.constrains('handle_tip_adjustments', 'tip_product_id')
+    def _check_company_invoice_journal(self):
+        if self.handle_tip_adjustments and not self.tip_product_id:
+            raise ValidationError(_("To handle tip adjustments please configure a Tip Product."))
