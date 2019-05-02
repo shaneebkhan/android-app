@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 
 @tagged('post_install', '-at_install')
-class TestAccountMove(AccountingSavepointCase):
+class TestAccountMoveOutInvoice(AccountingSavepointCase):
 
     # -------------------------------------------------------------------------
     # TESTS out_invoice ONCHANGE
