@@ -317,7 +317,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'tax_ids': [(6, 0, self.product_a.taxes_id.ids)],
             })]
         })
-        
+
         # Create an 'out_refund' journal entry with refund_method='modify'.
         move_reversal = self.env['account.move.reversal'].with_context(active_ids=move.ids).create({
             'date': fields.Date.from_string('2019-02-01'),
@@ -1106,7 +1106,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
     # TESTS Miscellaneous operations
     # -------------------------------------------------------------------------
 
-    def test_reversal_misc_1_draft_refund(self):
+    def test_reversal_misc_2_cancel_refund(self):
         move = self.env['account.move'].create({
             'type': 'misc',
             'line_ids': [
@@ -1132,8 +1132,6 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
         move_reversal = self.env['account.move.reversal'].with_context(active_ids=move.ids).create({
             'date': fields.Date.from_string('2019-02-01'),
-            'reason': 'no reason',
-            'refund_method': 'refund',
             'journal_id': self.parent_journal_sale_1.id,
         })
         reversal = move_reversal.reverse_moves()
@@ -1217,10 +1215,10 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'type': 'misc',
             'date': fields.Date.from_string('2019-02-01'),
             'fiscal_position_id': False,
-            'invoice_payment_ref': 'no reason',
+            'invoice_payment_ref': False,
             'invoice_payment_term_id': False,
             'amount_total': 1150.0,
-            'residual': 1150.0,
-            'state': 'draft',
-            'invoice_payment_state': 'not_paid',
+            'residual': 0.0,
+            'state': 'posted',
+            'invoice_payment_state': 'paid',
         }])
