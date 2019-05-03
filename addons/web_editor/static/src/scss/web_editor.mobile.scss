@@ -1,0 +1,111 @@
+@include media-breakpoint-down(sm) {
+
+    .o_form_sheet {
+        width: 100% !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+
+        .note-editor .note-toolbar {
+
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+
+            .note-btn-group {
+                .note-btn-group.show > .dropdown-menu.show {
+                    position: fixed !important;
+                }
+
+                // dropdown fullscreen, ignore para for avoid empty fullscreen
+                &:not(.note-para):not(.note-table) {
+                    .note-btn-group.show > .dropdown-menu.show {
+                        width: 100%;
+                        height: 100%;
+                        top: 0 !important;
+                        transform: none !important;
+                        overflow-y: auto;
+                    }
+
+                    // cancel button
+                    .note-btn-group.show > .dropdown-menu.show::before {
+                        position: sticky;
+                        width: 100%;
+                        height: $o-navbar-height;
+                        top: 0;
+                        padding: 10px;
+                        float: left;
+                        color: $o-tooltip-color;
+                        background-color: $o-enterprise-color;
+                        font-size: 1.3em;
+                        text-align: left;
+                        font-family: FontAwesome;
+                        content: ""; // fa-arrow-left
+                        z-index: 1;
+                    }
+                }
+            }
+
+            // Adapt inner dropdown fore/bg-color
+            .btn-group {
+                display: contents;
+
+                &.note-style, &.note-fontsize {
+                    .dropdown-menu {
+                        height: 150px;
+                        overflow-y: auto;
+                    }
+                }
+
+                &.note-color .dropdown-menu {
+                    .note-color-row {
+                        height: inherit !important;
+                    }
+
+                    .note-color-btn {
+                        width: 11%;
+                        height: 0;
+                        padding-top: 9%;
+                        margin-left: 4px;
+                    }
+
+                    .note-color-btn.btn {
+                        width: 100%;
+                    }
+                }
+            }
+
+
+            // Adapt the fore/bg-color dropdown
+            .note-fore-color.show, .note-bg-color.show {
+
+                .dropdown-menu.show {
+
+                    width: 98%;
+                    height: 100%;
+                    padding: 0;
+
+                    @media (orientation: landscape) {
+                        width: 96%;
+                    }
+
+                    transform: translate3d(8px, 0px, 0px) !important;
+                    overflow-y: auto;
+
+                    .note-color-palette button.note-color-btn {
+                        width: 12% !important;
+                    }
+                }
+            }
+
+            // Area of editable text
+            .note-editable {
+                width: 100%;
+                min-height: 400px !important;
+                @media (orientation: landscape) {
+                    min-height: 350px !important;
+                }
+            }
+
+        }
+    }
+}
