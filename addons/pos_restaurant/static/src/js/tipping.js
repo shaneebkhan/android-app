@@ -50,7 +50,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
                 $this.addClass("highlight");
 
                 self.gui.show_popup("number", {
-                    title: _t("Adjust tip"),
+                    title: _t("Add Tip"),
                     value: self.format_currency_no_symbol(self.order.tip_amount),
                     confirm: function(value) {
                         value = Number(value);
