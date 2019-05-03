@@ -263,14 +263,11 @@ class MailThread(models.AbstractModel):
         if self._context.get('tracking_disable'):
             return super(MailThread, self).create(vals_list)
 
-        # subscribe uid unless asked not to
-        if not self._context.get('mail_create_nosubscribe'):
-            for values in vals_list:
-                message_follower_ids = values.get('message_follower_ids') or []
-                message_follower_ids += [(0, 0, fol_vals) for fol_vals in self.env['mail.followers']._add_default_followers(self._name, [], self.env.user.partner_id.ids, customer_ids=[])[0][0]]
-                values['message_follower_ids'] = message_follower_ids
-
         threads = super(MailThread, self).create(vals_list)
+        # subscribe uid unless asked not to and avoid to add inactive user such as OdooBot
+        if not self._context.get('mail_create_nosubscribe') and self.env.user.active:
+            for thread in threads:
+                self.env['mail.followers']._insert_followers(thread._name, thread.ids, self.env.user.partner_id.ids, None, None, None, customer_ids=[])
 
         # auto_subscribe: take values and defaults into account
         create_values_list = {}
