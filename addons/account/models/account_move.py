@@ -436,7 +436,7 @@ class AccountMove(models.Model):
                         'credit': balance < 0.0 and -balance or 0.0,
                     })
                 else:
-                    account = line._get_default_tax_account(tax, balance)
+                    account = line._get_default_tax_account(tax, self.type)
                     tax_line = self.env['account.move.line'].new({
                         'name': tax.name,
                         'debit': balance > 0.0 and balance or 0.0,
@@ -1581,7 +1581,7 @@ class AccountMove(models.Model):
 
             if line_vals.get('tax_line_id') and move_vals['type'] in ('out_refund', 'in_refund'):
                 tax_line_id = self.env['account.tax'].browse(line_vals['tax_line_id'])
-                line_vals['account_id'] = self.env['account.move.line']._get_default_tax_account(tax_line_id, balance).id
+                line_vals['account_id'] = self.env['account.move.line']._get_default_tax_account(tax_line_id, move_vals['type']).id
         return move_vals
 
     @api.multi
@@ -2016,13 +2016,11 @@ class AccountMoveLine(models.Model):
         return self.display_type in ('product_cr', 'tax_cr')
 
     @api.model
-    def _get_default_tax_account(self, tax, balance):
+    def _get_default_tax_account(self, tax, move_type):
         if tax.tax_exigibility == 'on_payment':
             account = tax.account_id
-        elif tax.type_tax_use == 'purchase':
-            account = tax.refund_account_id if balance < 0 else tax.account_id
         else:
-            account = tax.refund_account_id if balance >= 0 else tax.account_id
+            account = tax.refund_account_id if move_type in ('out_refund', 'in_refund') else tax.account_id
         return account
 
     @api.multi
@@ -2189,7 +2187,7 @@ class AccountMoveLine(models.Model):
             sign = 1
         balance *= sign
 
-        if taxes:
+        if taxes and any(tax.price_include for tax in taxes):
             # Inverse taxes. E.g:
             #
             # Price Unit    | Taxes         | Originator Tax    |Price Subtotal     | Price Total
@@ -3241,6 +3239,7 @@ class AccountMoveLine(models.Model):
         tables = ''
         if domain:
             domain.append(('display_type', 'not in', ('line_section', 'line_note')))
+            domain.append(('move_id.state', '!=', 'cancel'))
 
             query = self._where_calc(domain)
 
