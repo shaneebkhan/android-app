@@ -4,8 +4,41 @@
         width: 100% !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
+    }
+    .note-editor {
+        // Use for provide display to user a scroll
+        .note-toolbar-scrollable.note-toolbar-wrapper {
+            &.scrollable-start::before {
+                position: absolute;
+                width: 12px;
+                height: $o-wysiwyg-toolbar-height;
+                padding: 6px 0;
+                top: 0;
+                left: 0;
+                text-align: center;
+                background-color: $o-tooltip-arrow-color;
+                color: $o-tooltip-color;
+                opacity: 0.6;
+                content: '<';
+                z-index: 1;
+            }
 
-        .note-editor .note-toolbar {
+            &.scrollable-end::after {
+                position: absolute;
+                width: 12px;
+                height: $o-wysiwyg-toolbar-height;
+                padding: 6px 0;
+                top: 0;
+                right: 0;
+                text-align: center;
+                background-color: $o-tooltip-arrow-color;
+                color: $o-tooltip-color;
+                opacity: 0.6;
+                content: '>';
+            }
+        }
+
+        .note-toolbar {
 
             display: flex;
             flex-wrap: nowrap;
@@ -72,8 +105,12 @@
                         width: 100%;
                     }
                 }
-            }
 
+                .dropdown-menu.show{
+                    padding: 0;
+                }
+
+            }
 
             // Adapt the fore/bg-color dropdown
             .note-fore-color.show, .note-bg-color.show {
@@ -82,7 +119,6 @@
 
                     width: 98%;
                     height: 100%;
-                    padding: 0;
 
                     @media (orientation: landscape) {
                         width: 96%;
