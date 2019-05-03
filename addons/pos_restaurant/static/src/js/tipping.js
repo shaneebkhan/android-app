@@ -65,6 +65,7 @@ odoo.define("pos_restaurant.tipping", function(require) {
 
                         self.order.is_tipped = true;
                         self.order.tip_amount = value;
+                        self.order.amount_total = self.order.amount_total_without_tip + value;
                         self.renderElement();
 
                         var search_box = self.parent.el.querySelector(".searchbox input");
