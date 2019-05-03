@@ -132,10 +132,10 @@
                         <field name="handle_tip_adjustments"/>
                     </div>
                     <div class="o_setting_right_pane">
-                        <label for="default_authorized_tip_amount" string="Adjust Tips After Payment"/>
+                        <label for="default_authorized_tip_amount" string="Add Tips After Payment"/>
                         <span class="fa fa-lg fa-cutlery" title="For bars and restaurants" role="img" aria-label="For bars and restaurants"/>
                         <div class="text-muted">
-                            Adjust credit card tips after payment (common in the US)
+                            Add credit card tips after payment (US Specific)
                         </div>
                         <div class="content-group" attrs="{'invisible': [('handle_tip_adjustments', '=', False)]}">
                             <div class="mt16">
