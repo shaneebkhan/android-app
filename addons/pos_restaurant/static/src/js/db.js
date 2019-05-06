@@ -19,7 +19,8 @@ odoo.define("pos_restaurant.DB", function(require) {
         export_as_JSON: function() {
             var res = _super_order.export_as_JSON.apply(this, arguments);
             return _.extend(res, {
-                tip_amount: this.get_tip()
+                tip_amount: this.get_tip(),
+                is_tippable: !this.is_paid_with_cash()
             });
         }
     });
@@ -53,15 +54,21 @@ odoo.define("pos_restaurant.DB", function(require) {
         // of it for the tipping interface.
         remove_order: function(order_id) {
             var order = this.get_order(order_id).data;
-            this.insert_validated_order(
-                _.extend(order, {
-                    amount_total_without_tip: order.amount_total - (order.tip_amount || 0),
-                    tip_amount: order.tip_amount || 0,
-                    is_tipped: order.is_tipped,
-                    creation_date: field_utils.format.datetime(moment(order.creation_date), {}, { timezone: false }),
-                    partner_name: order.partner_id && this.get_partner_by_id(order.partner_id).name
-                })
-            );
+            if (order.is_tippable) {
+                this.insert_validated_order(
+                    _.extend(order, {
+                        amount_total_without_tip: order.amount_total - (order.tip_amount || 0),
+                        tip_amount: order.tip_amount || 0,
+                        is_tipped: order.is_tipped,
+                        creation_date: field_utils.format.datetime(
+                            moment(order.creation_date),
+                            {},
+                            { timezone: false }
+                        ),
+                        partner_name: order.partner_id && this.get_partner_by_id(order.partner_id).name
+                    })
+                );
+            }
 
             this._super(order_id);
         }
@@ -75,6 +82,7 @@ odoo.define("pos_restaurant.DB", function(require) {
             "date_order",
             "tip_amount",
             "is_tipped",
+            "is_tippable",
             "partner_name",
             "table_name"
         ],
@@ -84,6 +92,9 @@ odoo.define("pos_restaurant.DB", function(require) {
         },
         loaded: function(self, orders) {
             orders.forEach(function(order) {
+                if (!order.is_tippable) {
+                    return;
+                }
                 self.db.insert_validated_order({
                     uid: order.pos_reference.replace(_t("Order "), ""),
                     amount_total: order.amount_total,
@@ -97,6 +108,7 @@ odoo.define("pos_restaurant.DB", function(require) {
 
                     tip_amount: order.tip_amount,
                     is_tipped: order.is_tipped,
+                    is_tippable: order.is_tippable,
                     creation_date: field_utils.format.datetime(moment(order.date_order), {}, { timezone: false }),
                     partner_name: order.partner_name,
                     table: order.table_name
