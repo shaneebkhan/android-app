@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+access_test_super_read_group_super_model,access_test_super_read_group_super_model,model_test_super_read_group_super_model,,1,0,0,0
+
