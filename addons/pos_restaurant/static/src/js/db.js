@@ -18,8 +18,10 @@ odoo.define("pos_restaurant.DB", function(require) {
 
         export_as_JSON: function() {
             var res = _super_order.export_as_JSON.apply(this, arguments);
+            var tip = this.get_tip();
             return _.extend(res, {
-                tip_amount: this.get_tip(),
+                tip_amount: tip,
+                is_tipped: tip > 0,
                 is_tippable: !this.is_paid_with_cash()
             });
         }
