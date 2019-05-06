@@ -1437,7 +1437,7 @@
 </t>
 <t t-name="Export.SavedList">
     <div class="input-group mb-3">
-        <label class="pt-2 mb-0 font-weight-bold">Templates: </label>
+        <label class="pt-2 mb-0 font-weight-bold">Template: </label>
         <select class="form-control ml-2 o_exported_lists_select">
             <option></option>
             <option class="font-italic" value="new_template">New template</option>

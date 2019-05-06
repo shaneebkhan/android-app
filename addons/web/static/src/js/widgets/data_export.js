@@ -62,7 +62,6 @@ var DataExport = Dialog.extend({
         this.$modal.find('.modal-content').css('height', '100%');
 
         this.$fieldsList = this.$('.o_fields_list');
-        this.$importCompatRadios = this.$('.o_import_compat input');
 
         proms.push(this._rpc({route: '/web/export/formats'}).then(doSetupExportFormats));
         proms.push(this._onChangeCompatibleInput());
@@ -241,7 +240,7 @@ var DataExport = Dialog.extend({
                     model: model,
                     prefix: prefix,
                     parent_name: name,
-                    import_compat: !!this.$importCompatRadios.filter(':checked').val(),
+                    import_compat: this.isCompatibleMode,
                     parent_field_type: record.field_type,
                     parent_field: record.params.parent_field,
                     exclude: excludeFields,
@@ -389,7 +388,7 @@ var DataExport = Dialog.extend({
      */
     _onChangeCompatibleInput: function () {
         var self = this;
-        this.isCompatibleMode = this.$('.o_import_compat_input').is(':checked');
+        this.isCompatibleMode = this.$('.o_import_compat input').is(':checked');
 
         this.$('.o_field_tree_structure').remove();
         this._resetTemplateField();
@@ -411,6 +410,7 @@ var DataExport = Dialog.extend({
                 })
                 .remove();
             self._onShowData(records);
+            self.$('.o_fields_list').empty();
             _.each(records, function (record) {
                 if (_.contains(self.defaultExportFields, record.id)) {
                     self._addField(record.id, record.string);

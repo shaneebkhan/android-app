@@ -10,9 +10,6 @@
         .o_left_field_panel {
             flex: 1;
             overflow: auto;
-            .o_export_tree_item:nth-child(odd) {
-                background-color: $o-brand-lightsecondary;
-            }
         }
         .o_export_tree_item {
             cursor: pointer;
@@ -21,11 +18,6 @@
             &.o_selected > .o_tree_column {
                 background-color: $o-brand-odoo;
                 color: white;
-            }
-            &.haschild {
-                .o_export_tree_item:nth-child(even) {
-                    background-color: white;
-                }
             }
             .o_expand_parent {
                 @include o-position-absolute($top: 4px, $left: 5px);
@@ -47,9 +39,6 @@
         .o_right_field_panel {
             flex: 1;
             overflow: auto;
-            .o_export_field:nth-child(odd) {
-                background-color: $o-brand-lightsecondary;
-            }
             .o_short_field {
                 cursor: ns-resize;
             }
