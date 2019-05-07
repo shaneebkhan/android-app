@@ -1261,9 +1261,9 @@ class Export(http.Controller):
             fields = self.fields_get(model)
 
         if not import_compat:
-            fields['.id'] = fields.pop('id', {'string': 'ID'})
-        else:
-            fields['id']['string'] = _('External ID')
+            fields['.id'] = {**fields['id']}
+
+        fields['id']['string'] = _('External ID')
 
         if parent_field:
             parent_field['string'] = _('External ID')
