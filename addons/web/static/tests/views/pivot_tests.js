@@ -1212,10 +1212,10 @@ QUnit.module('Views', {
 
         // Set a column groupby
         pivot.$('thead .o_pivot_header_cell_closed').click();
-        pivot.$('.o_field_selection .dropdown-item[data-field=customer]').click();
+        await testUtils.dom.click(pivot.$('.o_field_selection .dropdown-item[data-field=customer]'));
 
         // Set a domain
-        await pivot.update({domain: [['product_id', '=', 41]]});
+        await pivot.update({domain: [['product_id', '=', 37]], groupBy: []});
 
         var expectedContext = {pivot_column_groupby: ['customer'],
                                pivot_measures: ['__count'],
@@ -1227,10 +1227,10 @@ QUnit.module('Views', {
 
         // Set a column groupby
         pivot.$('thead .o_pivot_header_cell_closed').click();
-        pivot.$('.o_field_selection .dropdown-item[data-field=product_id]').click();
+        await testUtils.dom.click(pivot.$('.o_field_selection .dropdown-item[data-field=product_id]'));
 
         // Set a domain
-        await pivot.update({domain: [['product_id', '=', 37]]});
+        await pivot.update({domain: [['product_id', '=', 41]], groupBy: []});
 
         expectedContext = {pivot_column_groupby: ['customer', 'product_id'],
                            pivot_measures: ['__count'],
@@ -1238,6 +1238,71 @@ QUnit.module('Views', {
 
         assert.deepEqual(pivot.getOwnedQueryParams(), {context: expectedContext},
             'Column groupby not lost after second reload');
+
+        pivot.destroy();
+    });
+
+    QUnit.test('folded groups remain folded at reload', async function (assert) {
+        assert.expect(5);
+
+        var pivot = await createView({
+            View: PivotView,
+            model: "partner",
+            data: this.data,
+            arch: '<pivot>' +
+                        '<field name="product_id" type="row"/>' +
+                        '<field name="company_type" type="col"/>' +
+                        '<field name="foo" type="measure"/>' +
+                '</pivot>',
+        });
+
+        var values = [
+            "29", "3", "32",
+            "12",      "12",
+            "17", "3", "20",
+        ];
+        assert.strictEqual(getCurrentValues(pivot), values.join(','));
+
+        // expand a col group
+        await testUtils.dom.click(pivot.$('thead .o_pivot_header_cell_closed:nth(1)'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="customer"]'));
+
+        values = [
+            "29", "2", "1", "32",
+            "12",           "12",
+            "17", "2", "1", "20",
+        ];
+        assert.strictEqual(getCurrentValues(pivot), values.join(','));
+
+        // expand a row group
+        await testUtils.dom.click(pivot.$('tbody .o_pivot_header_cell_closed:nth(1)'));
+        await testUtils.dom.click(pivot.$('.o_pivot_field_menu .dropdown-item[data-field="other_product_id"]'));
+
+        values = [
+            "29", "2", "1", "32",
+            "12",           "12",
+            "17", "2", "1", "20",
+            "17", "2", "1", "20",
+        ];
+        assert.strictEqual(getCurrentValues(pivot), values.join(','));
+
+        // reload (should keep folded groups folded as col/row groupbys didn't change)
+        await testUtils.pivot.reload(pivot, {context: {}, domain: [], groupBy: []});
+
+        assert.strictEqual(getCurrentValues(pivot), values.join(','));
+
+        await testUtils.dom.click(pivot.$('.o_pivot_expand_button'));
+
+        // sanity check of what the table should look like if all groups are
+        // expanded, to ensure that the former asserts are pertinent
+        values = [
+            "12", "17", "2", "1", "32",
+            "12",                 "12",
+            "12",                 "12",
+                  "17", "2", "1", "20",
+                  "17", "2", "1", "20",
+        ];
+        assert.strictEqual(getCurrentValues(pivot), values.join(','));
 
         pivot.destroy();
     });
