@@ -280,7 +280,7 @@ class AccountBankStatement(models.Model):
                     st_number = SequenceObj.with_context(**context).next_by_code('account.bank.statement')
                 statement.name = st_number
             statement.state = 'open'
-            
+
     @api.multi
     def action_bank_reconcile_bank_statements(self):
         self.ensure_one()
@@ -731,4 +731,7 @@ class AccountBankStatementLine(models.Model):
 
     def _check_invoice_state(self, invoice):
         if invoice.state == 'in_payment' and all([payment.state == 'reconciled' for payment in invoice.mapped('payment_move_line_ids.payment_id')]):
-           invoice.write({'state': 'paid'})
+            invoice.write({'state': 'paid'})
+
+    def button_confirm_bank(self):
+        self.statement_id.button_confirm_bank()

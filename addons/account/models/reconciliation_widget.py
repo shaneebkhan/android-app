@@ -3,7 +3,7 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.osv import expression
-from odoo.tools.misc import formatLang
+from odoo.tools.misc import formatLang, format_date
 
 
 class AccountReconciliation(models.AbstractModel):
@@ -47,7 +47,7 @@ class AccountReconciliation(models.AbstractModel):
                 payment_aml_rec,
                 datum.get('new_aml_dicts', []))
             processed_moves = (processed_moves | moves)
-        return {'moves': processed_moves}
+        return {'moves': processed_moves.ids, 'statement_line_ids': processed_moves.mapped('line_ids.statement_line_id').ids}
 
     @api.model
     def get_move_lines_for_bank_statement_line(self, st_line_id, partner_id=None, excluded_ids=None, search_str=False, offset=0, limit=None):
@@ -77,7 +77,7 @@ class AccountReconciliation(models.AbstractModel):
 
         domain = self._domain_move_lines_for_reconciliation(st_line, aml_accounts, partner_id, excluded_ids=excluded_ids, search_str=search_str)
         recs_count = self.env['account.move.line'].search_count(domain)
-        aml_recs = self.env['account.move.line'].search(domain, offset=offset, limit=limit, order="date_maturity desc, id desc")
+        aml_recs = self.env['account.move.line'].search(domain, offset=offset, limit=limit, order="date_maturity asc, id asc")
         target_currency = st_line.currency_id or st_line.journal_id.currency_id or st_line.journal_id.company_id.currency_id
         return self._prepare_move_lines(aml_recs, target_currency=target_currency, target_date=st_line.date, recs_count=recs_count)
 
@@ -189,7 +189,7 @@ class AccountReconciliation(models.AbstractModel):
         return results
 
     @api.model
-    def get_bank_statement_data(self, bank_statement_line_ids, search_str=False):
+    def get_bank_statement_data(self, bank_statement_line_ids, srch_domain=[]):
         """ Get statement lines of the specified statements or all unreconciled
             statement lines and try to automatically reconcile them / find them
             a partner.
@@ -203,12 +203,6 @@ class AccountReconciliation(models.AbstractModel):
         edition_mode = self._context.get('edition_mode')
         bank_statements = self.env['account.bank.statement.line'].browse(bank_statement_line_ids).mapped('statement_id')
 
-        search_sql = '''
-            AND (p.name ILIKE CONCAT('%%',%(search_str)s,'%%')
-            OR line.ref ILIKE CONCAT('%%',%(search_str)s,'%%')
-            OR line.name ILIKE CONCAT('%%',%(search_str)s,'%%')
-            OR CAST(line.amount AS TEXT) ILIKE CONCAT('%%',%(search_str)s,'%%'))
-        '''
         query = '''
              SELECT line.id
              FROM account_bank_statement_line line
@@ -217,15 +211,14 @@ class AccountReconciliation(models.AbstractModel):
              AND line.amount != 0.0
              AND line.id IN %(ids)s
              {cond}
-             {srch}
              GROUP BY line.id
         '''.format(
             cond=not edition_mode and "AND NOT EXISTS (SELECT 1 from account_move_line aml WHERE aml.statement_line_id = line.id)" or "",
-            srch=search_str and search_sql or "",
         )
-        self.env.cr.execute(query, {'ids':tuple(bank_statement_line_ids), 'search_str':search_str})
+        self.env.cr.execute(query, {'ids': tuple(bank_statement_line_ids)})
 
-        bank_statement_lines = self.env['account.bank.statement.line'].browse([line.get('id') for line in self.env.cr.dictfetchall()])
+        domain = [['id', 'in', [line.get('id') for line in self.env.cr.dictfetchall()]]] + srch_domain
+        bank_statement_lines = self.env['account.bank.statement.line'].search(domain)
 
         results = self.get_bank_statement_line_data(bank_statement_lines.ids)
         bank_statement_lines_left = self.env['account.bank.statement.line'].browse([line['st_line']['id'] for line in results['lines']])
@@ -330,10 +323,9 @@ class AccountReconciliation(models.AbstractModel):
         aml_ids = self._context.get('active_ids') and self._context.get('active_model') == 'account.move.line' and tuple(self._context.get('active_ids'))
 
         query = ("""
-            SELECT {0} account_id, account_name, account_code, max_date {10}
+            SELECT {select} account_id, account_name, account_code, max_date
             FROM (
-                    SELECT {1}
-                        {11}
+                    SELECT {inner_select}
                         a.id AS account_id,
                         a.name AS account_name,
                         a.code AS account_code,
@@ -342,49 +334,47 @@ class AccountReconciliation(models.AbstractModel):
                         account_move_line l
                         RIGHT JOIN account_account a ON (a.id = l.account_id)
                         RIGHT JOIN account_account_type at ON (at.id = a.user_type_id)
-                        {2}
+                        {inner_from}
                     WHERE
                         a.reconcile IS TRUE
                         AND l.full_reconcile_id is NULL
-                        {3}
-                        {4}
-                        {5}
-                        AND l.company_id = {6}
+                        {where1}
+                        {where2}
+                        {where3}
+                        AND l.company_id = {company_id}
                         AND EXISTS (
                             SELECT NULL
                             FROM account_move_line l
                             WHERE l.account_id = a.id
-                            {7}
+                            {inner_where}
                             AND l.amount_residual > 0
                         )
                         AND EXISTS (
                             SELECT NULL
                             FROM account_move_line l
                             WHERE l.account_id = a.id
-                            {7}
+                            {inner_where}
                             AND l.amount_residual < 0
                         )
-                        {8}
-                    GROUP BY {9} a.id, a.name, a.code {12}
-                    {13}
+                        {where4}
+                    GROUP BY {group_by1} a.id, a.name, a.code {group_by2}
+                    {order_by}
                 ) as s
-            {14}
+            {outer_where}
         """.format(
-                is_partner and 'partner_id, partner_name,' or ' ',
-                is_partner and 'p.id AS partner_id, p.name AS partner_name,' or ' ',
-                is_partner and 'RIGHT JOIN res_partner p ON (l.partner_id = p.id)' or ' ',
-                is_partner and ' ' or "AND at.type <> 'payable' AND at.type <> 'receivable'",
-                account_type and "AND at.type = %(account_type)s" or '',
-                res_ids and 'AND ' + res_alias + '.id in %(res_ids)s' or '',
-                self.env.company.id,
-                is_partner and 'AND l.partner_id = p.id' or ' ',
-                aml_ids and 'AND l.id IN %(aml_ids)s' or '',
-                is_partner and 'l.partner_id, p.id,' or ' ',
-                res_type == 'partner' and ", to_char(last_time_entries_checked, 'YYYY-MM-DD') AS last_time_entries_checked" or ' ',
-                res_type == 'partner' and 'p.last_time_entries_checked AS last_time_entries_checked,' or ' ',
-                res_type == 'partner' and ', p.last_time_entries_checked' or ' ',
-                res_type == 'partner' and 'ORDER BY p.last_time_entries_checked' or 'ORDER BY a.code',
-                res_type == 'partner' and 'WHERE (last_time_entries_checked IS NULL OR max_date > last_time_entries_checked)' or ' ',
+                select=is_partner and "partner_id, partner_name, to_char(last_time_entries_checked, 'YYYY-MM-DD') AS last_time_entries_checked," or ' ',
+                inner_select=is_partner and 'p.id AS partner_id, p.name AS partner_name, p.last_time_entries_checked AS last_time_entries_checked,' or ' ',
+                inner_from=is_partner and 'RIGHT JOIN res_partner p ON (l.partner_id = p.id)' or ' ',
+                where1=is_partner and ' ' or "AND at.type <> 'payable' AND at.type <> 'receivable'",
+                where2=account_type and "AND at.type = %(account_type)s" or '',
+                where3=res_ids and 'AND ' + res_alias + '.id in %(res_ids)s' or '',
+                company_id=self.env.company.id,
+                inner_where=is_partner and 'AND l.partner_id = p.id' or ' ',
+                where4=aml_ids and 'AND l.id IN %(aml_ids)s' or '',
+                group_by1=is_partner and 'l.partner_id, p.id,' or ' ',
+                group_by2=is_partner and ', p.last_time_entries_checked' or ' ',
+                order_by=is_partner and 'ORDER BY p.last_time_entries_checked' or 'ORDER BY a.code',
+                outer_where=is_partner and 'WHERE (last_time_entries_checked IS NULL OR max_date > last_time_entries_checked)' or ' ',
             ))
         self.env.cr.execute(query, locals())
 
@@ -449,7 +439,7 @@ class AccountReconciliation(models.AbstractModel):
             '|', ('account_id.code', 'ilike', search_str),
             '|', ('move_id.name', 'ilike', search_str),
             '|', ('move_id.ref', 'ilike', search_str),
-            '|', ('date_maturity', 'like', search_str),
+            '|', ('date_maturity', 'like', search_str),  # TODO accept user format
             '&', ('name', '!=', '/'), ('name', 'ilike', search_str)
         ]
 
@@ -543,6 +533,7 @@ class AccountReconciliation(models.AbstractModel):
             ])
         # filter on account.move.line having the same company as the statement line
         domain = expression.AND([domain, [('company_id', '=', st_line.company_id.id)]])
+        domain = expression.AND([domain, [('move_id.state', '!=', 'draft')]])
 
         if st_line.company_id.account_bank_reconciliation_start:
             domain = expression.AND([domain, [('date', '>=', st_line.company_id.account_bank_reconciliation_start)]])
@@ -590,8 +581,8 @@ class AccountReconciliation(models.AbstractModel):
                 'account_code': line.account_id.code,
                 'account_name': line.account_id.name,
                 'account_type': line.account_id.internal_type,
-                'date_maturity': line.date_maturity,
-                'date': line.date,
+                'date_maturity': format_date(self.env, line.date_maturity),
+                'date': format_date(self.env, line.date),
                 'journal_id': [line.journal_id.id, line.journal_id.display_name],
                 'partner_id': line.partner_id.id,
                 'partner_name': line.partner_id.name,
@@ -686,7 +677,7 @@ class AccountReconciliation(models.AbstractModel):
             'ref': st_line.ref,
             'note': st_line.note or "",
             'name': st_line.name,
-            'date': st_line.date,
+            'date': format_date(self.env, st_line.date),
             'amount': amount,
             'amount_str': amount_str,  # Amount in the statement line currency
             'currency_id': st_line.currency_id.id or statement_currency.id,

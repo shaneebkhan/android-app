@@ -80,7 +80,7 @@ Tour.register('bank_statement_reconciliation', {
         {
             content: "create a write-off",
             extra_trigger: '.o_reconciliation_line:nth-child(2) .accounting_view tbody:not(:has(.cell_label))',
-            trigger: '.o_reconciliation_line:nth-child(2) .accounting_view tfoot .cell_label'
+            trigger: '.o_reconciliation_line:nth-child(2) .o_notebook .nav-link[href*="notebook_page_misc"]'
         },
         {
             content: "enter an account",
@@ -89,7 +89,7 @@ Tour.register('bank_statement_reconciliation', {
         },
         {
             content: "select the first account",
-            extra_trigger: '.ui-autocomplete:visible li:eq(1):contains(Create "100000")',
+            // extra_trigger: '.ui-autocomplete:visible li:eq(1):contains(Create "100000")',
             trigger: '.ui-autocomplete:visible li:contains(100000)',
         },
         {
@@ -100,7 +100,7 @@ Tour.register('bank_statement_reconciliation', {
         // Be done
         {
             content: "check the number off validate lines",
-            trigger: '.o_reconciliation .progress-text:contains(3 / 5)'
+            trigger: '.o_control_panel .progress-reconciliation:contains(3 / 5)'
         },
     ]
 );

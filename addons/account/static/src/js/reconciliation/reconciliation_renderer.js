@@ -19,11 +19,8 @@ var _t = core._t;
 var StatementRenderer = Widget.extend(FieldManagerMixin, {
     template: 'reconciliation.statement',
     events: {
-        'click div:first h1.statement_name': '_onClickStatementName',
-        "click *[rel='do_action']": "_onDoAction",
+        'click *[rel="do_action"]': '_onDoAction',
         'click button.js_load_more': '_onLoadMore',
-        'blur .statement_name_edition > input': '_onValidateName',
-        'keyup .statement_name_edition > input': '_onKeyupInput'
     },
     /**
      * @override
@@ -42,42 +39,11 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         var self = this;
         var defs = [this._super.apply(this, arguments)];
         this.time = Date.now();
-        this.$progress = this.$('.progress');
-        this.clickStatementName = this._initialState.bank_statement_id ? true : false;
+        this.$progress = $('');
 
-        if (this._initialState.bank_statement_id) {
-            var def = this.model.makeRecord("account.bank.statement", [{
-                type: 'char',
-                name: 'name',
-                attrs: {string: ""},
-                value: this._initialState.bank_statement_id.display_name
-            }]).then(function (recordID) {
-                self.handleNameRecord = recordID;
-                self.name = new basic_fields.FieldChar(self,
-                    'name', self.model.get(self.handleNameRecord),
-                    {mode: 'edit'});
-
-                self.name.appendTo(self.$('.statement_name_edition')).then(function () {
-                    self.name.$el.addClass('o_required_modifier');
-                });
-                self.$('.statement_name').text(self._initialState.bank_statement_id.display_name);
-            });
-            defs.push(def);
-        }
-
-        this.$('h1.statement_name').text(this._initialState.title || _t('No Title'));
-        if (this.model.context && this.model.context.args && this.model.context.args.search) {
-            this.$('.reconciliation_search_input').val(self.model.context.args.search);
-        }
         return Promise.all(defs);
     },
-    /**
-     * @override
-     */
-    destroy: function () {
-        this._super();
-        $('body').off('keyup', this.enterHandler);
-    },
+
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
@@ -100,9 +66,9 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
             'timePerTransaction': Math.round(dt/1000/state.valuemax),
             'context': state.context,
         }));
+        $done.find('*').addClass('o_reward_subcontent');
         $done.find('.button_close_statement').click(this._onCloseBankStatement.bind(this));
         $done.find('.button_back_to_statement').click(this._onGoToBankStatement.bind(this));
-        this.$el.children().hide();
         // display rainbowman after full reconciliation
         if (session.show_effect) {
             this.trigger_up('show_effect', {
@@ -140,9 +106,6 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         if (state.notifications) {
             this._renderNotifications(state.notifications);
         }
-
-        this.$('.statement_name, .statement_name_edition').toggle();
-        this.$('h1.statement_name').text(state.title || _t('No Title'));
     },
 
     //--------------------------------------------------------------------------
@@ -166,13 +129,23 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
     //--------------------------------------------------------------------------
 
     /**
+     * on click on the "import to suspense account" this method open the wizard.
+     * When the wizard close, reload the main view to shows the rainbowman.
      * @private
      */
-    _onClickStatementName: function () {
-        if (this._initialState.bank_statement_id) {
-            this.$('.statement_name, .statement_name_edition').toggle();
-            this.$('.statement_name_edition input').focus();
-        }
+    _onClickImportStatement: function(){
+        var self = this;
+        this.do_action("account.action_account_bank_statement_to_suspense", {
+            additional_context: {
+                res_ids: _.map(self.model.statement.lines, function(o){ return o.st_line.id }),
+                edition_mode: self.model.context.edition_mode || false,
+            },
+            on_close: function() {
+                self.model.statement.value_min = self.model.statement.value_max;
+                self.model.context.no_reload_lines = true;
+                self.trigger_up('reload');
+            }
+        });
     },
     /**
      * @private
@@ -212,6 +185,7 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         if (journalId) {
             journalId = parseInt(journalId);
         }
+        $('.o_reward').remove();
         this.do_action({
             name: 'Bank Statements',
             res_model: 'account.bank.statement',
@@ -230,24 +204,6 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
     _onLoadMore: function (e) {
         this.trigger_up('load_more');
     },
-    /**
-     * @private
-     */
-    _onValidateName: function () {
-        var name = this.$('.statement_name_edition input').val().trim();
-        this.trigger_up('change_name', {'data': name});
-    },
-    /**
-     * Save title on enter key pressed
-     *
-     * @private
-     * @param {KeyboardEvent} event
-     */
-    _onKeyupInput: function (event) {
-        if (event.which === $.ui.keyCode.ENTER) {
-            this.$('.statement_name_edition input').blur();
-        }
-    },
 });
 
 
@@ -259,8 +215,8 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
     template: "reconciliation.line",
     events: {
         'click .accounting_view caption .o_buttons button': '_onValidate',
-        'click .accounting_view thead td': '_onTogglePanel',
-        'click .accounting_view tfoot td:not(.cell_left,.cell_right)': '_onShowPanel',
+        'click .accounting_view': '_onTogglePanel',
+        'click .o_notebook li a': '_onChangeTab',
         'click .cell': '_onEditAmount',
         'change input.filter': '_onFilterChange',
         'click .match .load-more a': '_onLoadMore',
@@ -308,7 +264,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
                     self.model.get(recordID), {
                         mode: 'edit',
                         attrs: {
-                            placeholder: self._initialState.st_line.communication_partner_name || '',
+                            placeholder: self._initialState.st_line.communication_partner_name || _t('Select Partner'),
                         }
                     }
                 )
@@ -323,7 +279,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
             'placement': 'left',
             'container': this.$el,
             'html': true,
-            // disable bootstrap sanitizer because we use a table that has been 
+            // disable bootstrap sanitizer because we use a table that has been
             // rendered using qweb.render so it is safe and also because sanitizer escape table by default.
             'sanitize': false,
             'trigger': 'hover',
@@ -359,19 +315,19 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         });
 
         // mode
-        this.$('.create, .match').each(function () {
-            var $panel = $(this);
-            $panel.css('-webkit-transition', 'none');
-            $panel.css('-moz-transition', 'none');
-            $panel.css('-o-transition', 'none');
-            $panel.css('transition', 'none');
-            $panel.css('max-height', $panel.height());
-            $panel.css('-webkit-transition', '');
-            $panel.css('-moz-transition', '');
-            $panel.css('-o-transition', '');
-            $panel.css('transition', '');
-        });
         this.$el.data('mode', state.mode).attr('data-mode', state.mode);
+        this.$('.o_notebook li a').attr('aria-selected', false);
+        this.$('.o_notebook li a').removeClass('active');
+        this.$('.o_notebook .tab-content .tab-pane').removeClass('active');
+        if (state.mode === 'match') {
+            this.$('.o_notebook li a[href*="notebook_page_matching"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_matching"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_matching"]').addClass('active');
+        } else if (state.mode === 'create') {
+            this.$('.o_notebook li a[href*="notebook_page_misc"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_misc"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_misc"]').addClass('active');
+        }
         this.$('.create, .match').each(function () {
             $(this).removeAttr('style');
         });
@@ -403,6 +359,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         var recs_count = stateMvLines.length > 0 ? stateMvLines[0].recs_count : 0;
         var remaining = recs_count - stateMvLines.length;
         var $mv_lines = this.$('.match table tbody').empty();
+        this.$('.o_notebook li a[href*="notebook_page_matching"]').toggleClass('d-none', recs_count === 0);
 
         _.each(stateMvLines, function (line) {
             var $line = $(qweb.render("reconciliation.line.mv_line", {'line': line, 'state': state}));
@@ -415,7 +372,6 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         });
         this.$('.match div.load-more').toggle(remaining > 0);
         this.$('.match div.load-more span').text(remaining);
-        this.$('.match').css('max-height', !stateMvLines.length && !state.filter.length ? '0px' : '');
 
         // balance
         this.$('.popover').remove();
@@ -476,7 +432,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
                                 }
                             }
                         });
-                        return true; 
+                        return true;
                     });
                 });
         }
@@ -484,7 +440,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
     },
 
     updatePartialAmount: function(line_id, amount) {
-        var $line = $('.mv_line[data-line-id='+line_id+']');
+        var $line = this.$('.mv_line[data-line-id='+line_id+']');
         $line.find('.edit_amount').addClass('d-none');
         $line.find('.edit_amount_input').removeClass('d-none');
         $line.find('.edit_amount_input').focus();
@@ -590,7 +546,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
             var record = self.model.get(self.handleCreateRecord);
 
             self.fields.account_id = new relational_fields.FieldMany2One(self,
-                'account_id', record, {mode: 'edit'});
+                'account_id', record, {mode: 'edit', attrs: {can_create:false}});
 
             self.fields.journal_id = new relational_fields.FieldMany2One(self,
                 'journal_id', record, {mode: 'edit'});
@@ -717,15 +673,18 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
      * @private
      */
     _onTogglePanel: function () {
-        var mode = this.$el.data('mode') === 'inactive' ? 'match' : 'inactive';
-        this.trigger_up('change_mode', {'data': mode});
+        if (this.$el[0].getAttribute('data-mode') == 'inactive')
+            this.trigger_up('change_mode', {'data': 'default'});
     },
     /**
      * @private
      */
-    _onShowPanel: function () {
-        var mode = (this.$el.data('mode') === 'inactive' || this.$el.data('mode') === 'match') ? 'create' : 'match';
-        this.trigger_up('change_mode', {'data': mode});
+    _onChangeTab: function(event) {
+        if (event.target.getAttribute('href').includes('misc')) {
+            this.trigger_up('change_mode', {'data': 'create'});
+        } else if (event.target.getAttribute('href').includes('matching')) {
+            this.trigger_up('change_mode', {'data': 'match'});
+        }
     },
     /**
      * @private
@@ -845,13 +804,6 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
 var ManualRenderer = StatementRenderer.extend({
     template: "reconciliation.manual.statement",
 
-    /**
-     * avoid statement name edition
-     *
-     * @override
-     * @private
-     */
-    _onClickStatementName: function () {}
 });
 
 
@@ -910,10 +862,10 @@ var ManualLineRenderer = LineRenderer.extend({
 
             return Promise.all(defs).then(function () {
                 if (!self.fields.title_account_id) {
-                    return self.fields.partner_id.prependTo(self.$('.accounting_view thead td:eq(1) span:first'));
+                    return self.fields.partner_id.prependTo(self.$('.accounting_view thead td:eq(0) span:first'));
                 } else {
                     self.fields.partner_id.destroy();
-                    return self.fields.title_account_id.appendTo(self.$('.accounting_view thead td:eq(1) span:first'));
+                    return self.fields.title_account_id.appendTo(self.$('.accounting_view thead td:eq(0) span:first'));
                 }
             });
         });

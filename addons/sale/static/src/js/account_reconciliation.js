@@ -3,6 +3,7 @@ odoo.define('sale.account_reconciliation', function (require) {
 
 var ReconciliationRenderers = require('account.ReconciliationRenderer');
 var ReconciliationAction = require('account.ReconciliationClientAction');
+var ReconciliationModel = require('account.ReconciliationModel');
 var LineRenderer = ReconciliationRenderers.LineRenderer;
 var StatementAction = ReconciliationAction.StatementAction;
 var core = require('web.core');
@@ -11,14 +12,38 @@ var _t = core._t;
 LineRenderer.include({
     events: _.extend(
         {},
-        LineRenderer.prototype.events, 
-        {'click .accounting_view caption .js_open_so': '_onOpenSaleOrder'}
+        LineRenderer.prototype.events,
+        {'click .o_notebook .js_open_so': '_onOpenSaleOrder'}
     ),
 
     _onOpenSaleOrder: function (event) {
         event.preventDefault();
         this.trigger_up('open_sale_orders');
     },
+
+    update: function (state) {
+        this._super(state);
+
+        if (state.mode === 'saleorder') {
+            this.$('.o_notebook li a').attr('aria-selected', false);
+            this.$('.o_notebook li a').removeClass('active');
+            this.$('.o_notebook .tab-content .tab-pane').removeClass('active');
+            this.$('.o_notebook li a[href*="notebook_page_saleorder"]').attr('aria-selected', true);
+            this.$('.o_notebook li a[href*="notebook_page_saleorder"]').addClass('active');
+            this.$('.o_notebook .tab-content .tab-pane[id*="notebook_page_saleorder"]').addClass('active');
+        }
+    },
+});
+
+ReconciliationModel.StatementModel.include({
+    _getDefaultMode: function(handle) {
+        var line = this.getLine(handle);
+        if (line.sale_order_ids && line.sale_order_ids.length) {
+            return 'saleorder'
+        } else {
+            return this._super(handle);
+        }
+    }
 });
 
 StatementAction.include({
@@ -57,7 +82,7 @@ StatementAction.include({
                 views: [[false, 'form']],
                 target: 'current',
                 res_id: line.sale_order_ids[0],
-            }, 
+            },
             {
                 on_reverse_breadcrumb: function() {self.trigger_up('reload');},
             });

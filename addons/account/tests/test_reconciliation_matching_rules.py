@@ -105,6 +105,7 @@ class TestReconciliationMatchingRules(AccountingTestCase):
         self._check_statement_matching(self.rule_1, {
             self.bank_line_1.id: {'aml_ids': [self.invoice_line_1.id], 'model': self.rule_1},
             self.bank_line_2.id: {'aml_ids': [
+                self.invoice_line_1.id,
                 self.invoice_line_2.id,
                 self.invoice_line_3.id,
             ], 'model': self.rule_1},
@@ -125,6 +126,7 @@ class TestReconciliationMatchingRules(AccountingTestCase):
         self._check_statement_matching(self.rule_1, {
             self.bank_line_1.id: {'aml_ids': [self.invoice_line_1.id], 'model': self.rule_1},
             self.bank_line_2.id: {'aml_ids': [
+                self.invoice_line_1.id,
                 self.invoice_line_2.id,
                 self.invoice_line_3.id,
             ], 'model': self.rule_1},
@@ -205,6 +207,7 @@ class TestReconciliationMatchingRules(AccountingTestCase):
         self._check_statement_matching(self.rule_1, {
             self.bank_line_1.id: {'aml_ids': [self.invoice_line_1.id], 'model': self.rule_1, 'status': 'write_off'},
             self.bank_line_2.id: {'aml_ids': [
+                self.invoice_line_1.id,
                 self.invoice_line_2.id,
                 self.invoice_line_3.id,
             ], 'model': self.rule_1},
@@ -219,6 +222,7 @@ class TestReconciliationMatchingRules(AccountingTestCase):
         self._check_statement_matching(self.rule_1, {
             self.bank_line_1.id: {'aml_ids': [self.invoice_line_1.id], 'model': self.rule_1, 'status': 'write_off'},
             self.bank_line_2.id: {'aml_ids': [
+                self.invoice_line_1.id,
                 self.invoice_line_2.id,
                 self.invoice_line_3.id,
             ], 'model': self.rule_1},
@@ -248,6 +252,7 @@ class TestReconciliationMatchingRules(AccountingTestCase):
         self._check_statement_matching(self.rule_1 + self.rule_2, {
             self.bank_line_1.id: {'aml_ids': [self.invoice_line_1.id], 'model': self.rule_1},
             self.bank_line_2.id: {'aml_ids': [
+                self.invoice_line_1.id,
                 self.invoice_line_2.id,
                 self.invoice_line_3.id,
             ], 'model': self.rule_1},

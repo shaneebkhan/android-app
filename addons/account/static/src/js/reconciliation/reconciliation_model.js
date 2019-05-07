@@ -19,7 +19,7 @@ var _t = core._t;
  *  {
  *      valuenow: integer
  *      valuenow: valuemax
- *      [bank_statement_id]: {
+ *      [bank_statement_line_id]: {
  *          id: integer
  *          display_name: string
  *      }
@@ -110,6 +110,7 @@ var StatementModel = BasicModel.extend({
         this.valuenow = 0;
         this.valuemax = 0;
         this.alreadyDisplayed = [];
+        this.domain = [];
         this.defaultDisplayQty = options && options.defaultDisplayQty || 10;
         this.limitMoveLines = options && options.limitMoveLines || 15;
     },
@@ -132,7 +133,7 @@ var StatementModel = BasicModel.extend({
         var line = this.getLine(handle);
         var prop = _.clone(_.find(line.mv_lines, {'id': mv_line_id}));
         this._addProposition(line, prop);
-        line.limit_override = (line.offset + 1) * this.limitMoveLines;
+        line.limit_override = (line.offset + 1) + this.limitMoveLines;
 
         // Onchange the partner if not already set on the statement line.
         if(!line.st_line.partner_id && line.reconciliation_proposition
@@ -174,35 +175,21 @@ var StatementModel = BasicModel.extend({
      * @returns {Promise}
      */
     changeMode: function (handle, mode) {
+        var self = this;
         var line = this.getLine(handle);
-        if (line.mode  === 'create') {
-            this._blurProposition(handle);
-            line.createForm = null;
-        }
-        if (mode  === 'create' && this.avoidCreate) {
-            mode = 'match';
+        if (mode === 'default') {
+            return this._performMoveLine(handle).then(function() {
+                return self.changeMode(handle, self._getDefaultMode(handle));
+            });
         }
         line.mode = mode;
-        if (mode === 'match') {
+        if (line.mode === 'match' || !(line.mv_lines && line.mv_lines.length)) {
             return this._performMoveLine(handle);
         }
         if (line.mode === 'create') {
             return this.createProposition(handle);
         }
         return Promise.resolve();
-    },
-    /**
-     * call 'write' method on the 'account.bank.statement'
-     *
-     * @param {string} name
-     * @returns {Promise}
-     */
-    changeName: function (name) {
-        return this._rpc({
-                model: 'account.bank.statement',
-                method: 'write',
-                args: [this.bank_statement_id.id, {name: name}],
-            });
     },
     /**
      * change the offset for the matched lines, and fetch the new matched lines
@@ -243,13 +230,8 @@ var StatementModel = BasicModel.extend({
                     return self._computeLine(line);
                 })
                 .then(function () {
-                    if (!preserveMode)
-                        return self.changeMode(handle, 'match');
-                    return false;
+                    return self.changeMode(handle, preserveMode ? line.mode : 'default', true);
                 })
-                .then(function () {
-                    return line.mode === 'create' ? self.createProposition(handle) : false;
-                });
 
     },
     /**
@@ -259,12 +241,12 @@ var StatementModel = BasicModel.extend({
     closeStatement: function () {
         var self = this;
         return this._rpc({
-                model: 'account.bank.statement',
+                model: 'account.bank.statement.line',
                 method: 'button_confirm_bank',
-                args: [self.bank_statement_id.id],
+                args: [self.bank_statement_line_id.id],
             })
             .then(function () {
-                return self.bank_statement_id.id;
+                return self.bank_statement_line_id.id;
             });
     },
     /**
@@ -344,12 +326,22 @@ var StatementModel = BasicModel.extend({
      */
     load: function (context) {
         var self = this;
-        this.statement_line_ids = context.statement_line_ids;
-        if (!this.statement_line_ids) {
-            return Promise.resolve();
-        }
         this.context = context;
-        return self.reload();
+        this.statement_line_ids = context.statement_line_ids;
+        if (this.statement_line_ids === undefined) {
+            // This could be undefined if the user pressed F5, take everything as fallback instead of rainbowman
+            return self._rpc({
+                model: 'account.bank.statement.line',
+                method: 'search_read',
+                fields: ['id'],
+                domain: [['journal_id', '=', context.active_id]],
+            }).then(function (result) {
+                self.statement_line_ids = result.map(r => r.id);
+                return self.reload()
+            })
+        } else {
+            return self.reload();
+        }
 
     },
     /**
@@ -392,17 +384,15 @@ var StatementModel = BasicModel.extend({
         self.alreadyDisplayed = [];
         self.lines = {};
         self.pagerIndex = 0;
-        // FIXME: model should not be tied to the DOM !
-        self.search_str = $('.reconciliation_search_input').val();
         var def_statement = this._rpc({
                 model: 'account.reconciliation.widget',
                 method: 'get_bank_statement_data',
-                kwargs: {"bank_statement_line_ids":self.statement_line_ids, "search_str":self.search_str},
+                kwargs: {"bank_statement_line_ids":self.statement_line_ids, "srch_domain":self.domain},
                 context: self.context,
             })
             .then(function (statement) {
                 self.statement = statement;
-                self.bank_statement_id = self.statement_line_ids.length === 1 ? {id: self.statement_line_ids[0], display_name: statement.statement_name} : false;
+                self.bank_statement_line_id = self.statement_line_ids.length === 1 ? {id: self.statement_line_ids[0], display_name: statement.statement_name} : false;
                 self.valuenow = self.valuenow || statement.value_min;
                 self.valuemax = self.valuemax || statement.value_max;
                 self.context.journal_id = statement.journal_id;
@@ -526,7 +516,7 @@ var StatementModel = BasicModel.extend({
         var line = this.getLine(handle);
         var defs = [];
         // new limit = previous limit + 1, the one put back
-        line.limit_override = (line.offset + 1) * this.limitMoveLines;
+        line.limit_override = (line.offset + 1) + this.limitMoveLines;
         var prop = _.find(line.reconciliation_proposition, {'id' : id});
         if (prop) {
             line.reconciliation_proposition = _.filter(line.reconciliation_proposition, function (p) {
@@ -537,18 +527,11 @@ var StatementModel = BasicModel.extend({
             if(line.reconciliation_proposition.length == 0 && line.st_line.has_no_partner)
                 defs.push(self.changePartner(line.handle));
         }
-        line.mode = (id || line.mode !== "create") && isNaN(id) && !this.avoidCreate ? 'create' : 'match';
+        line.mode = (id || line.mode !== "create") && isNaN(id) ? 'create' : 'match';
         defs.push(this._computeLine(line));
-        if (line.mode === 'create') {
-            return Promise.all(defs).then(function () {
-                return self.createProposition(handle);
-            });
-        } else if (line.mode === 'match') {
-            return Promise.all(defs).then(function () {
-                return self._performMoveLine(handle);
-            });
-        }
-        return Promise.all(defs);
+        return Promise.all(defs).then(function() {
+            return self.changeMode(handle, line.mode, true);
+        })
     },
     getPartialReconcileAmount: function(handle, data) {
         var line = this.getLine(handle);
@@ -647,7 +630,7 @@ var StatementModel = BasicModel.extend({
                         });
                         break;
                 }
-            } 
+            }
             else if (fieldName === 'tax_ids') {
                 switch(value.operation) {
                     case "ADD_M2M":
@@ -774,6 +757,17 @@ var StatementModel = BasicModel.extend({
                 line.reconciled = true;
                 self.valuenow++;
             }));
+
+            _.each(self.lines, function(other_line) {
+                if (other_line != line) {
+                    var filtered_prop = other_line.reconciliation_proposition.filter(p => !line.reconciliation_proposition.map(l => l.id).includes(p.id));
+                    if (filtered_prop.length != other_line.reconciliation_proposition.length) {
+                        other_line.need_update = true;
+                        other_line.reconciliation_proposition = filtered_prop;
+                    }
+                    self._computeLine(line);
+                }
+            })
         });
 
         return Promise.all(handlesPromises).then(function() {
@@ -1114,7 +1108,7 @@ var StatementModel = BasicModel.extend({
         this._formatLineProposition(line, mv_lines);
 
         if (line.mode !== 'create' && !line.mv_lines.length && !line.filter.length) {
-            line.mode = this.avoidCreate || !line.balance.amount ? 'inactive' : 'create';
+            line.mode = !line.balance.amount ? 'inactive' : 'create';
             if (line.mode === 'create') {
                 return this._computeLine(line).then(function () {
                     return self.createProposition(handle);
@@ -1123,6 +1117,13 @@ var StatementModel = BasicModel.extend({
         } else {
             return this._computeLine(line);
         }
+    },
+    _getDefaultMode: function(handle) {
+        var line = this.getLine(handle);
+        if (line.balance.amount === 0 && (!line.st_line.mv_lines || line.st_line.mv_lines.length === 0)) {
+            return 'inactive';
+        }
+        return line.mv_lines.length > 0 ? 'match' : 'create';
     },
     /**
      * Apply default values for the proposition, format datas and format the
@@ -1226,11 +1227,9 @@ var StatementModel = BasicModel.extend({
      */
     _performMoveLine: function (handle) {
         var line = this.getLine(handle);
-        var excluded_ids = _.compact(_.flatten(_.map(this.lines, function (line) {
-            return _.map(line.reconciliation_proposition, function (prop) {
-                return _.isNumber(prop.id) ? prop.id : null;
-            });
-        })));
+        var excluded_ids = _.map(line.reconciliation_proposition, function (prop) {
+            return _.isNumber(prop.id) ? prop.id : null;
+        }).filter(id => id != null);
         var filter = line.filter || "";
         var limit = this.limitMoveLines;
         var offset = line.offset;
@@ -1295,6 +1294,7 @@ var StatementModel = BasicModel.extend({
      * @returns {Deferred}
      */
     _validatePostProcess: function (data) {
+        var self = this;
         return Promise.resolve();
     },
 });

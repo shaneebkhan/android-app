@@ -102,7 +102,7 @@ class AccountReconcileModel(models.Model):
     second_analytic_account_id = fields.Many2one('account.analytic.account', string='Second Analytic Account', ondelete='set null')
     second_analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Second Analytic Tags',
                                                relation='account_reconcile_model_second_analytic_tag_rel')
-    
+
     number_entries = fields.Integer(string='Number of entries related to this model', compute='_compute_number_entries')
 
     @api.multi
@@ -113,7 +113,7 @@ class AccountReconcileModel(models.Model):
             'help': """<p class="o_view_nocontent_empty_folder">{}</p>""".format(_('No move from this reconciliation model')),
         })
         return action
-        
+
     @api.multi
     def _compute_number_entries(self):
         data = self.env['account.move.line'].read_group([('reconcile_model_id', 'in', self.ids)], ['reconcile_model_ids'], 'reconcile_model_id')
@@ -456,7 +456,7 @@ class AccountReconcileModel(models.Model):
 
                 -- if there is a partner, propose all aml of the partner, otherwise propose only the ones
                 -- matching the statement line communication
-                AND 
+                AND
                 (
                     (
                         line_partner.partner_id != 0
@@ -635,9 +635,6 @@ class AccountReconcileModel(models.Model):
                 grouped_candidates.setdefault(res['id'], {})
                 grouped_candidates[res['id']].setdefault(res['model_id'], True)
 
-        # Keep track of already processed amls.
-        amls_ids_to_exclude = set()
-
         # Keep track of already reconciled amls.
         reconciled_amls_ids = set()
 
@@ -652,8 +649,6 @@ class AccountReconcileModel(models.Model):
                 # No result found.
                 if not grouped_candidates.get(line.id) or not grouped_candidates[line.id].get(model.id):
                     continue
-
-                excluded_lines_found = False
 
                 if model.rule_type == 'invoice_matching':
                     candidates = grouped_candidates[line.id][model.id]
@@ -689,19 +684,7 @@ class AccountReconcileModel(models.Model):
 
                         # Add candidates to the result.
                         for candidate in available_candidates:
-
-                            # Special case: the propositions match the rule but some of them are already consumed by
-                            # another one. Then, suggest the remaining propositions to the user but don't make any
-                            # automatic reconciliation.
-                            if candidate['aml_id'] in amls_ids_to_exclude:
-                                excluded_lines_found = True
-                                continue
-
                             results[line.id]['aml_ids'].append(candidate['aml_id'])
-                            amls_ids_to_exclude.add(candidate['aml_id'])
-
-                        if excluded_lines_found:
-                            break
 
                         # Create write-off lines.
                         move_lines = self.env['account.move.line'].browse(results[line.id]['aml_ids'])
