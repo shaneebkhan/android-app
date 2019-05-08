@@ -373,6 +373,7 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
      *        the new record to be in edit mode too, but the view manager calls
      *        this function as the URL changes...) @todo get rid of this when
      *        the webclient/action_manager's hashchange mechanism is improved.
+     * @param {boolean} [options.noAbandon=false]
      * @returns {Promise}
      */
     _discardChanges: function (recordID, options) {
@@ -383,9 +384,12 @@ var BasicController = AbstractController.extend(FieldManagerMixin, {
                 if (options && options.readonlyIfRealDiscard && !needDiscard) {
                     return;
                 }
+                if (options && options.noAbandon) {
+                    return;
+                }
                 self.model.discardChanges(recordID);
                 if (self.model.canBeAbandoned(recordID)) {
-                    self._abandonRecord(recordID);
+                    self._abandonRecord(recordID, options);
                     return;
                 }
                 return self._confirmSave(recordID);
