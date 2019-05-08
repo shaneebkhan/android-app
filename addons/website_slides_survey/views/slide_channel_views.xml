@@ -5,8 +5,23 @@
         <field name="model">slide.channel</field>
         <field name="inherit_id" ref="website_slides.view_slide_channel_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='total_slides']" position="before">
-                <field name="nbr_certification"/>
+            <xpath expr="//button[@name='action_redirect_to_members']" position="before">
+                <button name="action_certified_partners"
+                    type="object"
+                    class="oe_stat_button"
+                    attrs="{'invisible': [('nbr_certification', '=', 0)]}"
+                    icon="fa-trophy">
+                    <field string="Certified" name="certified_partners_count" widget="statinfo"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='nbr_webpage']" position="after">
+                <field string="Certifications" name="nbr_certification"/>
+            </xpath>
+            <xpath expr="//field[@name='slide_type']" position="after">
+                <field name="survey_id"/>
+            </xpath>
+            <xpath expr="//create[@name='add_slide_lesson']" position="after">
+                <create name="add_slide_certificate" string="Add certification" context="{'default_channel_id': active_id, 'default_slide_type': 'certification'}"/>
             </xpath>
         </field>
     </record>

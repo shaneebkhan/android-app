@@ -70,6 +70,7 @@
                             <page string="Document">
                                 <group>
                                     <field name="slide_type" readonly="1"/>
+                                    <field name="is_category" invisible="1"/>
                                     <field name="url"
                                         attrs="{'required': [('slide_type', 'in', ('video'))], 'readonly': [('slide_type', 'in', ('document', 'video'))], 'invisible': [('slide_type', 'not in', ('document', 'presentation', 'video'))]}" />
                                     <field name="document_id" readonly="1" attrs="{'invisible': [('document_id', '=', False)]}"/>

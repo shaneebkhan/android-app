@@ -5,6 +5,15 @@
         <field name="model">slide.channel</field>
         <field name="inherit_id" ref="website_slides.view_slide_channel_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_redirect_to_content']" position="before">
+                <button name="action_redirect_to_forum"
+                    type="object"
+                    class="oe_stat_button"
+                    attrs="{'invisible': [('forum_id', '=', False)]}"
+                    icon="fa-comment">
+                    <field string="Forum Posts" name="active_posts_count" widget="statinfo"/>
+                </button>
+            </xpath>
             <xpath expr="//field[@name='allow_comment']" position="after">
                 <field name="forum_id"/>
     		</xpath>

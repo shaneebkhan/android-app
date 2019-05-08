@@ -109,7 +109,7 @@ class Slide(models.Model):
     tag_ids = fields.Many2many('slide.tag', 'rel_slide_tag', 'slide_id', 'tag_id', string='Tags')
     access_token = fields.Char("Security Token", copy=False, default=_default_access_token)
     is_preview = fields.Boolean('Is Preview', default=False, help="The course is accessible by anyone : the users don't need to join the channel to access the content of the course.")
-    completion_time = fields.Float('# Hours', default=1, digits=(10, 4))
+    completion_time = fields.Float('Duration', default=1, digits=(10, 2))
 
     # UX Shenanigans done against my will =(
     is_category = fields.Boolean('Is a category ?', default=False)
@@ -160,7 +160,7 @@ class Slide(models.Model):
     embedcount_ids = fields.One2many('slide.embed', 'slide_id', string="Embed Count")
     slide_views = fields.Integer('# of Website Views', store=True, compute="_compute_slide_views")
     public_views = fields.Integer('# of Public Views')
-    total_views = fields.Integer("Total # Views", default="0", compute='_compute_total', store=True)
+    total_views = fields.Integer("Views", default="0", compute='_compute_total', store=True)
     # Statistics in case the slide is a category
     nbr_presentation = fields.Integer("Number of Presentations", compute='_count_presentations', store=True)
     nbr_document = fields.Integer("Number of Documents", compute='_count_presentations', store=True)
@@ -173,6 +173,11 @@ class Slide(models.Model):
     _sql_constraints = [
         ('exclusion_html_content_and_url', "CHECK(html_content IS NULL OR url IS NULL)", "A slide is either filled with a document url or HTML content. Not both.")
     ]
+
+    @api.onchange('is_category')
+    def _on_change_is_category(self):
+        if self.is_category:
+            self.slide_type = "category"
 
     @api.depends('slide_views', 'public_views')
     def _compute_total(self):
