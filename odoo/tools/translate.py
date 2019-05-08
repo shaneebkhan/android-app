@@ -468,7 +468,7 @@ class GettextAlias(object):
 class _lt:
     """ Lazy code translation
 
-    Similar tp GettextAlias but the translation lookup will be done only at
+    Similar to GettextAlias but the translation lookup will be done only at
     __str__ execution.
 
     A code using translated global variables such as:
@@ -479,7 +479,7 @@ class _lt:
         context = {'lang': self.partner_id.lang}
         self.user_label = LABEL
 
-    will now work unlink the classic GettextAlias implementation
+    works as expected (unlike the classic GettextAlias implementation).
     """
 
     __slots__ = ['_source']
@@ -487,13 +487,15 @@ class _lt:
         self._source = source
 
     def __str__(self):
+        # Call _._get_translation() like _() does, so that we have the same number
+        # of stack frames calling _get_translation()
         return _._get_translation(self._source)
 
     def __eq__(self, other):
         """ Prevent using equal operators
 
-        Comparing _lt(X) == Y will not have the expected effect
-        str(_lt(X)) == Y may be used instead
+        Prevent direct comparisons with ``self``.
+        One should compare the translation of ``self._source`` as ``str(self) == X``.
         """
         raise NotImplementedError()
 

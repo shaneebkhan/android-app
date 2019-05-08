@@ -10,6 +10,8 @@ from odoo.tools.misc import file_open, mute_logger
 from odoo.tools.translate import _, _lt
 
 
+TRANSLATED_TERM = _lt("Klingon")
+
 class TestTermCount(common.TransactionCase):
 
     def test_count_term(self):
@@ -175,11 +177,11 @@ class TestTermCount(common.TransactionCase):
         self.assertEqual(_("Klingon"), "tlhIngan", "The direct code translation was not applied")
         context = None
 
-        term = _lt("Klingon")
-        self.assertEqual(str(term), "Klingon", "The translation should not be applied yet")
+        self.assertRaises(TRANSLATED_TERM == "Klingon", "Comparison of lazy strings must be explicitely casted to string")
+        self.assertEqual(str(TRANSLATED_TERM), "Klingon", "The translation should not be applied yet")
 
         context = {'lang': "tlh"}
-        self.assertEqual(str(term), "tlhIngan", "The lazy code translation was not applied")
+        self.assertEqual(str(TRANSLATED_TERM), "tlhIngan", "The lazy code translation was not applied")
 
     def test_import_from_csv_file(self):
         """Test the import from a single CSV file works"""
