@@ -24,7 +24,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_admin"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_int_tour" model="hr.leave.allocation">
@@ -51,12 +51,6 @@
     </record>
 
     <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl')])
-        ]"/>
-    </function>
     <function model="hr.leave.allocation" name="action_approve">
         <value model="hr.leave.allocation" search="[
             ('state', '=', 'confirm'),
@@ -103,7 +97,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_al"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_allocation_pl_al" model="hr.leave.allocation">
@@ -121,12 +115,6 @@
     </record>
 
     <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl_al')])
-        ]"/>
-    </function>
     <function model="hr.leave.allocation" name="action_approve">
         <value model="hr.leave.allocation" search="[
             ('state', '=', 'confirm'),
@@ -186,7 +174,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_mit"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_vc_mit" model="hr.leave.allocation">
@@ -195,14 +183,6 @@
         <field name="number_of_days">7</field>
         <field name="employee_id" ref="hr.employee_mit"/>
     </record>
-
-    <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl_mit')])
-        ]"/>
-    </function>
 
     <!-- leave request -->
     <record id="hr_holidays_cl_mit" model="hr.leave">
@@ -242,7 +222,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_qdp"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_vc_qdp" model="hr.leave.allocation">
@@ -253,12 +233,6 @@
     </record>
 
     <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl_qdp')])
-        ]"/>
-    </function>
     <function model="hr.leave.allocation" name="action_approve">
         <value model="hr.leave.allocation" search="[
             ('state', '=', 'confirm'),
@@ -312,7 +286,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_fpi"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_int_tour_fpi" model="hr.leave.allocation">
@@ -331,12 +305,6 @@
     </record>
 
     <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl_fpi')])
-        ]"/>
-    </function>
     <function model="hr.leave.allocation" name="action_approve">
         <value model="hr.leave.allocation" search="[
             ('state', '=', 'confirm'),
@@ -371,7 +339,7 @@
         <field name="holiday_status_id" ref="holiday_status_cl"/>
         <field name="number_of_days">20</field>
         <field name="employee_id" ref="hr.employee_niv"/>
-        <field name="state">confirm</field>
+        <field name="state">validate</field>
     </record>
 
     <record id="hr_holidays_vc_vad" model="hr.leave.allocation">
@@ -382,12 +350,6 @@
     </record>
 
     <!-- approve leave allocations -->
-    <function model="hr.leave.allocation" name="action_approve">
-        <value model="hr.leave.allocation" search="[
-            ('state', '=', 'confirm'),
-            ('id', 'in', [ref('hr_holidays.hr_holidays_allocation_cl_vad')])
-        ]"/>
-    </function>
     <function model="hr.leave.allocation" name="action_approve">
         <value model="hr.leave.allocation" search="[
             ('state', '=', 'confirm'),
