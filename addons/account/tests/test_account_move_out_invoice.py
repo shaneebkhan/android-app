@@ -671,7 +671,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             {
                 'name': self.parent_tax_sale_1.name,
                 'product_id': False,
-                'account_id': self.parent_tax_sale_1.refund_account_id.id,
+                'account_id': self.parent_tax_sale_1.account_id.id,
                 'partner_id': self.partner_a.id,
                 'product_uom_id': False,
                 'quantity': 1.0,

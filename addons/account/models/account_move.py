@@ -258,7 +258,16 @@ class AccountMove(models.Model):
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
         # Force a call to 'onchange' when changing the partner.
-        pass
+        if self.type in ('out_invoice', 'out_refund', 'out_receipt'):
+            self.invoice_payment_term_id = self.partner_id.property_payment_term_id
+        elif self.type in ('in_invoice', 'in_refund', 'in_receipt'):
+            self.invoice_payment_term_id = self.partner_id.property_supplier_payment_term_id
+
+        # Find the new fiscal position.
+        delivery_partner_id = self._get_invoice_delivery_partner_id()
+        new_fiscal_position_id = self.env['account.fiscal.position'].get_fiscal_position(
+            self.partner_id.id, delivery_id=delivery_partner_id)
+        self.fiscal_position_id = self.env['account.fiscal.position'].browse(new_fiscal_position_id)
 
     @api.onchange('date')
     def _onchange_date(self):
@@ -280,6 +289,26 @@ class AccountMove(models.Model):
     def _onchange_invoice_payment_ref(self):
         for line in self.line_ids.filtered(lambda line: line._is_invoice_payment_term_line()):
             line.name = self.invoice_payment_ref
+
+    @api.onchange('invoice_vendor_bill_id')
+    def _onchange_invoice_vendor_bill(self):
+        if self.invoice_vendor_bill_id:
+            # Copy invoice lines.
+            for line in self.invoice_vendor_bill_id.invoice_line_ids:
+                copied_vals = line.copy_data()[0]
+                copied_vals['move_id'] = self.id
+                new_line = self.env['account.move.line'].new(copied_vals)
+                new_line.recompute_tax_line = True
+
+            # Copy payment terms.
+            self.invoice_payment_term_id = self.invoice_vendor_bill_id.invoice_payment_term_id
+
+            # Copy currency.
+            if self.currency_id != self.invoice_vendor_bill_id.currency_id:
+                self.currency_id = self.invoice_vendor_bill_id.currency_id
+
+            # Reset
+            self.invoice_vendor_bill_id = False
 
     @api.onchange('type')
     def _onchange_type(self):
@@ -310,42 +339,6 @@ class AccountMove(models.Model):
     @api.onchange('invoice_payment_term_id', 'invoice_date_due', 'invoice_cash_rounding_id', 'invoice_vendor_bill_id')
     def _onchange_force_onchange(self):
         pass
-
-    @api.multi
-    def _onchange_account_move_pre_hook(self, field_names):
-        # Manage change of partner_id.
-        # This is made at the beginning as a change of the fiscal position has a direct impact to newly created lines.
-        if 'partner_id' in field_names and self.partner_id:
-            if 'invoice_payment_term_id' not in field_names:
-                if self.type in ('out_invoice', 'out_refund', 'out_receipt'):
-                    self.invoice_payment_term_id = self.partner_id.property_payment_term_id
-                elif self.type in ('in_invoice', 'in_refund', 'in_receipt'):
-                    self.invoice_payment_term_id = self.partner_id.property_supplier_payment_term_id
-            if 'fiscal_position_id' not in field_names:
-                # Find the new fiscal position.
-                delivery_partner_id = self._get_invoice_delivery_partner_id()
-                new_fiscal_position_id = self.env['account.fiscal.position'].get_fiscal_position(
-                    self.partner_id.id, delivery_id=delivery_partner_id)
-                self.fiscal_position_id = self.env['account.fiscal.position'].browse(new_fiscal_position_id)
-
-        # Load from old vendor bill.
-        if self.invoice_vendor_bill_id:
-            # Copy invoice lines.
-            for line in self.invoice_vendor_bill_id.invoice_line_ids:
-                copied_vals = line.copy_data()[0]
-                copied_vals['move_id'] = self.id
-                new_line = self.env['account.move.line'].new(copied_vals)
-                new_line.recompute_tax_line = True
-
-            # Copy payment terms.
-            self.invoice_payment_term_id = self.invoice_vendor_bill_id.invoice_payment_term_id
-
-            # Copy currency.
-            if self.currency_id != self.invoice_vendor_bill_id.currency_id:
-                self.currency_id = self.invoice_vendor_bill_id.currency_id
-
-            # Reset
-            self.invoice_vendor_bill_id = False
 
     @api.multi
     def _onchange_process_dynamic_lines(self, options):
@@ -703,10 +696,6 @@ class AccountMove(models.Model):
                     line.update_line = None
             self.line_ids -= to_remove
 
-            # Hook allowing loading dynamic data such news lines coming from another business document before executing the
-            # onchange. This is made like this as it could impact a lot of fields.
-            self._onchange_account_move_pre_hook(field_names)
-
         snapshot1, result = super(AccountMove, self)._onchange(field_names, field_onchange, nametree, snapshot0)
 
         with self.env.do_in_onchange():
@@ -981,6 +970,16 @@ class AccountMove(models.Model):
     def _compute_reconcile_model(self):
         for move in self:
             move.reconcile_model_id = move.line_ids.mapped('reconcile_model_id')
+
+    @api.depends('reconcile_model_id')
+    def _search_reconcile_model(self, operator, operand):
+        if operand:
+            rmi = self.search([('line_ids.reconcile_model_id', operator, operand)])
+        else:
+            rmi = self.search([('line_ids', operator, operand)])
+        if rmi:
+            return [('id', 'in', rmi.ids)]
+        return [('id', '=', False)]
 
     @api.multi
     def _get_domain_edition_mode_available(self):
