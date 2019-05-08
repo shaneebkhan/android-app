@@ -27,7 +27,8 @@ odoo.define("pos_restaurant.tipping", function(require) {
             this.widgets.push({
                 name: "tipping",
                 widget: TippingWidget,
-                replace: ".placeholder-TippingWidget"
+                replace: ".placeholder-TippingWidget",
+                condition: function(){ return this.pos.config.handle_tip_adjustments; },
             });
         }
     });
