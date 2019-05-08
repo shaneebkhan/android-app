@@ -123,10 +123,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
      */
     canBeRemoved: function () {
         // AAB: get rid of this option when on_hashchange mechanism is improved
-        return this.discardChanges(undefined, {
-            noAbandon: true,
-            readonlyIfRealDiscard: true,
-        });
+        return this.discardChanges(undefined, { readonlyIfRealDiscard: true, });
     },
     /**
      * Discards the changes made on the record associated to the given ID, or
