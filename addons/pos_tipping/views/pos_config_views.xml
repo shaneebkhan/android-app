@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<odoo>
+    <record id="pos_config_view_form_inherit" model="ir.ui.view">
+        <field name="name">pos.config.form.inherit.restaurant</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='iface_tipproduct']//div[hasclass('content-group')]" position="inside">
+                <div class="mt16">
+                    <div class="row">
+                        <field name="handle_tip_adjustments" class="col-lg-1 ml16"/>
+                        <label for="handle_tip_adjustments" string="Add tips after payment (North America Specific)"/>
+                    </div>
+                    <div class="row">
+                        <label string="Default Authorized Tip Amount" for="default_authorized_tip_amount" class="col-lg-5 ml16 o_light_label"/>
+                        <field name="default_authorized_tip_amount"/>
+                        <div class="text-muted ml32">Always authorize a default tip to ensure successful capture (common in the US)</div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

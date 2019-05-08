@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo import api, fields, models
 
 
 class PosConfig(models.Model):
@@ -16,9 +15,6 @@ class PosConfig(models.Model):
     is_table_management = fields.Boolean('Table Management')
     is_order_printer = fields.Boolean('Order Printer')
     module_pos_restaurant = fields.Boolean(default=True)
-
-    handle_tip_adjustments = fields.Boolean('Handle Tip Adjustments')
-    default_authorized_tip_amount = fields.Monetary('Default Authorized Tip Amount', help='Amount that will be authorized by default when processing credit card payments.')
 
     @api.onchange('iface_tipproduct')
     def _onchange_tipproduct(self):
@@ -46,8 +42,3 @@ class PosConfig(models.Model):
     def _onchange_is_order_printer(self):
         if not self.is_order_printer:
             self.printer_ids = [(5, 0, 0)]
-
-    @api.constrains('handle_tip_adjustments', 'tip_product_id')
-    def _check_company_invoice_journal(self):
-        if self.handle_tip_adjustments and not self.tip_product_id:
-            raise ValidationError(_("To handle tip adjustments please configure a Tip Product."))

@@ -1,16 +1,13 @@
 <?xml version="1.0"?>
 <odoo>
-
-    <record id="view_pos_pos_form" model="ir.ui.view">
+    <record id="view_pos_pos_form_inherit" model="ir.ui.view">
         <field name="name">pos.order.form.view.inherit</field>
         <field name="model">pos.order</field>
         <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"></field>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='order_fields']" position="inside">
-                <field name="table_id"/>
-                <field name="customer_count"/>
-            </xpath>
+            <field name="pos_reference" position="after">
+                <field name="tip_amount"/>
+            </field>
         </field>
     </record>
-
 </odoo>

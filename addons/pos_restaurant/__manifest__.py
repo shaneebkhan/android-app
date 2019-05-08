@@ -31,7 +31,6 @@ This module adds several restaurant features to the Point of Sale:
         'static/src/xml/printbill.xml',
         'static/src/xml/notes.xml',
         'static/src/xml/floors.xml',
-        'static/src/xml/tipping.xml',
     ],
     'demo': [
         'data/pos_restaurant_demo.xml',
