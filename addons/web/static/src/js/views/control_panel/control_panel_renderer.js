@@ -51,6 +51,7 @@ var ControlPanelRenderer = Renderer.extend({
         this.$subMenus = null;
         this.action = params.action;
         this.displaySearchMenu = true;
+        this.isMobile = config.device.isMobile;
         this.menusSetup = false;
         this.searchMenuTypes = params.searchMenuTypes || [];
         this.subMenus = {};
@@ -73,9 +74,6 @@ var ControlPanelRenderer = Renderer.extend({
 
         // if we don't use the default search bar and buttons, we expose the
         // corresponding areas for custom content
-        if (!this.withSearchBar) {
-            this.nodes.$searchview = this.$('.o_cp_searchview');
-        }
         if (this.searchMenuTypes.length === 0) {
             this.nodes.$searchview_buttons = this.$('.o_search_options');
         }
