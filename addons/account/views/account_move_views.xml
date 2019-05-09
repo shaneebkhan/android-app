@@ -625,8 +625,8 @@
 
                                     <!-- Miscellaneous Operations specific fields -->
                                     <field name="auto_post"
-                                           attrs="{'invisible': [('type', '!=', 'misc')], 'readonly':[('reverse_entry_id', '!=', False)]}"/>
-                                    <field name="reverse_entry_id"
+                                           attrs="{'invisible': [('type', '!=', 'misc')], 'readonly':[('reversed_entry_id', '!=', False)]}"/>
+                                    <field name="reversed_entry_id"
                                            attrs="{'invisible': [('type', '!=', 'misc')]}"/>
 
                                     <!-- Invoice specific fields -->

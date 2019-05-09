@@ -130,7 +130,7 @@
         <field name="user_id" ref="base.user_demo"/>
         <field name="invoice_payment_term_id" ref="account.account_payment_term"/>
         <field name="invoice_date" eval="time.strftime('%Y-%m')+'-02'"/>
-        <field name="reverse_entry_id" ref="l10n_in.demo_invoice_b2b"/>
+        <field name="reversed_entry_id" ref="l10n_in.demo_invoice_b2b"/>
         <field name="invoice_line_ids" eval="[
             (0, 0, {
                 'product_id': ref('product.product_product_8'),
@@ -157,7 +157,7 @@
         <field name="user_id" ref="base.user_demo"/>
         <field name="invoice_payment_term_id" ref="account.account_payment_term"/>
         <field name="invoice_date" eval="time.strftime('%Y-%m')+'-02'"/>
-        <field name="reverse_entry_id" ref="l10n_in.demo_invoice_b2cl"/>
+        <field name="reversed_entry_id" ref="l10n_in.demo_invoice_b2cl"/>
         <field name="invoice_line_ids" eval="[
             (0, 0, {
                 'product_id': ref('product.consu_delivery_01'),

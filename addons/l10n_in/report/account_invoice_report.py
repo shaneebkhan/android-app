@@ -31,7 +31,7 @@ class L10nInAccountInvoiceReport(models.Model):
     cess_amount = fields.Float(string="Cess Amount")
     price_total = fields.Float(string='Total Without Tax')
     total = fields.Float(string="Invoice Total")
-    reverse_entry_id = fields.Many2one('account.move', string="Refund Invoice", help="From where this Refund is created")
+    reversed_entry_id = fields.Many2one('account.move', string="Refund Invoice", help="From where this Refund is created")
     shipping_bill_number = fields.Char(string="Shipping Bill Number")
     shipping_bill_date = fields.Date(string="Shipping Bill Date")
     shipping_port_code_id = fields.Many2one('l10n_in.port.code', string='Shipping port code')
@@ -78,7 +78,7 @@ class L10nInAccountInvoiceReport(models.Model):
             sub.journal_id,
             sub.company_id,
             sub.invoice_type,
-            sub.reverse_entry_id,
+            sub.reversed_entry_id,
             sub.partner_vat,
             sub.ecommerce_vat,
             sub.tax_rate as tax_rate,
@@ -126,7 +126,7 @@ class L10nInAccountInvoiceReport(models.Model):
                 am.journal_id,
                 aj.company_id,
                 ai.type AS invoice_type,
-                ai.reverse_entry_id AS reverse_entry_id,
+                ai.reversed_entry_id AS reversed_entry_id,
                 p.vat AS partner_vat,
                 CASE WHEN rp.vat IS NULL THEN '' ELSE rp.vat END AS ecommerce_vat,
                 (CASE WHEN at.l10n_in_reverse_charge = True
@@ -245,7 +245,7 @@ class L10nInAccountInvoiceReport(models.Model):
                 LEFT JOIN res_partner cp ON cp.id = c.partner_id
                 LEFT JOIN res_country_state cps ON cps.id = cp.state_id
                 LEFT JOIN account_move ai ON ai.id = aml.move_id
-                LEFT JOIN account_move refund_ai ON refund_ai.id = ai.reverse_entry_id
+                LEFT JOIN account_move refund_ai ON refund_ai.id = ai.reversed_entry_id
                 LEFT JOIN res_partner p ON p.id = aml.partner_id
                 LEFT JOIN res_country_state ps ON ps.id = p.state_id
                 LEFT JOIN res_partner rp ON rp.id = ai.l10n_in_reseller_partner_id
@@ -277,7 +277,7 @@ class L10nInAccountInvoiceReport(models.Model):
             sub.journal_id,
             sub.company_id,
             sub.invoice_type,
-            sub.reverse_entry_id,
+            sub.reversed_entry_id,
             sub.partner_vat,
             sub.ecommerce_vat,
             sub.place_of_supply,

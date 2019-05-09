@@ -63,7 +63,7 @@ class AccountMove(models.Model):
         # OVERRIDE
         moves = super(AccountMove, self).create(vals_list)
         for move in moves:
-            if move.reverse_entry_id:
+            if move.reversed_entry_id:
                 continue
             purchase = move.line_ids.mapped('purchase_line_id.order_id')
             refs = ["<a href=# data-oe-model=purchase.order data-oe-id=%s>%s</a>" % tuple(name_get) for name_get in purchase.name_get()]

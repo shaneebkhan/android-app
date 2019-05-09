@@ -161,9 +161,9 @@ class AccountMove(models.Model):
     # ==== Reverse feature fields ====
     # TODO: - ref the reverse feature:
     #   * invoice -> refunds through a stat button invisible: [('reverse_entry_count', '=', 0)]
-    #   * rename reverse_entry_id to reversed_entry_id
-    reverse_entry_id = fields.Many2one('account.move', string="Reverse entry", readonly=True, copy=False)
-    reverse_entry_ids = fields.One2many('account.move', 'reverse_entry_id', string="Reverse entries", readonly=True)
+    #   * rename reversed_entry_id to reversed_entry_id
+    reversed_entry_id = fields.Many2one('account.move', string="Reverse entry", readonly=True, copy=False)
+    reverse_entry_ids = fields.One2many('account.move', 'reversed_entry_id', string="Reverse entries", readonly=True)
 
     # ==== Onchange fields ====
     recompute_taxes = fields.Boolean(store=False,
@@ -1497,7 +1497,7 @@ class AccountMove(models.Model):
     def _reverse_moves(self, default_values_list=None, cancel=False):
         ''' Reverse a recordset of account.move.
         :param default_values_list: A list of default values to consider per move.
-                                    ('type' & 'reverse_entry_id' are computed in the method).
+                                    ('type' & 'reversed_entry_id' are computed in the method).
         :return:                    An account.move recordset, reverse of the current self.
         '''
         if not default_values_list:
@@ -1522,7 +1522,7 @@ class AccountMove(models.Model):
         for move, default_values in zip(self, default_values_list):
             default_values.update({
                 'type': reverse_type_map[self.type],
-                'reverse_entry_id': self.id,
+                'reversed_entry_id': self.id,
             })
             move_vals_list.append(move._reverse_move_vals(default_values, cancel=cancel))
         reverse_moves = self.env['account.move'].create(move_vals_list)
@@ -2819,7 +2819,7 @@ class AccountMoveLine(models.Model):
             for after_rec_dict in cash_basis_subjected:
                 new_rec = part_rec.create(after_rec_dict)
                 # if the pair belongs to move being reverted, do not create CABA entry
-                if cash_basis and not (new_rec.debit_move_id + new_rec.credit_move_id).mapped('move_id').mapped('reverse_entry_id'):
+                if cash_basis and not (new_rec.debit_move_id + new_rec.credit_move_id).mapped('move_id').mapped('reversed_entry_id'):
                     new_rec.create_tax_cash_basis_entry(cash_basis_percentage_before_rec)
         self.recompute()
 
