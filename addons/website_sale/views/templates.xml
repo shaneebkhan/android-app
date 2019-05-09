@@ -74,6 +74,7 @@
             <attribute name="data-display-description">true</attribute>
             <attribute name="data-display-price">true</attribute>
             <attribute name="data-display-image">true</attribute>
+            <attribute name="data-display-rating">false</attribute>
         </xpath>
         <xpath expr="//div[hasclass('input-group')]" position="replace">
             <form t-attf-class="o_wsale_products_searchbar_form #{_classes}" t-att-action="action if action else '/shop'" method="get">
