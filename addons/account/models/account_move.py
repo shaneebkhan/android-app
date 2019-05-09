@@ -795,6 +795,9 @@ class AccountMove(models.Model):
 
         if 'invoice_line_ids' in field_name:
             update_amls_from_imls(values)
+
+            # Don't loose performance by managing invoice_line_ids in snapshot.
+            values.pop('invoice_line_ids')
         elif 'line_ids' in field_name:
             update_imls_from_amls(values)
 
