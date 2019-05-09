@@ -7,7 +7,6 @@ from odoo import fields
 
 import logging
 
-
 _logger = logging.getLogger(__name__)
 
 
