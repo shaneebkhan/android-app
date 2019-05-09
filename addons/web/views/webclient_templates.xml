@@ -250,7 +250,7 @@
         <script type="text/javascript" src="/web/static/src/js/services/session.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/auto_complete.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/change_password.js"></script>
-        <script type="text/javascript" src="/web/static/src/js/tools/test_menus_loader.js"/>
+        <script type="text/javascript" src="/web/static/src/js/tools/click_everywhere.js"/>
         <script type="text/javascript" src="/web/static/src/js/tools/debug_manager_backend.js"></script>
         <script type="text/javascript" src="/web/static/src/js/tools/tools.js"></script>
         <script type="text/javascript" src="/web/static/src/js/widgets/data_export.js"></script>
