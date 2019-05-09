@@ -1886,14 +1886,11 @@ class AccountMoveLine(models.Model):
         compute='_compute_balance',
         help="Technical field holding the debit - credit in order to open meaningful graph views from reports")
     debit_cash_basis = fields.Monetary(store=True,
-        currency_field='company_currency_id',
-        compute='_compute_cash_basis')
+        currency_field='company_currency_id')
     credit_cash_basis = fields.Monetary(store=True,
-        currency_field='company_currency_id',
-        compute='_compute_cash_basis')
+        currency_field='company_currency_id')
     balance_cash_basis = fields.Monetary(store=True,
         currency_field='company_currency_id',
-        compute='_compute_cash_basis',
         help="Technical field holding the debit_cash_basis - credit_cash_basis in order to open meaningful graph views from reports")
     amount_currency = fields.Monetary(string='Balance in Currency', store=True, copy=True,
         help="The amount expressed in an optional other currency if it is a multi-currency entry.")

@@ -18,20 +18,14 @@ class AccountMove(models.Model):
 
     @api.onchange('purchase_vendor_bill_id', 'purchase_id')
     def _onchange_purchase_auto_complete(self):
-        pass
-
-    @api.multi
-    def _onchange_account_move_pre_hook(self, field_names):
         if self.purchase_vendor_bill_id.vendor_bill_id:
             self.invoice_vendor_bill_id = self.purchase_vendor_bill_id.vendor_bill_id
         elif self.purchase_vendor_bill_id.purchase_order_id:
             self.purchase_id = self.purchase_vendor_bill_id.purchase_order_id
         self.purchase_vendor_bill_id = False
 
-        res = super(AccountMove, self)._onchange_account_move_pre_hook(field_names)
-
         if not self.purchase_id:
-            return res
+            return
 
         # Copy partner.
         self.partner_id = self.purchase_id.partner_id
@@ -63,8 +57,6 @@ class AccountMove(models.Model):
             self._invoice_payment_ref = refs[0]
 
         self.purchase_id = False
-
-        return res
 
     @api.model_create_multi
     def create(self, vals_list):
