@@ -221,7 +221,7 @@ class account_journal(models.Model):
             today = fields.Date.today()
             query = '''
                 SELECT 
-                    (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * residual AS amount_total, 
+                    (CASE WHEN type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * amount_residual AS amount_total, 
                     currency_id AS currency, 
                     type, 
                     invoice_date, 
@@ -272,7 +272,7 @@ class account_journal(models.Model):
         return ('''
             SELECT 
                 move.state,
-                (CASE WHEN move.type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * move.residual AS amount_total, 
+                (CASE WHEN move.type IN ('out_refund', 'in_refund') THEN -1 ELSE 1 END) * move.amount_residual AS amount_total, 
                 move.currency_id AS currency, 
                 move.type, 
                 move.invoice_date, 

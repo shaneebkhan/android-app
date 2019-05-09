@@ -763,19 +763,19 @@ class TestReconciliationExec(TestReconciliation):
         credit_aml = payment.move_line_ids.filtered('credit')
 
         # Check residual before assignation
-        self.assertAlmostEquals(inv1.residual, 10)
-        self.assertAlmostEquals(inv2.residual, 20)
+        self.assertAlmostEquals(inv1.amount_residual, 10)
+        self.assertAlmostEquals(inv2.amount_residual, 20)
 
         # Assign credit and residual
         inv1.js_assign_outstanding_line(credit_aml.id)
         inv2.js_assign_outstanding_line(credit_aml.id)
-        self.assertAlmostEquals(inv1.residual, 0)
-        self.assertAlmostEquals(inv2.residual, 0)
+        self.assertAlmostEquals(inv1.amount_residual, 0)
+        self.assertAlmostEquals(inv2.amount_residual, 0)
 
         # Unreconcile one invoice at a time and check residual
         credit_aml.remove_move_reconcile()
-        self.assertAlmostEquals(inv1.residual, 10)
-        self.assertAlmostEquals(inv2.residual, 20)
+        self.assertAlmostEquals(inv1.amount_residual, 10)
+        self.assertAlmostEquals(inv2.amount_residual, 20)
 
     def test_unreconcile_exchange(self):
         # Use case:
@@ -814,16 +814,16 @@ class TestReconciliationExec(TestReconciliation):
         credit_aml = payment.move_line_ids.filtered('credit')
 
         # Check residual before assignation
-        self.assertAlmostEquals(inv.residual, 111)
+        self.assertAlmostEquals(inv.amount_residual, 111)
 
         # Assign credit, check exchange move and residual
         inv.js_assign_outstanding_line(credit_aml.id)
         self.assertEqual(len(payment.move_line_ids.mapped('full_reconcile_id').exchange_move_id), 1)
-        self.assertAlmostEquals(inv.residual, 0)
+        self.assertAlmostEquals(inv.amount_residual, 0)
 
         # Unreconcile invoice and check residual
         credit_aml.with_context(invoice_id=inv.id).remove_move_reconcile()
-        self.assertAlmostEquals(inv.residual, 111)
+        self.assertAlmostEquals(inv.amount_residual, 111)
 
     def test_revert_payment_and_reconcile(self):
         payment = self.env['account.payment'].create({
@@ -1843,7 +1843,7 @@ class TestReconciliationExec(TestReconciliation):
 
         # First Payment
         payment0 = self.make_payment(invoice, journal, amount=59.99)
-        self.assertEqual(invoice.residual, 0.01)
+        self.assertEqual(invoice.amount_residual, 0.01)
 
         tax_waiting_line = invoice.line_ids.filtered(lambda l: l.account_id == self.tax_waiting_account)
         self.assertTrue(tax_waiting_line.exists())
@@ -1859,7 +1859,7 @@ class TestReconciliationExec(TestReconciliation):
 
         # Second Payment
         payment1 = self.make_payment(invoice, journal, 0.01)
-        self.assertEqual(invoice.residual, 0)
+        self.assertEqual(invoice.amount_residual, 0)
         self.assertEqual(invoice.invoice_payment_state, 'paid')
 
         self.assertTrue(tax_waiting_line.reconciled)

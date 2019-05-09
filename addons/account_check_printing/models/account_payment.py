@@ -193,7 +193,7 @@ class AccountPayment(models.Model):
         else:
             amount_paid = abs(sum(invoice_payment_reconcile.mapped('amount')))
 
-        amount_residual = invoice_sign * invoice.residual
+        amount_residual = invoice_sign * invoice.amount_residual
 
         return {
             'due_date': format_date(self.env, invoice.invoice_date_due),

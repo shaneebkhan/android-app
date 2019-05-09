@@ -39,7 +39,7 @@ class AccountMoveReversal(models.TransientModel):
     journal_id = fields.Many2one('account.journal', string='Use Specific Journal', help='If empty, uses the journal of the journal entry to be reversed.')
 
     # related fields
-    residual = fields.Monetary(related='move_id.residual')
+    residual = fields.Monetary(related='move_id.amount_residual')
     currency_id = fields.Many2one(related='move_id.currency_id')
     move_type = fields.Selection(related='move_id.type')
 

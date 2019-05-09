@@ -15,7 +15,7 @@
                             <span class="swissqr_text content">Credit transfer</span>
                         </div>
 
-                        <img class="swissqr" t-att-src="o.invoice_partner_bank_id.build_swiss_code_url(o.residual, o.currency_id.name, o.invoice_date_due, o.partner_id, 'QRR',
+                        <img class="swissqr" t-att-src="o.invoice_partner_bank_id.build_swiss_code_url(o.amount_residual, o.currency_id.name, o.invoice_date_due, o.partner_id, 'QRR',
                         (o.invoice_partner_bank_id.bank_id.l10n_ch_postal_eur) if (o.invoice_partner_bank_id.currency_id.name == 'EUR') else o.invoice_partner_bank_id.bank_id.l10n_ch_postal_chf,
                         (o.ref) if (o.ref) else o.name)"/>
                         <img class="ch_cross" src="/l10n_ch/static/src/img/CH-Cross_7mm.png"/>
@@ -61,7 +61,7 @@
 
                         <div class="amount_zone amount">
                             <span class="swissqr_text title">Amount</span><br/>
-                            <t t-set="formated_amount" t-value="('%.2f' % (o.residual)).split(' ')[0].replace(',',' ')"/>
+                            <t t-set="formated_amount" t-value="('%.2f' % (o.amount_residual)).split(' ')[0].replace(',',' ')"/>
                             <span class="swissqr_text content" t-esc="formated_amount"/>
                         </div>
                     </div>

@@ -228,10 +228,10 @@
                                 t-esc="format_monetary(record.amount_total, currency)"/>
                             <ram:TotalPrepaidAmount
                                 t-att-currencyID="currency.name"
-                                t-esc="format_monetary(record.amount_total - record.residual, currency)"/>
+                                t-esc="format_monetary(record.amount_total - record.amount_residual, currency)"/>
                             <ram:DuePayableAmount
                                 t-att-currencyID="currency.name"
-                                t-esc="format_monetary(record.residual, currency)"/>
+                                t-esc="format_monetary(record.amount_residual, currency)"/>
                         </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
                     </ram:ApplicableHeaderTradeSettlement>
                 </rsm:SupplyChainTradeTransaction>

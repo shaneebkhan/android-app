@@ -76,7 +76,7 @@ class AccountMove(models.Model):
             vals['acquirer_id'] = acquirer.id
 
         vals.update({
-            'amount': sum(self.mapped('residual')),
+            'amount': sum(self.mapped('amount_residual')),
             'currency_id': currency.id,
             'partner_id': partner.id,
             'invoice_ids': [(6, 0, self.ids)],

@@ -132,7 +132,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Change the product set on the line.
@@ -248,7 +248,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
-            'residual': 2300.0,
+            'amount_residual': 2300.0,
         }])
 
     def test_out_invoice_line_onchange_account_1(self):
@@ -368,7 +368,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # One product line, custom account from aml tab.
@@ -485,7 +485,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_line_onchange_quantity_1(self):
@@ -605,7 +605,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
-            'residual': 2300.0,
+            'amount_residual': 2300.0,
         }])
 
     def test_out_invoice_line_onchange_quantity_2(self):
@@ -725,7 +725,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 0.0,
             'amount_tax': 0.0,
             'amount_total': 0.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
         }])
 
     def test_out_invoice_line_onchange_price_unit_1(self):
@@ -845,7 +845,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 2000.0,
             'amount_tax': 300.0,
             'amount_total': 2300.0,
-            'residual': 2300.0,
+            'amount_residual': 2300.0,
         }])
 
         # Edit balance, check impact to the price_unit.
@@ -962,7 +962,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
-            'residual': 3450.0,
+            'amount_residual': 3450.0,
         }])
 
     def test_out_invoice_line_onchange_discount_1(self):
@@ -1082,7 +1082,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
-            'residual': 575.0,
+            'amount_residual': 575.0,
         }])
 
         # One more product line having 100% discount.
@@ -1245,7 +1245,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
-            'residual': 575.0,
+            'amount_residual': 575.0,
         }])
 
         move_form = Form(move)
@@ -1412,7 +1412,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
-            'residual': 3450.0,
+            'amount_residual': 3450.0,
         }])
 
     def test_out_invoice_line_onchange_uom_1(self):
@@ -1531,7 +1531,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 12000.0,
             'amount_tax': 1800.0,
             'amount_total': 13800.0,
-            'residual': 13800.0,
+            'amount_residual': 13800.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_1_stackable_amounts(self):
@@ -1677,7 +1677,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 300.0,
             'amount_total': 1300.0,
-            'residual': 1300.0,
+            'amount_residual': 1300.0,
         }])
 
         # One more product line with two taxes: 15% tax + 15% tax.
@@ -1870,7 +1870,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 900.0,
             'amount_total': 3900.0,
-            'residual': 3900.0,
+            'amount_residual': 3900.0,
         }])
 
         # Edit tax line manually.
@@ -2057,7 +2057,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 1050.0,
             'amount_total': 4050.0,
-            'residual': 4050.0,
+            'amount_residual': 4050.0,
         }])
 
         # Remove a tax line.
@@ -2220,7 +2220,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 600.0,
             'amount_total': 3600.0,
-            'residual': 3600.0,
+            'amount_residual': 3600.0,
         }])
 
         # Remove product line. Taxes are recomputed.
@@ -2359,7 +2359,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 300.0,
             'amount_total': 1300.0,
-            'residual': 1300.0,
+            'amount_residual': 1300.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_2_price_include(self):
@@ -2480,7 +2480,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
@@ -2600,7 +2600,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_payment_term_1(self):
@@ -2742,7 +2742,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Set a custom name / account for payment term lines.
@@ -2884,7 +2884,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Set an immediate payment terms.
@@ -2999,7 +2999,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_amls_1(self):
@@ -3167,7 +3167,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 500.0,
             'amount_tax': 75.0,
             'amount_total': 575.0,
-            'residual': 575.0,
+            'amount_residual': 575.0,
         }])
 
     def test_out_invoice_onchange_partner_1(self):
@@ -3308,7 +3308,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_fiscal_position_1_applied_after(self):
@@ -3429,7 +3429,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_fiscal_position_2_applied_before(self):
@@ -3550,7 +3550,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_cash_rounding_1(self):
@@ -3732,7 +3732,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 10.0,
             'amount_tax': 1.5,
             'amount_total': 11.5,
-            'residual': 11.5,
+            'amount_residual': 11.5,
         }])
 
         # Change the cash rounding by the one affecting the biggest tax.
@@ -3871,7 +3871,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 9.99,
             'amount_tax': 1.46,
             'amount_total': 11.45,
-            'residual': 11.45,
+            'amount_residual': 11.45,
         }])
 
     def test_out_invoice_onchange_journal_1(self):
@@ -3991,7 +3991,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Reset the journal to the default one and then, the default currency.
@@ -4106,7 +4106,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_onchange_currency_1(self):
@@ -4227,7 +4227,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Change the date having a different currency rate.
@@ -4342,7 +4342,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
         # Create a new line. Standard price must be converted to the new currency.
@@ -4504,7 +4504,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 4000.0,
             'amount_tax': 600.0,
             'amount_total': 4600.0,
-            'residual': 4600.0,
+            'amount_residual': 4600.0,
         }])
 
     def test_out_invoice_onchange_invoice_sequence_number_1(self):
@@ -4671,7 +4671,7 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     def test_out_invoice_create_invoice_line_ids_2_multi_currency(self):
@@ -4799,5 +4799,5 @@ class TestAccountMoveOutInvoice(AccountingSavepointCase):
             'amount_untaxed': 3000.0,
             'amount_tax': 450.0,
             'amount_total': 3450.0,
-            'residual': 3450.0,
+            'amount_residual': 3450.0,
         }])

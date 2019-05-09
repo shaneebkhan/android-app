@@ -151,7 +151,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -206,7 +206,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
         ])
         self.assertAmlsValues(reverse_move.line_ids, [
@@ -232,7 +232,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
             {
                 'name': self.parent_tax_sale_1.name,
@@ -256,7 +256,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
             {
                 'name': 'product_a',
@@ -280,7 +280,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
         ])
         self.assertRecordValues(reverse_move, [{
@@ -295,7 +295,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -438,7 +438,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -552,7 +552,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -701,7 +701,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 151.0,
             'amount_total': 1151.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -815,7 +815,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 151.0,
             'amount_total': 1151.0,
-            'residual': 1151.0,
+            'amount_residual': 1151.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -959,7 +959,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 920.0,
+            'amount_residual': 920.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -1014,7 +1014,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
         ])
         self.assertAmlsValues(reverse_move.line_ids, [
@@ -1040,7 +1040,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
             {
                 'name': self.parent_tax_purchase_1.name,
@@ -1064,7 +1064,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
             {
                 'name': 'product_a',
@@ -1088,7 +1088,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_residual': 0.0,
+                'amount_.amount_residual': 0.0,
             },
         ])
         self.assertRecordValues(reverse_move, [{
@@ -1103,7 +1103,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -1246,7 +1246,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -1360,7 +1360,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 920.0,
+            'amount_residual': 920.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -1509,7 +1509,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 121.0,
             'amount_total': 921.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])
@@ -1623,7 +1623,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 121.0,
             'amount_total': 921.0,
-            'residual': 921.0,
+            'amount_residual': 921.0,
             'state': 'draft',
             'invoice_payment_state': 'not_paid',
         }])
@@ -1744,7 +1744,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'invoice_payment_ref': False,
             'invoice_payment_term_id': False,
             'amount_total': 1150.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
             'state': 'posted',
             'invoice_payment_state': 'paid',
         }])

@@ -131,7 +131,7 @@ class TestAccountMoveInReceipt(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 920.0,
+            'amount_residual': 920.0,
         }])
 
     # -------------------------------------------------------------------------
@@ -262,5 +262,5 @@ class TestAccountMoveInReceipt(AccountingSavepointCase):
             'amount_untaxed': 800.0,
             'amount_tax': 120.0,
             'amount_total': 920.0,
-            'residual': 920.0,
+            'amount_residual': 920.0,
         }])

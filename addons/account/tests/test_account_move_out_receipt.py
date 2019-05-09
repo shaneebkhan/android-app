@@ -131,7 +131,7 @@ class TestAccountMoveOutReceipt(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])
 
     # -------------------------------------------------------------------------
@@ -262,5 +262,5 @@ class TestAccountMoveOutReceipt(AccountingSavepointCase):
             'amount_untaxed': 1000.0,
             'amount_tax': 150.0,
             'amount_total': 1150.0,
-            'residual': 1150.0,
+            'amount_residual': 1150.0,
         }])

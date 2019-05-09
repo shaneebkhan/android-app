@@ -101,8 +101,7 @@ class AccountMove(models.Model):
     amount_total = fields.Monetary(string='Total', store=True, readonly=True,
         compute='_compute_amount',
         inverse='_inverse_amount_total')
-    # TODO: rename 'residual' to 'amount_residual' in account.move
-    residual = fields.Monetary(string='Amount Due', store=True,
+    amount_residual = fields.Monetary(string='Amount Due', store=True,
         compute='_compute_amount')
     user_id = fields.Many2one('res.users', readonly=True, copy=False, tracking=True,
         states={'draft': [('readonly', False)]},
@@ -844,10 +843,10 @@ class AccountMove(models.Model):
             move.amount_untaxed = sign * (total_untaxed_currency if len(currencies) == 1 else total_untaxed)
             move.amount_tax = sign * (total_tax_currency if len(currencies) == 1 else total_tax)
             move.amount_total = sign * (total_currency if len(currencies) == 1 else total)
-            move.residual = -sign * (total_residual_currency if len(currencies) == 1 else total_residual)
+            move.amount_residual = -sign * (total_residual_currency if len(currencies) == 1 else total_residual)
 
             currency = len(currencies) == 1 and currencies.pop() or move.company_id.currency_id
-            is_paid = currency and currency.is_zero(move.residual) or not move.residual
+            is_paid = currency and currency.is_zero(move.amount_residual) or not move.amount_residual
 
             # Compute 'invoice_payment_state'.
             if move.state == 'posted' and is_paid:
@@ -903,16 +902,16 @@ class AccountMove(models.Model):
         domain = self.env['account.move.line']._get_domain_for_edition_mode()
         domain += ['|', ('partner_id', '=?', self.partner_id.id), ('partner_id', '=', False)]
         if self.type in ('out_invoice', 'in_refund'):
-            domain.append(('balance', '=', -self.residual))
+            domain.append(('balance', '=', -self.amount_residual))
         else:
-            domain.append(('balance', '=', self.residual))
+            domain.append(('balance', '=', self.amount_residual))
         return domain
 
     @api.multi
     def _get_edition_mode_available(self):
         for r in self:
             domain = r._get_domain_edition_mode_available()
-            domain2 = [('state', '=', 'open'), ('residual', '=', r.residual), ('type', '=', r.type)]
+            domain2 = [('state', '=', 'open'), ('amount_residual', '=', r.amount_residual), ('type', '=', r.type)]
             r.edition_mode_available = r.state == 'open' and (0 < self.env['account.move.line'].search_count(domain) < 5) and self.env[
                 'account.move'].search_count(domain2) < 5
 

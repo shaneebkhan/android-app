@@ -301,7 +301,7 @@ class account_payment(models.Model):
             SELECT
                 move.type AS type,
                 move.currency_id AS currency_id,
-                SUM(line.amount_residual) AS residual,
+                SUM(line.amount_residual) AS amount_residual,
                 SUM(line.amount_residual_currency) AS residual_currency
             FROM account_move move
             LEFT JOIN account_move_line line ON line.move_id = move.id
@@ -319,9 +319,9 @@ class account_payment(models.Model):
             if move_currency == currency and move_currency != company.currency_id:
                 total += res['residual_currency']
             elif move_currency == currency == company.currency_id:
-                total += res['residual']
+                total += res['amount_residual']
             else:
-                total += move_currency._convert(res['residual'], currency, company, date)
+                total += move_currency._convert(res['amount_residual'], currency, company, date)
         return total
 
     @api.multi

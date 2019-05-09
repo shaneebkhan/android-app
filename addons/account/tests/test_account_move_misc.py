@@ -111,7 +111,7 @@ class TestAccountMoveMisc(AccountingSavepointCase):
             'journal_id': self.parent_journal_misc_1.id,
             'date': fields.Date.from_string('2019-01-01'),
             'amount_total': 100.0,
-            'residual': 0.0,
+            'amount_residual': 0.0,
         }])
 
     # -------------------------------------------------------------------------
