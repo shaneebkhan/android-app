@@ -662,7 +662,28 @@ class AccountMove(models.Model):
             self.invoice_date_due = max_date_maturity
 
     @api.multi
-    def _onchange_account_move_post_hook(self, field_names, snapshot0, snapshot1):
+    def _onchange_pre_hook(self, field_names):
+        if 'invoice_line_ids' not in field_names:
+            return
+
+        display_types = self.env['account.move.line']._get_invoice_line_types()
+        amls_map = {}
+        for aml in self.line_ids:
+            aml_id = aml.id or aml.id.ref
+            amls_map[aml_id] = (aml, False)
+        for iml in self.invoice_line_ids:
+            iml_id = iml.id or iml.id.ref
+            amls_map[iml_id] = (iml, True)
+        new_amls = self.env['account.move.line']
+        for aml, processed in amls_map.values():
+            if aml.display_type in display_types and not processed:
+                self.recompute_taxes = True
+            else:
+                new_amls += aml
+        self.line_ids = new_amls
+
+    @api.multi
+    def _onchange_post_hook(self, field_names, snapshot0, snapshot1):
         def field_has_changed(field_name):
             return field_name in field_names or snapshot0.get(field_name) != snapshot1.get(field_name)
 
@@ -685,127 +706,11 @@ class AccountMove(models.Model):
             'recompute_auto_balance': recompute_auto_balance,
         })
 
-    @api.multi
-    def _onchange(self, field_names, field_onchange, nametree, snapshot0):
-        # OVERRIDE
+        if 'invoice_line_ids' not in field_names and 'line_ids' not in field_names:
+            return
 
-        with self.env.do_in_onchange():
-            # Synchronize 'invoice_line_ids' with 'line_ids' by applying the changes made on a o2m to the another one.
-            # For example, if a line has been removed/modified, the changes must be made here to be present on the diff
-            # returned client side.
-            to_remove = self.env['account.move.line']
-            for line in self.line_ids:
-                if line.remove_line:
-                    to_remove += line
-                elif line.update_line:
-                    line.update(ast.literal_eval(line.update_line))
-                    line.update_line = None
-            self.line_ids -= to_remove
-
-        snapshot1, result = super(AccountMove, self)._onchange(field_names, field_onchange, nametree, snapshot0)
-
-        with self.env.do_in_onchange():
-            self._onchange_account_move_post_hook(field_names, snapshot0, snapshot1)
-            snapshot1 = models.Snapshot(self, nametree)
-
-        return snapshot1, result
-
-    @api.multi
-    def onchange(self, values, field_name, field_onchange):
-        # OVERRIDE
-
-        def is_invoice_line(command):
-            # Check if the command is about an invoice line.
-            display_types = self.env['account.move.line']._get_invoice_line_types()
-            if command[0] == 0 and command[2]['display_type'] in display_types:
-                return True
-            if command[0] == 1:
-                if 'display_type' in command[2]:
-                    return command[2]['display_type'] in display_types
-                else:
-                    return self.env['account.move.line'].browse(command[1]).display_type in display_types
-            if command[0] == 4 and self.env['account.move.line'].browse(command[1]).display_type in display_types:
-                return True
-            return False
-
-        def serialize_dict(vals):
-            new_vals = {}
-            for k, v in vals.items():
-                if isinstance(v, date):
-                    new_vals[k] = fields.Date.to_string(v)
-                elif isinstance(v, datetime):
-                    new_vals[k] = fields.Datetime.to_string(v)
-                elif k != 'id':
-                    new_vals[k] = v
-            return new_vals
-
-        def hack_o2m_command(command):
-            # Hack to simulate the changes comes from Python instead of the user interface to make sure the
-            # correct diff is returned JS-side.
-            if command[0] == 0:
-                command = (command[0], command[1], {
-                    'update_line': str(serialize_dict(command[2])),
-                    'display_type': command[2]['display_type']
-                })
-            elif command[1] == 1:
-                command = (1, command[1], {'update_line': str(serialize_dict(command[2]))})
-            elif command[0] == 2:
-                command = (1, command[1], {'remove_line': True})
-                values['recompute_taxes'] = True
-            return command
-
-        def update_amls_from_imls(values):
-            imls = values['invoice_line_ids']
-            amls = values['line_ids']
-            amls_map = OrderedDict()
-            for aml in amls:
-                amls_map[aml[1]] = (aml, False)
-            values['invoice_line_ids'] = []
-            values['line_ids'] = []
-            for iml in imls:
-                if iml[1] in amls_map:
-                    iml = hack_o2m_command(iml)
-                amls_map[iml[1]] = (iml, True)
-                values['invoice_line_ids'].append(iml)
-            for aml, processed in amls_map.values():
-                if is_invoice_line(aml) and not processed:
-                    values['recompute_taxes'] = True
-                    continue
-                values['line_ids'].append(aml)
-
-        def update_imls_from_amls(values):
-            amls = values['line_ids']
-            values['invoice_line_ids'] = []
-            values['line_ids'] = []
-            for aml in amls:
-                if is_invoice_line(aml):
-                    aml = hack_o2m_command(aml)
-                    values['invoice_line_ids'].append(aml)
-                values['line_ids'].append(aml)
-
-        def compute_diff_imls_from_amls(values):
-            amls = values['line_ids']
-            values['invoice_line_ids'] = []
-            for aml in amls:
-                if aml[0] == 5 or is_invoice_line(aml):
-                    values['invoice_line_ids'].append(aml)
-
-        if not isinstance(field_name, list):
-            field_name = [field_name]
-
-        if 'invoice_line_ids' in field_name:
-            update_amls_from_imls(values)
-
-            # Don't loose performance by managing invoice_line_ids in snapshot.
-            values.pop('invoice_line_ids')
-        elif 'line_ids' in field_name:
-            update_imls_from_amls(values)
-
-        res = super(AccountMove, self).onchange(values, field_name, field_onchange)
-        if 'value' in res and res['value'].get('line_ids'):
-            compute_diff_imls_from_amls(res['value'])
-
-        return res
+        display_types = self.env['account.move.line']._get_invoice_line_types()
+        self.invoice_line_ids = self.line_ids.filtered(lambda line: line.display_type in display_types)
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
@@ -1913,8 +1818,6 @@ class AccountMoveLine(models.Model):
              " on taxes, some will become exigible only when the payment is recorded.")
     recompute_tax_line = fields.Boolean(store=False, readonly=True,
         help="Technical field used to know on which lines the taxes must be recomputed.")
-    remove_line = fields.Boolean(store=False, readonly=True)
-    update_line = fields.Text(store=False, readonly=True)
     display_type = fields.Selection([
         ('line_section', 'Section'),
         ('line_note', 'Note'),

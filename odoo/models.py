@@ -131,55 +131,6 @@ def fix_import_export_id_paths(fieldname):
     return fixed_external_id.split('/')
 
 
-class Snapshot(dict):
-    """ A dict with the values of a record, following a prefix tree. """
-    __slots__ = ()
-
-    def __init__(self, record, tree):
-        # put record in dict to include it when comparing snapshots
-        super(Snapshot, self).__init__({'<record>': record, '<tree>': tree})
-        for name, subnames in tree.items():
-            # x2many fields are serialized as a list of line snapshots
-            self[name] = (
-                [Snapshot(line, subnames) for line in record[name]]
-                if subnames else record[name]
-            )
-
-    def diff(self, other):
-        """ Return the values in ``self`` that differ from ``other``.
-            Requires record cache invalidation for correct output!
-        """
-        record = self['<record>']
-        result = {}
-        for name, subnames in self['<tree>'].items():
-            if (name == 'id') or (other.get(name) == self[name]):
-                continue
-            if not subnames:
-                field = record._fields[name]
-                result[name] = field.convert_to_onchange(self[name], record, {})
-            else:
-                # x2many fields: serialize value as commands
-                result[name] = commands = [(5,)]
-                for line_snapshot in self[name]:
-                    line = line_snapshot['<record>']
-                    if not line.id:
-                        # new line: send diff from scratch
-                        line_diff = line_snapshot.diff({})
-                        commands.append((0, line.id.ref or 0, line_diff))
-                    else:
-                        # existing line: check diff from database
-                        # (requires a clean record cache!)
-                        line_diff = line_snapshot.diff(Snapshot(line, subnames))
-                        if line_diff:
-                            # send all fields because the web client
-                            # might need them to evaluate modifiers
-                            line_diff = line_snapshot.diff({})
-                            commands.append((1, line.id, line_diff))
-                        else:
-                            commands.append((4, line.id))
-        return result
-
-
 class MetaModel(api.Meta):
     """ The metaclass of all model classes.
         Its main purpose is to register the models per module.
@@ -5442,37 +5393,6 @@ Fields:
             return
 
     @api.multi
-    def _onchange(self, field_names, field_onchange, nametree, snapshot0):
-        self.ensure_one()
-
-        result = {'warnings': OrderedSet()}
-
-        # process names in order (or the keys of values if no name given)
-        done = set()
-        snapshot1 = snapshot0
-        field_names = list(field_names)
-        while field_names:
-            name = field_names.pop(0)
-            if name in done:
-                continue
-            done.add(name)
-
-            with self.env.do_in_onchange():
-                # apply field-specific onchange methods
-                if field_onchange.get(name):
-                    self._onchange_eval(name, field_onchange[name], result)
-
-                # make a snapshot (this forces evaluation of computed fields)
-                snapshot1 = Snapshot(self, nametree)
-
-                # determine which fields have been modified
-                for name in nametree:
-                    if snapshot1[name] != snapshot0[name]:
-                        field_names.append(name)
-
-        return snapshot1, result
-
-    @api.multi
     def onchange(self, values, field_name, field_onchange):
         """ Perform an onchange on the given field.
 
@@ -5514,6 +5434,54 @@ Fields:
                         subtree.pop(field.inverse_name, None)
             return tree
 
+        class Snapshot(dict):
+            """ A dict with the values of a record, following a prefix tree. """
+            __slots__ = ()
+
+            def __init__(self, record, tree):
+                # put record in dict to include it when comparing snapshots
+                super(Snapshot, self).__init__({'<record>': record, '<tree>': tree})
+                for name, subnames in tree.items():
+                    # x2many fields are serialized as a list of line snapshots
+                    self[name] = (
+                        [Snapshot(line, subnames) for line in record[name]]
+                        if subnames else record[name]
+                    )
+
+            def diff(self, other):
+                """ Return the values in ``self`` that differ from ``other``.
+                    Requires record cache invalidation for correct output!
+                """
+                record = self['<record>']
+                result = {}
+                for name, subnames in self['<tree>'].items():
+                    if (name == 'id') or (other.get(name) == self[name]):
+                        continue
+                    if not subnames:
+                        field = record._fields[name]
+                        result[name] = field.convert_to_onchange(self[name], record, {})
+                    else:
+                        # x2many fields: serialize value as commands
+                        result[name] = commands = [(5,)]
+                        for line_snapshot in self[name]:
+                            line = line_snapshot['<record>']
+                            if not line.id:
+                                # new line: send diff from scratch
+                                line_diff = line_snapshot.diff({})
+                                commands.append((0, line.id.ref or 0, line_diff))
+                            else:
+                                # existing line: check diff from database
+                                # (requires a clean record cache!)
+                                line_diff = line_snapshot.diff(Snapshot(line, subnames))
+                                if line_diff:
+                                    # send all fields because the web client
+                                    # might need them to evaluate modifiers
+                                    line_diff = line_snapshot.diff({})
+                                    commands.append((1, line.id, line_diff))
+                                else:
+                                    commands.append((4, line.id))
+                return result
+
         nametree = PrefixTree(self.browse(), field_onchange)
 
         # prefetch x2many lines without data (for the initial snapshot)
@@ -5531,16 +5499,20 @@ Fields:
 
         # create a new record with values, and attach ``self`` to it
         with env.do_in_onchange():
-            record = self.new(values)
+            ovalues = OrderedDict(values)
+            for name in names:
+                ovalues[name] = ovalues.pop(name)
+            record = self.new(ovalues)
             # attach ``self`` with a different context (for cache consistency)
             record._origin = self.with_context(__onchange=True)
 
         # make a snapshot based on the initial values of record
         with env.do_in_onchange():
-            snapshot0 = Snapshot(record, nametree)
+            snapshot0 = snapshot1 = Snapshot(record, nametree)
 
         # determine which field(s) should be triggered an onchange
         todo = list(names or nametree)
+        done = set()
 
         # dummy assignment: trigger invalidations on the record
         with env.do_in_onchange():
@@ -5554,7 +5526,36 @@ Fields:
                     continue
                 record[name] = value
 
-        snapshot1, result = record._onchange(todo, field_onchange, nametree, snapshot0)
+        result = {'warnings': OrderedSet()}
+
+        if hasattr(record, '_onchange_pre_hook'):
+            with env.do_in_onchange():
+                record._onchange_pre_hook(names)
+
+        # process names in order (or the keys of values if no name given)
+        while todo:
+            name = todo.pop(0)
+            if name in done:
+                continue
+            done.add(name)
+
+            with env.do_in_onchange():
+                # apply field-specific onchange methods
+                if field_onchange.get(name):
+                    record._onchange_eval(name, field_onchange[name], result)
+
+                # make a snapshot (this forces evaluation of computed fields)
+                snapshot1 = Snapshot(record, nametree)
+
+                # determine which fields have been modified
+                for name in nametree:
+                    if snapshot1[name] != snapshot0[name]:
+                        todo.append(name)
+
+        if hasattr(record, '_onchange_post_hook'):
+            with env.do_in_onchange():
+                record._onchange_post_hook(names, snapshot0, snapshot1)
+                snapshot1 = Snapshot(record, nametree)
 
         # determine values that have changed by comparing snapshots
         self.invalidate_cache()
