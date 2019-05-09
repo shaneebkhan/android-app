@@ -224,9 +224,7 @@ class AccountMove(models.Model):
         groups='account.group_account_invoice')
 
     # ==== Vendor bill fields ====
-    # TODO: remove the readonly and set it invisible when state != 'draft'
-    invoice_vendor_bill_id = fields.Many2one('account.move', store=False, readonly=True,
-        states={'draft': [('readonly', False)]},
+    invoice_vendor_bill_id = fields.Many2one('account.move', store=False,
         string='Vendor Bill',
         help="Auto-complete from a past bill.")
     invoice_source_email = fields.Char(string='Source Email', tracking=True)
