@@ -68,7 +68,6 @@
                                         <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags"/>
                                     </group>
                                 </group>
-                                <field name="narration" colspan="4" nolabel="1" placeholder="Add an internal note..."/>
                             </page>
                             <page string="Analytic Lines" groups="analytic.group_analytic_accounting">
                                 <field name="date" invisible="1"/>

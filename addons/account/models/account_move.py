@@ -26,6 +26,7 @@ class AccountMove(models.Model):
     _description = "Journal Entries"
     _order = 'date desc, id desc'
 
+    # TODO: remove _get_default_type and pass the type inside the context using 'default_type' key instead of 'type'
     @api.model
     def _get_default_type(self):
         ''' Get the default type from context. 'misc' is set by default. '''
@@ -82,6 +83,7 @@ class AccountMove(models.Model):
             ('cancel', 'cancelled')
         ], string='Status', required=True, readonly=True, copy=False, tracking=True,
         default='draft')
+    # TODO: ('misc', 'Miscellaneous Operations') => ('entry', 'Journal Entry')
     type = fields.Selection(selection=[
             ('misc', 'Miscellaneous Operations'),
             ('out_invoice', 'Customer Invoice'),
@@ -92,13 +94,14 @@ class AccountMove(models.Model):
             ('in_receipt', 'Purchase Receipt'),
         ], String='Type', required=True, store=True, index=True, readonly=True, tracking=True,
         default=_get_default_type)
-    amount_tax = fields.Monetary(string='Tax', store=True, readonly=True,
-        compute='_compute_amount')
     amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, readonly=True, tracking=True,
+        compute='_compute_amount')
+    amount_tax = fields.Monetary(string='Tax', store=True, readonly=True,
         compute='_compute_amount')
     amount_total = fields.Monetary(string='Total', store=True, readonly=True,
         compute='_compute_amount',
         inverse='_inverse_amount_total')
+    # TODO: rename 'residual' to 'amount_residual' in account.move
     residual = fields.Monetary(string='Amount Due', store=True,
         compute='_compute_amount')
     user_id = fields.Many2one('res.users', readonly=True, copy=False, tracking=True,
@@ -113,12 +116,16 @@ class AccountMove(models.Model):
         related='journal_id.company_id')
     company_currency_id = fields.Many2one(string='Company Currency', readonly=True,
         related='journal_id.company_id.currency_id')
-    currency_id = fields.Many2one('res.currency', store=True, readonly=True, tracking=True,
+    currency_id = fields.Many2one('res.currency', store=True, readonly=True, tracking=True, required=True,
         states={'draft': [('readonly', False)]},
         string='Currency',
         default=_get_default_currency)
-    foreign_currency_id = fields.Many2one('res.currency', string='Foreign Currency',
-        compute='_compute_foreign_currency_id')
+    foreign_currency_id = fields.Many2one('res.currency', string='Foreign Currency', # do it in _default_currency_id of account.move.line
+        compute='_compute_foreign_currency_id',
+        help="Technical field used to set the default currency on journal items.")
+    line_ids = fields.One2many('account.move.line', 'move_id', string='Journal Items', copy=True, readonly=True,
+        states={'draft': [('readonly', False)]})
+    # optional fields
     partner_id = fields.Many2one('res.partner', readonly=True, tracking=True,
         states={'draft': [('readonly', False)]},
         string='Customer/Vendor')
@@ -128,9 +135,10 @@ class AccountMove(models.Model):
         states={'draft': [('readonly', False)]},
         help = "Fiscal positions are used to adapt taxes and accounts for particular customers or sales orders/invoices. "
                "The default value comes from the customer.")
-    line_ids = fields.One2many('account.move.line', 'move_id', string='Journal Items', copy=True, readonly=True,
-        states={'draft': [('readonly', False)]})
-    reconcile_model_id = fields.Many2many('account.reconcile.model', compute='_compute_reconcile_model', search='_search_reconcile_model', string="Reconciliation Model", readonly=True)
+    # TODO: remove this field and replace it by python-action move.line_ids.reconcile_model_id
+    reconcile_model_id = fields.Many2many('account.reconcile.model', # to remove? replace by [('line_ids.reconcile_model_id', 'in', (...))]
+        compute='_compute_reconcile_model',
+        search='_search_reconcile_model', string="Reconciliation Model", readonly=True)
     to_check = fields.Boolean(string='To Check', default=False,
         help='If this checkbox is ticked, it means that the user was not sure of all the related informations at the time of the creation of the move and that the move needs to be checked again.')
     amount_by_group = fields.Binary(string="Tax amount by group",
@@ -152,11 +160,15 @@ class AccountMove(models.Model):
         help='If this checkbox is ticked, this entry will be automatically posted at its date.')
 
     # ==== Reverse feature fields ====
+    # TODO: - ref the reverse feature:
+    #   * invoice -> refunds through a stat button invisible: [('reverse_entry_count', '=', 0)]
+    #   * rename reverse_entry_id to reversed_entry_id
     reverse_entry_id = fields.Many2one('account.move', string="Reverse entry", readonly=True, copy=False)
     reverse_entry_ids = fields.One2many('account.move', 'reverse_entry_id', string="Reverse entries", readonly=True)
 
     # ==== Onchange fields ====
-    recompute_taxes = fields.Boolean(store=False)
+    recompute_taxes = fields.Boolean(store=False,
+        help="Technical field used to indicate the whole taxes lines must be recomputed (e.g. in case of an invoice line has been removed).")
 
     # =========================================================
     # Invoice related fields
@@ -208,8 +220,12 @@ class AccountMove(models.Model):
         compute='_compute_payments_widget_reconciled_info')
     invoice_has_outstanding = fields.Boolean(groups="account.group_account_invoice",
         compute='_compute_payments_widget_to_reconcile_info')
+    # TODO: merge this flag with invoice_has_outstanding
+    invoice_edition_mode_available = fields.Boolean(compute='_get_edition_mode_available',
+        groups='account.group_account_invoice')
 
     # ==== Vendor bill fields ====
+    # TODO: remove the readonly and set it invisible when state != 'draft'
     invoice_vendor_bill_id = fields.Many2one('account.move', store=False, readonly=True,
         states={'draft': [('readonly', False)]},
         string='Vendor Bill',
@@ -229,10 +245,6 @@ class AccountMove(models.Model):
         inverse='_inverse_invoice_sequence_number_next')
     invoice_sequence_number_next_prefix = fields.Char(string='Next Number Prefix',
         compute="_compute_invoice_sequence_number_next")
-
-    # ==== Suspense account fields ====
-    invoice_edition_mode_available = fields.Boolean(compute='_get_edition_mode_available',
-        groups='account.group_account_invoice')
 
     # ==== Display purpose fields ====
     invoice_filter_type_domain = fields.Char(compute='_compute_invoice_filter_type_domain',
@@ -1854,12 +1866,12 @@ class AccountMoveLine(models.Model):
     def _get_invoice_line_types(self):
         return [False, 'line_section', 'line_note', 'product_cr']
 
+    # TODO: RE-ORDER all these fields by feature/purpose
     # ==== Business fields ====
     sequence = fields.Integer(default=10)
     name = fields.Char(string='Label')
     date = fields.Date(related='move_id.date', store=True, readonly=True, index=True, copy=False)
     ref = fields.Char(related='move_id.ref', store=True, copy=False, index=True, readonly=False)
-    narration = fields.Text(related='move_id.narration', string='Narration', readonly=False)
     parent_state = fields.Selection(related='move_id.state', store=True, readonly=True)
     quantity = fields.Float(string='Quantity',
         default=1.0, digits=dp.get_precision('Product Unit of Measure'),
@@ -2345,12 +2357,6 @@ class AccountMoveLine(models.Model):
                 line.partner_id,
                 line.tax_ids,
             ))
-
-    @api.depends('currency_id')
-    def _compute_amount_currency(self):
-        for line in self:
-            if not line.currency_id:
-                line.amount_currency = 0.0
 
     @api.depends('currency_id')
     def _compute_always_set_currency_id(self):
