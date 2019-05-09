@@ -224,7 +224,8 @@ class Channel(models.Model):
             result[cid].update(cdata)
 
         for record in self:
-            record.update(result[record.id])
+            if record.id in result:
+                record.update(result[record.id])
 
     def _compute_slides_statistics_type(self, read_group_res):
         """ Compute statistics based on all existing slide types """
