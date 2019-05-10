@@ -209,7 +209,7 @@ class ResPartner(models.Model):
         if where_clause:
             where_clause = 'AND ' + where_clause
         self._cr.execute("""SELECT account_move_line.partner_id, act.type, SUM(account_move_line.amount_residual)
-                      FROM account_move_line
+                      FROM """ + tables + """
                       LEFT JOIN account_account a ON (account_move_line.account_id=a.id)
                       LEFT JOIN account_account_type act ON (a.user_type_id=act.id)
                       WHERE act.type IN ('receivable','payable')
