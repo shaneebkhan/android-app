@@ -346,7 +346,6 @@ class AccountMove(models.Model):
     @api.multi
     def _onchange_process_dynamic_lines(self, options):
         recompute_all_taxes = options.get('recompute_all_taxes')
-        recompute_check_taxes = options.get('recompute_check_taxes')
 
         is_invoice = self.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
         base_lines = self.env['account.move.line']
@@ -381,8 +380,7 @@ class AccountMove(models.Model):
                 base_lines += line
 
         # Compute taxes.
-        if recompute_all_taxes or recompute_check_taxes:
-
+        if recompute_all_taxes:
             # Compute taxes amounts.
             for line in base_lines:
                 if not line.tax_ids:
@@ -420,8 +418,6 @@ class AccountMove(models.Model):
 
             # Compute taxes lines.
             for key, value in taxes_map.items():
-                if not recompute_all_taxes:
-                    continue
 
                 tax_line, balance, amount_currency, processed = value
 
@@ -684,7 +680,7 @@ class AccountMove(models.Model):
         def field_has_changed(field_name):
             return field_name in field_names or snapshot0.get(field_name) != snapshot1.get(field_name)
 
-        recompute_all_taxes = recompute_check_taxes = recompute_auto_balance = False
+        recompute_all_taxes = recompute_auto_balance = False
 
         if field_has_changed('currency_id') or field_has_changed('date'):
             recompute_all_taxes = True
@@ -699,7 +695,6 @@ class AccountMove(models.Model):
 
         self._onchange_process_dynamic_lines({
             'recompute_all_taxes': recompute_all_taxes or self.recompute_taxes,
-            'recompute_check_taxes': recompute_check_taxes,
             'recompute_auto_balance': recompute_auto_balance,
         })
 
@@ -1899,6 +1894,7 @@ class AccountMoveLine(models.Model):
     # HELPERS
     # -------------------------------------------------------------------------
 
+    # TODO: remove _is_invoice_line, _is_invoice_payment_term_line, _is_invoice_cash_rounding_line
     @api.multi
     def _is_invoice_line(self):
         self.ensure_one()
