@@ -33,8 +33,10 @@ class Menu(models.Model):
     def name_get(self):
         res = []
         for menu in self:
-            website_suffix = '%s - %s' % (menu.name, menu.website_id.name)
-            res.append((menu.id, website_suffix if menu.website_id and self.env.user.has_group('website.group_multi_website') else menu.name))
+            menu_name = menu.name
+            if menu.website_id and self.env.user.has_group('website.group_multi_website'):
+                menu_name += ' [%s]' % menu.website_id.name
+            res.append((menu.id, menu_name))
         return res
 
     @api.model
