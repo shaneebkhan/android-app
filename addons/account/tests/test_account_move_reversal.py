@@ -206,7 +206,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
         ])
         self.assertAmlsValues(reverse_move.line_ids, [
@@ -232,7 +232,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
             {
                 'name': self.parent_tax_sale_1.name,
@@ -256,7 +256,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
             {
                 'name': 'product_a',
@@ -280,7 +280,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
         ])
         self.assertRecordValues(reverse_move, [{
@@ -1014,7 +1014,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
         ])
         self.assertAmlsValues(reverse_move.line_ids, [
@@ -1040,7 +1040,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'balance',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
             {
                 'name': self.parent_tax_purchase_1.name,
@@ -1064,7 +1064,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': 'tax',
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
             {
                 'name': 'product_a',
@@ -1088,7 +1088,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'display_type': False,
                 'date_maturity': fields.Date.from_string('2019-01-01'),
                 'tax_exigible': True,
-                'amount_.amount_residual': 0.0,
+                'amount_residual': 0.0,
             },
         ])
         self.assertRecordValues(reverse_move, [{
