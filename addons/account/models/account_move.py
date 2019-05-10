@@ -703,9 +703,6 @@ class AccountMove(models.Model):
             'recompute_auto_balance': recompute_auto_balance,
         })
 
-        if 'invoice_line_ids' not in field_names and 'line_ids' not in field_names:
-            return
-
         # Hack the snapshot directly to avoid a huge overhead in the cache.
         display_types = self.env['account.move.line']._get_invoice_line_types()
         snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['invoice_line_ids']\
