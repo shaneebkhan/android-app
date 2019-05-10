@@ -343,15 +343,294 @@ class AccountMove(models.Model):
     def _onchange_force_onchange(self):
         pass
 
+    @api.model
+    def _build_tax_line_groupby_key(self, line, tax):
+        return (
+            tax.id,
+            line.currency_id.id,
+            tax.analytic and tuple(line.analytic_tag_ids.ids),
+            tax.analytic and line.analytic_account_id.id,
+        )
+
+    @api.multi
+    def _recompute_taxes_lines(self, lines_map, taxes_map):
+        self.ensure_one()
+
+        # Compute taxes amounts.
+        for line in lines_map['base_lines']:
+            if not line.tax_ids:
+                continue
+
+            balance_taxes_res = line.tax_ids.with_context(force_price_include=False)\
+                .compute_all(line.balance, currency=line.company_currency_id, partner=line.partner_id)
+            if line.currency_id:
+                # Multi-currencies mode: Taxes are computed both in company's currency / foreign currency.
+                amount_currency_taxes_res = line.tax_ids.with_context(force_price_include=False)\
+                    .compute_all(line.amount_currency, currency=line.currency_id, partner=line.partner_id)
+            else:
+                # Single-currency mode: Only company's currency is considered.
+                amount_currency_taxes_res = {'taxes': [{'amount': 0.0} for tax_res in balance_taxes_res['taxes']]}
+
+            tax_exigible = True
+            for b_tax_res, ac_tax_res in zip(balance_taxes_res['taxes'], amount_currency_taxes_res['taxes']):
+                tax = self.env['account.tax'].browse(b_tax_res['id'])
+                if tax.tax_exigibility == 'on_payment':
+                    tax_exigible = False
+
+                key = self._build_tax_line_groupby_key(line, tax)
+                taxes_map.setdefault(key, [None, 0.0, 0.0, True])
+                taxes_map[key][1] += b_tax_res['amount']
+                taxes_map[key][2] += ac_tax_res['amount']
+                taxes_map[key][3] = True
+            line.tax_exigible = tax_exigible
+
+        # Compute taxes lines.
+        for key, value in taxes_map.items():
+            tax_line, balance, amount_currency, processed = value
+
+            if tax_line:
+                tax_line.update({
+                    'amount_currency': amount_currency,
+                    'debit': balance > 0.0 and balance or 0.0,
+                    'credit': balance < 0.0 and -balance or 0.0,
+                })
+            else:
+                account = line._get_default_tax_account(tax, self.type)
+                tax_line = self.env['account.move.line'].new({
+                    'name': tax.name,
+                    'debit': balance > 0.0 and balance or 0.0,
+                    'credit': balance < 0.0 and -balance or 0.0,
+                    'quantity': 1.0,
+                    'amount_currency': amount_currency,
+                    'date_maturity': line.date_maturity,
+                    'tax_exigible': tax.tax_exigibility == 'on_invoice',
+                    'move_id': self.id,
+                    'currency_id': line.currency_id.id,
+                    'company_id': line.company_id.id,
+                    'company_currency_id': line.company_currency_id.id,
+                    'account_id': account.id,
+                    'partner_id': line.partner_id.id,
+                    'tax_line_id': tax.id,
+                    'analytic_account_id': line.analytic_account_id.id if tax.analytic else False,
+                    'analytic_tag_ids': [(6, 0, line.analytic_tag_ids.ids)] if tax.analytic else False,
+                    'display_type': 'tax',
+                })
+                lines_map['taxes_lines'] += tax_line
+            tax_line._onchange_amount_currency()
+            tax_line._onchange_balance()
+
+        # Drop taxes lines that are no longer required.
+        for key, value in taxes_map.items():
+            if not value[3]:
+                self.line_ids -= value[0]
+                lines_map['taxes_lines'] -= value[0]
+
+    @api.multi
+    def _recompute_cash_rounding_lines(self, lines_map, totals_map):
+        rounding_lines = lines_map['rounding_lines']
+        if self.invoice_cash_rounding_id:
+
+            # Clear lines if the mode has changed.
+            strategy = self.invoice_cash_rounding_id.strategy
+            if rounding_lines and \
+                    (strategy == 'biggest_tax' and rounding_lines.display_type == 'product_cr') \
+                    or (strategy == 'add_invoice_line' and rounding_lines.display_type == 'tax_cr'):
+                self.line_ids -= rounding_lines
+                rounding_lines = self.env['account.move.line']
+
+            if self.currency_id == self.company_id.currency_id:
+                diff_balance = self.invoice_cash_rounding_id.compute_difference(self.company_id.currency_id,
+                                                                                totals_map['total_balance'])
+                diff_amount_currency = 0.0
+                currency = False
+            else:
+                currency = self.currency_id
+                diff_amount_currency = self.invoice_cash_rounding_id.compute_difference(self.currency_id, totals_map[
+                    'total_amount_currency'])
+                diff_balance = currency._convert(diff_amount_currency, self.company_id.currency_id, self.company_id,
+                                                 self.date)
+
+            if strategy == 'biggest_tax' and rounding_lines:
+                rounding_lines.update({
+                    'amount_currency': diff_amount_currency,
+                    'debit': diff_balance > 0.0 and diff_balance or 0.0,
+                    'credit': diff_balance < 0.0 and -diff_balance or 0.0,
+                })
+                totals_map['total_balance'] += diff_balance
+                totals_map['total_amount_currency'] += diff_amount_currency
+            elif strategy == 'biggest_tax' and not rounding_lines:
+                # Search for the biggest tax.
+                biggest_tax_line = None
+                for tax_line in lines_map['taxes_lines']:
+                    if not biggest_tax_line or tax_line.balance > biggest_tax_line.balance:
+                        biggest_tax_line = tax_line
+
+                if biggest_tax_line:
+                    rounding_lines = self.env['account.move.line'].new({
+                        'name': _('%s (rounding)') % biggest_tax_line.name,
+                        'debit': diff_balance > 0.0 and diff_balance or 0.0,
+                        'credit': diff_balance < 0.0 and -diff_balance or 0.0,
+                        'quantity': 1.0,
+                        'amount_currency': diff_amount_currency,
+                        'account_id': biggest_tax_line.account_id.id,
+                        'partner_id': self.partner_id.id,
+                        'move_id': self.id,
+                        'currency_id': currency and currency.id,
+                        'company_id': self.company_id.id,
+                        'company_currency_id': self.company_id.currency_id.id,
+                        'date_maturity': self.invoice_date_due,
+                        'tax_line_id': biggest_tax_line.tax_line_id.id,
+                        'display_type': 'tax_cr',
+                        'sequence': 9999,
+                    })
+                    totals_map['total_balance'] += diff_balance
+                    totals_map['total_amount_currency'] += diff_amount_currency
+            elif strategy == 'add_invoice_line' and rounding_lines:
+                rounding_lines.update({
+                    'amount_currency': diff_amount_currency,
+                    'debit': diff_balance > 0.0 and diff_balance or 0.0,
+                    'credit': diff_balance < 0.0 and -diff_balance or 0.0,
+                })
+                totals_map['total_balance'] += diff_balance
+                totals_map['total_amount_currency'] += diff_amount_currency
+            elif strategy == 'add_invoice_line' and not rounding_lines:
+                rounding_lines = self.env['account.move.line'].new({
+                    'name': self.invoice_cash_rounding_id.name,
+                    'debit': diff_balance > 0.0 and diff_balance or 0.0,
+                    'credit': diff_balance < 0.0 and -diff_balance or 0.0,
+                    'quantity': 1.0,
+                    'amount_currency': diff_amount_currency,
+                    'account_id': self.invoice_cash_rounding_id.account_id.id,
+                    'partner_id': self.partner_id.id,
+                    'move_id': self.id,
+                    'currency_id': currency and currency.id,
+                    'company_id': self.company_id.id,
+                    'company_currency_id': self.company_id.currency_id.id,
+                    'sequence': 9999,
+                    'date_maturity': self.invoice_date_due,
+                    'display_type': 'product_cr',
+                })
+                totals_map['total_balance'] += diff_balance
+                totals_map['total_amount_currency'] += diff_amount_currency
+
+            rounding_lines._onchange_amount_currency()
+            rounding_lines._onchange_balance()
+            lines_map['rounding_lines'] = rounding_lines
+        else:
+            self.line_ids -= rounding_lines
+            lines_map['rounding_lines'] = self.env['account.move.line']
+
+    @api.multi
+    def _recompute_payment_terms_lines(self, lines_map, totals_map, terms_map):
+        if not self.invoice_date:
+            self.invoice_date = fields.Date.context_today(self)
+
+        if self.invoice_payment_term_id:
+            terms_date = self.invoice_date
+        else:
+            terms_date = self.invoice_date_due or self.invoice_date
+
+        if not lines_map['base_lines'] and not lines_map['taxes_lines']:
+            self.line_ids -= lines_map['terms_lines']
+            return
+
+        # Compute payment terms account.
+        # Find the receivable/payable account.
+        # /!\ The partner could not be set on a receipt.
+        if lines_map['terms_lines']:
+            # Retrieve account from previous payment terms lines.
+            account = lines_map['terms_lines'][0].account_id
+        elif self.partner_id:
+            # Retrieve account from partner.
+            if self.type in ('out_invoice', 'out_refund', 'out_receipt'):
+                account = self.partner_id.property_account_receivable_id
+            elif self.type in ('in_invoice', 'in_refund', 'in_receipt'):
+                account = self.partner_id.property_account_payable_id
+            else:
+                account = None
+        elif self.type in ('out_receipt', 'in_receipt', 'out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
+            # Search new account.
+            domain = [('company_id', '=', self.company_id.id)]
+            domain.append(('internal_type', '=', 'receivable' if self.type == 'out_receipt' else 'payable'))
+            account = self.env['account.account'].search(domain, limit=1)
+        else:
+            account = None
+
+        # Compute payment terms lines.
+        max_date_maturity = False
+        if self.invoice_payment_term_id:
+            to_compute = self.invoice_payment_term_id.compute(
+                totals_map['total_balance'], date_ref=terms_date, currency=self.currency_id)
+            if self.currency_id != self.company_id.currency_id:
+                # Multi-currencies.
+                to_compute_currency = self.invoice_payment_term_id.compute(
+                    totals_map['total_amount_currency'], date_ref=terms_date, currency=self.currency_id)
+                to_compute = [(b[0], b[1], ac[1]) for b, ac in zip(to_compute, to_compute_currency)]
+            else:
+                # Single-currency.
+                to_compute = [(b[0], b[1], 0.0) for b in to_compute]
+        else:
+            to_compute = [(fields.Date.to_string(terms_date), totals_map['total_balance'], totals_map['total_amount_currency'])]
+
+        terms_lines_to_keep = self.env['account.move.line']
+        for date_maturity, balance, amount_currency in to_compute:
+
+            # Keep track of the max encountered maturity date.
+            if not max_date_maturity or date_maturity > max_date_maturity:
+                max_date_maturity = date_maturity
+
+            candidate = terms_map.pop(date_maturity, None)
+
+            if candidate:
+                candidate.update({
+                    'amount_currency': -amount_currency,
+                    'debit': balance < 0.0 and -balance or 0.0,
+                    'credit': balance > 0.0 and balance or 0.0,
+                })
+            else:
+                candidate = self.env['account.move.line'].new({
+                    'name': self.invoice_payment_ref or '/',
+                    'debit': balance < 0.0 and -balance or 0.0,
+                    'credit': balance > 0.0 and balance or 0.0,
+                    'quantity': 1.0,
+                    'amount_currency': -amount_currency,
+                    'date_maturity': date_maturity,
+                    'move_id': self.id,
+                    'currency_id': self.currency_id.id if self.currency_id != self.company_id.currency_id else False,
+                    'account_id': account.id,
+                    'partner_id': self.commercial_partner_id.id,
+                    'display_type': 'balance',
+                })
+            terms_lines_to_keep += candidate
+
+        terms_lines_to_keep._onchange_amount_currency()
+        terms_lines_to_keep._onchange_balance()
+        self.line_ids -= lines_map['terms_lines'] - terms_lines_to_keep
+        terms_lines = terms_lines_to_keep
+
+        # Set date_maturity in others lines.
+        for line in lines_map['base_lines']:
+            line.date_maturity = max_date_maturity
+        for line in lines_map['taxes_lines']:
+            line.date_maturity = max_date_maturity
+
+        # Update invoice_payment_ref.
+        self.invoice_payment_ref = terms_lines and terms_lines[0].name or '/'
+
+        # Update the date_maturity.
+        self.invoice_date_due = max_date_maturity
+
     @api.multi
     def _onchange_process_dynamic_lines(self, options):
         recompute_all_taxes = options.get('recompute_all_taxes')
 
         is_invoice = self.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
-        base_lines = self.env['account.move.line']
-        taxes_lines = self.env['account.move.line']
-        terms_lines = self.env['account.move.line']
-        rounding_lines = self.env['account.move.line']
+        lines_map = {
+            'base_lines': self.env['account.move.line'],
+            'taxes_lines': self.env['account.move.line'],
+            'terms_lines': self.env['account.move.line'],
+            'rounding_lines': self.env['account.move.line'],
+        }
         taxes_map = {}
         terms_map = {}
 
@@ -361,298 +640,41 @@ class AccountMove(models.Model):
                 recompute_all_taxes = True
                 line.recompute_tax_line = False
             if line.tax_line_id:
-                taxes_lines += line
-                key = (
-                    line.tax_line_id.id,
-                    line.currency_id.id,
-                    line.tax_line_id.analytic and tuple(line.analytic_tag_ids.ids),
-                    line.tax_line_id.analytic and line.analytic_account_id.id,
-                )
+                lines_map['taxes_lines'] += line
+                key = self._build_tax_line_groupby_key(line, line.tax_line_id)
                 taxes_map[key] = [line, 0.0, 0.0, False]
             elif is_invoice and line._is_invoice_payment_term_line():
-                terms_lines += line
+                lines_map['terms_lines'] += line
                 terms_map[fields.Date.to_string(line.date_maturity)] = line
             elif is_invoice and line._is_invoice_cash_rounding_line():
-                rounding_lines += line
+                lines_map['rounding_lines'] += line
             elif is_invoice and line._is_invoice_line():
-                base_lines += line
+                lines_map['base_lines'] += line
             else:
-                base_lines += line
+                lines_map['base_lines'] += line
 
         # Compute taxes.
         if recompute_all_taxes:
-            # Compute taxes amounts.
-            for line in base_lines:
-                if not line.tax_ids:
-                    continue
-
-                balance_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
-                    line.balance, currency=line.company_currency_id, partner=line.partner_id)
-                if line.currency_id:
-                    # Multi-currencies mode: Taxes are computed both in company's currency / foreign currency.
-                    amount_currency_taxes_res = line.tax_ids.with_context(force_price_include=False).compute_all(
-                        line.amount_currency, currency=line.currency_id, partner=line.partner_id)
-                else:
-                    # Single-currency mode: Only company's currency is considered.
-                    amount_currency_taxes_res = {'taxes': [{'amount': 0.0} for tax_res in balance_taxes_res['taxes']]}
-
-                tax_exigible = True
-                for b_tax_res, ac_tax_res in zip(balance_taxes_res['taxes'], amount_currency_taxes_res['taxes']):
-                    tax = self.env['account.tax'].browse(b_tax_res['id'])
-                    if tax.tax_exigibility == 'on_payment':
-                        tax_exigible = False
-
-                    key = (
-                        tax.id,
-                        line.currency_id.id,
-                        tax.analytic and tuple(line.analytic_tag_ids.ids),
-                        tax.analytic and line.analytic_account_id.id,
-                    )
-                    if key not in taxes_map:
-                        taxes_map[key] = [None, 0.0, 0.0, True]
-                        recompute_all_taxes = True
-                    taxes_map[key][1] += b_tax_res['amount']
-                    taxes_map[key][2] += ac_tax_res['amount']
-                    taxes_map[key][3] = True
-                line.tax_exigible = tax_exigible
-
-            # Compute taxes lines.
-            for key, value in taxes_map.items():
-
-                tax_line, balance, amount_currency, processed = value
-
-                if tax_line:
-                    tax_line.update({
-                        'amount_currency': amount_currency,
-                        'debit': balance > 0.0 and balance or 0.0,
-                        'credit': balance < 0.0 and -balance or 0.0,
-                    })
-                else:
-                    account = line._get_default_tax_account(tax, self.type)
-                    tax_line = self.env['account.move.line'].new({
-                        'name': tax.name,
-                        'debit': balance > 0.0 and balance or 0.0,
-                        'credit': balance < 0.0 and -balance or 0.0,
-                        'quantity': 1.0,
-                        'amount_currency': amount_currency,
-                        'date_maturity': line.date_maturity,
-                        'tax_exigible': tax.tax_exigibility == 'on_invoice',
-                        'move_id': self.id,
-                        'currency_id': line.currency_id.id,
-                        'company_id': line.company_id.id,
-                        'company_currency_id': line.company_currency_id.id,
-                        'account_id': account.id,
-                        'partner_id': line.partner_id.id,
-                        'tax_line_id': tax.id,
-                        'analytic_account_id': line.analytic_account_id.id if tax.analytic else False,
-                        'analytic_tag_ids': [(6, 0, line.analytic_tag_ids.ids)] if tax.analytic else False,
-                        'display_type': 'tax',
-                    })
-                    taxes_lines += tax_line
-                tax_line._onchange_amount_currency()
-                tax_line._onchange_balance()
-
-            # Drop taxes lines that are no longer required.
-            for key, value in taxes_map.items():
-                if not value[3]:
-                    self.line_ids -= value[0]
-                    taxes_lines -= value[0]
+            self._recompute_taxes_lines(lines_map, taxes_map)
 
         if is_invoice:
             # Compute totals.
-            total_balance = total_amount_currency = 0.0
-            for line in base_lines:
-                total_balance += line.balance
-                total_amount_currency += line.amount_currency
-            for line in taxes_lines:
-                total_balance += line.balance
-                total_amount_currency += line.amount_currency
+            totals_map = {
+                'total_balance': 0.0,
+                'total_amount_currency': 0.0,
+            }
+            for line in lines_map['base_lines']:
+                totals_map['total_balance'] += line.balance
+                totals_map['total_amount_currency'] += line.amount_currency
+            for line in lines_map['taxes_lines']:
+                totals_map['total_balance'] += line.balance
+                totals_map['total_amount_currency'] += line.amount_currency
 
             # Compute cash rounding.
-            if self.invoice_cash_rounding_id:
-                # Clear lines if the mode has changed.
-                strategy = self.invoice_cash_rounding_id.strategy
-                if rounding_lines and \
-                        (strategy == 'biggest_tax' and rounding_lines.display_type == 'product_cr') \
-                        or (strategy == 'add_invoice_line' and rounding_lines.display_type == 'tax_cr'):
-                    self.line_ids -= rounding_lines
-                    rounding_lines = self.env['account.move.line']
-
-                if self.currency_id == self.company_id.currency_id:
-                    diff_balance = self.invoice_cash_rounding_id.compute_difference(self.company_id.currency_id, total_balance)
-                    diff_amount_currency = 0.0
-                    currency = False
-                else:
-                    currency = self.currency_id
-                    diff_amount_currency = self.invoice_cash_rounding_id.compute_difference(self.currency_id, total_amount_currency)
-                    diff_balance = currency._convert(diff_amount_currency, self.company_id.currency_id, self.company_id, self.date)
-
-                if strategy == 'biggest_tax' and rounding_lines:
-                    rounding_lines.update({
-                        'amount_currency': diff_amount_currency,
-                        'debit': diff_balance > 0.0 and diff_balance or 0.0,
-                        'credit': diff_balance < 0.0 and -diff_balance or 0.0,
-                    })
-                    total_balance += diff_balance
-                    total_amount_currency += diff_amount_currency
-                elif strategy == 'biggest_tax' and not rounding_lines:
-                    # Search for the biggest tax.
-                    biggest_tax_line = None
-                    for tax_line in taxes_lines:
-                        if not biggest_tax_line or tax_line.balance > biggest_tax_line.balance:
-                            biggest_tax_line = tax_line
-
-                    if biggest_tax_line:
-                        rounding_lines = self.env['account.move.line'].new({
-                            'name': _('%s (rounding)') % biggest_tax_line.name,
-                            'debit': diff_balance > 0.0 and diff_balance or 0.0,
-                            'credit': diff_balance < 0.0 and -diff_balance or 0.0,
-                            'quantity': 1.0,
-                            'amount_currency': diff_amount_currency,
-                            'account_id': biggest_tax_line.account_id.id,
-                            'partner_id': self.partner_id.id,
-                            'move_id': self.id,
-                            'currency_id': currency and currency.id,
-                            'company_id': self.company_id.id,
-                            'company_currency_id': self.company_id.currency_id.id,
-                            'date_maturity': self.invoice_date_due,
-                            'tax_line_id': biggest_tax_line.tax_line_id.id,
-                            'display_type': 'tax_cr',
-                            'sequence': 9999,
-                        })
-                        total_balance += diff_balance
-                        total_amount_currency += diff_amount_currency
-                elif strategy == 'add_invoice_line' and rounding_lines:
-                    rounding_lines.update({
-                        'amount_currency': diff_amount_currency,
-                        'debit': diff_balance > 0.0 and diff_balance or 0.0,
-                        'credit': diff_balance < 0.0 and -diff_balance or 0.0,
-                    })
-                    total_balance += diff_balance
-                    total_amount_currency += diff_amount_currency
-                elif strategy == 'add_invoice_line' and not rounding_lines:
-                    rounding_lines = self.env['account.move.line'].new({
-                        'name': self.invoice_cash_rounding_id.name,
-                        'debit': diff_balance > 0.0 and diff_balance or 0.0,
-                        'credit': diff_balance < 0.0 and -diff_balance or 0.0,
-                        'quantity': 1.0,
-                        'amount_currency': diff_amount_currency,
-                        'account_id': self.invoice_cash_rounding_id.account_id.id,
-                        'partner_id': self.partner_id.id,
-                        'move_id': self.id,
-                        'currency_id': currency and currency.id,
-                        'company_id': self.company_id.id,
-                        'company_currency_id': self.company_id.currency_id.id,
-                        'sequence': 9999,
-                        'date_maturity': self.invoice_date_due,
-                        'display_type': 'product_cr',
-                    })
-                    total_balance += diff_balance
-                    total_amount_currency += diff_amount_currency
-
-                rounding_lines._onchange_amount_currency()
-                rounding_lines._onchange_balance()
-            else:
-                self.line_ids -= rounding_lines
+            self._recompute_cash_rounding_lines(lines_map, totals_map)
 
             # Compute payment terms.
-            if not self.invoice_date:
-                self.invoice_date = fields.Date.context_today(self)
-
-            if self.invoice_payment_term_id:
-                terms_date = self.invoice_date
-            else:
-                terms_date = self.invoice_date_due or self.invoice_date
-
-            if not base_lines and not taxes_lines:
-                self.line_ids -= terms_lines
-                return
-
-            # Compute payment terms account.
-            # Find the receivable/payable account.
-            # /!\ The partner could not be set on a receipt.
-            if terms_lines:
-                # Retrieve account from previous payment terms lines.
-                account = terms_lines[0].account_id
-            elif self.partner_id:
-                # Retrieve account from partner.
-                if self.type in ('out_invoice', 'out_refund', 'out_receipt'):
-                    account = self.partner_id.property_account_receivable_id
-                elif self.type in ('in_invoice', 'in_refund', 'in_receipt'):
-                    account = self.partner_id.property_account_payable_id
-                else:
-                    account = None
-            elif self.type in ('out_receipt', 'in_receipt', 'out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
-                # Search new account.
-                domain = [('company_id', '=', self.company_id.id)]
-                domain.append(('internal_type', '=', 'receivable' if self.type == 'out_receipt' else 'payable'))
-                account = self.env['account.account'].search(domain, limit=1)
-            else:
-                account = None
-
-            # Compute payment terms lines.
-            max_date_maturity = False
-            if self.invoice_payment_term_id:
-                to_compute = self.invoice_payment_term_id.compute(
-                    total_balance, date_ref=terms_date, currency=self.currency_id)
-                if self.currency_id != self.company_id.currency_id:
-                    # Multi-currencies.
-                    to_compute_currency = self.invoice_payment_term_id.compute(
-                        total_amount_currency, date_ref=terms_date, currency=self.currency_id)
-                    to_compute = [(b[0], b[1], ac[1]) for b, ac in zip(to_compute, to_compute_currency)]
-                else:
-                    # Single-currency.
-                    to_compute = [(b[0], b[1], 0.0) for b in to_compute]
-            else:
-                to_compute = [(fields.Date.to_string(terms_date), total_balance, total_amount_currency)]
-
-            terms_lines_to_keep = self.env['account.move.line']
-            for date_maturity, balance, amount_currency in to_compute:
-
-                # Keep track of the max encountered maturity date.
-                if not max_date_maturity or date_maturity > max_date_maturity:
-                    max_date_maturity = date_maturity
-
-                candidate = terms_map.pop(date_maturity, None)
-
-                if candidate:
-                    candidate.update({
-                        'amount_currency': -amount_currency,
-                        'debit': balance < 0.0 and -balance or 0.0,
-                        'credit': balance > 0.0 and balance or 0.0,
-                    })
-                else:
-                    candidate = self.env['account.move.line'].new({
-                        'name': self.invoice_payment_ref or '/',
-                        'debit': balance < 0.0 and -balance or 0.0,
-                        'credit': balance > 0.0 and balance or 0.0,
-                        'quantity': 1.0,
-                        'amount_currency': -amount_currency,
-                        'date_maturity': date_maturity,
-                        'move_id': self.id,
-                        'currency_id': self.currency_id.id if self.currency_id != self.company_id.currency_id else False,
-                        'account_id': account.id,
-                        'partner_id': self.commercial_partner_id.id,
-                        'display_type': 'balance',
-                    })
-                terms_lines_to_keep += candidate
-
-            terms_lines_to_keep._onchange_amount_currency()
-            terms_lines_to_keep._onchange_balance()
-            self.line_ids -= terms_lines - terms_lines_to_keep
-            terms_lines = terms_lines_to_keep
-
-            # Set date_maturity in others lines.
-            for line in base_lines:
-                line.date_maturity = max_date_maturity
-            for line in taxes_lines:
-                line.date_maturity = max_date_maturity
-
-            # Update invoice_payment_ref.
-            self.invoice_payment_ref = terms_lines and terms_lines[0].name or '/'
-
-            # Update the date_maturity.
-            self.invoice_date_due = max_date_maturity
+            self._recompute_payment_terms_lines(lines_map, totals_map, terms_map)
 
     @api.multi
     def _onchange_pre_hook(self, field_names):
