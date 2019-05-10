@@ -17,7 +17,7 @@ class TestAccountMoveInReceipt(AccountingSavepointCase):
     # -------------------------------------------------------------------------
 
     def test_in_receipt_onchange_1(self):
-        move_form = Form(self.env['account.move'].with_context(type='in_receipt'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_receipt'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
         move_form.partner_id = self.partner_a
         with move_form.invoice_line_ids.new() as line_form:
@@ -132,7 +132,7 @@ class TestAccountMoveInReceipt(AccountingSavepointCase):
 
     def test_in_receipt_create_invoice_line_ids_1_single_currency(self):
         # Test creating an account_move with the least information.
-        move = self.env['account.move'].with_context(type='in_receipt').create({
+        move = self.env['account.move'].with_context(default_type='in_receipt').create({
             'type': 'in_receipt',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),

@@ -181,7 +181,7 @@ class TestSaleOrder(TestCommonSaleNoChart):
         so.action_confirm()
         so._create_analytic_account()
 
-        inv = self.env['account.move'].with_context(type='in_invoice').create({
+        inv = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_customer_usd.id,
             'invoice_line_ids': [

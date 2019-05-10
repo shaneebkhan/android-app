@@ -342,7 +342,7 @@ class account_journal(models.Model):
         elif self.type == 'purchase':
             ctx['type'] = 'in_refund' if ctx.get('refund') else 'in_invoice'
         else:
-            ctx['type'] = 'misc'
+            ctx['type'] = 'entry'
             ctx['view_no_maturity'] = True
         return {
             'name': _('Create invoice/bill'),

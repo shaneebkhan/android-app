@@ -13,7 +13,7 @@ class ISRTest(AccountingTestCase):
 
     def create_invoice(self, currency_to_use='base.CHF'):
         """ Generates a test invoice """
-        invoice = self.env['account.move'].with_context(type='out_invoice').create({
+        invoice = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.env.ref("base.res_partner_2").id,
             'currency_id': self.env.ref(currency_to_use).id,

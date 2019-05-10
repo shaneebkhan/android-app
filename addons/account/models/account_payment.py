@@ -655,7 +655,7 @@ class account_payment(models.Model):
             If invoice_ids is not empty, there will be one reconcilable move line per invoice to reconcile with.
             If the payment is a transfer, a second journal entry is created in the destination journal to receive money from the transfer account.
         """
-        AccountMove = self.env['account.move'].with_context(type='misc')
+        AccountMove = self.env['account.move'].with_context(default_type='entry')
         for rec in self:
 
             if rec.state != 'draft':

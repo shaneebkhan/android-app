@@ -8,7 +8,7 @@ from odoo.tests import tagged
 class TestReconciliationMatchingRules(AccountingTestCase):
     def _create_invoice_line(self, amount, partner, type):
         ''' Create an invoice on the fly.'''
-        invoice_form = Form(self.env['account.move'].with_context(type=type))
+        invoice_form = Form(self.env['account.move'].with_context(default_type=type))
         invoice_form.partner_id = partner
         with invoice_form.invoice_line_ids.new() as invoice_line_form:
             invoice_line_form.name = 'xxxx'

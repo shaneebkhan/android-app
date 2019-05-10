@@ -56,7 +56,7 @@ class AccountMove(models.Model):
         '''
         amount_total_import = None
 
-        self_ctx = self.with_context(type='in_invoice')
+        self_ctx = self.with_context(default_type='in_invoice')
 
         # self could be a single record (editing) or be empty (new).
         with Form(self_ctx) as invoice_form:

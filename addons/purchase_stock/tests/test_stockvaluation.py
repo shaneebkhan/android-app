@@ -350,7 +350,7 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt_po1.move_lines.quantity_done = 10
         receipt_po1.button_validate()
 
-        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
         move_form.partner_id = self.partner_id
         move_form.purchase_id = po1
         invoice_po1 = move_form.save()
@@ -375,7 +375,7 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt_po2.move_lines.quantity_done = 10
         receipt_po2.button_validate()
 
-        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
         move_form.partner_id = self.partner_id
         move_form.purchase_id = po2
         invoice_po2 = move_form.save()
@@ -399,7 +399,7 @@ class TestStockValuationWithCOA(AccountingTestCase):
         self.assertEqual(self.product1.stock_value, 200)
 
         # create a credit note for po2
-        move_form = Form(self.env['account.move'].with_context(type='in_refund'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
         move_form.partner_id = self.partner_id
         move_form.purchase_id = po2
         with move_form.invoice_line_ids.edit(0) as line_form:
@@ -439,7 +439,7 @@ class TestStockValuationWithCOA(AccountingTestCase):
         receipt.button_validate()
 
         # Create an invoice with a different price
-        move_form = Form(self.env['account.move'].with_context(type='in_invoice'))
+        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
         move_form.partner_id = order.partner_id
         move_form.purchase_id = order
         with move_form.invoice_line_ids.edit(0) as line_form:

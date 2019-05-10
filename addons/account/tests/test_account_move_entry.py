@@ -12,7 +12,7 @@ _logger = logging.getLogger(__name__)
 
 
 @tagged('post_install', '-at_install')
-class TestAccountMoveMisc(AccountingSavepointCase):
+class TestAccountMoveEntry(AccountingSavepointCase):
 
     # -------------------------------------------------------------------------
     # TESTS Miscellaneous operations ONCHANGE
@@ -114,7 +114,7 @@ class TestAccountMoveMisc(AccountingSavepointCase):
 
     def test_misc_tax_lock_date_1(self):
         move = self.env['account.move'].create({
-            'type': 'misc',
+            'type': 'entry',
             'date': fields.Date.from_string('2016-01-01'),
             'line_ids': [
                 (0, None, {

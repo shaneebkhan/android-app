@@ -47,9 +47,9 @@ class AccountMove(models.Model):
         else:
             type = 'in_invoice'
 
-        default_journal = self.with_context(type=type)._get_default_journal()
+        default_journal = self.with_context(default_type=type)._get_default_journal()
 
-        with Form(self.with_context(type=type, default_journal_id=default_journal.id)) as invoice_form:
+        with Form(self.with_context(default_type=type, default_journal_id=default_journal.id)) as invoice_form:
             # Reference
             elements = tree.xpath('//cbc:ID', namespaces=namespaces)
             if elements:

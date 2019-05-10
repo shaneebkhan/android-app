@@ -117,7 +117,7 @@ class TestReconciliation(AccountingTestCase):
         }
         if currency_id:
             invoice_vals['currency_id'] = currency_id
-        invoice = self.env['account.move'].with_context(type=type).create(invoice_vals)
+        invoice = self.env['account.move'].with_context(default_type=type).create(invoice_vals)
         invoice.post()
         return invoice
 
@@ -277,7 +277,7 @@ class TestReconciliationExec(TestReconciliation):
     def test_statement_euro_invoice_usd_transaction_euro_full(self):
         # Create a customer invoice of 50 USD.
         partner = self.env['res.partner'].create({'name': 'test'})
-        move = self.env['account.move'].with_context(type='out_invoice').create({
+        move = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': partner.id,
             'invoice_date': '%s-07-01' % time.strftime('%Y'),
@@ -650,7 +650,7 @@ class TestReconciliationExec(TestReconciliation):
             'company_id': self.env.ref('base.main_company').id})
 
         # Preparing Invoices (from vendor)
-        invoice_a = self.env['account.move'].with_context(type='in_invoice').create({
+        invoice_a = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_agrolait_id,
             'currency_id': self.currency_usd_id,
@@ -660,7 +660,7 @@ class TestReconciliationExec(TestReconciliation):
                 (0, 0, {'product_id': self.product.id, 'quantity': 1, 'price_unit': 50.0})
             ],
         })
-        invoice_b = self.env['account.move'].with_context(type='in_invoice').create({
+        invoice_b = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_agrolait_id,
             'currency_id': self.currency_usd_id,
@@ -868,7 +868,7 @@ class TestReconciliationExec(TestReconciliation):
         self.assertEqual(reversed_customer_line.full_reconcile_id.id, customer_line.full_reconcile_id.id)
 
     def create_invoice_partner(self, type='out_invoice', invoice_amount=50, currency_id=None, partner_id=False, payment_term_id=False):
-        move = self.env['account.move'].with_context(type=type).create({
+        move = self.env['account.move'].with_context(default_type=type).create({
             'type': type,
             'partner_id': partner_id,
             'invoice_date': time.strftime('%Y') + '-07-01',
@@ -1094,7 +1094,7 @@ class TestReconciliationExec(TestReconciliation):
             'rate': 2,
         })
 
-        invoice_cust_1 = self.env['account.move'].with_context(type='out_invoice').create({
+        invoice_cust_1 = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.partner_agrolait_id,
             'invoice_date': '%s-01-01' % time.strftime('%Y'),
@@ -1824,7 +1824,7 @@ class TestReconciliationExec(TestReconciliation):
             'company_id': self.env.ref('base.main_company').id,
         })
 
-        move_form = Form(self.env['account.move'].with_context(type='out_invoice'))
+        move_form = Form(self.env['account.move'].with_context(default_type='out_invoice'))
         move_form.partner_id = self.partner_agrolait
         move_form.currency_id = self.env.ref('base.USD')
         move_form.invoice_date = time.strftime('%Y') + '-07-01'

@@ -18,7 +18,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_out_invoice_1_draft_refund(self):
         # Create an 'out_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='out_invoice').create({
+        move = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -158,7 +158,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_out_invoice_2_cancel_refund(self):
         # Create an 'out_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='out_invoice').create({
+        move = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -302,7 +302,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_out_invoice_3_modify_refund(self):
         # Create an 'out_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='out_invoice').create({
+        move = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -559,7 +559,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_out_invoice_4_modify_refund_manual_tax(self):
         # Create an 'out_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='out_invoice').create({
+        move = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -826,7 +826,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_in_invoice_1_draft_refund(self):
         # Create an 'in_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='in_invoice').create({
+        move = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -966,7 +966,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_in_invoice_2_cancel_refund(self):
         # Create an 'in_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='in_invoice').create({
+        move = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -1110,7 +1110,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_in_invoice_3_modify_refund(self):
         # Create an 'in_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='in_invoice').create({
+        move = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -1367,7 +1367,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_in_invoice_3_modify_refund_manual_tax(self):
         # Create an 'in_invoice' journal entry.
-        move = self.env['account.move'].with_context(type='in_invoice').create({
+        move = self.env['account.move'].with_context(default_type='in_invoice').create({
             'type': 'in_invoice',
             'partner_id': self.partner_a.id,
             'invoice_date': fields.Date.from_string('2019-01-01'),
@@ -1634,7 +1634,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
 
     def test_reversal_misc_2_cancel_refund(self):
         move = self.env['account.move'].create({
-            'type': 'misc',
+            'default_type': 'entry',
             'line_ids': [
                 (0, None, {
                     'account_id': self.parent_acc_revenue_1.id,
@@ -1738,7 +1738,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
             'partner_id': False,
             'currency_id': self.company_parent.currency_id.id,
             'journal_id': self.parent_journal_sale_1.id,
-            'type': 'misc',
+            'type': 'entry',
             'date': fields.Date.from_string('2019-02-01'),
             'fiscal_position_id': False,
             'invoice_payment_ref': False,

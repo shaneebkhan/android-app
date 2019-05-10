@@ -442,7 +442,7 @@ class SaleOrder(models.Model):
         a clean extension chain).
         """
         self.ensure_one()
-        journal = self.env['account.move'].with_context(force_company=self.company_id.id, type='out_invoice')._get_default_journal()
+        journal = self.env['account.move'].with_context(force_company=self.company_id.id, default_type='out_invoice')._get_default_journal()
         if not journal:
             raise UserError(_('Please define an accounting sales journal for the %s company.') % self.company_id.id)
 
@@ -565,8 +565,8 @@ class SaleOrder(models.Model):
             out_invoice_vals_list = invoice_vals_list
 
         # Create invoices.
-        moves = self.env['account.move'].with_context(type='out_invoice').create(out_invoice_vals_list)
-        moves += self.env['account.move'].with_context(type='out_refund').create(refund_invoice_vals_list)
+        moves = self.env['account.move'].with_context(default_type='out_invoice').create(out_invoice_vals_list)
+        moves += self.env['account.move'].with_context(default_type='out_refund').create(refund_invoice_vals_list)
         for move in moves:
             move.message_post_with_view('mail.message_origin_link',
                 values={'self': move, 'origin': move.line_ids.mapped('sale_line_ids.order_id')},

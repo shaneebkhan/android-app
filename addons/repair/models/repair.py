@@ -424,7 +424,7 @@ class Repair(models.Model):
         for invoices in grouped_invoices_vals.values():
             for invoice in invoices:
                 invoices_vals_list.append(invoice)
-        self.env['account.move'].with_context(type='out_invoice').create(invoices_vals_list)
+        self.env['account.move'].with_context(default_type='out_invoice').create(invoices_vals_list)
 
         repairs.write({'invoiced': True})
         repairs.mapped('operations').filtered(lambda op: op.type == 'add').write({'invoiced': True})

@@ -26,19 +26,13 @@ class AccountMove(models.Model):
     _description = "Journal Entries"
     _order = 'date desc, id desc'
 
-    # TODO: remove _get_default_type and pass the type inside the context using 'default_type' key instead of 'type'
-    @api.model
-    def _get_default_type(self):
-        ''' Get the default type from context. 'misc' is set by default. '''
-        return self._context.get('type', 'misc')
-
     @api.model
     def _get_default_journal(self):
         ''' Get the default journal.
         - The default journal could by passed through the context using the 'default_journal_id' key containing its id.
-        - The default journal is determined by the default type (see '_get_default_type').
+        - The default journal is determined by the default type found in the context or 'entry'.
         '''
-        move_type = self._get_default_type()
+        move_type = self._context.get('default_type', 'entry')
 
         if self._context.get('default_journal_id'):
             # /!\ No check ensuring the consistency between the default journal and the default type if passed by the
@@ -83,9 +77,8 @@ class AccountMove(models.Model):
             ('cancel', 'cancelled')
         ], string='Status', required=True, readonly=True, copy=False, tracking=True,
         default='draft')
-    # TODO: ('misc', 'Miscellaneous Operations') => ('entry', 'Journal Entry')
     type = fields.Selection(selection=[
-            ('misc', 'Miscellaneous Operations'),
+            ('entry', 'Journal Entry'),
             ('out_invoice', 'Customer Invoice'),
             ('out_refund', 'Customer Credit Note'),
             ('in_invoice', 'Vendor Bill'),
@@ -93,7 +86,7 @@ class AccountMove(models.Model):
             ('out_receipt', 'Sales Receipt'),
             ('in_receipt', 'Purchase Receipt'),
         ], String='Type', required=True, store=True, index=True, readonly=True, tracking=True,
-        default=_get_default_type)
+        default="entry")
     amount_untaxed = fields.Monetary(string='Untaxed Amount', store=True, readonly=True, tracking=True,
         compute='_compute_amount')
     amount_tax = fields.Monetary(string='Tax', store=True, readonly=True,
@@ -797,7 +790,7 @@ class AccountMove(models.Model):
                 if line.currency_id:
                     currencies.add(line.currency_id)
 
-                if move.type == 'misc':
+                if move.type == 'entry':
                     # Miscellaneous operation.
                     total_residual += line.amount_residual
                     total_residual_currency += line.amount_residual_currency
@@ -825,7 +818,7 @@ class AccountMove(models.Model):
             total = total_untaxed + total_tax
             total_currency = total_untaxed_currency + total_tax_currency
 
-            if (move.type == 'misc' and total < 0.0) or move.type in ('out_invoice', 'in_refund', 'out_receipt'):
+            if (move.type == 'entry' and total < 0.0) or move.type in ('out_invoice', 'in_refund', 'out_receipt'):
                 sign = -1
             else:
                 sign = 1
@@ -850,7 +843,7 @@ class AccountMove(models.Model):
     @api.multi
     def _inverse_amount_total(self):
         for move in self:
-            if len(move.line_ids) != 2 or move.type != 'misc':
+            if len(move.line_ids) != 2 or move.type != 'entry':
                 continue
 
             to_write = []
@@ -1130,8 +1123,8 @@ class AccountMove(models.Model):
                 AND move2.type = move.type
                 AND move2.id != move.id
             WHERE move.id IN %s
-            AND move.type != 'misc'
-            AND move2.type != 'misc'
+            AND move.type != 'entry'
+            AND move2.type != 'entry'
             AND move.name != '/'
             AND move2.name != '/'
         ''', [tuple(self.ids)])
@@ -1227,7 +1220,7 @@ class AccountMove(models.Model):
                 vals.pop('invoice_line_ids', None)
                 new_vals_list.append(vals)
                 continue
-            vals['type'] = vals.get('type', self._get_default_type())
+            vals['type'] = vals.get('type', self._context.get('default_type', 'entry'))
             if vals['type'] not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
                 new_vals_list.append(vals)
                 continue
@@ -1237,7 +1230,7 @@ class AccountMove(models.Model):
             if vals.get('invoice_date') and not vals.get('date'):
                 vals['date'] = vals['invoice_date']
 
-            ctx_vals = {'type': vals['type']}
+            ctx_vals = {'default_type': vals['type']}
             if vals.get('journal_id'):
                 ctx_vals['default_journal_id'] = vals['journal_id']
             self_ctx = self.with_context(**ctx_vals)
@@ -1327,7 +1320,7 @@ class AccountMove(models.Model):
     def name_get(self):
         result = []
         for move in self:
-            if move.type == 'misc':
+            if move.type == 'entry':
                 # Miscellaneous operation.
                 if move.state == 'draft':
                     name = '* %s' % str(move.id)
@@ -1429,7 +1422,7 @@ class AccountMove(models.Model):
         self.ensure_one()
 
         journal = self.journal_id
-        if self.type in ('misc', 'out_invoice', 'in_invoice') or not journal.refund_sequence:
+        if self.type in ('entry', 'out_invoice', 'in_invoice') or not journal.refund_sequence:
             return journal.sequence_id
         if not journal.refund_sequence_id:
             return
@@ -1502,7 +1495,7 @@ class AccountMove(models.Model):
                 lines.remove_move_reconcile()
 
         reverse_type_map = {
-            'misc': 'misc',
+            'entry': 'entry',
             'out_invoice': 'out_refund',
             'in_invoice': 'in_refund',
             'in_refund': 'in_invoice',
@@ -2726,7 +2719,7 @@ class AccountMoveLine(models.Model):
             exchange_move_id = False
             # Eventually create a journal entry to book the difference due to foreign currency's exchange rate that fluctuates
             if to_balance and any([not float_is_zero(residual, precision_rounding=digits_rounding_precision) for aml, residual in to_balance.values()]):
-                exchange_move = self.env['account.move'].with_context(type='misc').create(
+                exchange_move = self.env['account.move'].with_context(default_type='entry').create(
                     self.env['account.full.reconcile']._prepare_exchange_diff_move(move_date=maxdate, company=amls[0].company_id))
                 part_reconcile = self.env['account.partial.reconcile']
                 for aml_to_balance, total in to_balance.values():

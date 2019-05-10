@@ -49,7 +49,7 @@ class TestPingenSend(AccountingTestCase):
             'user_type_id': self.env.ref('account.data_account_type_direct_costs').id
         })
 
-        invoice = self.env['account.move'].with_context(type='out_invoice').create({
+        invoice = self.env['account.move'].with_context(default_type='out_invoice').create({
             'type': 'out_invoice',
             'partner_id': partner_agrolait.id,
             'currency_id': currency.id,
