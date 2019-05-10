@@ -709,8 +709,10 @@ class AccountMove(models.Model):
         if 'invoice_line_ids' not in field_names and 'line_ids' not in field_names:
             return
 
+        # Hack the snapshot directly to avoid a huge overhead in the cache.
         display_types = self.env['account.move.line']._get_invoice_line_types()
-        self.invoice_line_ids = self.line_ids.filtered(lambda line: line.display_type in display_types)
+        snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['invoice_line_ids']\
+            .filtered(lambda line: line.display_type in display_types)
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
