@@ -1774,13 +1774,12 @@ class AccountMoveLine(models.Model):
     def _get_invoice_line_types(self):
         return [False, 'line_section', 'line_note', 'product_cr']
 
-    # TODO: RE-ORDER all these fields by feature/purpose
     # ==== Business fields ====
+    move_id = fields.Many2one('account.move', string='Journal Entry',
+        index=True, required=True, auto_join=True, ondelete="cascade",
+        help="The move of this entry line.")
     sequence = fields.Integer(default=10)
     name = fields.Char(string='Label')
-    date = fields.Date(related='move_id.date', store=True, readonly=True, index=True, copy=False)
-    ref = fields.Char(related='move_id.ref', store=True, copy=False, index=True, readonly=False)
-    parent_state = fields.Selection(related='move_id.state', store=True, readonly=True)
     quantity = fields.Float(string='Quantity',
         default=1.0, digits=dp.get_precision('Product Unit of Measure'),
         help="The optional quantity expressed by this line, eg: number of product sold."
@@ -1825,6 +1824,38 @@ class AccountMoveLine(models.Model):
         help="Technical field used to mark a tax line as exigible in the vat report or not (only exigible journal items"
              " are displayed). By default all new journal items are directly exigible, but with the feature cash_basis"
              " on taxes, some will become exigible only when the payment is recorded.")
+    currency_id = fields.Many2one('res.currency', string='Currency')
+    partner_id = fields.Many2one('res.partner', string='Partner', ondelete='restrict')
+    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
+    product_id = fields.Many2one('product.product', string='Product')
+    account_id = fields.Many2one('account.account', string='Account',
+        index=True, ondelete="cascade",
+        domain=[('deprecated', '=', False)])
+    tax_ids = fields.Many2many('account.tax', string='Taxes')
+    tax_line_id = fields.Many2one('account.tax', string='Originator tax', ondelete='restrict')
+    analytic_line_ids = fields.One2many('account.analytic.line', 'move_id', string='Analytic lines')
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Analytic Account', index=True)
+    analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Analytic Tags')
+    reconcile_model_id = fields.Many2one('account.reconcile.model', string="Reconciliation Model", copy=False)
+    payment_id = fields.Many2one('account.payment', string="Originator Payment", copy=False,
+        help="Payment that created this entry")
+    statement_line_id = fields.Many2one('account.bank.statement.line',
+        string='Bank statement line reconciled with this entry',
+        index=True, copy=False, readonly=True)
+    statement_id = fields.Many2one(related='statement_line_id.statement_id', store=True, index=True, copy=False,
+        help="The bank statement used for bank reconciliation")
+
+    # ==== related business fields ====
+    date = fields.Date(related='move_id.date', store=True, readonly=True, index=True, copy=False)
+    ref = fields.Char(related='move_id.ref', store=True, copy=False, index=True, readonly=False)
+    parent_state = fields.Selection(related='move_id.state', store=True, readonly=True)
+    journal_id = fields.Many2one(related='move_id.journal_id', store=True, readonly=False, index=True, copy=False)
+    company_id = fields.Many2one(related='move_id.company_id', store=True, readonly=True)
+    company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company Currency',
+        readonly=True, store=True,
+        help='Utility field to express amount currency')
+
+    # ==== Onchange purpose fields ====
     recompute_tax_line = fields.Boolean(store=False, readonly=True,
         help="Technical field used to know on which lines the taxes must be recomputed.")
     display_type = fields.Selection([
@@ -1835,41 +1866,15 @@ class AccountMoveLine(models.Model):
         ('tax', 'Tax Line'),
         ('balance', 'Auto-balance Line'),
     ], default=False, help="Technical field for UX purpose.")
-    move_id = fields.Many2one('account.move', string='Journal Entry',
-        index=True, required=True, auto_join=True, ondelete="cascade",
-        help="The move of this entry line.")
-    currency_id = fields.Many2one('res.currency', string='Currency')
     always_set_currency_id = fields.Many2one('res.currency', string='Foreign Currency',
         compute='_compute_always_set_currency_id')
-    journal_id = fields.Many2one(related='move_id.journal_id', store=True, readonly=False, index=True, copy=False)
-    company_id = fields.Many2one(related='move_id.company_id', store=True, readonly=True)
-    company_currency_id = fields.Many2one(related='company_id.currency_id', string='Company Currency',
-        readonly=True, store=True,
-        help='Utility field to express amount currency')
-    partner_id = fields.Many2one('res.partner', string='Partner', ondelete='restrict')
-    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    product_id = fields.Many2one('product.product', string='Product')
-    account_id = fields.Many2one('account.account', string='Account',
-        index=True, ondelete="cascade",
-        domain=[('deprecated', '=', False)])
-    payment_id = fields.Many2one('account.payment', string="Originator Payment", copy=False,
-        help="Payment that created this entry")
-    statement_line_id = fields.Many2one('account.bank.statement.line',
-        string='Bank statement line reconciled with this entry',
-        index=True, copy=False, readonly=True)
-    statement_id = fields.Many2one(related='statement_line_id.statement_id', store=True, index=True, copy=False,
-        help="The bank statement used for bank reconciliation")
+
+    # ==== Reconciliation fields ====
     full_reconcile_id = fields.Many2one('account.full.reconcile', string="Matching Number", copy=False, index=True)
     matched_debit_ids = fields.One2many('account.partial.reconcile', 'credit_move_id', String='Matched Debits',
         help='Debit journal items that are matched with this journal item.')
     matched_credit_ids = fields.One2many('account.partial.reconcile', 'debit_move_id', String='Matched Credits',
         help='Credit journal items that are matched with this journal item.')
-    tax_ids = fields.Many2many('account.tax', string='Taxes')
-    tax_line_id = fields.Many2one('account.tax', string='Originator tax', ondelete='restrict')
-    analytic_line_ids = fields.One2many('account.analytic.line', 'move_id', string='Analytic lines')
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Analytic Account', index=True)
-    analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Analytic Tags')
-    reconcile_model_id = fields.Many2one('account.reconcile.model', string="Reconciliation Model", copy=False)
 
     _sql_constraints = [
         (
