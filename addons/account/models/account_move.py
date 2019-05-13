@@ -671,53 +671,55 @@ class AccountMove(models.Model):
             self._recompute_payment_terms_lines(lines_map, totals_map, terms_map)
 
     @api.multi
-    def _onchange_pre_hook(self, field_names):
-        if 'invoice_line_ids' not in field_names:
-            return
-
-        display_types = self.env['account.move.line']._get_invoice_line_types()
-        amls_map = {}
-        for aml in self.line_ids:
-            aml_id = aml.id or aml.id.ref
-            amls_map[aml_id] = (aml, False)
-        for iml in self.invoice_line_ids:
-            iml_id = iml.id or iml.id.ref
-            amls_map[iml_id] = (iml, True)
-        new_amls = self.env['account.move.line']
-        for aml, processed in amls_map.values():
-            if aml.display_type in display_types and not processed:
-                self.recompute_taxes = True
-            else:
-                new_amls += aml
-        self.line_ids = new_amls
-
-    @api.multi
-    def _onchange_post_hook(self, field_names, snapshot0, snapshot1):
+    def _onchange(self, nametree, field_names, field_onchange, result, snapshot0):
         def field_has_changed(field_name):
             return field_name in field_names or snapshot0.get(field_name) != snapshot1.get(field_name)
 
-        recompute_all_taxes = recompute_auto_balance = False
+        if 'invoice_line_ids' in field_names:
+            display_types = self.env['account.move.line']._get_invoice_line_types()
+            amls_map = {}
+            for aml in self.line_ids:
+                aml_id = aml.id or aml.id.ref
+                amls_map[aml_id] = (aml, False)
+            for iml in self.invoice_line_ids:
+                iml_id = iml.id or iml.id.ref
+                amls_map[iml_id] = (iml, True)
+            new_amls = self.env['account.move.line']
+            for aml, processed in amls_map.values():
+                if aml.display_type in display_types and not processed:
+                    self.recompute_taxes = True
+                else:
+                    new_amls += aml
+            self.line_ids = new_amls
 
-        if field_has_changed('currency_id') or field_has_changed('date'):
-            recompute_all_taxes = True
+        snapshot1 = super(AccountMove, self)._onchange(nametree, field_names, field_onchange, result, snapshot0)
 
-            # Currency has changed so 'amount_currency' must be recomputed.
-            self.line_ids._onchange_price_subtotal()
-        if field_has_changed('invoice_cash_rounding_id') \
-                or field_has_changed('invoice_payment_term_id') \
-                or field_has_changed('invoice_payment_ref') \
-                or field_has_changed('invoice_date_due'):
-            recompute_auto_balance = True
+        if 'invoice_line_ids' in field_names or 'line_ids' in field_names:
+            recompute_all_taxes = recompute_auto_balance = False
 
-        self._onchange_process_dynamic_lines({
-            'recompute_all_taxes': recompute_all_taxes or self.recompute_taxes,
-            'recompute_auto_balance': recompute_auto_balance,
-        })
+            if field_has_changed('currency_id') or field_has_changed('date'):
+                recompute_all_taxes = True
 
-        # Hack the snapshot directly to avoid a huge overhead in the cache.
-        display_types = self.env['account.move.line']._get_invoice_line_types()
-        snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['invoice_line_ids']\
-            .filtered(lambda line: line.display_type in display_types)
+                # Currency has changed so 'amount_currency' must be recomputed.
+                self.line_ids._onchange_price_subtotal()
+            if field_has_changed('invoice_cash_rounding_id') \
+                    or field_has_changed('invoice_payment_term_id') \
+                    or field_has_changed('invoice_payment_ref') \
+                    or field_has_changed('invoice_date_due'):
+                recompute_auto_balance = True
+
+            self._onchange_process_dynamic_lines({
+                'recompute_all_taxes': recompute_all_taxes or self.recompute_taxes,
+                'recompute_auto_balance': recompute_auto_balance,
+            })
+
+            # Hack the snapshot directly to avoid a huge overhead in the cache.
+            display_types = self.env['account.move.line']._get_invoice_line_types()
+            snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['line_ids'] \
+                .filtered(lambda line: line.display_type in display_types)
+
+            snapshot1 = models.Snapshot(self, nametree)
+        return snapshot1
 
     # -------------------------------------------------------------------------
     # COMPUTE METHODS
