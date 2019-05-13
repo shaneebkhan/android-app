@@ -12,6 +12,7 @@ class SlideChannelTagGroup(models.Model):
     name = fields.Char('Name', required=True, translate=True)
     sequence = fields.Integer('Sequence', default=10, index=True, required=True)
     tag_ids = fields.One2many('slide.channel.tag', 'group_id', string='Tags')
+    # TODO: use mixin? -> Then change 6 occurence in <record> and some in form/tree view
     website_published = fields.Boolean(
         'Menu entry', default=True,
         help='Makes a menu entry in main navigation of Slides, allowing to filter on its tags directly from main navigation.')

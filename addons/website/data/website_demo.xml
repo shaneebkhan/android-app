@@ -11,7 +11,7 @@
         <record id="bs_debug_page" model="website.page">
             <field name="name">BS Debug</field>
             <field name="url">/website/demo/bootstrap</field>
-            <field name="website_published">False</field>
+            <field name="is_published">False</field>
             <field name="type">qweb</field>
             <field name="key">website.bs_debug_page_view</field>
             <field name="arch" type="xml">
@@ -273,7 +273,7 @@
         <record id="snippets_debug_page" model="website.page">
             <field name="name">Snippet Debug</field>
             <field name="url">/website/demo/snippets</field>
-            <field name="website_published">False</field>
+            <field name="is_published">False</field>
             <field name="type">qweb</field>
             <field name="key">website.snippets_debug_page_view</field>
             <field name="arch" type="xml">

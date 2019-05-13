@@ -83,6 +83,7 @@ class PaymentAcquirer(models.Model):
         ('test', 'Test'),
         ('prod', 'Production')], string='Environment',
         default='test', oldname='env', required=True)
+    # TODO: move publish mixin in portal and use it on payment?
     website_published = fields.Boolean(
         'Visible in Portal / Website', copy=False,
         help="Make this payment acquirer available (Customer invoices, etc.)")

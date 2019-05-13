@@ -118,6 +118,7 @@ class WebsiteCustomer(http.Controller):
         google_map_partner_ids = ','.join(str(it) for it in partners.ids)
         google_maps_api_key = request.website.google_maps_api_key
 
+        # TODO: this website_published could be removed? really relevant for admin?
         tags = Tag.search([('website_published', '=', True), ('partner_ids', 'in', partners.ids)], order='classname, name ASC')
         tag = tag_id and Tag.browse(tag_id) or False
 

@@ -121,14 +121,17 @@ class WebsitePublishedMixin(models.AbstractModel):
     _description = 'Website Published Mixin'
 
     website_published = fields.Boolean('Visible on current website', related='is_published', readonly=False)
-    is_published = fields.Boolean('Is published', copy=False)
-    can_publish = fields.Boolean('Can publish', compute='_compute_can_publish')
+    is_published = fields.Boolean('Is Published', copy=False, default=lambda self: self._default_is_published())
+    can_publish = fields.Boolean('Can Publish', compute='_compute_can_publish')
     website_url = fields.Char('Website URL', compute='_compute_website_url', help='The full URL to access the document through the website.')
 
     @api.multi
     def _compute_website_url(self):
         for record in self:
             record.website_url = '#'
+
+    def _default_is_published(self):
+        return False
 
     @api.multi
     def website_publish_button(self):
@@ -150,7 +153,7 @@ class WebsitePublishedMixin(models.AbstractModel):
     @api.model_create_multi
     def create(self, vals_list):
         records = super(WebsitePublishedMixin, self).create(vals_list)
-
+        # TODO: this is wrong? I will still be able to write on is_published?
         is_publish_modified = any('website_published' in values for values in vals_list)
         if is_publish_modified and not all(record.can_publish for record in records):
             raise AccessError(self._get_can_publish_error_message())
@@ -159,6 +162,7 @@ class WebsitePublishedMixin(models.AbstractModel):
 
     @api.multi
     def write(self, values):
+        # TODO: this is wrong? I will still be able to write on is_published?
         if 'website_published' in values and not all(record.can_publish for record in self):
             raise AccessError(self._get_can_publish_error_message())
 

@@ -46,7 +46,7 @@ class SlidesCase(common.SavepointCase):
             'promote_strategy': 'most_voted',
             'enroll': 'public',
             'visibility': 'public',
-            'website_published': True,
+            'is_published': True,
             'karma_gen_channel_finish': 100,
             'karma_gen_slide_vote': 5,
             'karma_gen_channel_rank': 10,
@@ -55,7 +55,7 @@ class SlidesCase(common.SavepointCase):
             'name': 'How To Cook Humans',
             'channel_id': self.channel.id,
             'slide_type': 'presentation',
-            'website_published': True,
+            'is_published': True,
             'completion_time': 2.0,
         })
 

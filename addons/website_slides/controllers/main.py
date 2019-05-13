@@ -778,7 +778,7 @@ class WebsiteSlides(WebsiteProfile):
 
         try:
             values['user_id'] = request.env.uid
-            values['website_published'] = values.get('website_published', False) and can_publish
+            values['is_published'] = values.get('is_published', False) and can_publish
             slide = request.env['slide.slide'].sudo().create(values)
         except (UserError, AccessError) as e:
             _logger.error(e)
@@ -804,7 +804,7 @@ class WebsiteSlides(WebsiteProfile):
 
     def _get_valid_slide_post_values(self):
         return ['name', 'url', 'tag_ids', 'slide_type', 'channel_id', 'is_preview',
-            'mime_type', 'datas', 'description', 'image', 'index_content', 'website_published']
+            'mime_type', 'datas', 'description', 'image', 'index_content', 'is_published']  # TODO: triple check
 
     @http.route(['/slides/tag/search_read'], type='json', auth='user', methods=['POST'], website=True)
     def slide_tag_search_read(self, fields, domain):

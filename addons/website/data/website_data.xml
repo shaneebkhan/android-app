@@ -36,7 +36,7 @@
             </field>
         </record>
         <record id="homepage_page" model="website.page">
-            <field name="website_published">True</field>
+            <field name="is_published">True</field>
             <field name="url">/</field>
             <field name="view_id" ref="homepage"/>
         </record>
@@ -95,7 +95,7 @@
         </record>
         <record id="contactus_page" model="website.page">
             <field name="url">/contactus</field>
-            <field name="website_published">True</field>
+            <field name="is_published">True</field>
             <field name="view_id" ref="contactus"/>
         </record>
 
@@ -146,7 +146,7 @@
             </field>
         </record>
         <record id="aboutus_page" model="website.page">
-            <field name="website_published">True</field>
+            <field name="is_published">True</field>
             <field name="url">/aboutus</field>
             <field name="view_id" ref="aboutus"/>
         </record>

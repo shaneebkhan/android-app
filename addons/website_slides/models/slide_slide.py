@@ -284,7 +284,7 @@ class Slide(models.Model):
             values['index_content'] = values.get('description')
         if values.get('slide_type') == 'infographic' and not values.get('image'):
             values['image'] = values['datas']
-        if values.get('website_published') and not values.get('date_published'):
+        if values.get('is_published') and not values.get('date_published'):
             values['date_published'] = datetime.datetime.now()
         if values.get('url') and not values.get('document_id'):
             doc_data = self._parse_document_url(values['url']).get('values', dict())
@@ -293,7 +293,7 @@ class Slide(models.Model):
 
         slide = super(Slide, self).create(values)
 
-        if slide.website_published:
+        if slide.is_published:
             slide._post_publication()
         return slide
 
@@ -305,7 +305,7 @@ class Slide(models.Model):
                 values.setdefault(key, value)
 
         res = super(Slide, self).write(values)
-        if values.get('website_published'):
+        if values.get('is_published'):
             self.date_published = datetime.datetime.now()
             self._post_publication()
         return res
