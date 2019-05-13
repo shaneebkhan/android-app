@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record model="ir.actions.act_window" id="account_generator_view">
+        <field name="name">Generate</field>
+        <field name="res_model">account.generator</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_account_form" model="ir.ui.view">
+        <field name="name">account.generator.form</field>
+        <field name="model">account.generator</field>
+        <field name="arch" type="xml">
+            <form string="Account Generator">
+               <sheet>
+                   <group>
+                       <field name="number_to_generate"/>
+                   </group>
+                </sheet>
+                <footer>
+                    <button name="generate_amls" type="object" string="Generate Amls"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <menuitem id="menu_finance_dev_tools" name="Dev Tools" parent="account.menu_finance" sequence="999"/>
+    <menuitem id="menu_generate" action="account_generator.account_generator_view" parent="account_generator.menu_finance_dev_tools"/>
+</odoo>
