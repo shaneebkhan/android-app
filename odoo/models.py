@@ -5538,7 +5538,8 @@ Fields:
             record._origin = self.with_context(__onchange=True)
 
         # make a snapshot based on the initial values of record
-        snapshot0 = Snapshot(record, nametree)
+        with env.do_in_onchange():
+            snapshot0 = Snapshot(record, nametree)
 
         # determine which field(s) should be triggered an onchange
         todo = list(names or nametree)
@@ -5557,7 +5558,7 @@ Fields:
 
         result = {'warnings': OrderedSet()}
 
-        with self.env.do_in_onchange():
+        with env.do_in_onchange():
             snapshot1 = record._onchange(nametree, todo, field_onchange, result, snapshot0)
 
         # determine values that have changed by comparing snapshots
