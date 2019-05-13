@@ -1124,6 +1124,17 @@ Possible children of the view element are:
       ``delete``
         deletes the card's record and removes the card
 
+    * kanban-specific CSS
+
+      * CSS Class
+
+        ``o_m2o_hidden``
+          define this class on element which needed to be hidden in kanban view
+          opened via m2o search more records option in mobile device
+        ``o_m2o_visible``
+          define this class on element which needed to be visible only in kanban
+          view opened view m2o search more records option in mobile device
+
     .. todo::
 
        * kanban-specific CSS
