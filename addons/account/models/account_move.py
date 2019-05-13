@@ -165,10 +165,6 @@ class AccountMove(models.Model):
     reversed_entry_id = fields.Many2one('account.move', string="Reverse entry", readonly=True, copy=False)
     reverse_entry_ids = fields.One2many('account.move', 'reversed_entry_id', string="Reverse entries", readonly=True)
 
-    # ==== Onchange fields ====
-    recompute_taxes = fields.Boolean(store=False,
-        help="Technical field used to indicate the whole taxes lines must be recomputed (e.g. in case of an invoice line has been removed).")
-
     # =========================================================
     # Invoice related fields
     # =========================================================
@@ -615,9 +611,7 @@ class AccountMove(models.Model):
         self.invoice_date_due = max_date_maturity
 
     @api.multi
-    def _onchange_process_dynamic_lines(self, options):
-        recompute_all_taxes = options.get('recompute_all_taxes')
-
+    def _onchange_process_dynamic_lines(self, recompute_all_taxes=False):
         is_invoice = self.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
         lines_map = {
             'base_lines': self.env['account.move.line'],
@@ -675,6 +669,8 @@ class AccountMove(models.Model):
         def field_has_changed(field_name):
             return field_name in field_names or snapshot0.get(field_name) != snapshot1.get(field_name)
 
+        recompute_all_taxes = False
+
         if 'invoice_line_ids' in field_names:
             display_types = self.env['account.move.line']._get_invoice_line_types()
             amls_map = {}
@@ -687,38 +683,27 @@ class AccountMove(models.Model):
             new_amls = self.env['account.move.line']
             for aml, processed in amls_map.values():
                 if aml.display_type in display_types and not processed:
-                    self.recompute_taxes = True
+                    recompute_all_taxes = True
                 else:
                     new_amls += aml
             self.line_ids = new_amls
 
         snapshot1 = super(AccountMove, self)._onchange(nametree, field_names, field_onchange, result, snapshot0)
 
-        if 'invoice_line_ids' in field_names or 'line_ids' in field_names:
-            recompute_all_taxes = recompute_auto_balance = False
+        if field_has_changed('currency_id') or field_has_changed('date'):
+            recompute_all_taxes = True
 
-            if field_has_changed('currency_id') or field_has_changed('date'):
-                recompute_all_taxes = True
+            # Currency has changed so 'amount_currency' must be recomputed.
+            self.line_ids._onchange_price_subtotal()
 
-                # Currency has changed so 'amount_currency' must be recomputed.
-                self.line_ids._onchange_price_subtotal()
-            if field_has_changed('invoice_cash_rounding_id') \
-                    or field_has_changed('invoice_payment_term_id') \
-                    or field_has_changed('invoice_payment_ref') \
-                    or field_has_changed('invoice_date_due'):
-                recompute_auto_balance = True
+        self._onchange_process_dynamic_lines(recompute_all_taxes=recompute_all_taxes)
 
-            self._onchange_process_dynamic_lines({
-                'recompute_all_taxes': recompute_all_taxes or self.recompute_taxes,
-                'recompute_auto_balance': recompute_auto_balance,
-            })
+        # Hack the snapshot directly to avoid a huge overhead in the cache.
+        display_types = self.env['account.move.line']._get_invoice_line_types()
+        snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['line_ids'] \
+            .filtered(lambda line: line.display_type in display_types)
 
-            # Hack the snapshot directly to avoid a huge overhead in the cache.
-            display_types = self.env['account.move.line']._get_invoice_line_types()
-            snapshot1['<record>']['invoice_line_ids'] = snapshot1['<record>']['line_ids'] \
-                .filtered(lambda line: line.display_type in display_types)
-
-            snapshot1 = models.Snapshot(self, nametree)
+        snapshot1 = models.Snapshot(self, nametree)
         return snapshot1
 
     # -------------------------------------------------------------------------
@@ -2271,7 +2256,7 @@ class AccountMoveLine(models.Model):
                 line.move_id.type,
                 line.currency_id,
                 line.move_id.company_id,
-                line.date
+                line.move_id.date
             ))
 
     @api.onchange('currency_id')
