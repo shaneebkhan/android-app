@@ -100,6 +100,6 @@ class AccountPayment(models.Model):
 
         res = super(AccountPayment, self - payments_need_trans).post()
 
-        transactions.s2s_do_transaction()
+        transactions._s2s_do_transaction()
 
         return res

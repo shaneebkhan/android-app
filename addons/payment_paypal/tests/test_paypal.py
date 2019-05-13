@@ -167,7 +167,7 @@ class PaypalForm(PaypalCommon):
 
         # should raise error about unknown tx
         with self.assertRaises(ValidationError):
-            self.env['payment.transaction'].form_feedback(paypal_post_data, 'paypal')
+            self.env['payment.transaction']._form_feedback(paypal_post_data, 'paypal')
 
         # create tx
         tx = self.env['payment.transaction'].create({
@@ -179,7 +179,7 @@ class PaypalForm(PaypalCommon):
             'partner_country_id': self.country_france.id})
 
         # validate it
-        tx.form_feedback(paypal_post_data, 'paypal')
+        tx._form_feedback(paypal_post_data, 'paypal')
         # check
         self.assertEqual(tx.state, 'pending', 'paypal: wrong state after receiving a valid pending notification')
         self.assertEqual(tx.state_message, 'multi_currency', 'paypal: wrong state message after receiving a valid pending notification')
@@ -193,7 +193,7 @@ class PaypalForm(PaypalCommon):
         # update notification from paypal
         paypal_post_data['payment_status'] = 'Completed'
         # validate it
-        tx.form_feedback(paypal_post_data, 'paypal')
+        tx._form_feedback(paypal_post_data, 'paypal')
         # check
         self.assertEqual(tx.state, 'done', 'paypal: wrong state after receiving a valid pending notification')
         self.assertEqual(tx.acquirer_reference, '08D73520KX778924N', 'paypal: wrong txn_id after receiving a valid pending notification')

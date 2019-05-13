@@ -21,7 +21,8 @@ class AccountInvoice(models.Model):
     @api.multi
     def get_portal_last_transaction(self):
         self.ensure_one()
-        return self.transaction_ids.get_last_transaction()
+        transactions = self.transaction_ids.filtered(lambda t: t.state != 'draft')
+        return transactions and transactions[0] or transactions
 
     @api.multi
     def _create_payment_transaction(self, vals):
@@ -85,14 +86,14 @@ class AccountInvoice(models.Model):
 
         # Process directly if payment_token
         if transaction.payment_token_id:
-            transaction.s2s_do_transaction()
+            transaction._s2s_do_transaction()
 
         return transaction
 
     @api.multi
     def payment_action_capture(self):
-        self.authorized_transaction_ids.s2s_capture_transaction()
+        self.authorized_transaction_ids._s2s_capture_transaction()
 
     @api.multi
     def payment_action_void(self):
-        self.authorized_transaction_ids.s2s_void_transaction()
+        self.authorized_transaction_ids._s2s_void_transaction()
