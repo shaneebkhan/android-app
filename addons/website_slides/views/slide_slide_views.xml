@@ -38,7 +38,7 @@
                     <sheet>
                         <div class="oe_button_box" name="button_box">
                             <button class="oe_stat_button" name="website_publish_button"
-                                    type="object" icon="fa-globe">
+                                    type="object" icon="fa-globe" attrs="{'invisible': [('is_category', '=', True)]}">
                                 <field name="is_published" widget="website_button"/>
                             </button>
                             <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
@@ -46,7 +46,7 @@
                             </button>
                         </div>
                         <field name="image" widget="image" class="oe_avatar" options='{"preview_image": "image_large"}'
-                            attrs="{'readonly': [('slide_type', 'in', ('document', 'presentation', 'video'))]}"
+                            attrs="{'readonly': [('slide_type', 'in', ('document', 'presentation', 'video'))], 'invisible': [('is_category', '=', True)]}"
                         />
                         <div class="oe_title">
                             <div class="oe_edit_only">
@@ -55,16 +55,15 @@
                             <h1>
                                 <field name="name" default_focus="1" placeholder="Name"/>
                             </h1>
-                            <field name="tag_ids" widget="many2many_tags" placeholder="Tags..."/>
+                            <field name="tag_ids" attrs="{'invisible': [('is_category', '=', True)]}" widget="many2many_tags" placeholder="Tags..."/>
                         </div>
-                        <group>
+                        <group attrs="{'invisible': [('is_category', '=', True)]}">
                             <field name="user_id"/>
                             <field name="channel_id"/>
-                            <field name="category_id" context="{'default_channel_id': channel_id}"/>
                             <field name="website_id" groups="website.group_multi_website"/>
                             <field name="website_url"/>
                         </group>
-                        <notebook>
+                        <notebook attrs="{'invisible': [('is_category', '=', True)]}">
                             <page string="Description">
                                 <field name="description"/>
                             </page>

@@ -39,7 +39,9 @@
     '|',
         '&amp;', ('channel_id.visibility', '=', 'public'), ('is_preview', '=', True),
         ('channel_id.partner_ids', '=', user.partner_id.id),
-    '&amp;', ('channel_id.website_published', '=', True), '|', ('user_id', '=', user.id), ('website_published', '=', True)]</field>
+    '|',
+        '&amp;', ('channel_id.website_published', '=', True), '|', ('user_id', '=', user.id), ('website_published', '=', True),
+        ('is_category','=', True)]</field>
         </record>
 
         <record id="rule_slide_slide_website" model="ir.rule">

@@ -116,7 +116,7 @@
             <t t-if="uncategorized_slides" t-call="website_slides.slide_aside_training_category">
                 <t t-set="category_slide_ids" t-value="uncategorized_slides"/>
             </t>
-            <t t-foreach="slide.channel_id.category_ids" t-as="category">
+            <t t-foreach="slide.channel_id.slide_category_ids" t-as="category">
                 <t t-call="website_slides.slide_aside_training_category">
                     <t t-set="category_slide_ids" t-value="category.slide_ids"/>
                 </t>

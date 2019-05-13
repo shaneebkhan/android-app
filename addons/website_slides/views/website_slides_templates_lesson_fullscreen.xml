@@ -48,7 +48,7 @@
                                 <t t-set="slides" t-value="uncategorized_slides"/>
                                 <t t-set="current_slide" t-value="slide"/>
                             </t>
-                            <t t-foreach="slide.channel_id.category_ids" t-as="category">
+                            <t t-foreach="slide.channel_id.slide_category_ids" t-as="category">
                                 <t t-if="category.slide_ids">
                                     <t t-call="website_slides.slide_fullscreen_sidebar_category">
                                         <t t-set="slides" t-value="category.slide_ids"/>

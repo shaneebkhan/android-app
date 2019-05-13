@@ -81,7 +81,7 @@ var SlideUploadDialog = Dialog.extend({
                     route: '/slides/category/search_read',
                     params: {
                         fields: ['name'],
-                        domain: [['channel_id', '=', self.channelID]],
+                        domain: [['channel_id', '=', self.channelID], ['is_category', '=', true]],
                     }
                 });
             })

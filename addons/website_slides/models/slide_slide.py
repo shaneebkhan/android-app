@@ -89,12 +89,12 @@ class Slide(models.Model):
     _description = 'Slides'
     _mail_post_access = 'read'
     _order_by_strategy = {
-        'sequence': 'category_sequence asc, sequence asc',
+        'sequence': 'sequence asc',
         'most_viewed': 'total_views desc',
         'most_voted': 'likes desc',
         'latest': 'date_published desc',
     }
-    _order = 'category_sequence asc, sequence asc'
+    _order = 'sequence asc'
 
     def _default_access_token(self):
         return str(uuid.uuid4())
@@ -103,15 +103,19 @@ class Slide(models.Model):
     name = fields.Char('Title', required=True, translate=True)
     active = fields.Boolean(default=True)
     sequence = fields.Integer('Sequence', default=10)
-    category_sequence = fields.Integer('Category sequence', related="category_id.sequence", store=True)
     user_id = fields.Many2one('res.users', string='Uploaded by', default=lambda self: self.env.uid)
     description = fields.Text('Description', translate=True)
     channel_id = fields.Many2one('slide.channel', string="Channel", required=True)
-    category_id = fields.Many2one('slide.category', string="Category", domain="[('channel_id', '=', channel_id)]")
     tag_ids = fields.Many2many('slide.tag', 'rel_slide_tag', 'slide_id', 'tag_id', string='Tags')
     access_token = fields.Char("Security Token", copy=False, default=_default_access_token)
     is_preview = fields.Boolean('Is Preview', default=False, help="The course is accessible by anyone : the users don't need to join the channel to access the content of the course.")
     completion_time = fields.Float('# Hours', default=1, digits=(10, 4))
+
+    # UX Shenanigans done against my will =(
+    is_category = fields.Boolean('Is a category ?', default=False)
+    category_id = fields.Many2one('slide.slide', string="Category", compute="_compute_category_id", store=True)
+    slide_ids = fields.One2many('slide.slide', string="Slides", compute="_compute_slide_ids")
+
     # subscribers
     partner_ids = fields.Many2many('res.partner', 'slide_slide_partner', 'slide_id', 'partner_id',
                                    string='Subscribers', groups='website.group_website_publisher')
@@ -133,7 +137,8 @@ class Slide(models.Model):
         ('presentation', 'Presentation'),
         ('document', 'Document'),
         ('video', 'Video'),
-        ('quiz', "Quiz")],
+        ('quiz', "Quiz"),
+        ('category', "Category")],
         string='Type', required=True,
         default='document', readonly=True,
         help="The document type will be set automatically based on the document URL and properties (e.g. height and width for presentation and document).")
@@ -156,6 +161,14 @@ class Slide(models.Model):
     slide_views = fields.Integer('# of Website Views', store=True, compute="_compute_slide_views")
     public_views = fields.Integer('# of Public Views')
     total_views = fields.Integer("Total # Views", default="0", compute='_compute_total', store=True)
+    # Statistics in case the slide is a category
+    nbr_presentation = fields.Integer("Number of Presentations", compute='_count_presentations', store=True)
+    nbr_document = fields.Integer("Number of Documents", compute='_count_presentations', store=True)
+    nbr_video = fields.Integer("Number of Videos", compute='_count_presentations', store=True)
+    nbr_infographic = fields.Integer("Number of Infographics", compute='_count_presentations', store=True)
+    nbr_webpage = fields.Integer("Number of Webpages", compute='_count_presentations', store=True)
+    nbr_quiz = fields.Integer("Number of Quizs", compute="_count_presentations", store=True)
+    total_slides = fields.Integer(compute='_count_presentations', store=True, oldname='total')
 
     _sql_constraints = [
         ('exclusion_html_content_and_url', "CHECK(html_content IS NULL OR url IS NULL)", "A slide is either filled with a document url or HTML content. Not both.")
@@ -184,6 +197,49 @@ class Slide(models.Model):
         for slide in self:
             slide.update(slide_data[slide.id])
 
+    @api.multi
+    @api.depends('channel_id.slide_ids.is_category', 'channel_id.slide_ids.sequence')
+    def _compute_slide_ids(self):
+        """Will take all the slides of the channel for which the index is higher than the index of this category
+        and lower than the index of the next category"""
+        for slide in self:
+            if slide.is_category:
+                slide_index = slide._index()
+                if slide_index < len(slide.channel_id.slide_ids) - 1:
+                    for slide_item in slide.channel_id.slide_ids[slide_index + 1:]:
+                        if slide_item.is_category:
+                            break
+                        slide.slide_ids |= slide_item
+                else:
+                    slide.slide_ids = self.env['slide.slide']
+            else:
+                slide.slide_ids = self.env['slide.slide']
+
+    @api.depends('channel_id.slide_ids.is_category', 'channel_id.slide_ids.sequence')
+    def _compute_category_id(self):
+        """Will find the category to which this slide belongs to by looking inside the corresponding channel."""
+        for slide in self:
+            if slide.is_category:
+                slide.category_id = None
+            else:
+                slide.category_id = next(
+                    (iter(slide
+                    .channel_id
+                    .slide_ids
+                    .filtered(lambda s: s.is_category and s.sequence < slide.sequence)
+                    .sorted(reverse=True))),
+                    None
+                )
+
+    @api.multi
+    def _index(self):
+        """We would normally just use the 'sequence' field of slides BUT, if the categories and slides are
+        created without ever moving records around, the sequence field can be set to 0 for all the slides.
+
+        However, the order of the recordset is always correct so we can rely on the index method."""
+        self.ensure_one()
+        return list(self.channel_id.slide_ids).index(self)
+
     @api.depends('slide_partner_ids.slide_id')
     def _compute_slide_views(self):
         # TODO awa: tried compute_sudo, for some reason it doesn't work in here...
@@ -195,6 +251,34 @@ class Slide(models.Model):
         mapped_data = dict((res['slide_id'][0], res['slide_id_count']) for res in read_group_res)
         for slide in self:
             slide.slide_views = mapped_data.get(slide.id, 0)
+
+    def _count_presentations(self):
+        result = dict.fromkeys(self.ids, dict())
+        res = self.env['slide.slide'].read_group(
+            [('is_published', '=', True), ('category_id', 'in', self.ids)],
+            ['category_id', 'slide_type'], ['category_id', 'slide_type'],
+            lazy=False)
+
+        type_stats = self._compute_slides_statistics_type(res)
+        for cid, cdata in type_stats.items():
+            result[cid].update(cdata)
+
+        for record in self:
+            record.update(result[record.id])
+
+    def _compute_slides_statistics_type(self, read_group_res):
+        """ Compute statistics based on all existing slide types """
+        slide_types = self.env['slide.slide']._fields['slide_type'].get_values(self.env)
+        slide_types.remove('category')
+        keys = ['nbr_%s' % slide_type for slide_type in slide_types]
+        keys.append('total_slides')
+        result = dict((cid, dict((key, 0) for key in keys)) for cid in self.ids)
+        for res_group in read_group_res:
+            cid = res_group['category_id'][0]
+            for slide_type in slide_types:
+                result[cid]['nbr_%s' % slide_type] += res_group.get('slide_type', '') == slide_type and res_group['__count'] or 0
+                result[cid]['total_slides'] += res_group.get('slide_type', '') == slide_type and res_group['__count'] or 0
+        return result
 
     @api.depends('slide_partner_ids.partner_id')
     def _compute_user_membership_id(self):
@@ -290,6 +374,9 @@ class Slide(models.Model):
             doc_data = self._parse_document_url(values['url']).get('values', dict())
             for key, value in doc_data.items():
                 values.setdefault(key, value)
+        if values.get('is_category'):
+            values['slide_type'] = 'category'
+            values['is_preview'] = True
 
         slide = super(Slide, self).create(values)
 
