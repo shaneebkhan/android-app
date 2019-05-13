@@ -47,7 +47,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -95,7 +95,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -118,7 +118,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -163,7 +163,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -211,7 +211,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -234,7 +234,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -283,7 +283,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -331,7 +331,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -354,7 +354,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -400,7 +400,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -448,7 +448,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -471,7 +471,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -520,7 +520,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -568,7 +568,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -591,7 +591,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -640,7 +640,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -688,7 +688,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -711,7 +711,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -760,7 +760,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -808,7 +808,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -831,7 +831,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -877,7 +877,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -925,7 +925,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -948,7 +948,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -997,7 +997,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1045,7 +1045,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1068,7 +1068,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1114,7 +1114,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1137,7 +1137,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1185,7 +1185,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1208,7 +1208,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1231,7 +1231,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1281,7 +1281,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1304,7 +1304,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1352,7 +1352,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1375,7 +1375,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1398,7 +1398,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1446,7 +1446,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1494,7 +1494,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1517,7 +1517,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1569,7 +1569,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1617,7 +1617,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1640,7 +1640,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1663,7 +1663,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1716,7 +1716,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1739,7 +1739,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1787,7 +1787,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1810,7 +1810,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1833,7 +1833,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1856,7 +1856,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1903,7 +1903,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1926,7 +1926,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1974,7 +1974,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1997,7 +1997,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2020,7 +2020,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2043,7 +2043,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2089,7 +2089,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2112,7 +2112,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2160,7 +2160,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2183,7 +2183,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2206,7 +2206,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2251,7 +2251,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2299,7 +2299,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2322,7 +2322,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2345,7 +2345,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2395,7 +2395,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2443,7 +2443,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2466,7 +2466,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2515,7 +2515,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': False,
             },
         ])
@@ -2563,7 +2563,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': False,
             },
             {
@@ -2586,7 +2586,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': False,
             },
         ])
@@ -2634,7 +2634,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2705,7 +2705,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2728,7 +2728,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2776,7 +2776,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2801,7 +2801,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2824,7 +2824,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2914,7 +2914,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -2939,7 +2939,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -2962,7 +2962,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3036,7 +3036,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3059,7 +3059,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3084,7 +3084,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3130,7 +3130,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3153,7 +3153,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3200,7 +3200,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3271,7 +3271,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3294,7 +3294,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-02-28'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3344,7 +3344,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3392,7 +3392,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3415,7 +3415,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3465,7 +3465,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3513,7 +3513,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3536,7 +3536,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3600,7 +3600,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'product_cr',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3623,7 +3623,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3671,7 +3671,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3694,7 +3694,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'product_cr',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3717,7 +3717,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3762,7 +3762,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3810,7 +3810,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3833,7 +3833,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax_cr',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3856,7 +3856,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3906,7 +3906,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -3954,7 +3954,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -3977,7 +3977,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4021,7 +4021,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4069,7 +4069,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4092,7 +4092,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4142,7 +4142,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4190,7 +4190,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4213,7 +4213,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4257,7 +4257,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4305,7 +4305,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4328,7 +4328,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4373,7 +4373,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4396,7 +4396,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4444,7 +4444,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4467,7 +4467,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4490,7 +4490,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4586,7 +4586,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4634,7 +4634,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4657,7 +4657,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4714,7 +4714,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -4762,7 +4762,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -4785,7 +4785,7 @@ class TestAccountMoveOutRefund(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2016-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])

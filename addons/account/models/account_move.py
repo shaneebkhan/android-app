@@ -402,7 +402,7 @@ class AccountMove(models.Model):
                     'credit': balance < 0.0 and -balance or 0.0,
                     'quantity': 1.0,
                     'amount_currency': amount_currency,
-                    'date_maturity': line.date_maturity,
+                    'date_maturity': False,
                     'tax_exigible': tax.tax_exigibility == 'on_invoice',
                     'move_id': self.id,
                     'currency_id': line.currency_id.id,
@@ -478,7 +478,7 @@ class AccountMove(models.Model):
                         'currency_id': currency and currency.id,
                         'company_id': self.company_id.id,
                         'company_currency_id': self.company_id.currency_id.id,
-                        'date_maturity': self.invoice_date_due,
+                        'date_maturity': False,
                         'tax_line_id': biggest_tax_line.tax_line_id.id,
                         'display_type': 'tax_cr',
                         'sequence': 9999,
@@ -507,7 +507,7 @@ class AccountMove(models.Model):
                     'company_id': self.company_id.id,
                     'company_currency_id': self.company_id.currency_id.id,
                     'sequence': 9999,
-                    'date_maturity': self.invoice_date_due,
+                    'date_maturity': False,
                     'display_type': 'product_cr',
                 })
                 totals_map['total_balance'] += diff_balance
@@ -607,12 +607,6 @@ class AccountMove(models.Model):
         terms_lines_to_keep._onchange_balance()
         self.line_ids -= lines_map['terms_lines'] - terms_lines_to_keep
         terms_lines = terms_lines_to_keep
-
-        # Set date_maturity in others lines.
-        for line in lines_map['base_lines']:
-            line.date_maturity = max_date_maturity
-        for line in lines_map['taxes_lines']:
-            line.date_maturity = max_date_maturity
 
         # Update invoice_payment_ref.
         self.invoice_payment_ref = terms_lines and terms_lines[0].name or '/'

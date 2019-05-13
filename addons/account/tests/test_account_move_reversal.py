@@ -64,7 +64,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -112,7 +112,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -135,7 +135,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -204,7 +204,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -254,7 +254,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -278,7 +278,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -351,7 +351,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -399,7 +399,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -422,7 +422,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -465,7 +465,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -513,7 +513,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -536,7 +536,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -614,7 +614,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -662,7 +662,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -685,7 +685,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -728,7 +728,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -776,7 +776,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -799,7 +799,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -872,7 +872,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -920,7 +920,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -943,7 +943,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1012,7 +1012,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -1062,7 +1062,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -1086,7 +1086,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
                 'amount_residual': 0.0,
             },
@@ -1159,7 +1159,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1207,7 +1207,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1230,7 +1230,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1273,7 +1273,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1321,7 +1321,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1344,7 +1344,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1422,7 +1422,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1470,7 +1470,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1493,7 +1493,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1536,7 +1536,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
@@ -1584,7 +1584,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': 'tax',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
             {
@@ -1607,7 +1607,7 @@ class TestAccountMoveReversal(AccountingSavepointCase):
                 'analytic_account_id': False,
                 'analytic_tag_ids': [],
                 'display_type': False,
-                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'date_maturity': False,
                 'tax_exigible': True,
             },
         ])
