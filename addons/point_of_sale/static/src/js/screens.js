@@ -314,14 +314,17 @@ var ScaleScreenWidget = ScreenWidget.extend({
             // add product *after* switching screen to scroll properly
             self.order_product();
         });
+        this._read_scale();
+    },
 
+    _read_scale: function() {
         queue.schedule(function(){
             return self.pos.proxy.scale_read().then(function(weight){
                 self.set_weight(weight.weight);
             });
         },{duration:500, repeat: true});
-
     },
+
     get_product: function(){
         return this.gui.get_current_screen_param('product');
     },

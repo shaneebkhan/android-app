@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import logging
 import time
+import inspect
+from abc import ABCMeta
+from collections import deque
 from threading import Thread, Event
 from usb import core
 from gatt import DeviceManager as Gatt_DeviceManager
@@ -18,6 +21,7 @@ from cups import Connection as cups_connection
 from glob import glob
 from base64 import b64decode
 from pathlib import Path
+from serial.tools.list_ports import comports
 import socket
 
 from odoo import http, _
@@ -116,15 +120,22 @@ class StatusController(http.Controller):
 # Drivers
 #----------------------------------------------------------
 
-drivers = []
+drivers = deque()
 bt_devices = {}
 socket_devices = {}
 iot_devices = {}
 
-class DriverMetaClass(type):
+class DriverMetaClass(ABCMeta):
     def __new__(cls, clsname, bases, attrs):
         newclass = super(DriverMetaClass, cls).__new__(cls, clsname, bases, attrs)
-        drivers.append(newclass)
+        #  We only add concrete classes to `drivers`.
+        if inspect.isabstract(newclass):
+            return newclass
+        # Some drivers must be tried only when all the others have been ruled out. These are kept at the bottom of the list.
+        if newclass.is_tested_last:
+            drivers.append(newclass)
+        else:
+            drivers.appendleft(newclass)
         return newclass
 
 class Driver(Thread, metaclass=DriverMetaClass):
@@ -132,6 +143,7 @@ class Driver(Thread, metaclass=DriverMetaClass):
     Hook to register the driver into the drivers list
     """
     connection_type = ""
+    is_tested_last = False
 
     def __init__(self, device):
         super(Driver, self).__init__()
@@ -301,6 +313,13 @@ class Manager(Thread):
         else:
             _logger.warning('Odoo server not set')
 
+    def serial_loop(self):
+        serial_devices = {}
+        for dev in comports():
+            iot_device = IoTDevice(dev.device, 'serial')
+            serial_devices[dev.device] = iot_device
+        return serial_devices
+
     def usb_loop(self):
         usb_devices = {}
         devs = core.find(find_all=True)
@@ -351,6 +370,7 @@ class Manager(Thread):
             updated_devices.update(self.video_loop())
             updated_devices.update(bt_devices)
             updated_devices.update(socket_devices)
+            updated_devices.update(self.serial_loop())
             if cpt % 40 == 0:
                 printer_devices = self.printer_loop()
                 cpt = 0
