@@ -21,7 +21,14 @@
         </div>
         <div class="col-12 col-lg-6">
             <h5 class="mt-0 mb-2">Share Link</h5>
-            <input type="text" class="form-control" t-att-value="slide.website_url" readonly="readonly" onClick="this.select();"/>
+            <div class="input-group">
+                <input type="text" class="form-control o_wslides_js_share_link" id="shareLink" t-att-value="slide.website_url" readonly="readonly" onClick="this.select();"/>
+                <div class="input-group-append">
+                    <button class="btn btn-sm btn-primary o_clipboard_button" data-clipboard-target="#shareLink">
+                        <span class="fa fa-clipboard"> Copy Text</span>
+                    </button>
+                </div>
+            </div>
             <span class="form-text text-muted">Use permanent link to share in social media</span>
         </div>
     </div>
