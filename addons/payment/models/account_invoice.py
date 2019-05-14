@@ -21,8 +21,7 @@ class AccountInvoice(models.Model):
     @api.multi
     def get_portal_last_transaction(self):
         self.ensure_one()
-        transactions = self.transaction_ids.filtered(lambda t: t.state != 'draft')
-        return transactions and transactions[0] or transactions
+        return self.transaction_ids.get_last_transaction()
 
     @api.multi
     def _create_payment_transaction(self, vals):

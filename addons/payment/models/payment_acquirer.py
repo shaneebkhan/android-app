@@ -659,6 +659,11 @@ class PaymentTransaction(models.Model):
         }
 
     @api.multi
+    def get_last_transaction(self):
+        transactions = self.filtered(lambda t: t.state != 'draft')
+        return transactions and transactions[0] or transactions
+
+    @api.multi
     def _get_payment_transaction_sent_message(self):
         self.ensure_one()
         if self.payment_token_id:
