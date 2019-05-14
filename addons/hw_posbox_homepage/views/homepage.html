@@ -130,7 +130,9 @@
                         </div>
                     {% endfor %}
                 </div>
-                <br><center><a class="btn btn-sm" href='/list_drivers'>drivers list</a></center>
+                {% if server_status != "Not Configured" %}
+                    <br><center><a class="btn btn-sm" href='/list_drivers'>drivers list</a></center>
+                {% endif %}
             </td>
         </tr>
     </table>
