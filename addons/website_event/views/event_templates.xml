@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-<template id="assets_frontend" inherit_id="website.assets_frontend">
-    <xpath expr="//link[last()]" position="after">
-        <link rel="stylesheet" type="text/scss" href="/website_event/static/src/scss/website_event.scss"/>
-    </xpath>
-    <xpath expr="//script[last()]" position="after">
-        <script type="text/javascript" src="/website_event/static/src/js/website_geolocation.js"></script>
-        <script type="text/javascript" src="/website_event/static/src/js/website_event.js"></script>
-    </xpath>
-</template>
+<!-- TODO -->
+<!-- OPT - Index - Cards -->
+<!-- OPT - Index - Timeline -->
+<!-- OPT - Index - Hero -->
+<!-- OPT - Index - Covers -->
+<!-- OPT - Index - Speaker -->
+<!-- OPT - Index - Category -->
+<!-- OPT - Sidebar - About us -->
+<!-- OPT - Sidebar - Follow us -->
+<!-- OPT - Show Categories -->
+<!-- OPT - Similar Events -->
+<!-- OPT - Top Banner -->
+<!-- OPT - Toolbar - Search Box -->
 
-<template id="assets_editor" inherit_id="website.assets_editor" name="Event Editor">
-    <xpath expr="." position="inside">
-        <script type="text/javascript" src="/website_event/static/src/js/website_event.editor.js"></script>
-        <script type="text/javascript" src="/website_event/static/src/js/website.tour.event.js"></script>
-    </xpath>
-</template>
-
-<!-- Page -->
+<!-- INDEX -->
 <template id="index" name="Events">
     <t t-call="website.layout">
       <div id="wrap">
@@ -79,12 +76,14 @@
     </t>
 </template>
 
-<template id="event_right_column" inherit_id="website_event.index" active="False" customize_show="True" name="Content Column on the Right">
+<!-- OPT - Sidebar -->
+<template id="event_right_column" inherit_id="website_event.index" active="False" customize_show="True" name="Right Sidebar">
     <xpath expr="//div[@id='middle_column']" position="after">
         <div class="col-lg-3 oe_structure" id="right_column"/>
     </xpath>
 </template>
 
+<!-- OPT - Sidebar - Photos -->
 <template id="event_right_photos" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Photos">
     <xpath expr="//div[@id='right_column']" position="inside">
         <figure class="figure o_figure_relative_layout w-100">
@@ -98,6 +97,7 @@
     </xpath>
 </template>
 
+<!-- OPT - Sidebar - Quotes -->
 <template id="event_right_quotes" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Quotes">
     <xpath expr="//div[@id='right_column']" position="inside">
         <div class="card mb-3 bg-secondary">
@@ -115,6 +115,7 @@
     </xpath>
 </template>
 
+<!-- OPT - Sidebar - Country -->
 <template id="event_right_country_event" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Country Events">
     <xpath expr="//div[@id='right_column']" position="inside">
         <div class="card mb-3">
@@ -125,12 +126,52 @@
     </xpath>
 </template>
 
-<template id="event_left_column" active="True" inherit_id="website_event.index" customize_show="True" name="Filters Column on the Left">
+<!-- OPT - Sidebar - Country -->
+<template id="country_events_list" name="Country">
+    <t t-ignore="true">
+        <t t-if="events">
+            <div class="country_events_list">
+                <t t-if="country">
+                    <img class="img-fluid" t-att-src="website.image_url(country, 'image')" alt=""></img>
+                    <h4><b>Events: <span t-esc="country.name"></span></b></h4>
+                </t>
+                <t t-if="not country">
+                    <img class="img-fluid" src="/website_event/static/src/img/world_map.jpg" alt=""></img>
+                    <h4><b>Upcoming Events</b></h4>
+                </t>
+                <div t-foreach="events[:5]" t-as="event_dict" class="oe_website_overflow_ellipsis mb8">
+                    <t t-if="not event_dict['event'].website_published">
+                        <span class="badge badge-danger" role="img" aria-label="Attention: not published" title="Not published"><i class="fa fa-ban"></i></span>
+                    </t>
+                    <t t-if="event_dict['event'].address_id">
+                        <i class="fa fa-map-marker" title="It is a physical event" role="img" aria-label="It is a physical event"></i>
+                    </t>
+                    <t t-if="not event_dict['event'].address_id">
+                        <i class="fa fa-cloud" title="It is an online event" role="img" aria-label="It is an online event"></i>
+                    </t>
+                    <b><span t-esc="event_dict['date']"/>: <span><a t-att-href="event_dict['url']"><t t-esc="event_dict['event'].name"/></a></span></b>
+                </div>
+                <t t-if="len(events) &gt; 5">
+                    <div t-if="country">
+                        <b><a t-att-href="'/event?country='+str(country.id)">See all events from <span t-esc="country.name"></span></a></b>
+                    </div>
+                    <div t-if="not country">
+                        <b><a href="/event"> See all upcoming events </a></b>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </t>
+</template>
+
+<!-- OPT - Toolbar -->
+<template id="event_left_column" active="True" inherit_id="website_event.index" customize_show="True" name="Top Toolbar">
     <xpath expr="//div[@id='middle_column']" position="before">
         <div class="col-lg-3 css_noprint" id="left_column"/>
     </xpath>
 </template>
 
+<!-- OPT - Toolbar - Date Filter -->
 <template id="event_time" active="True" customize_show="True" inherit_id="website_event.event_left_column" name="Filter by Date">
     <xpath expr="//div[@id='left_column']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
@@ -145,6 +186,7 @@
     </xpath>
 </template>
 
+<!-- OPT - Toolbar - Category Filter -->
 <template id="event_category" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Category">
     <xpath expr="//div[@id='left_column']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
@@ -160,6 +202,7 @@
     </xpath>
 </template>
 
+<!-- OPT - Toolbar - Country Filter -->
 <template id="event_location" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Country">
     <xpath expr="//div[@id='left_column']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
@@ -180,14 +223,10 @@
     </xpath>
 </template>
 
-<template id="event_edit_options" inherit_id="website.user_navbar" name="Edit Event Options">
-    <xpath expr="//li[@id='edit-page-menu']" position="after">
-        <t t-if="main_object._name == 'event.event'" t-set="action" t-value="'event.action_event_view'" />
-    </xpath>
-</template>
+
 <template id="layout">
     <t t-call="website.layout">
-      <div id="wrap" class="js_event o_website_event">
+        <div id="wrap" class="js_event o_website_event">
         <div class="container">
             <ol t-if="not event.menu_id" id="event_menu" class="breadcrumb mt-2">
                 <li class="breadcrumb-item"><a href="/event">All Events</a></li>
@@ -223,53 +262,25 @@
     </t>
 </template>
 
-<template id="template_location">
-    <t t-call="website_event.layout">
-        <div class="oe_structure" id="oe_structure_website_event_location_1"/>
-        <section class="container">
-            <h1 class="o_page_header">Event Location</h1>
-            <div class="row justify-content-center">
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h3 class="text-secondary" t-field="event.address_id" t-options='{
-                                "widget": "contact",
-                                "fields": ["name"]
-                            }'/>
-                            <h5>
-                                <a itemprop="location" t-att-href="event.google_map_link()" target="_BLANK" temprop="location" t-field="event.address_id" t-options='{
-                                    "widget": "contact",
-                                    "fields": ["address"]
-                                }'/>
-                            </h5>
-                            <h5 t-field="event.address_id" t-options='{
-                                "widget": "contact",
-                                "fields": ["phone", "mobile"]
-                            }'/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-        <div class="oe_structure" id="oe_structure_website_event_location_2"/>
-    </t>
-</template>
-
-<template id="template_intro">
-    <t t-call="website_event.layout">
-        <section class="container">
-            <h1 class="o_page_header">Event Introduction</h1>
-        </section>
-        <div class="oe_structure oe_empty" id="oe_structure_website_event_intro_1"/>
-    </t>
-</template>
-
 <template id="default_page">
     <t t-call="website.layout">
         <div class="oe_structure oe_empty"/>
     </t>
 </template>
 
+<template id="404">
+    <t t-call="website.layout">
+        <div id="wrap">
+            <div class="oe_structure oe_empty">
+                <div class="container">
+                    <h1 class="mt-4">Event not found!</h1>
+                    <p>Sorry, the requested event is not available anymore.</p>
+                    <p><a t-attf-href="/event">Return to the event list.</a></p>
+                </div>
+            </div>
+        </div>
+    </t>
+</template>
 
 <template id="event_details">
     <t t-call="website_event.layout">
@@ -288,20 +299,6 @@
             </div>
             <div class="row my-4">
                 <t t-raw="0"/>
-            </div>
-        </div>
-    </t>
-</template>
-
-<template id="404">
-    <t t-call="website.layout">
-        <div id="wrap">
-            <div class="oe_structure oe_empty">
-                <div class="container">
-                    <h1 class="mt-4">Event not found!</h1>
-                    <p>Sorry, the requested event is not available anymore.</p>
-                    <p><a t-attf-href="/event">Return to the event list.</a></p>
-                </div>
             </div>
         </div>
     </t>
@@ -402,7 +399,7 @@
     </t>
 </template>
 
-<!-- Registration Templates -->
+<!-- Registration -->
 <template id="registration_template">
     <t t-set="tickets_available" t-value="event.seats_available or event.seats_availability == 'unlimited'"/>
     <t t-set="buy" t-value="tickets_available and event.state == 'confirm'"/>
@@ -467,42 +464,6 @@
                     Configure and Launch Event Registration</em>
                 </a>
             </t>
-        </div>
-    </div>
-</template>
-
-<template id="ticket" name="Ticket offer template">
-    <div class="d-lg-none card-header bg-primary">
-        <h5><strong>Ticket Type:</strong> <t t-raw="name"/></h5>
-        <small t-if="description">
-            <t t-raw="description"/>
-        </small>
-    </div>
-    <div class="card-body">
-        <div class="row" itemscope="itemscope" itemtype="http://schema.org/Offer">
-            <div class="col-lg-4 d-none d-lg-block" t-raw="name"/>
-            <div class="col-6 d-lg-none border-sm-bottom pb-1">
-                <h6>End of Registration</h6>
-            </div>
-            <div class="col-6 col-lg-4" itemprop="availabilityEnds" t-raw="registration_end"/>
-            <div class="col-6 d-lg-none">
-                <h6>Price</h6>
-            </div>
-            <div class="col-6 col-lg-2" t-raw="price"/>
-            <div class="col-6 d-lg-none">
-                <h6>Quantity</h6>
-            </div>
-            <div class="col-6 col-lg-2">
-                <t t-if="tickets_available">
-                    <link itemprop="availability" content="http://schema.org/InStock"/>
-                    <t t-raw="quantity"/>
-                </t>
-                <t t-else="">
-                    <span itemprop="availability" content="http://schema.org/SoldOut">
-                        Sold Out
-                    </span>
-                </t>
-            </div>
         </div>
     </div>
 </template>
@@ -650,6 +611,43 @@
     </t>
 </template>
 
+<!-- Ticket -->
+<template id="ticket" name="Ticket offer template">
+    <div class="d-lg-none card-header bg-primary">
+        <h5><strong>Ticket Type:</strong> <t t-raw="name"/></h5>
+        <small t-if="description">
+            <t t-raw="description"/>
+        </small>
+    </div>
+    <div class="card-body">
+        <div class="row" itemscope="itemscope" itemtype="http://schema.org/Offer">
+            <div class="col-lg-4 d-none d-lg-block" t-raw="name"/>
+            <div class="col-6 d-lg-none border-sm-bottom pb-1">
+                <h6>End of Registration</h6>
+            </div>
+            <div class="col-6 col-lg-4" itemprop="availabilityEnds" t-raw="registration_end"/>
+            <div class="col-6 d-lg-none">
+                <h6>Price</h6>
+            </div>
+            <div class="col-6 col-lg-2" t-raw="price"/>
+            <div class="col-6 d-lg-none">
+                <h6>Quantity</h6>
+            </div>
+            <div class="col-6 col-lg-2">
+                <t t-if="tickets_available">
+                    <link itemprop="availability" content="http://schema.org/InStock"/>
+                    <t t-raw="quantity"/>
+                </t>
+                <t t-else="">
+                    <span itemprop="availability" content="http://schema.org/SoldOut">
+                        Sold Out
+                    </span>
+                </t>
+            </div>
+        </div>
+    </div>
+</template>
+
 <!-- Snippet to display local events -->
 <template id="s_country_events" name="Local Events">
     <div t-attf-class="oe_country_events #{_classes or 'my-3'}">
@@ -676,53 +674,29 @@
     </xpath>
 </template>
 
-<!-- Misc templates -->
-<template id="country_events_list" name="Country">
-    <t t-ignore="true">
-        <t t-if="events">
-            <div class="country_events_list">
-                <t t-if="country">
-                    <img class="img-fluid" t-att-src="website.image_url(country, 'image')" alt=""></img>
-                    <h4><b>Events: <span t-esc="country.name"></span></b></h4>
-                </t>
-                <t t-if="not country">
-                    <img class="img-fluid" src="/website_event/static/src/img/world_map.jpg" alt=""></img>
-                    <h4><b>Upcoming Events</b></h4>
-                </t>
-                <div t-foreach="events[:5]" t-as="event_dict" class="oe_website_overflow_ellipsis mb8">
-                    <t t-if="not event_dict['event'].website_published">
-                        <span class="badge badge-danger" role="img" aria-label="Attention: not published" title="Not published"><i class="fa fa-ban"></i></span>
-                    </t>
-                    <t t-if="event_dict['event'].address_id">
-                        <i class="fa fa-map-marker" title="It is a physical event" role="img" aria-label="It is a physical event"></i>
-                    </t>
-                    <t t-if="not event_dict['event'].address_id">
-                        <i class="fa fa-cloud" title="It is an online event" role="img" aria-label="It is an online event"></i>
-                    </t>
-                    <b><span t-esc="event_dict['date']"/>: <span><a t-att-href="event_dict['url']"><t t-esc="event_dict['event'].name"/></a></span></b>
-                </div>
-                <t t-if="len(events) &gt; 5">
-                    <div t-if="country">
-                        <b><a t-att-href="'/event?country='+str(country.id)">See all events from <span t-esc="country.name"></span></a></b>
-                    </div>
-                    <div t-if="not country">
-                        <b><a href="/event"> See all upcoming events </a></b>
-                    </div>
-                </t>
-            </div>
-        </t>
-    </t>
+<!-- Assets -->
+<template id="assets_frontend" inherit_id="website.assets_frontend">
+    <xpath expr="//link[last()]" position="after">
+        <link rel="stylesheet" type="text/scss" href="/website_event/static/src/scss/website_event.scss"/>
+    </xpath>
+    <xpath expr="//script[last()]" position="after">
+        <script type="text/javascript" src="/website_event/static/src/js/website_geolocation.js"></script>
+        <script type="text/javascript" src="/website_event/static/src/js/website_event.js"></script>
+    </xpath>
 </template>
-
-<template id="website_event.brand_promotion" inherit_id="website.brand_promotion">
-    <xpath expr="//div[hasclass('o_brand_promotion')]" position="replace">
-        <div class="o_brand_promotion">
-            Powered by <a target="_blank" class="badge badge-danger" href="http://www.odoo.com/page/website-builder?utm_source=db&amp;utm_medium=website">Odoo</a>.
-            Try the <a target="_blank" href="http://www.odoo.com/page/website-builder?utm_source=db&amp;utm_medium=website">open source website builder</a>.
-        </div>
+<template id="assets_editor" inherit_id="website.assets_editor" name="Event Editor">
+    <xpath expr="." position="inside">
+        <script type="text/javascript" src="/website_event/static/src/js/website_event.editor.js"></script>
+        <script type="text/javascript" src="/website_event/static/src/js/website.tour.event.js"></script>
     </xpath>
 </template>
 
+<!-- Edit -->
+<template id="event_edit_options" inherit_id="website.user_navbar" name="Edit Event Options">
+    <xpath expr="//li[@id='edit-page-menu']" position="after">
+        <t t-if="main_object._name == 'event.event'" t-set="action" t-value="'event.action_event_view'" />
+    </xpath>
+</template>
 
 <!-- User Navbar -->
 <template id="user_navbar_inherit_website_event" inherit_id="website.user_navbar">
@@ -733,4 +707,58 @@
         <attribute name="groups">event.group_event_manager</attribute>
     </xpath>
 </template>
+
+<!-- Odoo -->
+<template id="website_event.brand_promotion" inherit_id="website.brand_promotion">
+    <xpath expr="//div[hasclass('o_brand_promotion')]" position="replace">
+        <div class="o_brand_promotion">
+            Powered by <a target="_blank" class="badge badge-danger" href="http://www.odoo.com/page/website-builder?utm_source=db&amp;utm_medium=website">Odoo</a>.
+            Try the <a target="_blank" href="http://www.odoo.com/page/website-builder?utm_source=db&amp;utm_medium=website">open source website builder</a>.
+        </div>
+    </xpath>
+</template>
+
+<!-- Website Menu - Template -->
+<template id="template_location">
+    <t t-call="website_event.layout">
+        <div class="oe_structure" id="oe_structure_website_event_location_1"/>
+        <section class="container">
+            <h1 class="o_page_header">Event Location</h1>
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 class="text-secondary" t-field="event.address_id" t-options='{
+                                "widget": "contact",
+                                "fields": ["name"]
+                            }'/>
+                            <h5>
+                                <a itemprop="location" t-att-href="event.google_map_link()" target="_BLANK" temprop="location" t-field="event.address_id" t-options='{
+                                    "widget": "contact",
+                                    "fields": ["address"]
+                                }'/>
+                            </h5>
+                            <h5 t-field="event.address_id" t-options='{
+                                "widget": "contact",
+                                "fields": ["phone", "mobile"]
+                            }'/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <div class="oe_structure" id="oe_structure_website_event_location_2"/>
+    </t>
+</template>
+
+<!-- Website Menu - Template -->
+<template id="template_intro">
+    <t t-call="website_event.layout">
+        <section class="container">
+            <h1 class="o_page_header">Event Introduction</h1>
+        </section>
+        <div class="oe_structure oe_empty" id="oe_structure_website_event_intro_1"/>
+    </t>
+</template>
+
 </odoo>
