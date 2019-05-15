@@ -23,7 +23,7 @@
                         </group>
                     </group>
                     <separator string="Pickings"/>
-                    <field name="picking_ids" widget="many2many" domain="[('state', 'not in', ('done', 'cancel'))]" options="{'not_delete': True}">
+                    <field name="picking_ids" widget="many2many" domain="[('state', 'not in', ('done', 'cancel'))]" options="{'not_delete': True}" kanban_view_ref="%(stock.stock_picking_kanban_m2o_mobile)s">
                         <tree>
                             <field name="name"/>
                             <field name="backorder_id"/>

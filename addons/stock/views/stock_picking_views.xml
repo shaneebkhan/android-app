@@ -140,6 +140,44 @@
             </field>
         </record>
 
+        <record model="ir.ui.view" id="stock_picking_kanban_m2o_mobile">
+            <field name="name">stock.picking.kanban</field>
+            <field name="model">stock.picking</field>
+            <field name="arch" type="xml">
+                <kanban class="o_kanban_mobile">
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="location_dest_id"/>
+                    <field name="state"/>
+                    <field name="date"/>
+                    <field name="activity_state"/>
+                    <progressbar field="activity_state" colors='{"planned": "success", "today": "warning", "overdue": "danger"}'/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_card oe_kanban_global_click">
+                                <div class="o_kanban_record_top mb8">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title"><span><t t-esc="record.name.value"/></span></strong>
+                                    </div>
+                                    <strong>
+                                            <field name="state" widget="label_selection" options="{'classes': {'draft': 'default', 'cancel': 'default', 'none': 'danger', 'waiting': 'warning', 'confirmed': 'warning', 'partially_available': 'warning', 'done': 'success'}}"/>
+                                    </strong>
+                                </div>
+                                <div class="o_kanban_record_bottom">
+                                    <div class="oe_kanban_bottom_left">
+                                        <t t-esc="record.partner_id.value"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <t t-esc="record.date.value and record.date.value.split(' ')[0] or False"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+
         <record model="ir.ui.view" id="stock_picking_kanban">
             <field name="name">stock.picking.kanban</field>
             <field name="model">stock.picking</field>
