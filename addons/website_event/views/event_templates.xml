@@ -22,7 +22,7 @@
         <div class="oe_structure" id="oe_structure_website_event_index_1"/>
         <div id="o_index_container" class="container">
             <div class="row">
-                <div class="col" id="middle_column">
+                <div id="o_index_main_column" class="col">
                     <div class="text-center text-muted" t-if="not event_ids">
                         <h1>No event found</h1>
                         <p groups="event.group_event_manager">Use the top menu <i>'Content'</i> to create your first event.</p>
@@ -68,14 +68,14 @@
 
 <!-- OPT - Sidebar -->
 <template id="event_right_column" inherit_id="website_event.index" active="False" customize_show="True" name="Right Sidebar">
-    <xpath expr="//div[@id='middle_column']" position="after">
-        <div class="col-lg-3 oe_structure" id="right_column"/>
+    <xpath expr="//div[@id='o_index_main_column']" position="after">
+        <div id="o_index_sidebar" class="col-lg-3 oe_structure"/>
     </xpath>
 </template>
 
 <!-- OPT - Sidebar - Photos -->
 <template id="event_right_photos" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Photos">
-    <xpath expr="//div[@id='right_column']" position="inside">
+    <xpath expr="//div[@id='o_index_sidebar']" position="inside">
         <figure class="figure o_figure_relative_layout w-100">
             <img class="figure-img img-fluid" src="/website_event/static/src/img/openerp_enterprise_of_the_year.png" alt=""/>
             <figcaption class="figure-caption text-center"><a href="/event">Photos of Past Events</a></figcaption>
@@ -89,7 +89,7 @@
 
 <!-- OPT - Sidebar - Quotes -->
 <template id="event_right_quotes" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Quotes">
-    <xpath expr="//div[@id='right_column']" position="inside">
+    <xpath expr="//div[@id='o_index_sidebar']" position="inside">
         <div class="card mb-3 bg-secondary">
             <div class="card-body">
                 <blockquote class="m-0">
@@ -107,7 +107,7 @@
 
 <!-- OPT - Sidebar - Country -->
 <template id="event_right_country_event" inherit_id="website_event.event_right_column" active="False" customize_show="True" name="Country Events">
-    <xpath expr="//div[@id='right_column']" position="inside">
+    <xpath expr="//div[@id='o_index_sidebar']" position="inside">
         <div class="card mb-3">
             <t t-call="website_event.s_country_events">
                 <t t-set="_classes" t-value="'card-body'"/>
@@ -156,14 +156,14 @@
 
 <!-- OPT - Toolbar -->
 <template id="event_left_column" active="True" inherit_id="website_event.index" customize_show="True" name="Top Toolbar">
-    <xpath expr="//div[@id='middle_column']" position="before">
-        <div class="col-lg-3 css_noprint" id="left_column"/>
+    <xpath expr="//div[@id='o_index_main_column']" position="before">
+        <div class="col-12 css_noprint" id="o_index_toolbar"/>
     </xpath>
 </template>
 
 <!-- OPT - Toolbar - Date Filter -->
 <template id="event_time" active="True" customize_show="True" inherit_id="website_event.event_left_column" name="Filter by Date">
-    <xpath expr="//div[@id='left_column']" position="inside">
+    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
             <t t-foreach="dates" t-as="date">
                 <li class="nav-item" t-if="date[3] or (date[0] in ('old','all'))">
@@ -178,7 +178,7 @@
 
 <!-- OPT - Toolbar - Category Filter -->
 <template id="event_category" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Category">
-    <xpath expr="//div[@id='left_column']" position="inside">
+    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
             <t t-foreach="types" t-as="type">
                 <li t-if="type['event_type_id']"
@@ -194,7 +194,7 @@
 
 <!-- OPT - Toolbar - Country Filter -->
 <template id="event_location" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Country">
-    <xpath expr="//div[@id='left_column']" position="inside">
+    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
         <ul class="nav nav-pills flex-column mb-3">
             <t t-foreach="countries" t-as="country">
                 <li t-if="country['country_id']" class="nav-item">
