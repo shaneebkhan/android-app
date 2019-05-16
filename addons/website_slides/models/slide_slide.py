@@ -402,6 +402,15 @@ class Slide(models.Model):
             self._post_publication()
         return res
 
+    @api.multi
+    @api.returns('self', lambda value: value.id)
+    def copy(self, default=None):
+        """Sets the sequence to zero so that it always lands at the beginning
+        of the newly selected course as an uncategorized slide"""
+        rec = super(Slide, self).copy(default)
+        rec.sequence = 0
+        return rec
+
     # ---------------------------------------------------------
     # Mail/Rating
     # ---------------------------------------------------------
