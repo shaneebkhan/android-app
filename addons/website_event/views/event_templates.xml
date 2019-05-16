@@ -22,37 +22,71 @@
         <div class="oe_structure" id="oe_structure_website_event_index_1"/>
         <div id="o_index_container" class="container">
             <div class="row">
-                <div id="o_index_main_column" class="col">
+                <div id="o_index_main_column" class="col my-3">
                     <div class="text-center text-muted" t-if="not event_ids">
                         <h1>No event found</h1>
                         <p groups="event.group_event_manager">Use the top menu <i>'Content'</i> to create your first event.</p>
                     </div>
-                    <div t-foreach="event_ids" t-as="event" class="card mb-3" itemscope="itemscope" itemtype="http://schema.org/Event">
-                        <img t-att-src="events_cover_properties[event_index].get('img_url')" class="img-fluid" alt=""/>
-                        <div t-attf-class="card-body #{event.is_participating and 'o_wevent_participating_container' or ''}">
-                            <span t-if="event.is_participating" class="badge badge-info">Participating</span>
-                            <span t-if="event.is_online" class="badge badge-info">Online</span>
-                            <span t-if="not event.website_published" class="badge badge-danger">unpublished</span>
-                            <small class="badge badge-primary float-right" t-if="event.event_type_id">
-                                <i class="fa fa-ticket" role="img" aria-label="Event type" title="Event type"/> <span t-field="event.event_type_id"/>
-                            </small>
-                            <h4>
-                                <a itemprop="url" t-att-class="event.state == 'done' and 'text-success'" t-attf-href="/event/#{ slug(event) }/#{(not event.menu_id) and 'register' or ''}"><b itemprop="name" t-field="event.name"/></a>
-                            </h4>
-                            <small t-if="event.organizer_id" class="text-muted">Organized by <span t-field="event.organizer_id" /></small>
-                            <div>
-                                <i class="fa fa-clock-o text-primary mx-1" role="img" aria-label="Start date" title="Start date"/>
-                                <span itemprop="startDate" t-field="event.with_context(tz=event.date_tz).date_begin" t-options='{"hide_seconds":"True"}'></span>
-                                <small>to</small>
-                                <span itemprop="endDate" t-field="event.with_context(tz=event.date_tz).date_end" t-options='{"hide_seconds":"True"}'></span>
+                    <div class="row">
+
+                        <!--  -->
+                        <t t-set="opt_sidebar_show" t-value="False"/>
+                        <t t-set="opt_col_size" t-value="'col-lg-4' if opt_sidebar_show else 'col-lg-3'"/>
+                        <!--  -->
+
+                        <div t-foreach="event_ids" t-as="event" itemscope="itemscope" itemtype="http://schema.org/Event" t-attf-class="col-12 #{opt_col_size} my-3">
+                            <div class="card">
+
+                                <a t-attf-href="/event/#{ slug(event) }/#{(not event.menu_id) and 'register' or ''}" class="o_index_event_img_overlay overflow-hidden position-relative">
+                                    <!-- Overlay -->
+                                    <div class="card-img-overlay">
+                                        <span t-if="not event.website_published" class="badge badge-danger badge-pill mt-3 ml-3 px-3 py-2 text-uppercase">Unpublished</span>
+                                        <span t-if="event.is_participating" class="badge badge-info badge-pill mt-3 ml-3 px-3 py-2 text-uppercase">Participating</span>
+                                        <!-- Start DATE -->
+                                        <div class="o_index_event_date float-right bg-light shadow rounded text-center">
+                                            <div t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%b')" class="text-uppercase small px-2 pt-2"/>
+                                            <div t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%d')" class="h5 font-weight-bold m-0 pb-2 px-2"/>
+                                        </div>
+                                    </div>
+                                    <img itemprop="image" t-att-src="events_cover_properties[event_index].get('img_url')" class="card-img-top" t-att-alt="event.name"/>
+                                </a>
+
+
+                                <div t-attf-class="card-body #{event.is_participating and 'o_wevent_participating_container' or ''}">
+                                    <!-- TODO - Online -->
+                                    <!-- <span t-if="event.is_online" class="badge badge-info">Online</span> -->
+                                    <h5 class="card-title mb-0">
+                                        <a itemprop="url" t-attf-href="/event/#{ slug(event) }/#{(not event.menu_id) and 'register' or ''}"><span itemprop="name" t-field="event.name"/></a>
+                                    </h5>
+                                    <!-- TODO - If event is done? -->
+                                    <!-- t-att-class="event.state == 'done' and 'text-success'"-->
+                                    <small t-if="event.organizer_id" class="d-block text-muted mt-1 mb-3">Organized by <span t-field="event.organizer_id" itemprop="organizer"/></small>
+                                    <t t-if="not event.is_online">
+                                        <span itemprop="location" t-field="event.address_id" t-options='{
+                                            "widget": "contact",
+                                            "fields": ["city"],
+                                            "no_marker": "true"
+                                            }'/>
+                                    </t>
+                                    <t t-else=""><i class="fa fa-cloud mr-1"/>Online</t>
+                                    <!-- <hr/> -->
+                                </div>
+                                <div class="card-footer small d-flex justify-content-between">
+                                    <!-- TODO - Display smallest and highest ticket price - eg. FREE ~ $99 -->
+                                    <t t-set="price">
+                                         <span itemprop="price" content="0">
+                                             <b>FREE</b>
+                                         </span>
+                                    </t>
+                                    <t t-raw="price"/>
+                                    <span t-if="event.event_type_id" class="text-nowrap text-truncate pl-2">
+                                        <i class="fa fa-folder-open" role="img" aria-label="Event type" title="Event type"/>
+                                        <a t-attf-href="/event?type=#{event.event_type_id.id}">
+                                            <b t-esc="event.event_type_id.name"/>
+                                        </a>
+                                    </span>
+                                </div>
                             </div>
-                            <hr/>
-                            <t t-if="not event.is_online">
-                                <div itemprop="location" t-field="event.address_id" t-options='{
-                                    "widget": "contact",
-                                    "fields": ["city"]
-                                }'/>
-                            </t>
                         </div>
                     </div>
                 </div>
