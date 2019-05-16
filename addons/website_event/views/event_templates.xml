@@ -156,63 +156,105 @@
 
 <!-- OPT - Toolbar -->
 <template id="event_left_column" active="True" inherit_id="website_event.index" customize_show="True" name="Top Toolbar">
-    <xpath expr="//div[@id='o_index_main_column']" position="before">
-        <div class="col-12 css_noprint" id="o_index_toolbar"/>
+    <xpath expr="//div[@id='o_index_container']" position="before">
+        <div id="o_index_toolbar" class="navbar bg-200">
+            <div class="container justify-content-start py-2">
+                <h3 class="my-0 navbar-brand mr-4">Events</h3>
+                <ul id="o_toolbar_filters" class="nav"/>
+                <a href="/event" class="small"><i class="fa fa-close mr-1"/>Reset Filters</a>
+            </div>
+        </div>
     </xpath>
 </template>
 
 <!-- OPT - Toolbar - Date Filter -->
 <template id="event_time" active="True" customize_show="True" inherit_id="website_event.event_left_column" name="Filter by Date">
-    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
-        <ul class="nav nav-pills flex-column mb-3">
-            <t t-foreach="dates" t-as="date">
-                <li class="nav-item" t-if="date[3] or (date[0] in ('old','all'))">
-                    <a t-attf-href="/event?{{ keep_query('country', 'type', date=date[0]) }}" t-attf-class="nav-link d-flex align-items-center #{searches.get('date') == date[0] and ' active' or ''}"><t t-esc="date[1]"/>
-                        <span t-if="date[3]" class="badge badge-primary ml-auto"><t t-esc="date[3]"/></span>
-                    </a>
-                </li>
-            </t>
-        </ul>
+    <xpath expr="//ul[@id='o_toolbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <!-- TODO - Display the active filter instead of this hardcoded label -->
+                <span class="pr-2">Next Event</span>
+            </a>
+            <div class="dropdown-menu">
+                <t t-foreach="dates" t-as="date">
+                    <t t-if="date[3] or (date[0] in ('old','all'))">
+                        <a t-attf-href="/event?{{ keep_query('country', 'type', date=date[0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('date') == date[0] and ' active' or ''}"><t t-esc="date[1]"/>
+                            <span t-if="date[3]" class="badge badge-pill py-1 px-2 ml-auto"><t t-esc="date[3]"/></span>
+                        </a>
+                    </t>
+                </t>
+            </div>
+        </li>
     </xpath>
 </template>
 
 <!-- OPT - Toolbar - Category Filter -->
 <template id="event_category" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Category">
-    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
-        <ul class="nav nav-pills flex-column mb-3">
-            <t t-foreach="types" t-as="type">
-                <li t-if="type['event_type_id']"
-                    class="nav-item">
-                    <a t-attf-href="/event?{{ keep_query('country', 'date', type=type['event_type_id'][0]) }}" t-attf-class="nav-link d-flex align-items-center #{searches.get('type') == str(type['event_type_id'] and type['event_type_id'][0]) and ' active' or ''}"><t t-esc="type['event_type_id'][1]"/>
-                        <span class="badge badge-primary ml-auto"><t t-esc="type['event_type_id_count']"/></span>
-                    </a>
-                </li>
-            </t>
-        </ul>
+    <xpath expr="//ul[@id='o_toolbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <!-- TODO - Display the active filter instead of this hardcoded label -->
+                <span class="pr-2">All Categories</span>
+            </a>
+            <div class="dropdown-menu">
+                <t t-foreach="types" t-as="type">
+                    <t t-if="type['event_type_id']">
+                        <a t-attf-href="/event?{{ keep_query('country', 'date', type=type['event_type_id'][0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('type') == str(type['event_type_id'] and type['event_type_id'][0]) and ' active' or ''}"><t t-esc="type['event_type_id'][1]"/>
+                            <span class="badge badge-pill ml-auto"><t t-esc="type['event_type_id_count']"/></span></a>
+                    </t>
+                </t>
+            </div>
+        </li>
     </xpath>
 </template>
 
 <!-- OPT - Toolbar - Country Filter -->
 <template id="event_location" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Filter by Country">
-    <xpath expr="//div[@id='o_index_toolbar']" position="inside">
-        <ul class="nav nav-pills flex-column mb-3">
-            <t t-foreach="countries" t-as="country">
-                <li t-if="country['country_id']" class="nav-item">
-                    <a t-attf-href="/event?{{ keep_query('type', 'date', country=country['country_id'][0]) }}" t-attf-class="nav-link d-flex align-items-center #{searches.get('country') == str(country['country_id'] and country['country_id'][0]) and ' active' or ''}"><t t-esc="country['country_id'][1]"/>
-                        <span class="badge badge-primary ml-auto"><t t-esc="country['country_id_count']"/></span>
-                    </a>
-                </li>
-                <li t-if="not country['country_id']" class="nav-item">
-                    <a t-attf-href="/event?{{ keep_query('type', 'date', country='online') }}" t-attf-class="nav-link d-flex align-items-center #{searches.get('country') == 'online' and ' active' or ''}">
-                        <span>Online Events</span>
-                        <span class="badge badge-primary ml-auto"><t t-esc="country['country_id_count']"/></span>
-                    </a>
-                </li>
-            </t>
-        </ul>
+    <xpath expr="//ul[@id='o_toolbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <!-- TODO - Display the active filter instead of this hardcoded label -->
+                <span class="pr-2">All countries</span>
+            </a>
+            <div class="dropdown-menu">
+                <t t-foreach="countries" t-as="country">
+                    <t t-if="country['country_id']">
+                        <a t-attf-href="/event?{{ keep_query('type', 'date', country=country['country_id'][0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('country') == str(country['country_id'] and country['country_id'][0]) and ' active' or ''}">
+                            <t t-esc="country['country_id'][1]"/>
+                            <span class="badge badge-pill ml-auto"><t t-esc="country['country_id_count']"/></span>
+                        </a>
+                    </t>
+                    <t t-if="not country['country_id']">
+                        <a t-attf-href="/event?{{ keep_query('type', 'date', country='online') }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('country') == 'online' and ' active' or ''}">
+                            <span>Online Events</span>
+                            <span class="badge ml-auto"><t t-esc="country['country_id_count']"/></span>
+                        </a>
+                    </t>
+                </t>
+            </div>
+        </li>
     </xpath>
 </template>
 
+<!-- OPT - Toolbar - Search Box -->
+<template id="index_search_box" inherit_id="website_event.event_left_column" active="False" customize_show="True" name="Search box">
+    <xpath expr="//div[@id='o_index_toolbar']/div" position="inside">
+        <t t-call="website_event.search_box"/>
+    </xpath>
+</template>
+
+<!-- Search Box -->
+<!-- TODO - Make it works -->
+<template id="search_box" name="Search box">
+    <form id="o_search_box" class="form-inline d-inline-block ml-auto">
+        <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search"/>
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit"><i class="fa fa-search"/></button>
+            </div>
+        </div>
+    </form>
+</template>
 
 <template id="layout">
     <t t-call="website.layout">

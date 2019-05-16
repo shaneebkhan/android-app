@@ -11,3 +11,36 @@
 .o_wevent_registration_list_attendees:nth-child(2n) {
     background-color: gray('200');
 }
+
+
+#o_index_toolbar {
+    $dropdown-item-padding-y: 0.375rem;
+    $dropdown-item-padding-x: 1rem;
+    .dropdown-toggle {
+        padding: $dropdown-item-padding-y $dropdown-item-padding-x;
+        margin-right: 10px;
+        background-color: $dropdown-bg;
+        color: $dropdown-link-color;
+        border: $dropdown-border-width solid $dropdown-border-color;
+        @include border-radius($dropdown-border-radius);
+
+        @include hover-focus {
+            color: $primary;
+            border-color: $primary;
+        }
+    }
+    .dropdown-menu {
+        min-width: 12rem;
+    }
+    .dropdown-item  {
+        padding: $dropdown-item-padding-y $dropdown-item-padding-x;
+        .badge {
+            background-color: $primary;
+            color: color-yiq($primary);
+        }
+        &.active .badge {
+            color: $primary;
+            background-color: color-yiq($primary);
+        }
+    }
+}
