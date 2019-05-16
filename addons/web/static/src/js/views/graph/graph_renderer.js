@@ -674,6 +674,9 @@ return AbstractRenderer.extend({
             dataset.backgroundColor = color;
         });
 
+            //used to determine if the datasets are stackables
+            this.isStackable = (data.datasets.length > 1);
+
         // prepare options
         var options = this._prepareOptions(data.datasets.length);
 
