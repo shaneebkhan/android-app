@@ -29,9 +29,6 @@
                 <li t-if="current_type" class="breadcrumb-item"><t t-esc="current_type.name"/></li>
                 <li t-if="current_country" class="breadcrumb-item"><t t-esc="current_country.name"/></li>
             </ol>
-            <div class="form-inline justify-content-center mb-3">
-                <t t-call="website.pager"/>
-            </div>
             <div class="row">
                 <div class="col" id="middle_column">
                     <div class="text-center text-muted" t-if="not event_ids">
