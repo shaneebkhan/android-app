@@ -21,7 +21,7 @@
         </record>
 
         <act_window id="action_account_invoice_confirm"
-            name="Confirm Draft Invoices"
+            name="Validate"
             res_model="account.invoice.confirm"
             binding_model="account.invoice" binding_views="list"
             view_mode="form" target="new"/>
