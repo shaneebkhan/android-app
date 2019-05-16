@@ -1427,6 +1427,95 @@ var CharCopyClipboard = FieldChar.extend(CopyClipboard, {
     clipboardTemplate: 'CopyClipboardChar',
 });
 
+var FieldEmbedURLViewer = FieldChar.extend({
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
+     * @override
+     */
+    init: function () {
+        this._super.apply(this, arguments);
+        this.page = 1;
+    },
+
+    /**
+     * force to set 'src' for embed iframe viewer when its value has changed
+     *
+     * @override
+     *
+     */
+    reset: function () {
+        var self = this;
+        return $.when(this._super.apply(this, arguments)).then(function () {
+            var $iframe = self.$el.find('iframe.o_embed_iframe');
+            if ($iframe.length) {
+                self._setEmbedSrc(self.value);
+                if (self.src && $iframe.attr('src') !== self.src) {
+                    $iframe.removeClass('o_hidden');
+                }
+                $iframe.attr('src', self.src);
+            }
+        });
+    },
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * set the associated src for embed iframe viewer
+     *
+     * @private
+     */
+    _setEmbedSrc: function (value) {
+        var src = false;
+        if (value) {
+            // check given google slide url is valid or not
+            var googleRegExp = /(^https:\/\/docs.google.com).*(\/d\/e\/|\/d\/)([A-Za-z0-9-_]+)/;
+            var google = value.match(googleRegExp);
+            if (google && google[3]) {
+                src = 'https://docs.google.com/presentation' + google[2] + google[3] + '/preview?slide=' + this.page;
+            }
+        }
+        this.src = src || value || this.value;
+    },
+
+    /**
+     * initialize an iframe for viewer
+     *
+     * @private
+     */
+    _initIFrame: function () {
+        return $('<iframe>', {
+            src: this.src || 'about:blank',
+            class: this.src ? 'o_embed_iframe' : 'o_embed_iframe o_hidden',
+            width: '100%',
+            height: '30rem',
+            css: {
+                border: '0',
+            },
+            allowfullscreen: true,
+        });
+    },
+
+    /**
+     * append iframe for embed viewer
+     *
+     * @override
+     * @private
+     */
+    _render: function ()  {
+        this._super.apply(this, arguments);
+        this._setEmbedSrc(this.value);
+        this.mode === 'readonly' ? this.$el.hide() : this.$el.show();
+        this.setElement(this.$el.wrap('<div class="o_embed_url_viewer"/>').parent());
+        this.$el.append(this._initIFrame());
+    },
+});
+
 var AbstractFieldBinary = AbstractField.extend({
     events: _.extend({}, AbstractField.prototype.events, {
         'change .o_input_file': 'on_file_change',
@@ -3052,6 +3141,7 @@ return {
     UrlWidget: UrlWidget,
     TextCopyClipboard: TextCopyClipboard,
     CharCopyClipboard: CharCopyClipboard,
+    FieldEmbedURLViewer: FieldEmbedURLViewer,
     JournalDashboardGraph: JournalDashboardGraph,
     AceEditor: AceEditor,
 };

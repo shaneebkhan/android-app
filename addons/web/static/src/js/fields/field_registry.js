@@ -37,6 +37,7 @@ registry
     .add('url', basic_fields.UrlWidget)
     .add('CopyClipboardText', basic_fields.TextCopyClipboard)
     .add('CopyClipboardChar', basic_fields.CharCopyClipboard)
+    .add('embed_viewer', basic_fields.FieldEmbedURLViewer)
     .add('image', basic_fields.FieldBinaryImage)
     .add('binary', basic_fields.FieldBinaryFile)
     .add('pdf_viewer', basic_fields.FieldPdfViewer)
