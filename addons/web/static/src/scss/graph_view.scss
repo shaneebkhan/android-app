@@ -13,4 +13,57 @@
             }
         }
     }
+    div.o_tooltip_graph{
+        border-radius: 15px;
+        background-color: white;
+        //font-size: 10px;
+        border: black solid 0.5px;
+        /* display:flex;
+        justify-content: center; */
+        position: absolute;
+        z-index: 1;
+        padding: 10px;
+        pointer-events: none;
+        td.label{
+            text-overflow: ellipsis;
+            overflow:hidden; 
+            white-space: nowrap;
+            font-weight: bold;
+            color:black;
+            //padding-bottom: 1px;
+            margin:0;
+            padding:0;
+        }
+    
+        td.count{
+            margin:0;
+            padding:0;
+            padding-left: 10px;
+            vertical-align: baseline;
+            padding-bottom: 1px;
+        }
+        table.overflow{
+            overflow:hidden;
+            display:block;
+            border-collapse: collapse;
+            /* display:block;
+            text-overflow: ellipsis;
+            overflow:hidden; */
+            /* border-radius: 15px;
+            background-color: white;
+            border: black solid 0.5px;
+            font-size: 10px;
+            display: inline-block;
+            align-self: center; */
+            
+        }
+        span.square{
+            height: 10px;
+            width: 10px;
+            display: inline-block;
+        }
+        th.count{
+            padding-left:10px;
+        }
+    }
 }
