@@ -105,6 +105,9 @@
     <xpath expr="//div[@id='o_index_main_column']" position="after">
         <div id="o_index_sidebar" class="col-lg-3 oe_structure"/>
     </xpath>
+    <xpath expr="//t[@t-set='opt_sidebar_show']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
 </template>
 
 <!-- OPT - Sidebar - Photos -->
