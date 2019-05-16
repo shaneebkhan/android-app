@@ -2,17 +2,19 @@
 <odoo>
 <data>
     <record id="lunch_order_action_confirm" model="ir.actions.server">
-        <field name="name">Lunch: Receive meals</field>
+        <field name="name">Mark as received</field>
         <field name="model_id" ref="model_lunch_order"/>
         <field name="binding_model_id" ref="model_lunch_order"/>
+        <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">records.action_confirm()</field>
     </record>
 
     <record id="lunch_order_action_cancel" model="ir.actions.server">
-        <field name="name">Lunch: Cancel meals</field>
+        <field name="name">Cancel</field>
         <field name="model_id" ref="model_lunch_order"/>
         <field name="binding_model_id" ref="model_lunch_order"/>
+        <field name="binding_view_types">list</field>
         <field name="state">code</field>
         <field name="code">records.action_cancel()</field>
     </record>
