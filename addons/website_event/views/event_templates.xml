@@ -39,6 +39,7 @@
                         <p groups="event.group_event_manager">Use the top menu <i>'Content'</i> to create your first event.</p>
                     </div>
                     <div t-foreach="event_ids" t-as="event" class="card mb-3" itemscope="itemscope" itemtype="http://schema.org/Event">
+                        <img t-att-src="events_cover_properties[event_index].get('img_url')" class="img-fluid" alt=""/>
                         <div t-attf-class="card-body #{event.is_participating and 'o_wevent_participating_container' or ''}">
                             <span t-if="event.is_participating" class="badge badge-info">Participating</span>
                             <span t-if="event.is_online" class="badge badge-info">Online</span>

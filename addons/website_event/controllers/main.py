@@ -137,6 +137,7 @@ class WebsiteEventController(http.Controller):
             'pager': pager,
             'searches': searches,
             'search_path': "?%s" % werkzeug.url_encode(searches),
+            'events_cover_properties': [json.loads(e.cover_properties) for e in events],
         }
 
         return request.render("website_event.index", values)
@@ -148,7 +149,7 @@ class WebsiteEventController(http.Controller):
 
         values = {
             'event': event,
-            'main_object': event
+            'main_object': event,
         }
 
         if '.' not in page:
@@ -186,7 +187,8 @@ class WebsiteEventController(http.Controller):
             'event': event,
             'main_object': event,
             'range': range,
-            'registrable': event.sudo()._is_event_registrable()
+            'registrable': event.sudo()._is_event_registrable(),
+            'event_cover_properties': json.loads(event.cover_properties),
         }
         return request.render("website_event.event_description_full", values)
 
@@ -283,3 +285,9 @@ class WebsiteEventController(http.Controller):
             'google_url': urls.get('google_url'),
             'iCal_url': urls.get('iCal_url')
         })
+
+    @http.route('/event/event_change_img', type='json', auth="public", website=True)
+    def change_bg(self, event_id=0, cover_properties={}, **post):
+        if not event_id:
+            return False
+        return request.env['event.event'].browse(int(event_id)).write({'cover_properties': json.dumps(cover_properties)})

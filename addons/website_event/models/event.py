@@ -2,6 +2,7 @@
 
 import pytz
 import werkzeug
+import json
 
 from odoo import api, fields, models, _
 from odoo.addons.http_routing.models.ir_http import slug
@@ -25,6 +26,10 @@ class Event(models.Model):
     is_published = fields.Boolean(tracking=True)
 
     is_participating = fields.Boolean("Is Participating", compute="_compute_is_participating")
+
+    cover_properties = fields.Text(
+        'Cover Properties',
+        default='{"img_url": "", "background-color": "oe_black", "opacity": "0.2", "resize_class": ""}')
 
     website_menu = fields.Boolean('Dedicated Menu',
         help="Creates menus Introduction, Location and Register on the page "
@@ -152,6 +157,8 @@ class Event(models.Model):
     def _default_website_meta(self):
         res = super(Event, self)._default_website_meta()
         res['default_opengraph']['og:title'] = res['default_twitter']['twitter:title'] = self.name
+        event_cover_properties = json.loads(self.cover_properties)
+        res['default_opengraph']['og:image'] = res['default_twitter']['twitter:image'] = event_cover_properties.get('img_url', '')[4:-1]
         res['default_opengraph']['og:description'] = res['default_twitter']['twitter:description'] = self.date_begin
         res['default_twitter']['twitter:card'] = 'summary'
         res['default_meta_description'] = self.date_begin
