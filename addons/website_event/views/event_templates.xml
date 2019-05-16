@@ -210,7 +210,7 @@
         <li class="nav-item dropdown">
             <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
                 <!-- TODO - Display the active filter instead of this hardcoded label -->
-                <span class="pr-2">Next Event</span>
+                <span>Next Event</span>
             </a>
             <div class="dropdown-menu">
                 <t t-foreach="dates" t-as="date">
@@ -231,7 +231,7 @@
         <li class="nav-item dropdown">
             <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
                 <!-- TODO - Display the active filter instead of this hardcoded label -->
-                <span class="pr-2">All Categories</span>
+                <span>All Categories</span>
             </a>
             <div class="dropdown-menu">
                 <t t-foreach="types" t-as="type">
@@ -251,7 +251,7 @@
         <li class="nav-item dropdown">
             <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
                 <!-- TODO - Display the active filter instead of this hardcoded label -->
-                <span class="pr-2">All countries</span>
+                <span>All countries</span>
             </a>
             <div class="dropdown-menu">
                 <t t-foreach="countries" t-as="country">
