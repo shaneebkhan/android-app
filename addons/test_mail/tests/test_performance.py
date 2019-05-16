@@ -161,7 +161,10 @@ class TestAdvMailPerformance(TransactionCase):
         model = self.env['mail.test.activity']
 
         with self.assertQueryCount(__system__=9, emp=8):  # test_mail only: 9 - 8
+            if self.warm:
+                self.env.cr.sql_log = self.env.cr.sql_log_count
             model.create({'name': 'Test'})
+            self.env.cr.sql_log = False
 
     @users('__system__', 'emp')
     @warmup
@@ -173,6 +176,8 @@ class TestAdvMailPerformance(TransactionCase):
         })
 
         with self.assertQueryCount(__system__=10, emp=17):  # com runbot: 10 - 16 // test_mail only: 10 - 15
+            if self.warm:
+                self.env.cr.sql_log = self.env.cr.sql_log_count
             activity = MailActivity.create({
                 'summary': 'Test Activity',
                 'res_id': record.id,
@@ -181,6 +186,7 @@ class TestAdvMailPerformance(TransactionCase):
             #read activity_type to normalize cache between enterprise and community
             #voip module read activity_type during create leading to one less query in enterprise on action_feedback
             category = activity.activity_type_id.category
+            self.env.cr.sql_log = False
 
         with self.assertQueryCount(__system__=24, emp=41):  # com runbot: 24 - 41 // test_mail only: 24 - 39
             activity.action_feedback(feedback='Zizisse Done !')

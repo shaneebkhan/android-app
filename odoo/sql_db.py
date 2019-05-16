@@ -215,8 +215,11 @@ class Cursor(object):
             raise ValueError("SQL query parameters should be a tuple, list or dict; got %r" % (params,))
 
         if self.sql_log:
+            print('%s _____________________________' % (self.sql_log_count + 1 - self.sql_log))
             encoding = psycopg2.extensions.encodings[self.connection.encoding]
-            _logger.debug("query: %s", self._obj.mogrify(query, params).decode(encoding, 'replace'))
+            print(self._obj.mogrify(query, params).decode(encoding, 'replace'))
+            import traceback
+            #traceback.print_stack()
         now = time.time()
         try:
             params = params or None

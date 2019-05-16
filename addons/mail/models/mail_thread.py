@@ -263,11 +263,18 @@ class MailThread(models.AbstractModel):
         if self._context.get('tracking_disable'):
             return super(MailThread, self).create(vals_list)
 
+        # subscribe uid unless asked not to
+        # if not self._context.get('mail_create_nosubscribe'):
+        #     for values in vals_list:
+        #         message_follower_ids = values.get('message_follower_ids') or []
+        #         message_follower_ids += [(0, 0, fol_vals) for fol_vals in self.env['mail.followers']._add_default_followers(self._name, [], self.env.user.partner_id.ids, customer_ids=[])[0][0]]
+        #         values['message_follower_ids'] = message_follower_ids
+
         threads = super(MailThread, self).create(vals_list)
         # subscribe uid unless asked not to and avoid to add inactive user such as OdooBot
         if not self._context.get('mail_create_nosubscribe') and self.env.user.active:
             for thread in threads:
-                self.env['mail.followers']._insert_followers(thread._name, thread.ids, self.env.user.partner_id.ids, None, None, None, customer_ids=[])
+                self.env['mail.followers']._insert_followers(thread._name, thread.ids, self.env.user.partner_id.ids, None, None, None, customer_ids=[], check_existing=False)
 
         # auto_subscribe: take values and defaults into account
         create_values_list = {}
@@ -2272,7 +2279,7 @@ class MailThread(models.AbstractModel):
                 self._name, self.ids,
                 partner_ids, dict((pid, subtype_ids) for pid in partner_ids),
                 channel_ids, dict((cid, subtype_ids) for cid in channel_ids),
-                customer_ids=customer_ids, check_existing=True, existing_policy='replace')
+                customer_ids=customer_ids, existing_policy='replace')
 
         return True
 
@@ -2425,7 +2432,7 @@ class MailThread(models.AbstractModel):
             self._name, self.ids,
             list(new_partners), new_partners,
             list(new_channels), new_channels,
-            check_existing=True, existing_policy='skip')
+            existing_policy='skip')
 
         # notify people from auto subscription, for example like assignation
         for template, pids in notify_data.items():
