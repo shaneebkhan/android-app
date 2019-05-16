@@ -2159,7 +2159,7 @@ class Many2one(_Relational):
         new = process(model._cr, model._table, self.name, comodel._table, 'id', self.ondelete or 'set null')
         if new:
             conname = '%s_%s_fkey' % (model._table, self.name)
-            model.env['ir.model.constraint']._reflect_constraint(model, conname, 'f', None, self._module)
+            model.env['ir.model.constraint']._reflect_constraint(model, conname, 'f', None, self._module, '')
 
     def _update(self, records, value):
         """ Update the cached value of ``self`` for ``records`` with ``value``. """
@@ -2682,10 +2682,10 @@ class Many2many(_RelationalMulti):
         # create foreign key references with ondelete=cascade, unless the targets are SQL views
         if sql.table_kind(cr, model._table) != 'v':
             sql.add_foreign_key(cr, self.relation, self.column1, model._table, 'id', 'cascade')
-            reflect(model, '%s_%s_fkey' % (self.relation, self.column1), 'f', None, self._module)
+            reflect(model, '%s_%s_fkey' % (self.relation, self.column1), 'f', None, self._module, '')
         if sql.table_kind(cr, comodel._table) != 'v':
             sql.add_foreign_key(cr, self.relation, self.column2, comodel._table, 'id', 'cascade')
-            reflect(model, '%s_%s_fkey' % (self.relation, self.column2), 'f', None, self._module)
+            reflect(model, '%s_%s_fkey' % (self.relation, self.column2), 'f', None, self._module, '')
 
     def read(self, records):
         comodel = records.env[self.comodel_name].with_context(**self.context)

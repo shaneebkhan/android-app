@@ -77,8 +77,14 @@ def check(f):
 
             try:
                 cr = odoo.sql_db.db_connect(dbname).cursor()
-                res = translate(cr, name=False, source_type=ttype,
-                                lang=lang, source=src)
+                if ttype == 'sql_constraint':
+                    cr.execute("SELECT id, message FROM ir_model_constraint WHERE name=%s and type='u'", (key,))
+                    res_id, msg = cr.fetchone()
+                    cr.execute("SELECT value FROM ir_translation WHERE lang=%s and type='model' and name='ir.model.constraint,message' and res_id=%s", (lang, res_id))
+                    res = cr.fetchone() or msg
+                else:
+                    res = translate(cr, name=False, source_type=ttype,
+                                    lang=lang, source=src)
                 if res:
                     return res
                 else:
@@ -116,7 +122,7 @@ def check(f):
                 registry = odoo.registry(dbname)
                 for key in registry._sql_error.keys():
                     if key in inst.pgerror:
-                        raise ValidationError(tr(registry._sql_error[key], 'sql_constraint') or inst.pgerror)
+                        raise ValidationError(tr(key, 'sql_constraint') or registry._sql_error[key] or inst.pgerror)
                 if inst.pgcode in (errorcodes.NOT_NULL_VIOLATION, errorcodes.FOREIGN_KEY_VIOLATION, errorcodes.RESTRICT_VIOLATION):
                     msg = _('The operation cannot be completed, probably due to the following:\n- deletion: you may be trying to delete a record while other records still reference it\n- creation/update: a mandatory field is not correctly set')
                     _logger.debug("IntegrityError", exc_info=True)
