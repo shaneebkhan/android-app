@@ -49,26 +49,6 @@
                                 <span class="o_stat_text">Money Out</span>
                             </div>
                         </button>
-                        <button name="open_cashbox"
-                            class="oe_stat_button"
-                            attrs="{'invisible':['|', ('cash_control', '=', False), ('state', '!=', 'opening_control')]}"
-                            icon="fa-money"
-                            type="object" context="{'balance': 'start'}">
-                            <span class="o_stat_text">Set Opening Balance</span>
-                        </button>
-                        <button name="open_cashbox"
-                            class="oe_stat_button"
-                            attrs="{'invisible':['|', '|', ('cash_control', '=', False), ('state', '=', 'opening_control'), ('state', '=', 'closed')]}"
-                            icon="fa-money"
-                            type="object" context="{'balance': 'close'}">
-                            <span class="o_stat_text">Set Closing Balance</span>
-                        </button>
-                        <button name="action_view_order"
-                            class="oe_stat_button"
-                            icon="fa-shopping-basket"
-                            type="object">
-                            <field name="order_count" widget="statinfo" string="Orders"/>
-                        </button>
                         <button class="oe_stat_button" name="action_stock_picking" type="object" icon="fa-arrows-v" attrs="{'invisible':[('picking_count', '=', 0)]}">
                             <field name="picking_count" widget="statinfo" string="Picking Errors"/>
                         </button>
@@ -79,39 +59,43 @@
                     </h1>
                     <group>
                         <field name="cash_control" invisible="1" />
-                        <group>
-                            <field name="user_id"/>
-                            <field name="currency_id" invisible="1"/>
-                            <field name="config_id"/>
-                        </group>
-                        <group>
-                            <field name="start_at" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>
-                            <field name="stop_at" attrs="{'invisible' : [('state', '!=', 'closed')]}"/>
-                            <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
-                        </group>
-                        <newline/>
-
-                        <div attrs="{'invisible' : [('cash_control', '=', False)]}">
-                            <group class="oe_subtotal_footer oe_right">
-                                <field name="cash_register_balance_start" readonly="1" string="Opening Balance" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <label for="cash_register_total_entry_encoding" attrs="{'invisible' : [('state', '=', 'opening_control')]}" string="+ Transactions" class="oe_force_bold oe_opening_total"/>
-                                <field name="cash_register_total_entry_encoding" nolabel="1" attrs="{'invisible' : [('state', '=', 'opening_control')]}" class="oe_bold oe_pos_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                                <label for="cash_register_balance_end" attrs="{'invisible' : [('state', '=', 'opening_control')]}" string="= Theoretical Closing Balance" class="oe_force_bold oe_opening_total"/>
-                                <field name="cash_register_balance_end" nolabel="1" attrs="{'invisible' : [('state', '=', 'opening_control')]}" class="oe_bold oe_pos_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                            </group>
-                            <div class="oe_clear"/>
-                        </div>
-                        <div>
-                            <group class="oe_subtotal_footer oe_right" attrs="{'invisible': ['|', ('cash_control', '=', False), ('state', '=', 'opening_control')]}">
-                                <field name="cash_register_balance_end_real" string="Real Closing Balance" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                            </group>
-                            <group/>
-                            <group/>
-                            <group class="oe_subtotal_footer oe_right" attrs="{'invisible': ['|', ('cash_control', '=', False), ('state', '=', 'opening_control')]}">
-                                <field name="cash_register_difference" class="oe_subtotal_footer_separator oe_right oe_pos_total oe_pos_difference" widget="monetary" options="{'currency_field': 'currency_id'}"/>
-                            </group>
-                        </div>
+                        <field name="user_id"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="config_id"/>
+                        <field name="start_at" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>
+                        <field name="stop_at" attrs="{'invisible' : [('state', '!=', 'closed')]}"/>
                     </group>
+
+                        <notebook>
+                            <page string="Cash Control" attrs="{'invisible' : [('cash_control', '=', False)]}">
+                                <group>
+                                    <div>
+                                    <div>
+                                        <label for="cash_register_balance_start" string="Opening Balance: "/>
+                                        <field name="cash_register_balance_start" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        <button class="oe_inline oe_link" name="open_cashbox" type="object" context="{'balance': 'start'}" attrs="{'invisible':['|', ('cash_control', '=', False), ('state', '!=', 'opening_control')]}">Set Opening Balance</button>
+                                    </div>
+                                    <div>
+                                        <label for="cash_register_total_entry_encoding" attrs="{'invisible' : [('state', '=', 'opening_control')]}" string="+ Transactions: " class="oe_force_bold oe_opening_total"/>
+                                        <field name="cash_register_total_entry_encoding" nolabel="1" attrs="{'invisible' : [('state', '=', 'opening_control')]}" class="oe_bold oe_pos_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </div>
+                                    <div>
+                                        <label for="cash_register_balance_end" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}" string="= Expected Closing Balance: " class="oe_force_bold oe_opening_total"/>
+                                        <field name="cash_register_balance_end" nolabel="1" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}" class="oe_bold oe_pos_total" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    </div>
+                                    <div>
+                                        <label for="cash_register_balance_end_real" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}" string="Actual closing balance: " class="oe_force_bold oe_opening_total"/>
+                                        <field name="cash_register_balance_end_real" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}" string="Real Closing Balance" class="oe_subtotal_footer_separator" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                        <button class="oe_inline oe_link" name="open_cashbox" type="object" context="{'balance': 'close'}" attrs="{'invisible': ['|','|', '|', ('cash_control', '=', False), ('state', '=', 'opening_control'), ('state', '=', 'closed'), ('state', '=', 'opened')]}">Set Closing Balance</button>
+                                    </div>
+                                    <div>
+                                        <label for="cash_register_difference" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}" string="Difference: " class="oe_force_bold oe_opening_total"/>
+                                        <field name="cash_register_difference" attrs="{'invisible' : ['|', ('state', '=', 'opening_control'), ('state', '=', 'opened')]}"  widget="monetary" options="{'currency_field': 'currency_id'}" decoration-danger="cash_register_difference != 0"/>
+                                    </div>
+                                  </div>
+                                </group>
+                            </page>
+                        </notebook>
                     <separator string="Summary by Payment Methods" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>
                     <field name="statement_ids" attrs="{'invisible' : [('state', '=', 'opening_control')]}">
                         <tree string="Statements">
@@ -141,7 +125,6 @@
                 <field name="config_id" />
                 <field name="name" />
                 <field name="user_id" />
-                <field name="company_id" groups="base.group_multi_company"/>
                 <field name="start_at" />
                 <field name="stop_at" />
                 <field name="state" />
@@ -235,6 +218,6 @@
         id="menu_pos_session_all"
         parent="menu_point_of_sale"
         action="action_pos_session"
-        sequence="1"
+        sequence="2"
         groups="group_pos_manager"/>
 </odoo>
