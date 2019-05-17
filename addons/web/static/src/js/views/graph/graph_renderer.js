@@ -150,7 +150,9 @@ odoo.define('web.GraphRenderer', function (require) {
             // string returned could be 'wrong' if a groupby value contain a '/'!
             var groups = label.split("/");
             var shortLabel = groups.slice(0, 3).join("/");
-            if (groups.length > 3) {
+            if (shortLabel.length > 30) {
+                shortLabel = shortLabel.slice(0, 30) + '...';
+            } else if (groups.length > 3) {
                 shortLabel = shortLabel + '/...';
             }
             return shortLabel;
@@ -178,6 +180,7 @@ odoo.define('web.GraphRenderer', function (require) {
         _getColor: function (index) {
             return COLORS[index % COLOR_NB];
         },
+
         /**
          * Determines the initial section of the labels array
          * over a dataset has to be completed. The section only depends
@@ -214,6 +217,7 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return this.state.origins[dataPt.originIndex];
         },
+
         /**
          * Returns a DateClasses instance used to manage equivalence of dates.
          *
@@ -234,6 +238,7 @@ odoo.define('web.GraphRenderer', function (require) {
             });
             return new DateClasses(dateSets);
         },
+
         /**
          * Determines over which label is the data point
          *
@@ -259,6 +264,47 @@ odoo.define('web.GraphRenderer', function (require) {
                 return dataPt.labels;
             }
         },
+
+        /**
+         * @private
+         * Leaving legend element handler. 
+         * If there's a tooltip in the DOM it'll be removed 
+         */
+
+        _LeaveLegendTootip: function () {
+            var tooltipEl = document.getElementById('chartjs-tooltip-legend');
+            if (tooltipEl) {
+                tooltipEl.remove();
+            }
+        },
+
+        /**
+         * If the name has been shortened this function will create a a tooltip that displays the full text.
+         * @private
+         * @param {MouseEvent} e 
+         * @param {Object} legendItem see chartjs documentation: https://www.chartjs.org/docs/latest/configuration/legend.html
+         */
+
+        _CreateLegendTooltip: function (e, legendItem) {
+            var tooltipEl = document.getElementById('chartjs-tooltip-legend');
+            if (legendItem.text === legendItem.textFull) {
+                return;
+            }
+            var chartAreaLeft = this.chart.chartArea.left;
+            var chartAreaRight = this.chart.chartArea.right;
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = "chartjs-tooltip-legend";
+                tooltipEl.classList.add("o_tooltip_legend");
+                tooltipEl.style.maxWidth = chartAreaRight - chartAreaLeft - 50 + 'px';
+                this.el.appendChild(tooltipEl);
+                tooltipEl.innerHTML = "";
+                tooltipEl.innerHTML = legendItem.textFull;
+                tooltipEl.style.top = e.y - 140 + 'px';
+                tooltipEl.style.left = chartAreaRight - tooltipEl.clientWidth + 'px';
+            }
+        },
+
         /**
          * Returns the options used to generate the chart legend.
          *
@@ -270,6 +316,8 @@ odoo.define('web.GraphRenderer', function (require) {
             var legendOptions = {
                 display: datasetsCount <= MAX_LEGEND_LENGTH,
                 position: config.device.size_class > config.device.SIZES.VSM ? 'right' : 'top',
+                onHover: this._CreateLegendTooltip.bind(this),
+                onLeave: this._LeaveLegendTootip.bind(this),
             };
             var self = this;
             if (_.contains(['bar', 'line'], this.state.mode)) {
@@ -285,6 +333,7 @@ odoo.define('web.GraphRenderer', function (require) {
                         return data.datasets.map(function (dataset, i) {
                             return {
                                 text: self._shortenLabel(dataset.label),
+                                textFull: dataset.label,
                                 fillStyle: dataset[referenceColor],
                                 hidden: !chart.isDatasetVisible(i),
                                 lineCap: dataset.borderCapStyle,
@@ -329,6 +378,7 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return legendOptions;
         },
+
         /**
          * Returns the options used to generate the chart axes.
          *
@@ -398,7 +448,9 @@ odoo.define('web.GraphRenderer', function (require) {
             var self = this;
             var datasetsDisplayValues = [];
             //removes dataset that has no data for a given abscisse
-            datasets = datasets.filter(function (item) { return item.data[yLabel] !== undefined; });
+            datasets = datasets.filter(function (item, i) {
+                return item.data[yLabel] !== undefined && self.chart.isDatasetVisible(i);
+            });
             datasets.forEach(function (dataset, i) {
                 var buildLabel = self._buildLabel(dataset, label);
                 var value = self._formatValue(dataset.data[yLabel]);
@@ -454,7 +506,7 @@ odoo.define('web.GraphRenderer', function (require) {
             } else if (leftPosition > chartAreaRight - tooltilWidth / 2) {
                 leftPosition -= tooltilWidth / 2;
             }
-            return leftPosition+'px';
+            return leftPosition + 'px';
         },
         /**
          * This function compute the top position of the tooltip to avoid the tooltip to be positionned over the chart's limit
@@ -466,9 +518,9 @@ odoo.define('web.GraphRenderer', function (require) {
          * @return {Number} topPosition the left position of the tooltip after potential corrections
          */
         _AdjustTooltipTopPosition: function (tooltipEl, position, tooltipModel, chartAreaBottom, chartAreaTop) {
-            if(this.isEmbedded){
-               return '85px'; 
-            }else{
+            if (this.isEmbedded) {
+                return '85px';
+            } else {
                 var tooltipHeight = tooltipEl.clientHeight;
                 var topPosition = position.top + window.pageYOffset + tooltipModel.caretY - 160;
                 var bottomPosition = topPosition + tooltipHeight;
@@ -838,7 +890,6 @@ odoo.define('web.GraphRenderer', function (require) {
                 } else if (this.state.mode === 'pie') {
                     this._renderPieChart(dataPoints);
                 }
-
                 this._renderTitle();
             }
             return this._super.apply(this, arguments);

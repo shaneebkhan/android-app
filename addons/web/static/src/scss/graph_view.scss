@@ -13,13 +13,23 @@
             }
         }
     }
+    div.o_tooltip_legend{
+        background-color: white;
+        color:black;
+        font-weight: bold;
+        border: black solid 0.5px;
+        border-radius: 10px;
+        opacity: 0.8;
+        position: absolute;
+        padding:10px;
+        z-index: 2;
+        pointer-events: none;
+        word-break: break-all;
+    }
     div.o_tooltip_graph{
         border-radius: 15px;
         background-color: white;
-        //font-size: 10px;
         border: black solid 0.5px;
-        /* display:flex;
-        justify-content: center; */
         position: absolute;
         z-index: 1;
         padding: 10px;
@@ -30,7 +40,6 @@
             white-space: nowrap;
             font-weight: bold;
             color:black;
-            //padding-bottom: 1px;
             margin:0;
             padding:0;
         }
@@ -46,16 +55,6 @@
             overflow:hidden;
             display:block;
             border-collapse: collapse;
-            /* display:block;
-            text-overflow: ellipsis;
-            overflow:hidden; */
-            /* border-radius: 15px;
-            background-color: white;
-            border: black solid 0.5px;
-            font-size: 10px;
-            display: inline-block;
-            align-self: center; */
-            
         }
         span.square{
             height: 10px;
