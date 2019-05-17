@@ -1452,11 +1452,7 @@ var FieldEmbedURLViewer = FieldChar.extend({
         return $.when(this._super.apply(this, arguments)).then(function () {
             var $iframe = self.$el.find('iframe.o_embed_iframe');
             if ($iframe.length) {
-                self._setEmbedSrc(self.value);
-                if (self.src && $iframe.attr('src') !== self.src) {
-                    $iframe.removeClass('o_hidden');
-                }
-                $iframe.attr('src', self.src);
+                self._updateIframePreviews($iframe);
             }
         });
     },
@@ -1465,6 +1461,19 @@ var FieldEmbedURLViewer = FieldChar.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * update iframe attrs
+     *
+     * @private
+     * @param {object} $iframe
+     */
+    _updateIframePreviews: function ($iframe) {
+        this._setEmbedSrc(this.value);
+        if (this.src && $iframe.attr('src') !== this.src) {
+            $iframe.removeClass('o_hidden');
+        }
+        $iframe.attr('src', this.src);
+    },
     /**
      * set the associated src for embed iframe viewer
      *
@@ -1509,10 +1518,12 @@ var FieldEmbedURLViewer = FieldChar.extend({
      */
     _render: function ()  {
         this._super.apply(this, arguments);
-        this._setEmbedSrc(this.value);
         this.mode === 'readonly' ? this.$el.hide() : this.$el.show();
-        this.setElement(this.$el.wrap('<div class="o_embed_url_viewer"/>').parent());
-        this.$el.append(this._initIFrame());
+        if (!$('iframe.o_embed_iframe').length) {
+            this._setEmbedSrc(this.value);
+            this.setElement(this.$el.wrap('<div class="o_embed_url_viewer"/>').parent());
+            this.$el.append(this._initIFrame());
+        }
     },
 });
 
