@@ -65,9 +65,10 @@ class HolidaysRequest(models.Model):
         defaults = self._default_get_request_parameters(defaults)
 
         LeaveType = self.env['hr.leave.type'].with_context(employee_id=defaults.get('employee_id'), default_date_from=defaults.get('date_from', fields.Datetime.now()))
-        lt = LeaveType.search([('valid', '=', True)])
+        lt = LeaveType.search([('valid', '=', True)], limit=1)
 
-        defaults['holiday_status_id'] = lt[0].id if len(lt) > 0 else defaults.get('holiday_status_id')
+        defaults['holiday_status_id'] = lt.id if lt else defaults.get('holiday_status_id')
+        defaults['state'] = 'confirm' if lt and lt.validation_type != 'no_validation' else 'draft'
         return defaults
 
     def _default_employee(self):
@@ -101,7 +102,7 @@ class HolidaysRequest(models.Model):
         ('refuse', 'Refused'),
         ('validate1', 'Second Approval'),
         ('validate', 'Approved')
-        ], string='Status', readonly=True, tracking=True, copy=False, default='confirm',
+        ], string='Status', readonly=True, tracking=True, copy=False,
         help="The status is set to 'To Submit', when a time off request is created." +
         "\nThe status is 'To Approve', when time off request is confirmed by user." +
         "\nThe status is 'Refused', when time off request is refused by manager." +
@@ -309,6 +310,7 @@ class HolidaysRequest(models.Model):
     @api.onchange('holiday_status_id')
     def _onchange_holiday_status_id(self):
         self.request_unit_half = False
+        self.state = 'confirm' if self.validation_type != 'no_validation' else 'draft'
 
     @api.onchange('request_unit_half')
     def _onchange_request_unit_half(self):
@@ -843,17 +845,12 @@ class HolidaysRequest(models.Model):
         self.ensure_one()
         responsible = self.env.user
 
-        # RLI FIXME This should probably return a group_holidays_manager
-        # when in double validation second approval
-
-        if self.validation_type == 'manager':
-            responsible = self.employee_id.leave_manager_id
-        elif self.validation_type == 'hr' or (self.validation_type == 'both' and self.state == 'valiadte1'):
-            if self.holiday_status_id.responsible_id:
-                responsible = self.holiday_status_id.responsible_id
-        elif self.state == 'confirm' or (self.state == 'validate' and self.validation_type == 'no_validation'):
+        if self.validation_type == 'manager' or (self.validation_type == 'both' and self.state == 'confirm'):
             if self.employee_id.leave_manager_id:
                 responsible = self.employee_id.leave_manager_id
+        elif self.validation_type == 'hr' or (self.validation_type == 'both' and self.state == 'validate1'):
+            if self.holiday_status_id.responsible_id:
+                responsible = self.holiday_status_id.responsible_id
 
         return responsible
 

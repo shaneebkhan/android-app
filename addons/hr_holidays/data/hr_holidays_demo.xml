@@ -8,6 +8,7 @@
         <field name="allocation_type">fixed</field>
         <field name="color_name">brown</field>
         <field name="validation_type">both</field>
+        <field name="responsible_id" ref="base.user_admin"/>
     </record>
 
     <!-- Home working -->
@@ -15,7 +16,24 @@
        <field name="name">Home Workings</field>
        <field name="color_name">lightgreen</field>
        <field name="leave_notif_subtype_id" eval="ref('mt_leave_home_working')"/>
+       <field name="responsible_id" ref="base.user_admin"/>
    </record>
+
+	<record id="holiday_status_cl" model="hr.leave.type">
+		<field name="responsible_id" ref="base.user_admin"/>
+	</record>
+
+	<record id="holiday_status_sl" model="hr.leave.type">
+		<field name="responsible_id" ref="base.user_admin"/>
+	</record>
+
+	<record id="holiday_status_comp" model="hr.leave.type">
+		<field name="responsible_id" ref="base.user_admin"/>
+	</record>
+
+	<record id="holiday_status_unpaid" model="hr.leave.type">
+		<field name="responsible_id" ref="base.user_admin"/>
+	</record>
 
     <!-- ++++++++++++++++++++++  Mitchell Admin  ++++++++++++++++++++++ -->
 
