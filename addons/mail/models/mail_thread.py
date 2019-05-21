@@ -124,29 +124,53 @@ class MailThread(models.AbstractModel):
     def _search_follower_partners(self, operator, operand):
         """Search function for message_follower_ids
 
-        Do not use with operator 'not in'. Use instead message_is_followers
-        """
-        # TOFIX make it work with not in
-        assert operator != "not in", "Do not search message_follower_ids with 'not in'"
+        convert negative operator to positive operator and
+        then use the not in main domain"""
+
+        newOperator = self._follower_reverse_operator(operator, operand)
+
         followers = self.env['mail.followers'].sudo().search([
             ('res_model', '=', self._name),
-            ('partner_id', operator, operand)])
+            ('partner_id', newOperator, operand)])
+
+        inner_operator = self._follewer_inner_operator(operator, operand)
         # using read() below is much faster than followers.mapped('res_id')
-        return [('id', 'in', [res['res_id'] for res in followers.read(['res_id'])])]
+        return [('id', inner_operator, [res['res_id'] for res in followers.read(['res_id'])])]
+
+    def _follower_reverse_operator(self, operator, operand):
+        if operand and operator in ['=', '!=']:
+            newOperator = "="
+        elif operand and operator in ['ilike', 'not ilike']:
+            newOperator = "ilike"
+        elif not operand:
+            newOperator = "!="
+        else:
+            newOperator = operator
+        return newOperator
+
+    def _follewer_inner_operator(self, operator, operand):
+        if (operator in ['ilike', '=', 'in', 'child_of'] and operand) or (operator == '!=' and not operand):
+            inner_operator = 'in'
+        else:
+            inner_operator = 'not in'
+        return inner_operator
 
     @api.model
     def _search_follower_channels(self, operator, operand):
         """Search function for message_follower_ids
 
-        Do not use with operator 'not in'. Use instead message_is_followers
-        """
-        # TOFIX make it work with not in
-        assert operator != "not in", "Do not search message_follower_ids with 'not in'"
+        convert negative operator to positive operator and
+        then use the not in main domain"""
+
+        newOperator = self._follower_reverse_operator(operator, operand)
+
         followers = self.env['mail.followers'].sudo().search([
             ('res_model', '=', self._name),
-            ('channel_id', operator, operand)])
+            ('channel_id', newOperator, operand)])
+
+        inner_operator = self._follewer_inner_operator(operator, operand)
         # using read() below is much faster than followers.mapped('res_id')
-        return [('id', 'in', [res['res_id'] for res in followers.read(['res_id'])])]
+        return [('id', inner_operator, [res['res_id'] for res in followers.read(['res_id'])])]
 
     @api.multi
     @api.depends('message_follower_ids')
