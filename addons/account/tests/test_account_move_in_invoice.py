@@ -14,4176 +14,1898 @@ _logger = logging.getLogger(__name__)
 @tagged('post_install', '-at_install')
 class TestAccountMoveInInvoice(AccountingSavepointCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestAccountMoveInInvoice, cls).setUpClass()
+        cls.invariants = {
+            'out_refund': {},
+            'in_refund': {}
+        }
+        cls.invariants['in_invoice'] = {
+            'line_product': {
+                'name': 'product_a',
+                'product_id': cls.product_a.id,
+                'account_id': cls.parent_acc_expense_1.id,
+                'partner_id': cls.partner_a.id,
+                'product_uom_id': cls.uom_unit.id,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': 800.0,
+                'price_subtotal': 800.0,
+                'price_total': 920.0,
+                'tax_ids': cls.parent_tax_purchase_1.ids,
+                'tax_line_id': False,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 800.0,
+                'credit': 0.0,
+                'display_type': False,
+                'date_maturity': False,
+                'tax_exigible': True,
+            },
+            'line_balance': {
+                'name': '/',
+                'product_id': False,
+                'account_id': cls.parent_acc_payable_1.id,
+                'partner_id': cls.partner_a.id,
+                'product_uom_id': False,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': -920.0,
+                'price_subtotal': -920.0,
+                'price_total': -920.0,
+                'tax_ids': [],
+                'tax_line_id': False,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 0.0,
+                'credit': 920.0,
+                'display_type': 'balance',
+                'date_maturity': fields.Date.from_string('2019-01-01'),
+                'tax_exigible': True,
+            },
+            'line_tax': {
+                'name': cls.parent_tax_purchase_1.name,
+                'product_id': False,
+                'account_id': cls.parent_tax_purchase_1.account_id.id,
+                'partner_id': cls.partner_a.id,
+                'product_uom_id': False,
+                'quantity': 1.0,
+                'discount': 0.0,
+                'price_unit': 120.0,
+                'price_subtotal': 120.0,
+                'price_total': 120.0,
+                'tax_ids': [],
+                'tax_line_id': cls.parent_tax_purchase_1.id,
+                'currency_id': False,
+                'amount_currency': 0.0,
+                'debit': 120.0,
+                'credit': 0.0,
+                'display_type': 'tax',
+                'date_maturity': False,
+                'tax_exigible': True,
+            },
+            'move': {
+                'partner_id': cls.partner_a.id,
+                'currency_id': cls.company_parent.currency_id.id,
+                'journal_id': cls.parent_journal_purchase_1.id,
+                'date': fields.Date.from_string('2019-01-01'),
+                'fiscal_position_id': False,
+                'invoice_payment_ref': '/',
+                'invoice_payment_term_id': cls.pay_terms_immediate.id,
+                'amount_untaxed': 800.0,
+                'amount_tax': 120.0,
+                'amount_total': 920.0,
+                'amount_residual': 920.0,
+            }
+        }
+        cls.invariants['in_refund'] = {
+            'line_product': {
+                **cls.invariants['in_invoice']['line_product'],
+                'debit': cls.invariants['in_invoice']['line_product']['credit'],
+                'credit': cls.invariants['in_invoice']['line_product']['debit'],
+            },
+            'line_balance': {
+                **cls.invariants['in_invoice']['line_balance'],
+                'debit': cls.invariants['in_invoice']['line_balance']['credit'],
+                'credit': cls.invariants['in_invoice']['line_balance']['debit'],
+            },
+            'line_tax': {
+                **cls.invariants['in_invoice']['line_tax'],
+                'account_id': cls.parent_tax_purchase_1.refund_account_id.id,
+                'debit': cls.invariants['in_invoice']['line_tax']['credit'],
+                'credit': cls.invariants['in_invoice']['line_tax']['debit'],
+            },
+            'move': cls.invariants['in_invoice']['move'],
+        }
+        cls.move_types = [
+            'in_invoice',
+            'in_refund',
+        ]
+
     # -------------------------------------------------------------------------
     # TESTS in_invoice ONCHANGE
     # -------------------------------------------------------------------------
 
     def test_in_invoice_line_onchange_account_1(self):
-        # One product line, custom account.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.account_id = self.parent_acc_expense_2
-        move = move_form.save()
+        for move_type in self.move_types:
+            # One product line, custom account.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.account_id = self.parent_acc_expense_2
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_2.id,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_2.id,
+                },
+            ])
+            self.assertRecordValues(move, [self.invariants[move_type]['move']])
 
-        # One product line, custom account from aml tab.
-        move_form = Form(move)
-        index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
-        with move_form.line_ids.edit(index_product_line) as line_form:
-            line_form.account_id = self.parent_acc_payable_1
-        move = move_form.save()
+            # One product line, custom account from aml tab.
+            move_form = Form(move)
+            index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
+            with move_form.line_ids.edit(index_product_line) as line_form:
+                line_form.account_id = self.parent_acc_payable_1
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_payable_1.id,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_payable_1.id,
+                },
+            ])
+            self.assertRecordValues(move, [self.invariants[move_type]['move']])
 
     def test_in_invoice_line_onchange_product_1(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move = move_form.save()
 
-        # Change the product set on the line.
-        move_form = Form(move)
-        with move_form.invoice_line_ids.edit(0) as line_form:
-            line_form.product_id = self.product_b
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [self.invariants[move_type]['move']])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_b',
-                'product_id': self.product_b.id,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_dozen.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1500.0,
-                'price_subtotal': 1500.0,
-                'price_total': 1725.0,
-                'tax_ids': self.parent_tax_purchase_2.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1500.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1725.0,
-                'price_subtotal': -1725.0,
-                'price_total': -1725.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 1725.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_2.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_2.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 225.0,
-                'price_subtotal': 225.0,
-                'price_total': 225.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_2.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 225.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_b',
-                'product_id': self.product_b.id,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_dozen.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1500.0,
-                'price_subtotal': 1500.0,
-                'price_total': 1725.0,
-                'tax_ids': self.parent_tax_purchase_2.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1500.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 1500.0,
-            'amount_tax': 225.0,
-            'amount_total': 1725.0,
-            'amount_residual': 1725.0,
-        }])
+            # Change the product set on the line.
+            move_form = Form(move)
+            with move_form.invoice_line_ids.edit(0) as line_form:
+                line_form.product_id = self.product_b
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_b',
+                    'product_id': self.product_b.id,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'product_uom_id': self.uom_dozen.id,
+                    'price_unit': 1500.0,
+                    'price_subtotal': 1500.0,
+                    'price_total': 1725.0,
+                    'tax_ids': self.parent_tax_purchase_2.ids,
+                    operational_field: 1500.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -1725.0,
+                    'price_subtotal': -1725.0,
+                    'price_total': -1725.0,
+                    counterpart_field: 1725.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_2.name,
+                    'product_id': False,
+                    'account_id': self.parent_tax_purchase_2.account_id.id,
+                    'price_unit': 225.0,
+                    'price_subtotal': 225.0,
+                    'price_total': 225.0,
+                    'tax_line_id': self.parent_tax_purchase_2.id,
+                    operational_field: 225.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_b',
+                    'product_id': self.product_b.id,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'product_uom_id': self.uom_dozen.id,
+                    'price_unit': 1500.0,
+                    'price_subtotal': 1500.0,
+                    'price_total': 1725.0,
+                    'tax_ids': self.parent_tax_purchase_2.ids,
+                    operational_field: 1500.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 1500.0,
+                'amount_tax': 225.0,
+                'amount_total': 1725.0,
+                'amount_residual': 1725.0,
+            }])
 
     def test_in_invoice_line_onchange_quantity_1(self):
         # One product line, custom quantity.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.quantity = 2
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 2.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 1600.0,
-                'price_total': 1840.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1600.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1840.0,
-                'price_subtotal': -1840.0,
-                'price_total': -1840.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 1840.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 240.0,
-                'price_subtotal': 240.0,
-                'price_total': 240.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 240.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 2.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 1600.0,
-                'price_total': 1840.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1600.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 1600.0,
-            'amount_tax': 240.0,
-            'amount_total': 1840.0,
-            'amount_residual': 1840.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.quantity = 2
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'quantity': 2.0,
+                    'price_subtotal': 1600.0,
+                    'price_total': 1840.0,
+                    operational_field: 1600.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -1840.0,
+                    'price_subtotal': -1840.0,
+                    'price_total': -1840.0,
+                    counterpart_field: 1840.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 240.0,
+                    'price_subtotal': 240.0,
+                    'price_total': 240.0,
+                    operational_field: 240.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'quantity': 2.0,
+                    'price_subtotal': 1600.0,
+                    'price_total': 1840.0,
+                    operational_field: 1600.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 1600.0,
+                'amount_tax': 240.0,
+                'amount_total': 1840.0,
+                'amount_residual': 1840.0,
+            }])
 
     def test_in_invoice_line_onchange_quantity_2(self):
         # One product line, custom quantity.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.quantity = 0.0
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 0.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 0.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 0.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 0.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 0.0,
-            'amount_tax': 0.0,
-            'amount_total': 0.0,
-            'amount_residual': 0.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.quantity = 0.0
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'quantity': 0.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    operational_field: 0.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': 0.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    counterpart_field: 0.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 0.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    operational_field: 0.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'quantity': 0.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    operational_field: 0.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 0.0,
+                'amount_tax': 0.0,
+                'amount_total': 0.0,
+                'amount_residual': 0.0,
+            }])
 
     def test_in_invoice_line_onchange_price_unit_1(self):
-        # One product line, custom price_unit.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.price_unit = 2000
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2300.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -2300.0,
-                'price_subtotal': -2300.0,
-                'price_total': -2300.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 2300.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 300.0,
-                'price_subtotal': 300.0,
-                'price_total': 300.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 300.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2300.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 2000.0,
-            'amount_tax': 300.0,
-            'amount_total': 2300.0,
-            'amount_residual': 2300.0,
-        }])
+            # One product line, custom price_unit.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.price_unit = 2000
+            move = move_form.save()
 
-        # Edit balance, check impact to the price_unit.
-        move_form = Form(move)
-        index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
-        with move_form.line_ids.edit(index_product_line) as line_form:
-            line_form.debit = 3000
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2300.0,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -2300.0,
+                    'price_subtotal': -2300.0,
+                    'price_total': -2300.0,
+                    counterpart_field: 2300.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 300.0,
+                    'price_subtotal': 300.0,
+                    'price_total': 300.0,
+                    operational_field: 300.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2300.0,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 2000.0,
+                'amount_tax': 300.0,
+                'amount_total': 2300.0,
+                'amount_residual': 2300.0,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 3000.0,
-                'price_subtotal': 3000.0,
-                'price_total': 3450.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 3000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3450.0,
-                'price_subtotal': -3450.0,
-                'price_total': -3450.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 3450.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 450.0,
-                'price_subtotal': 450.0,
-                'price_total': 450.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 450.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 3000.0,
-                'price_subtotal': 3000.0,
-                'price_total': 3450.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 3000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 3000.0,
-            'amount_tax': 450.0,
-            'amount_total': 3450.0,
-            'amount_residual': 3450.0,
-        }])
+            # Edit balance, check impact to the price_unit.
+            move_form = Form(move)
+            index_product_line, _ = self._search_candidate_records(move.line_ids, {'name': 'product_a'})
+            with move_form.line_ids.edit(index_product_line) as line_form:
+                setattr(line_form, operational_field, 3000)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 3000.0,
+                    'price_subtotal': 3000.0,
+                    'price_total': 3450.0,
+                    operational_field: 3000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3450.0,
+                    'price_subtotal': -3450.0,
+                    'price_total': -3450.0,
+                    counterpart_field: 3450.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 450.0,
+                    'price_subtotal': 450.0,
+                    'price_total': 450.0,
+                    operational_field: 450.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 3000.0,
+                    'price_subtotal': 3000.0,
+                    'price_total': 3450.0,
+                    operational_field: 3000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 3000.0,
+                'amount_tax': 450.0,
+                'amount_total': 3450.0,
+                'amount_residual': 3450.0,
+            }])
 
     def test_in_invoice_line_onchange_discount_1(self):
-        # One product line having 50% discount.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.discount = 50.0
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 800.0,
-                'price_subtotal': 400.0,
-                'price_total': 460.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -460.0,
-                'price_subtotal': -460.0,
-                'price_total': -460.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 460.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 60.0,
-                'price_subtotal': 60.0,
-                'price_total': 60.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 60.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 800.0,
-                'price_subtotal': 400.0,
-                'price_total': 460.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 400.0,
-            'amount_tax': 60.0,
-            'amount_total': 460.0,
-            'amount_residual': 460.0,
-        }])
+            # One product line having 50% discount.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.discount = 50.0
+            move = move_form.save()
 
-        # One more product line having 100% discount.
-        move_form = Form(move)
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.discount = 100
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 400.0,
+                    'price_total': 460.0,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -460.0,
+                    'price_subtotal': -460.0,
+                    'price_total': -460.0,
+                    counterpart_field: 460.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 60.0,
+                    'price_subtotal': 60.0,
+                    'price_total': 60.0,
+                    operational_field: 60.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 400.0,
+                    'price_total': 460.0,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 400.0,
+                'amount_tax': 60.0,
+                'amount_total': 460.0,
+                'amount_residual': 460.0,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 100.0,
-                'price_unit': 800.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 800.0,
-                'price_subtotal': 400.0,
-                'price_total': 460.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -460.0,
-                'price_subtotal': -460.0,
-                'price_total': -460.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 460.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 60.0,
-                'price_subtotal': 60.0,
-                'price_total': 60.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 60.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 100.0,
-                'price_unit': 800.0,
-                'price_subtotal': 0.0,
-                'price_total': 0.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 800.0,
-                'price_subtotal': 400.0,
-                'price_total': 460.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 400.0,
-            'amount_tax': 60.0,
-            'amount_total': 460.0,
-            'amount_residual': 460.0,
-        }])
+            # One more product line having 100% discount.
+            move_form = Form(move)
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.discount = 100
+            move = move_form.save()
 
-        move_form = Form(move)
-        # Edit balance of line having 50% discount.
-        index_50discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 50.0})
-        with move_form.line_ids.edit(index_50discount_line) as line_form:
-            line_form.debit = 1000
-        # Edit balance of line having 100% discount.
-        index_100discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 100.0})
-        with move_form.line_ids.edit(index_100discount_line) as line_form:
-            line_form.debit = 2000
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 100.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    operational_field: 0.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 400.0,
+                    'price_total': 460.0,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -460.0,
+                    'price_subtotal': -460.0,
+                    'price_total': -460.0,
+                    counterpart_field: 460.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 60.0,
+                    'price_subtotal': 60.0,
+                    'price_total': 60.0,
+                    operational_field: 60.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 100.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 0.0,
+                    'price_total': 0.0,
+                    operational_field: 0.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 800.0,
+                    'price_subtotal': 400.0,
+                    'price_total': 460.0,
+                    operational_field: 400.0,
+                },
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 1000.0,
-                'price_total': 1150.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2300.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3450.0,
-                'price_subtotal': -3450.0,
-                'price_total': -3450.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 3450.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 450.0,
-                'price_subtotal': 450.0,
-                'price_total': 450.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 450.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 50.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 1000.0,
-                'price_total': 1150.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2300.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 3000.0,
-            'amount_tax': 450.0,
-            'amount_total': 3450.0,
-            'amount_residual': 3450.0,
-        }])
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 400.0,
+                'amount_tax': 60.0,
+                'amount_total': 460.0,
+                'amount_residual': 460.0,
+            }])
+
+            move_form = Form(move)
+            # Edit balance of line having 50% discount.
+            index_50discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 50.0})
+            with move_form.line_ids.edit(index_50discount_line) as line_form:
+                setattr(line_form, operational_field, 1000)
+            # Edit balance of line having 100% discount.
+            index_100discount_line, _ = self._search_candidate_records(move.line_ids, {'discount': 100.0})
+            with move_form.line_ids.edit(index_100discount_line) as line_form:
+                setattr(line_form, operational_field, 2000)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 2000.0,
+                    'price_subtotal': 1000.0,
+                    'price_total': 1150.0,
+                    operational_field: 1000.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2300.0,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3450.0,
+                    'price_subtotal': -3450.0,
+                    'price_total': -3450.0,
+                    counterpart_field: 3450.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 450.0,
+                    'price_subtotal': 450.0,
+                    'price_total': 450.0,
+                    operational_field: 450.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'discount': 50.0,
+                    'price_unit': 2000.0,
+                    'price_subtotal': 1000.0,
+                    'price_total': 1150.0,
+                    operational_field: 1000.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2300.0,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 3000.0,
+                'amount_tax': 450.0,
+                'amount_total': 3450.0,
+                'amount_residual': 3450.0,
+            }])
 
     def test_in_invoice_line_onchange_uom_1(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.product_uom_id = self.uom_dozen
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_dozen.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9600.0,
-                'price_subtotal': 9600.0,
-                'price_total': 11040.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9600.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -11040.0,
-                'price_subtotal': -11040.0,
-                'price_total': -11040.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 11040.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1440.0,
-                'price_subtotal': 1440.0,
-                'price_total': 1440.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1440.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_dozen.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9600.0,
-                'price_subtotal': 9600.0,
-                'price_total': 11040.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9600.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 9600.0,
-            'amount_tax': 1440.0,
-            'amount_total': 11040.0,
-            'amount_residual': 11040.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.product_uom_id = self.uom_dozen
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'product_uom_id': self.uom_dozen.id,
+                    'price_unit': 9600.0,
+                    'price_subtotal': 9600.0,
+                    'price_total': 11040.0,
+                    operational_field: 9600.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -11040.0,
+                    'price_subtotal': -11040.0,
+                    'price_total': -11040.0,
+                    counterpart_field: 11040.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 1440.0,
+                    'price_subtotal': 1440.0,
+                    'price_total': 1440.0,
+                    operational_field: 1440.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'product_uom_id': self.uom_dozen.id,
+                    'price_unit': 9600.0,
+                    'price_subtotal': 9600.0,
+                    'price_total': 11040.0,
+                    operational_field: 9600.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 9600.0,
+                'amount_tax': 1440.0,
+                'amount_total': 11040.0,
+                'amount_residual': 11040.0,
+            }])
 
     def test_in_invoice_line_onchange_taxes_1_stackable_amounts(self):
-        # One product line with two taxes: 15% tax + 15% tax.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move = move_form.save()
-        move_form = Form(move)
-        with move_form.invoice_line_ids.edit(0) as line_form:
-            line_form.tax_ids.add(self.parent_tax_purchase_2)
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1040.0,
-                'price_subtotal': -1040.0,
-                'price_total': -1040.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 1040.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_2.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_2.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_2.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 240.0,
-            'amount_total': 1040.0,
-            'amount_residual': 1040.0,
-        }])
+            # One product line with two taxes: 15% tax + 15% tax.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move = move_form.save()
+            move_form = Form(move)
+            with move_form.invoice_line_ids.edit(0) as line_form:
+                line_form.tax_ids.add(self.parent_tax_purchase_2)
+            move = move_form.save()
 
-        # One more product line with two taxes: 15% tax + 15% tax.
-        # Taxes must be grouped with existing lines.
-        move_form = Form(move)
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.name = 'product_a bis'
-            line_form.price_unit = 2000
-        move = move_form.save()
-        move_form = Form(move)
-        index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {'name': 'product_a bis'})
-        with move_form.invoice_line_ids.edit(index_product_line) as line_form:
-            line_form.tax_ids.add(self.parent_tax_purchase_2)
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -1040.0,
+                    'price_subtotal': -1040.0,
+                    'price_total': -1040.0,
+                    counterpart_field: 1040.0,
+                },
+                self.invariants[move_type]['line_tax'],
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_2.name,
+                    'tax_line_id': self.parent_tax_purchase_2.id,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_tax': 240.0,
+                'amount_total': 1040.0,
+                'amount_residual': 1040.0,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3640.0,
-                'price_subtotal': -3640.0,
-                'price_total': -3640.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 3640.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_sale_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 420.0,
-                'price_subtotal': 420.0,
-                'price_total': 420.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 420.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_2.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_2.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 420.0,
-                'price_subtotal': 420.0,
-                'price_total': 420.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_2.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 420.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 2800.0,
-            'amount_tax': 840.0,
-            'amount_total': 3640.0,
-            'amount_residual': 3640.0,
-        }])
+            # One more product line with two taxes: 15% tax + 15% tax.
+            # Taxes must be grouped with existing lines.
+            move_form = Form(move)
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.name = 'product_a bis'
+                line_form.price_unit = 2000
+            move = move_form.save()
+            move_form = Form(move)
+            index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {'name': 'product_a bis'})
+            with move_form.invoice_line_ids.edit(index_product_line) as line_form:
+                line_form.tax_ids.add(self.parent_tax_purchase_2)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3640.0,
+                    'price_subtotal': -3640.0,
+                    'price_total': -3640.0,
+                    counterpart_field: 3640.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 420.0,
+                    'price_subtotal': 420.0,
+                    'price_total': 420.0,
+                    'tax_line_id': self.parent_tax_purchase_1.id,
+                    operational_field: 420.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_2.name,
+                    'price_unit': 420.0,
+                    'price_subtotal': 420.0,
+                    'price_total': 420.0,
+                    'tax_line_id': self.parent_tax_purchase_2.id,
+                    operational_field: 420.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 2800.0,
+                'amount_tax': 840.0,
+                'amount_total': 3640.0,
+                'amount_residual': 3640.0,
+            }])
 
 
-        # Edit tax line manually.
-        # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
-        move_form = Form(move)
-        index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_1.id})
-        with move_form.line_ids.edit(index_tax_line) as line_form:
-            line_form.debit = 600
-        move = move_form.save()
+            # Edit tax line manually.
+            # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
+            move_form = Form(move)
+            index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_1.id})
+            with move_form.line_ids.edit(index_tax_line) as line_form:
+                setattr(line_form, operational_field, 600)
+            move = move_form.save()
 
-        self.assertRecordValues(move.invoice_line_ids.sorted('debit'), [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3820.0,
-                'price_subtotal': -3820.0,
-                'price_total': -3820.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 3820.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 600.0,
-                'price_subtotal': 600.0,
-                'price_total': 600.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 600.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_2.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_2.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 420.0,
-                'price_subtotal': 420.0,
-                'price_total': 420.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_2.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 420.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 2800.0,
-            'amount_tax': 1020.0,
-            'amount_total': 3820.0,
-            'amount_residual': 3820.0,
-        }])
+            self.assertRecordValues(move.invoice_line_ids.sorted('debit'), [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3820.0,
+                    'price_subtotal': -3820.0,
+                    'price_total': -3820.0,
+                    counterpart_field: 3820.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_1.name,
+                    'price_unit': 600.0,
+                    'price_subtotal': 600.0,
+                    'price_total': 600.0,
+                    'tax_line_id': self.parent_tax_purchase_1.id,
+                    operational_field: 600.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_2.name,
+                    'price_unit': 420.0,
+                    'price_subtotal': 420.0,
+                    'price_total': 420.0,
+                    'tax_line_id': self.parent_tax_purchase_2.id,
+                    operational_field: 420.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 2800.0,
+                'amount_tax': 1020.0,
+                'amount_total': 3820.0,
+                'amount_residual': 3820.0,
+            }])
 
-        # Remove a tax line.
-        # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
-        move_form = Form(move)
-        index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_2.id})
-        move_form.line_ids.remove(index=index_tax_line)
-        move = move_form.save()
+            # Remove a tax line.
+            # Taxes shouldn't be recomputed as the user is free to edit the taxes like he wants.
+            move_form = Form(move)
+            index_tax_line, _ = self._search_candidate_records(move.line_ids, {'tax_line_id': self.parent_tax_purchase_2.id})
+            move_form.line_ids.remove(index=index_tax_line)
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3400.0,
-                'price_subtotal': -3400.0,
-                'price_total': -3400.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 3400.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 600.0,
-                'price_subtotal': 600.0,
-                'price_total': 600.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 600.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a bis',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2000.0,
-                'price_subtotal': 2000.0,
-                'price_total': 2600.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 2000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 2800.0,
-            'amount_tax': 600.0,
-            'amount_total': 3400.0,
-            'amount_residual': 3400.0,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3400.0,
+                    'price_subtotal': -3400.0,
+                    'price_total': -3400.0,
+                    counterpart_field: 3400.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 600.0,
+                    'price_subtotal': 600.0,
+                    'price_total': 600.0,
+                    operational_field: 600.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                },
+                {
+                    'name': 'product_a bis',
+                    'price_unit': 2000.0,
+                    'price_subtotal': 2000.0,
+                    'price_total': 2600.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 2000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 2800.0,
+                'amount_tax': 600.0,
+                'amount_total': 3400.0,
+                'amount_residual': 3400.0,
+            }])
 
-        # Remove product line. Taxes are recomputed.
-        move_form = Form(move)
-        index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {'debit': 2000.0})
-        move_form.invoice_line_ids.remove(index=index_product_line)
-        move = move_form.save()
+            # Remove product line. Taxes are recomputed.
+            move_form = Form(move)
+            index_product_line, _ = self._search_candidate_records(move.invoice_line_ids, {operational_field: 2000.0})
+            move_form.invoice_line_ids.remove(index=index_product_line)
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1040.0,
-                'price_subtotal': -1040.0,
-                'price_total': -1040.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 1040.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_2.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_2.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_2.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 1040.0,
-                'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 240.0,
-            'amount_total': 1040.0,
-            'amount_residual': 1040.0,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 800.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -1040.0,
+                    'price_subtotal': -1040.0,
+                    'price_total': -1040.0,
+                    counterpart_field: 1040.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 120.0,
+                    'price_subtotal': 120.0,
+                    'price_total': 120.0,
+                    operational_field: 120.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_2.name,
+                    'price_unit': 120.0,
+                    'price_subtotal': 120.0,
+                    'price_total': 120.0,
+                    'tax_line_id': self.parent_tax_purchase_2.id,
+                    operational_field: 120.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_total': 1040.0,
+                    'tax_ids': (self.parent_tax_purchase_1 + self.parent_tax_purchase_2).ids,
+                    operational_field: 800.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 800.0,
+                'amount_tax': 240.0,
+                'amount_total': 1040.0,
+                'amount_residual': 1040.0,
+            }])
 
     def test_in_invoice_line_onchange_taxes_2_price_include(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.price_unit = 1150
-            line_form.tax_ids.clear()
-            line_form.tax_ids.add(self.parent_tax_purchase_1_incl)
-        move = move_form.save()
+        for move_type in self.move_types:
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1150.0,
-                'price_subtotal': 1000.0,
-                'price_total': 1150.0,
-                'tax_ids': self.parent_tax_purchase_1_incl.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1150.0,
-                'price_subtotal': -1150.0,
-                'price_total': -1150.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 1150.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1_incl.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1_incl.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 150.0,
-                'price_subtotal': 150.0,
-                'price_total': 150.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1_incl.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 150.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1150.0,
-                'price_subtotal': 1000.0,
-                'price_total': 1150.0,
-                'tax_ids': self.parent_tax_purchase_1_incl.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 1000.0,
-            'amount_tax': 150.0,
-            'amount_total': 1150.0,
-            'amount_residual': 1150.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.price_unit = 1150
+                line_form.tax_ids.clear()
+                line_form.tax_ids.add(self.parent_tax_purchase_1_incl)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 1150.0,
+                    'price_subtotal': 1000.0,
+                    'price_total': 1150.0,
+                    'tax_ids': self.parent_tax_purchase_1_incl.ids,
+                    operational_field: 1000.0,
+
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -1150.0,
+                    'price_subtotal': -1150.0,
+                    'price_total': -1150.0,
+                    counterpart_field: 1150.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_1_incl.name,
+                    'account_id': self.parent_tax_purchase_1_incl.account_id.id,
+                    'price_unit': 150.0,
+                    'price_subtotal': 150.0,
+                    'price_total': 150.0,
+                    'tax_line_id': self.parent_tax_purchase_1_incl.id,
+                    operational_field: 150.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 1150.0,
+                    'price_subtotal': 1000.0,
+                    'price_total': 1150.0,
+                    'tax_ids': self.parent_tax_purchase_1_incl.ids,
+                    operational_field: 1000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 1000.0,
+                'amount_tax': 150.0,
+                'amount_total': 1150.0,
+                'amount_residual': 1150.0,
+            }])
 
     def test_in_invoice_line_onchange_taxes_3_exigibility_on_payment(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.tax_ids.clear()
-            line_form.tax_ids.add(self.parent_tax_purchase_1_not_exigible)
-        move = move_form.save()
+        for move_type in self.move_types:
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1_not_exigible.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': False,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1_not_exigible.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1_not_exigible.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1_not_exigible.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': False,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1_not_exigible.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': False,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.tax_ids.clear()
+                line_form.tax_ids.add(self.parent_tax_purchase_1_not_exigible)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'tax_ids': self.parent_tax_purchase_1_not_exigible.ids,
+                    'tax_exigible': False,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_1_not_exigible.name,
+                    'account_id': self.parent_tax_purchase_1_not_exigible.account_id.id,
+                    'tax_line_id': self.parent_tax_purchase_1_not_exigible.id,
+                    'tax_exigible': False,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'tax_ids': self.parent_tax_purchase_1_not_exigible.ids,
+                    'tax_exigible': False,
+                },
+            ])
+            self.assertRecordValues(move, [self.invariants[move_type]['move']])
 
     def test_in_invoice_onchange_payment_term_1(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move_form.invoice_payment_term_id = self.pay_terms_advance
-        move = move_form.save()
+        for move_type in self.move_types:
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -644.0,
-                'price_subtotal': -644.0,
-                'price_total': -644.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 644.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
-                'tax_exigible': True,
-            },
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -276.0,
-                'price_subtotal': -276.0,
-                'price_total': -276.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 276.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_advance.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move_form.invoice_payment_term_id = self.pay_terms_advance
+            move = move_form.save()
 
-        # Set a custom name / account for payment term lines.
-        move_form = Form(move)
-        move_form.invoice_payment_ref = 'turlututu'
-        index_pay_term_line, _ = self._search_candidate_records(move.line_ids, {'date_maturity': '2019-01-01'})
-        with move_form.line_ids.edit(index_pay_term_line) as line_form:
-            line_form.name = 'tsoin tsoin'
-            line_form.account_id = self.parent_acc_payable_2
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -276.0,
+                    'price_subtotal': -276.0,
+                    'price_total': -276.0,
+                    counterpart_field: 276.0,
+                    'date_maturity': fields.Date.from_string('2019-01-01'),
+                },
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -644.0,
+                    'price_subtotal': -644.0,
+                    'price_total': -644.0,
+                    counterpart_field: 644.0,
+                    'date_maturity': fields.Date.from_string('2019-02-28'),
+                },
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_payment_term_id': self.pay_terms_advance.id,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'tsoin tsoin',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -276.0,
-                'price_subtotal': -276.0,
-                'price_total': -276.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 276.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': 'turlututu',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -644.0,
-                'price_subtotal': -644.0,
-                'price_total': -644.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 644.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': 'tsoin tsoin',
-            'invoice_payment_term_id': self.pay_terms_advance.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            # Set a custom name / account for payment term lines.
+            move_form = Form(move)
+            move_form.invoice_payment_ref = 'turlututu'
+            index_pay_term_line, _ = self._search_candidate_records(move.line_ids, {'date_maturity': '2019-01-01'})
+            with move_form.line_ids.edit(index_pay_term_line) as line_form:
+                line_form.name = 'tsoin tsoin'
+                line_form.account_id = self.parent_acc_payable_2
+            move = move_form.save()
 
-        # Set an immediate payment terms.
-        move_form = Form(move)
-        move_form.invoice_payment_term_id = self.pay_terms_immediate
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'name': 'tsoin tsoin',
+                    'account_id': self.parent_acc_payable_2.id,
+                    'price_unit': -276.0,
+                    'price_subtotal': -276.0,
+                    'price_total': -276.0,
+                    counterpart_field: 276.0,
+                },
+                {
+                    'name': 'turlututu',
+                    'price_unit': -644.0,
+                    'price_subtotal': -644.0,
+                    'price_total': -644.0,
+                    counterpart_field: 644.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_payment_ref': 'tsoin tsoin',
+                'invoice_payment_term_id': self.pay_terms_advance.id,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'tsoin tsoin',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': 'tsoin tsoin',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            # Set an immediate payment terms.
+            move_form = Form(move)
+            move_form.invoice_payment_term_id = self.pay_terms_immediate
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'name': 'tsoin tsoin',
+                    'account_id': self.parent_acc_payable_2.id,
+                    'price_unit': -920.0,
+                    'price_subtotal': -920.0,
+                    'price_total': -920.0,
+                    counterpart_field: 920.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_payment_ref': 'tsoin tsoin',
+                'invoice_payment_term_id': self.pay_terms_immediate.id,
+            }])
 
     def test_in_invoice_onchange_amls_1(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        with move_form.line_ids.new() as line_form:
-            line_form.account_id = self.parent_acc_expense_2
-            line_form.credit = 500
-            line_form.tax_ids.add(self.parent_tax_purchase_1)
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': False,
-                'product_id': False,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -500.0,
-                'price_subtotal': -500.0,
-                'price_total': -575.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 500.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': False,
-                'product_id': False,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -500.0,
-                'price_subtotal': -500.0,
-                'price_total': -575.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 500.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -345.0,
-                'price_subtotal': -345.0,
-                'price_total': -345.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 345.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 45.0,
-                'price_subtotal': 45.0,
-                'price_total': 45.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 45.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 300.0,
-            'amount_tax': 45.0,
-            'amount_total': 345.0,
-            'amount_residual': 345.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            with move_form.line_ids.new() as line_form:
+                line_form.account_id = self.parent_acc_expense_2
+                setattr(line_form, counterpart_field, 500)
+                line_form.tax_ids.add(self.parent_tax_purchase_1)
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': False,
+                    'product_id': False,
+                    'product_uom_id': False,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'price_unit': -500.0,
+                    'price_subtotal': -500.0,
+                    'price_total': -575.0,
+                    operational_field: 0.0,
+                    counterpart_field: 500.0,
+                },
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': False,
+                    'product_id': False,
+                    'product_uom_id': False,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'price_unit': -500.0,
+                    'price_subtotal': -500.0,
+                    'price_total': -575.0,
+                    operational_field: 0.0,
+                    counterpart_field: 500.0,
+                },
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -345.0,
+                    'price_subtotal': -345.0,
+                    'price_total': -345.0,
+                    counterpart_field: 345.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 45.0,
+                    'price_subtotal': 45.0,
+                    'price_total': 45.0,
+                    operational_field: 45.0,
+                },
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'amount_untaxed': 300.0,
+                'amount_tax': 45.0,
+                'amount_total': 345.0,
+                'amount_residual': 345.0,
+            }])
 
     def test_in_invoice_onchange_partner_1(self):
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_b
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_3.id,
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_b
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_3.id,
+                    'partner_id': self.partner_b.id,
+                    'tax_ids': self.parent_tax_purchase_3.ids,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'account_id': self.parent_acc_payable_2.id,
+                    'partner_id': self.partner_b.id,
+                    'price_unit': -276.0,
+                    'price_subtotal': -276.0,
+                    'price_total': -276.0,
+                    counterpart_field: 276.0,
+                },
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'account_id': self.parent_acc_payable_2.id,
+                    'partner_id': self.partner_b.id,
+                    'price_unit': -644.0,
+                    'price_subtotal': -644.0,
+                    'price_total': -644.0,
+                    counterpart_field: 644.0,
+                    'date_maturity': fields.Date.from_string('2019-02-28'),
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_3.name,
+                    'partner_id': self.partner_b.id,
+                    'price_unit': 120.0,
+                    'price_subtotal': 120.0,
+                    'price_total': 120.0,
+                    'tax_line_id': self.parent_tax_purchase_3.id,
+                    operational_field: 120.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_3.id,
+                    'partner_id': self.partner_b.id,
+                    'tax_ids': self.parent_tax_purchase_3.ids,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
                 'partner_id': self.partner_b.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_3.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_2.id,
-                'partner_id': self.partner_b.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -644.0,
-                'price_subtotal': -644.0,
-                'price_total': -644.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 644.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
-                'tax_exigible': True,
-            },
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_2.id,
-                'partner_id': self.partner_b.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -276.0,
-                'price_subtotal': -276.0,
-                'price_total': -276.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 276.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_3.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_3.account_id.id,
-                'partner_id': self.partner_b.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_3.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_3.id,
-                'partner_id': self.partner_b.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_3.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_b.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': self.parent_fp_1.id,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_advance.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+                'fiscal_position_id': self.parent_fp_1.id,
+                'invoice_payment_ref': '/',
+                'invoice_payment_term_id': self.pay_terms_advance.id,
+            }])
 
     def test_in_invoice_onchange_fiscal_position_1_applied_after(self):
-        # Create a new invoice with a single product line.
-        # The fiscal position is applied at the end so the accounts remains untouched.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move_form.fiscal_position_id = self.parent_fp_1
-        move = move_form.save()
+        for move_type in self.move_types:
+            # Create a new invoice with a single product line.
+            # The fiscal position is applied at the end so the accounts remains untouched.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move_form.fiscal_position_id = self.parent_fp_1
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': self.parent_fp_1.id,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'fiscal_position_id': self.parent_fp_1.id,
+            }])
 
     def test_in_invoice_onchange_fiscal_position_2_applied_before(self):
-        # Create a new invoice with a single product line.
-        # The fiscal position is applied at the beginning so the accounts/taxes are mapped.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        move_form.fiscal_position_id = self.parent_fp_1
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move = move_form.save()
+        for move_type in self.move_types:
+            # Create a new invoice with a single product line.
+            # The fiscal position is applied at the beginning so the accounts/taxes are mapped.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            move_form.fiscal_position_id = self.parent_fp_1
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_3.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_3.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_3.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_3.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_3.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_3.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_3.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': self.parent_fp_1.id,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_3.id,
+                    'tax_ids': self.parent_tax_purchase_3.ids,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': self.parent_tax_purchase_3.name,
+                    'account_id': self.parent_tax_purchase_3.account_id.id,
+                    'tax_line_id': self.parent_tax_purchase_3.id,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'account_id': self.parent_acc_expense_3.id,
+                    'tax_ids': self.parent_tax_purchase_3.ids,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'fiscal_position_id': self.parent_fp_1.id,
+            }])
 
     def test_in_invoice_onchange_cash_rounding_1(self):
-        rounding_add_line = self.env['account.cash.rounding'].create({
-            'name': 'add_invoice_line',
-            'rounding': 0.05,
-            'strategy': 'add_invoice_line',
-            'account_id': self.parent_acc_expense_2.id,
-            'rounding_method': 'UP',
-        })
-        rounding_biggest_tax = self.env['account.cash.rounding'].create({
-            'name': 'biggest_tax',
-            'rounding': 0.05,
-            'strategy': 'biggest_tax',
-            'rounding_method': 'DOWN',
-        })
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        # Create the invoice with one line.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-            line_form.price_unit = 9.99
-        move_form.invoice_cash_rounding_id = rounding_add_line
-        move = move_form.save()
-
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
+            rounding_add_line = self.env['account.cash.rounding'].create({
                 'name': 'add_invoice_line',
-                'product_id': False,
+                'rounding': 0.05,
+                'strategy': 'add_invoice_line',
                 'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 0.01,
-                'price_subtotal': 0.01,
-                'price_total': 0.01,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.01,
-                'credit': 0.00,
-                'display_type': 'product_cr',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9.99,
-                'price_subtotal': 9.99,
-                'price_total': 11.49,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9.99,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -11.50,
-                'price_subtotal': -11.50,
-                'price_total': -11.50,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 11.50,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1.5,
-                'price_subtotal': 1.5,
-                'price_total': 1.5,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1.5,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'add_invoice_line',
-                'product_id': False,
-                'account_id': self.parent_acc_expense_2.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 0.01,
-                'price_subtotal': 0.01,
-                'price_total': 0.01,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.01,
-                'credit': 0.0,
-                'display_type': 'product_cr',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9.99,
-                'price_subtotal': 9.99,
-                'price_total': 11.49,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9.99,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'invoice_cash_rounding_id': rounding_add_line.id,
-            'amount_untaxed': 10.0,
-            'amount_tax': 1.5,
-            'amount_total': 11.5,
-            'amount_residual': 11.5,
-        }])
+                'rounding_method': 'UP',
+            })
+            rounding_biggest_tax = self.env['account.cash.rounding'].create({
+                'name': 'biggest_tax',
+                'rounding': 0.05,
+                'strategy': 'biggest_tax',
+                'rounding_method': 'DOWN',
+            })
 
-        # Change the cash rounding by the one affecting the biggest tax.
-        move_form = Form(move)
-        move_form.invoice_cash_rounding_id = rounding_biggest_tax
-        move = move_form.save()
+            # Create the invoice with one line.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+                line_form.price_unit = 9.99
+            move_form.invoice_cash_rounding_id = rounding_add_line
+            move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9.99,
-                'price_subtotal': 9.99,
-                'price_total': 11.49,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9.99,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -11.45,
-                'price_subtotal': -11.45,
-                'price_total': -11.45,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 11.45,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 1.5,
-                'price_subtotal': 1.5,
-                'price_total': 1.5,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 1.5,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': '%s (rounding)' % self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -0.04,
-                'price_subtotal': -0.04,
-                'price_total': -0.04,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 0.04,
-                'display_type': 'tax_cr',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 9.99,
-                'price_subtotal': 9.99,
-                'price_total': 11.49,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 9.99,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'invoice_cash_rounding_id': rounding_biggest_tax.id,
-            'amount_untaxed': 9.99,
-            'amount_tax': 1.46,
-            'amount_total': 11.45,
-            'amount_residual': 11.45,
-        }])
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'add_invoice_line',
+                    'product_id': False,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'product_uom_id': False,
+                    'price_unit': 0.01,
+                    'price_subtotal': 0.01,
+                    'price_total': 0.01,
+                    'tax_ids': [],
+                    operational_field: 0.01,
+                    'display_type': 'product_cr',
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 9.99,
+                    'price_subtotal': 9.99,
+                    'price_total': 11.49,
+                    operational_field: 9.99,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -11.50,
+                    'price_subtotal': -11.50,
+                    'price_total': -11.50,
+                    counterpart_field: 11.50,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 1.5,
+                    'price_subtotal': 1.5,
+                    'price_total': 1.5,
+                    operational_field: 1.5,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'name': 'add_invoice_line',
+                    'product_id': False,
+                    'account_id': self.parent_acc_expense_2.id,
+                    'product_uom_id': False,
+                    'price_unit': 0.01,
+                    'price_subtotal': 0.01,
+                    'price_total': 0.01,
+                    'tax_ids': [],
+                    operational_field: 0.01,
+                    'display_type': 'product_cr',
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 9.99,
+                    'price_subtotal': 9.99,
+                    'price_total': 11.49,
+                    operational_field: 9.99,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_cash_rounding_id': rounding_add_line.id,
+                'amount_untaxed': 10.0,
+                'amount_tax': 1.5,
+                'amount_total': 11.5,
+                'amount_residual': 11.5,
+            }])
+
+            # Change the cash rounding by the one affecting the biggest tax.
+            move_form = Form(move)
+            move_form.invoice_cash_rounding_id = rounding_biggest_tax
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 9.99,
+                    'price_subtotal': 9.99,
+                    'price_total': 11.49,
+                    operational_field: 9.99,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -11.45,
+                    'price_subtotal': -11.45,
+                    'price_total': -11.45,
+                    counterpart_field: 11.45,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 1.5,
+                    'price_subtotal': 1.5,
+                    'price_total': 1.5,
+                    operational_field: 1.5,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'name': '%s (rounding)' % self.parent_tax_purchase_1.name,
+                    'price_unit': -0.04,
+                    'price_subtotal': -0.04,
+                    'price_total': -0.04,
+                    operational_field: 0.0,
+                    counterpart_field: 0.04,
+                    'display_type': 'tax_cr',
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 9.99,
+                    'price_subtotal': 9.99,
+                    'price_total': 11.49,
+                    operational_field: 9.99,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_cash_rounding_id': rounding_biggest_tax.id,
+                'amount_untaxed': 9.99,
+                'amount_tax': 1.46,
+                'amount_total': 11.45,
+                'amount_residual': 11.45,
+            }])
 
     def test_in_invoice_onchange_journal_1(self):
         ''' Set a custom journal having a foreign currency. '''
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move_form.journal_id = self.parent_journal_purchase_2
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -920.0,
-                'debit': 0.0,
-                'credit': 460.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 120.0,
-                'debit': 60.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_2.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move_form.journal_id = self.parent_journal_purchase_2
+            move = move_form.save()
 
-        # Reset the journal to the default one and then, the default currency.
-        move_form = Form(move)
-        move_form.journal_id = self.parent_journal_purchase_1
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': -920.0 if move_type == "in_invoice" else 920.0,
+                    counterpart_field: 460.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 120.0 if move_type == "in_invoice" else -120.0,
+                    operational_field: 60.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'currency_id': self.gold_currency.id,
+                'journal_id': self.parent_journal_purchase_2.id,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            # Reset the journal to the default one and then, the default currency.
+            move_form = Form(move)
+            move_form.journal_id = self.parent_journal_purchase_1
+            move = move_form.save()
+
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [self.invariants[move_type]['move']])
 
     def test_in_invoice_onchange_currency_1(self):
-        # Create an invoice with a single product line.
-        # Set a foreign currency at the end: the product price remains unchanged.
-        move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
-        move_form.invoice_date = fields.Date.from_string('2019-01-01')
-        move_form.partner_id = self.partner_a
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move_form.currency_id = self.gold_currency
-        move = move_form.save()
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -920.0,
-                'debit': 0.0,
-                'credit': 460.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 120.0,
-                'debit': 60.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 400.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            # Create an invoice with a single product line.
+            # Set a foreign currency at the end: the product price remains unchanged.
+            move_form = Form(self.env['account.move'].with_context(default_type=move_type))
+            move_form.invoice_date = fields.Date.from_string('2019-01-01')
+            move_form.partner_id = self.partner_a
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move_form.currency_id = self.gold_currency
+            move = move_form.save()
 
-        # Change the date having a different currency rate.
-        move_form = Form(move)
-        move_form.invoice_date = fields.Date.from_string('2016-01-01')
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -920.0,
+                    'price_subtotal': -920.0,
+                    'price_total': -920.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': -920.0 if move_type == "in_invoice" else 920.0,
+                    counterpart_field: 460.0,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 120.0 if move_type == "in_invoice" else -120.0,
+                    operational_field: 60.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 400.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'currency_id': self.gold_currency.id,
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 266.67,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -920.0,
-                'debit': 0.0,
-                'credit': 306.67,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 120.0,
-                'debit': 40.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 266.67,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2016-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
-        }])
+            # Change the date having a different currency rate.
+            move_form = Form(move)
+            move_form.invoice_date = fields.Date.from_string('2016-01-01')
+            move = move_form.save()
 
-        # Create a new line. Standard price must be converted to the new currency.
-        move_form = Form(move)
-        with move_form.invoice_line_ids.new() as line_form:
-            line_form.product_id = self.product_a
-        move = move_form.save()
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 266.67,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': -920.0 if move_type == "in_invoice" else 920.0,
+                    'date_maturity': fields.Date.from_string('2016-01-01'),
+                    counterpart_field: 306.67,
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 120.0 if move_type == "in_invoice" else -120.0,
+                    operational_field: 40.0,
+                    counterpart_field: 0.0,
+                    'display_type': 'tax',
+                    'date_maturity': False,
+                    'tax_exigible': True,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 266.67,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'currency_id': self.gold_currency.id,
+                'date': fields.Date.from_string('2016-01-01'),
+            }])
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 266.67,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2400.0,
-                'price_subtotal': 2400.0,
-                'price_total': 2760.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 2400.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3680.0,
-                'price_subtotal': -3680.0,
-                'price_total': -3680.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -3680.0,
-                'debit': 0.0,
-                'credit': 1226.67,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 480.0,
-                'price_subtotal': 480.0,
-                'price_total': 480.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 480.0,
-                'debit': 160.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 800.0,
-                'debit': 266.67,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 2400.0,
-                'price_subtotal': 2400.0,
-                'price_total': 2760.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 2400.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2016-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': self.pay_terms_immediate.id,
-            'amount_untaxed': 3200.0,
-            'amount_tax': 480.0,
-            'amount_total': 3680.0,
-            'amount_residual': 3680.0,
-        }])
+            # Create a new line. Standard price must be converted to the new currency.
+            move_form = Form(move)
+            with move_form.invoice_line_ids.new() as line_form:
+                line_form.product_id = self.product_a
+            move = move_form.save()
 
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 266.67,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2400.0,
+                    'price_subtotal': 2400.0,
+                    'price_total': 2760.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 2400.0 if move_type == "in_invoice" else -2400.0,
+                    operational_field: 800.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3680.0,
+                    'price_subtotal': -3680.0,
+                    'price_total': -3680.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': -3680.0 if move_type == "in_invoice" else 3680.0,
+                    counterpart_field: 1226.67,
+                    'date_maturity': fields.Date.from_string('2016-01-01'),
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 480.0,
+                    'price_subtotal': 480.0,
+                    'price_total': 480.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 480.0 if move_type == "in_invoice" else -480.0,
+                    operational_field: 160.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 800.0 if move_type == "in_invoice" else -800.0,
+                    operational_field: 266.67,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 2400.0,
+                    'price_subtotal': 2400.0,
+                    'price_total': 2760.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 2400.0 if move_type == "in_invoice" else -2400.0,
+                    operational_field: 800.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'currency_id': self.gold_currency.id,
+                'date': fields.Date.from_string('2016-01-01'),
+                'amount_untaxed': 3200.0,
+                'amount_tax': 480.0,
+                'amount_total': 3680.0,
+                'amount_residual': 3680.0,
+            }])
+
+    # -------------------------------------------------------------------------
+    # TESTS in_invoice and in_refund CREATE
+    # -------------------------------------------------------------------------
+
+    def test_in_invoice_create_invoice_line_ids_1_single_currency(self):
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
+
+            # Test creating an account_move with the least information.
+            move = self.env['account.move'].create({
+                'type': move_type,
+                'partner_id': self.partner_a.id,
+                'invoice_date': fields.Date.from_string('2019-01-01'),
+                'invoice_line_ids': [(0, None, {
+                    'partner_id': self.partner_a.id,
+                    'product_id': self.product_a.id,
+                    'product_uom_id': self.product_a.uom_id.id,
+                    'name': self.product_a.name,
+                    'price_unit': 800.0,
+                    'quantity': 1,
+                    'tax_ids': [(6, 0, self.product_a.supplier_taxes_id.ids)],
+                })]
+            })
+
+            self.assertAmlsValues(move.invoice_line_ids, [self.invariants[move_type]['line_product']])
+            self.assertAmlsValues(move.line_ids, [
+                self.invariants[move_type]['line_balance'],
+                self.invariants[move_type]['line_tax'],
+                self.invariants[move_type]['line_product'],
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'invoice_payment_term_id': False,
+            }])
+
+    def test_in_invoice_create_invoice_line_ids_2_multi_currency(self):
+        for move_type in self.move_types:
+            operational_field = 'debit' if move_type == 'in_invoice' else 'credit'
+            counterpart_field = 'credit' if move_type == 'in_invoice' else 'debit'
+
+            # Test creating an account_move with the least information.
+            move = self.env['account.move'].create({
+                'type': move_type,
+                'partner_id': self.partner_a.id,
+                'invoice_date': fields.Date.from_string('2016-01-01'),
+                'currency_id': self.gold_currency.id,
+                'invoice_line_ids': [(0, None, {
+                    'partner_id': self.partner_a.id,
+                    'product_id': self.product_a.id,
+                    'product_uom_id': self.product_a.uom_id.id,
+                    'name': self.product_a.name,
+                    'price_unit': 3000.0,
+                    'quantity': 1,
+                    'tax_ids': [(6, 0, self.product_a.supplier_taxes_id.ids)],
+                })]
+            })
+
+            self.assertAmlsValues(move.invoice_line_ids, [
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 3000.0,
+                    'price_subtotal': 3000.0,
+                    'price_total': 3450.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 3000.0 if move_type == "in_invoice" else -3000.0,
+                    operational_field: 1000.0,
+                },
+            ])
+            self.assertAmlsValues(move.line_ids, [
+                {
+                    **self.invariants[move_type]['line_balance'],
+                    'price_unit': -3450.0,
+                    'price_subtotal': -3450.0,
+                    'price_total': -3450.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': -3450.0 if move_type == "in_invoice" else 3450.0,
+                    counterpart_field: 1150.0,
+                    'date_maturity': fields.Date.from_string('2016-01-01'),
+                },
+                {
+                    **self.invariants[move_type]['line_tax'],
+                    'price_unit': 450.0,
+                    'price_subtotal': 450.0,
+                    'price_total': 450.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 450.0 if move_type == "in_invoice" else -450.0,
+                    operational_field: 150.0,
+                },
+                {
+                    **self.invariants[move_type]['line_product'],
+                    'price_unit': 3000.0,
+                    'price_subtotal': 3000.0,
+                    'price_total': 3450.0,
+                    'currency_id': self.gold_currency.id,
+                    'amount_currency': 3000.0 if move_type == "in_invoice" else -3000.0,
+                    operational_field: 1000.0,
+                },
+            ])
+            self.assertRecordValues(move, [{
+                **self.invariants[move_type]['move'],
+                'currency_id': self.gold_currency.id,
+                'date': fields.Date.from_string('2016-01-01'),
+                'invoice_payment_term_id': False,
+                'amount_untaxed': 3000.0,
+                'amount_tax': 450.0,
+                'amount_total': 3450.0,
+                'amount_residual': 3450.0,
+            }])
+
+
+    # -------------------------------------------------------------------------
+    # TESTS in_invoice ONCHANGE
+    # -------------------------------------------------------------------------
     def test_in_invoice_onchange_invoice_sequence_number_1(self):
         move_form = Form(self.env['account.move'].with_context(default_type='in_invoice'))
         move_form.invoice_date = fields.Date.from_string('2019-01-01')
@@ -4238,366 +1960,99 @@ class TestAccountMoveInInvoice(AccountingSavepointCase):
 
         self.assertAmlsValues(move.invoice_line_ids, [
             {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
+                **self.invariants['in_invoice']['line_product'],
                 'price_unit': 1600.0,
                 'price_subtotal': 1600.0,
                 'price_total': 1840.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
                 'currency_id': self.gold_currency.id,
                 'amount_currency': 1600.0,
                 'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
             },
         ])
         self.assertAmlsValues(move.line_ids, [
             {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -1288.0,
-                'price_subtotal': -1288.0,
-                'price_total': -1288.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -1288.0,
-                'debit': 0.0,
-                'credit': 644.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-02-28'),
-                'tax_exigible': True,
-            },
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
+                **self.invariants['in_invoice']['line_balance'],
                 'price_unit': -552.0,
                 'price_subtotal': -552.0,
                 'price_total': -552.0,
-                'tax_ids': [],
-                'tax_line_id': False,
                 'currency_id': self.gold_currency.id,
                 'amount_currency': -552.0,
-                'debit': 0.0,
                 'credit': 276.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
             },
             {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
+                **self.invariants['in_invoice']['line_balance'],
+                'price_unit': -1288.0,
+                'price_subtotal': -1288.0,
+                'price_total': -1288.0,
+                'currency_id': self.gold_currency.id,
+                'amount_currency': -1288.0,
+                'credit': 644.0,
+                'date_maturity': fields.Date.from_string('2019-02-28'),
+            },
+            {
+                **self.invariants['in_invoice']['line_tax'],
                 'price_unit': 240.0,
                 'price_subtotal': 240.0,
                 'price_total': 240.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
                 'currency_id': self.gold_currency.id,
                 'amount_currency': 240.0,
                 'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
             },
             {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
+                **self.invariants['in_invoice']['line_product'],
                 'price_unit': 1600.0,
                 'price_subtotal': 1600.0,
                 'price_total': 1840.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
                 'currency_id': self.gold_currency.id,
                 'amount_currency': 1600.0,
                 'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
             },
         ])
         self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
+            **self.invariants['in_invoice']['move'],
             'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
             'invoice_payment_term_id': self.pay_terms_advance.id,
             'amount_untaxed': 1600.0,
             'amount_tax': 240.0,
             'amount_total': 1840.0,
             'amount_residual': 1840.0,
         }])
-
     # -------------------------------------------------------------------------
-    # TESTS in_invoice CREATE
+    # TESTS in_refund ONCHANGE
     # -------------------------------------------------------------------------
 
-    def test_in_invoice_create_invoice_line_ids_1_single_currency(self):
-        # Test creating an account_move with the least information.
-        move = self.env['account.move'].with_context(default_type='in_invoice').create({
-            'type': 'in_invoice',
-            'partner_id': self.partner_a.id,
-            'invoice_date': fields.Date.from_string('2019-01-01'),
-            'invoice_line_ids': [(0, None, {
-                'partner_id': self.partner_a.id,
-                'product_id': self.product_a.id,
-                'product_uom_id': self.product_a.uom_id.id,
-                'name': self.product_a.name,
-                'price_unit': 800.0,
-                'quantity': 1,
-                'tax_ids': [(6, 0, self.product_a.supplier_taxes_id.ids)],
-            })]
-        })
+    def test_in_refund_onchange_invoice_sequence_number_1(self):
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
+        move_form.invoice_date = fields.Date.from_string('2019-01-01')
+        move_form.partner_id = self.partner_a
+        with move_form.invoice_line_ids.new() as line_form:
+            line_form.product_id = self.product_a
+        move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -920.0,
-                'price_subtotal': -920.0,
-                'price_total': -920.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 0.0,
-                'credit': 920.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2019-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 120.0,
-                'price_subtotal': 120.0,
-                'price_total': 120.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 120.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 800.0,
-                'price_subtotal': 800.0,
-                'price_total': 920.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': False,
-                'amount_currency': 0.0,
-                'debit': 800.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
         self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.company_parent.currency_id.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2019-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': False,
-            'amount_untaxed': 800.0,
-            'amount_tax': 120.0,
-            'amount_total': 920.0,
-            'amount_residual': 920.0,
+            'invoice_sequence_number_next': '0001',
+            'invoice_sequence_number_next_prefix': 'BILL/2019/',
         }])
 
-    def test_in_invoice_create_invoice_line_ids_2_multi_currency(self):
-        # Test creating an account_move with the least information.
-        move = self.env['account.move'].with_context(default_type='in_invoice').create({
-            'type': 'in_invoice',
-            'partner_id': self.partner_a.id,
-            'invoice_date': fields.Date.from_string('2016-01-01'),
-            'currency_id': self.gold_currency.id,
-            'invoice_line_ids': [(0, None, {
-                'partner_id': self.partner_a.id,
-                'product_id': self.product_a.id,
-                'product_uom_id': self.product_a.uom_id.id,
-                'name': self.product_a.name,
-                'price_unit': 3000.0,
-                'quantity': 1,
-                'tax_ids': [(6, 0, self.product_a.supplier_taxes_id.ids)],
-            })]
-        })
+        move_form = Form(move)
+        move_form.invoice_sequence_number_next = '0042'
+        move = move_form.save()
 
-        self.assertAmlsValues(move.invoice_line_ids, [
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 3000.0,
-                'price_subtotal': 3000.0,
-                'price_total': 3450.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 3000.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
-        self.assertAmlsValues(move.line_ids, [
-            {
-                'name': '/',
-                'product_id': False,
-                'account_id': self.parent_acc_payable_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': -3450.0,
-                'price_subtotal': -3450.0,
-                'price_total': -3450.0,
-                'tax_ids': [],
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': -3450.0,
-                'debit': 0.0,
-                'credit': 1150.0,
-                'display_type': 'balance',
-                'date_maturity': fields.Date.from_string('2016-01-01'),
-                'tax_exigible': True,
-            },
-            {
-                'name': self.parent_tax_purchase_1.name,
-                'product_id': False,
-                'account_id': self.parent_tax_purchase_1.account_id.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': False,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 450.0,
-                'price_subtotal': 450.0,
-                'price_total': 450.0,
-                'tax_ids': [],
-                'tax_line_id': self.parent_tax_purchase_1.id,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 450.0,
-                'debit': 150.0,
-                'credit': 0.0,
-                'display_type': 'tax',
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-            {
-                'name': 'product_a',
-                'product_id': self.product_a.id,
-                'account_id': self.parent_acc_expense_1.id,
-                'partner_id': self.partner_a.id,
-                'product_uom_id': self.uom_unit.id,
-                'quantity': 1.0,
-                'discount': 0.0,
-                'price_unit': 3000.0,
-                'price_subtotal': 3000.0,
-                'price_total': 3450.0,
-                'tax_ids': self.parent_tax_purchase_1.ids,
-                'tax_line_id': False,
-                'currency_id': self.gold_currency.id,
-                'amount_currency': 3000.0,
-                'debit': 1000.0,
-                'credit': 0.0,
-                'display_type': False,
-                'date_maturity': False,
-                'tax_exigible': True,
-            },
-        ])
         self.assertRecordValues(move, [{
-            'partner_id': self.partner_a.id,
-            'currency_id': self.gold_currency.id,
-            'journal_id': self.parent_journal_purchase_1.id,
-            'date': fields.Date.from_string('2016-01-01'),
-            'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
-            'invoice_payment_term_id': False,
-            'amount_untaxed': 3000.0,
-            'amount_tax': 450.0,
-            'amount_total': 3450.0,
-            'amount_residual': 3450.0,
+            'invoice_sequence_number_next': '0042',
+            'invoice_sequence_number_next_prefix': 'BILL/2019/',
         }])
+
+        move.post()
+
+        self.assertRecordValues(move, [{'name': 'BILL/2019/0042'}])
+
+        move_form = Form(self.env['account.move'].with_context(default_type='in_refund'))
+        move_form.invoice_date = fields.Date.from_string('2019-01-01')
+        move_form.partner_id = self.partner_a
+        with move_form.invoice_line_ids.new() as line_form:
+            line_form.product_id = self.product_a
+        move = move_form.save()
+        move.post()
+
+        self.assertRecordValues(move, [{'name': 'BILL/2019/0043'}])

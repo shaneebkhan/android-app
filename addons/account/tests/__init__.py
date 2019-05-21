@@ -2,9 +2,7 @@
 
 from . import test_account_move_entry
 from . import test_account_move_out_invoice
-from . import test_account_move_out_refund
 from . import test_account_move_in_invoice
-from . import test_account_move_in_refund
 from . import test_account_move_out_receipt
 from . import test_account_move_in_receipt
 from . import test_account_move_closed_period
