@@ -45,11 +45,11 @@ class StockScrap(models.Model):
     move_id = fields.Many2one('stock.move', 'Scrap Move', readonly=True)
     picking_id = fields.Many2one('stock.picking', 'Picking', states={'done': [('readonly', True)]})
     location_id = fields.Many2one(
-        'stock.location', 'Location', domain="[('usage', '=', 'internal')]",
+        'stock.location', 'Location', domain="[('usage', '=', 'internal'),('company_id', '=', company_id)]",
         required=True, states={'done': [('readonly', True)]}, default=_get_default_location_id)
     scrap_location_id = fields.Many2one(
         'stock.location', 'Scrap Location', default=_get_default_scrap_location_id,
-        domain="[('scrap_location', '=', True)]", required=True, states={'done': [('readonly', True)]})
+        domain="[('scrap_location', '=', True), ('company_id', '=', company_id)]", required=True, states={'done': [('readonly', True)]})
     scrap_qty = fields.Float('Quantity', default=1.0, required=True, states={'done': [('readonly', True)]})
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -73,6 +73,11 @@ class StockScrap(models.Model):
                     if move_line.product_id == self.product_id:
                         self.location_id = move_line.location_id
                         break
+
+    @api.onchange('company_id')
+    def _onchange_company_id(self):
+        if self.company_id:
+            self.scrap_location_id = self.env['stock.location'].search([('scrap_location', '=', True), ('company_id', '=', self.company_id.id)], limit=1).id
 
     @api.model
     def create(self, vals):
