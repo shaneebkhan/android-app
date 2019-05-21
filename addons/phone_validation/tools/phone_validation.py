@@ -26,13 +26,18 @@ try:
 
         return phone_nbr
 
-    def phone_format(number, country_code, country_phone_code, always_international=True, raise_exception=True):
+    def phone_format(number, country_code, country_phone_code, force_format='INTERNATIONAL', raise_exception=True):
         """ Format the given phone number according to the localisation and international options.
             :param number: number to convert
             :param country_code: the ISO country code in two chars
             :type country_code: str
             :param country_phone_code: country dial in codes, defined by the ITU-T (Ex: 32 for Belgium)
             :type country_phone_code: int
+            :param format: stringified version of format globals (see https://github.com/daviddrysdale/python-phonenumbers/blob/dev/python/phonenumbers/phonenumberutil.py
+                'E164' = 0
+                'INTERNATIONAL' = 1
+                'NATIONAL' = 2
+                'RFC3966' = 3
             :rtype: str
         """
         try:
@@ -43,7 +48,11 @@ try:
             else:
                 _logger.warning(_('Unable to format %s:\n%s'), number, e)
                 return number
-        if always_international or phone_nbr.country_code != country_phone_code:
+        if force_format == 'E164':
+            phone_fmt = phonenumbers.PhoneNumberFormat.E164
+        elif force_format == 'RFC3966':
+            phone_fmt = phonenumbers.PhoneNumberFormat.RFC3966
+        elif force_format == 'INTERNATIONAL' or phone_nbr.country_code != country_phone_code:
             phone_fmt = phonenumbers.PhoneNumberFormat.INTERNATIONAL
         else:
             phone_fmt = phonenumbers.PhoneNumberFormat.NATIONAL
@@ -54,7 +63,7 @@ except ImportError:
     def phone_parse(number, country_code):
         return False
 
-    def phone_format(number, country_code, country_phone_code, always_international=True, raise_exception=True):
+    def phone_format(number, country_code, country_phone_code, force_format='INTERNATIONAL', raise_exception=True):
         global _phonenumbers_lib_warning
         if not _phonenumbers_lib_warning:
             _logger.warning(
