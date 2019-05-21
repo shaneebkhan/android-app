@@ -2,18 +2,64 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_wip_systray_messaging_menu > .dropdown-menu {
-    flex: 0 1 auto;
-    min-height: 50px;
-    max-height: 400px;
-    width: 350px;
-    overflow-y: auto;
+.o_mail_wip_systray_messaging_menu {
+
+    > a > .o_counter {
+        position: absolute;
+        transform: translate(-25%, 60%);
+    }
+
+    > .dropdown-menu {
+        display: flex;
+        flex-flow: column;
+        flex: 0 1 auto;
+        max-height: 400px;
+        width: 350px;
+        padding-top: 0;
+        padding-bottom: 0;
+        overflow-y: auto;
+
+        > .o_header {
+            display: flex;
+        }
+    }
 }
+
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_wip_systray_messaging_menu > a > i {
-    font-size: larger
+.o_mail_wip_systray_messaging_menu {
+
+    > a {
+
+        > i {
+            font-size: larger
+        }
+
+        > .o_counter {
+            background-color: $o-brand-primary;
+        }
+    }
+
+    > .dropdown-menu > .o_header {
+        border-bottom: 1px solid gray('400');
+        box-shadow: 0 0 2px gray('400');
+        z-index: 1;
+
+        > .o_filter {
+
+            &.o_active {
+                font-weight: bold;
+            }
+
+            &:not(:hover) {
+
+                &:not(.o_active) {
+                    color: gray('500');
+                }
+            }
+        }
+    }
 }

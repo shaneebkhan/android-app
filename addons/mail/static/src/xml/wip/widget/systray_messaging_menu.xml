@@ -21,13 +21,13 @@
                 <t t-esc="props.counter"/>
             </span>
         </a>
-        <div class="dropdown-menu dropdown-menu-right"
-             t-att-class="state.toggleShow ? 'show' : ''"
+        <div t-if="state.toggleShow"
+             class="dropdown-menu dropdown-menu-right"
              role="menu">
             <div class="o_header">
                 <button t-foreach="['all', 'chat', 'channel']"
                         t-as="filter"
-                        class="btn btn-link o_filter_button"
+                        class="btn btn-link o_filter"
                         t-att-class="state.filter === filter ? 'o_active' : ''"
                         role="tab"
                         type="button"

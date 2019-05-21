@@ -6,9 +6,11 @@
     -->
     <div t-name="mail.wip.widget.ThreadPreview" owl="1"
          class="o_preview"
+         t-att-class="props.thread.message_unread_counter > 0 ? 'o_unread' : ''"
          t-on-click="_onClick">
         <div class="o_sidebar">
-            <img t-att-src="image"
+            <img class="rounded-circle"
+                 t-att-src="image"
                  alt="Preview"/>
         </div>
         <div class="o_content">
@@ -20,21 +22,21 @@
                       class="o_counter">
                     (<t t-esc="props.thread.message_unread_counter"/>)
                 </span>
+                <span class="o_mail_wip_autogrow"/>
                 <span t-if="props.lastMessage" class="o_date">
                     <t t-esc="props.lastMessage.$date.fromNow()"/>
                 </span>
             </div>
             <div class="o_core">
-                <t t-if="props.lastMessageAuthor">
-                    <t t-if="isMyselfLastMessageAuthor">Me:</t>
-                    <t t-else=""><t t-esc="props.lastMessageAuthor.name"/>:</t>
-                </t>
-                <t t-raw="inlineLastMessageBody"/>
+                <span class="o_inline_text">
+                    <t t-if="props.lastMessageAuthor"><t t-if="isMyselfLastMessageAuthor"><i class="fa fa-mail-reply"/>You:</t><t t-else=""><t t-esc="props.lastMessageAuthor.name"/>:</t></t> <t t-raw="inlineLastMessageBody"/>
+                </span>
+                <span class="o_mail_wip_autogrow"/>
+                <span t-if="props.thread.message_unread_counter > 0"
+                      class="o_mark_as_read fa fa-check"
+                      title="Mark as Read"
+                      t-on-click="_onClickMarkAsRead"/>
             </div>
-            <span t-if="props.thread.message_unread_counter > 0"
-                  class="o_mark_as_read fa fa-check"
-                  title="Mark as Read"
-                  t-on-click="_onClickMarkAsRead"/>
         </div>
     </div>
 

@@ -158,6 +158,8 @@
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/wip/widget/systray_messaging_menu.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/wip/widget/thread.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/wip/widget/thread_icon.scss"/>
+                <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/wip/widget/thread_preview.scss"/>
+                <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/wip/widget/thread_preview_list.scss"/>
             </xpath>
         </template>
 
