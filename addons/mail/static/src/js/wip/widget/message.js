@@ -89,7 +89,7 @@ class Message extends Component {
      */
     get displayedAuthorName() {
         if (this.props.author) {
-            return this.props.author.name;
+            return this.props.author.$name;
         }
         return this.props.message.email_from || this.env._t("Anonymous");
     }

@@ -311,7 +311,7 @@ const mutations = {
     'message/create'(
         { commit, set, state },
         {
-            author_id, author_id: [authorID, authorName]=[],
+            author_id, author_id: [authorID, authorDisplayName]=[],
             channel_ids,
             model,
             needaction_partner_ids,
@@ -342,8 +342,8 @@ const mutations = {
         // 2. author: create/update + link
         if (authorID) {
             const partnerLID = commit('partner/insert', {
+                displayName: authorDisplayName,
                 id: authorID,
-                name: authorName,
             });
             commit('partner/link_message', {
                 messageLID,

@@ -193,7 +193,7 @@ class ChatWindowManager extends Component {
             computed.hidden.offset = this.START_GAP_WIDTH;
             computed.hidden.items.push(items);
         }
-        if (!this.computed.visible.length && this.computed.hidden.items.length) {
+        if (!computed.visible.length && computed.hidden.items.length) {
             console.warn('cannot display any visible chat windows (screen is too small)');
         }
         this.computed = computed;

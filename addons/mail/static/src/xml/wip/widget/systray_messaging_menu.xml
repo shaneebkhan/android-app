@@ -41,7 +41,8 @@
                 <div class="o_mail_wip_autogrow"/>
                 <button t-if="!props.discussOpen"
                         class="btn btn-link o_new_message"
-                        type="button">
+                        type="button"
+                        t-on-click="_onClickNewMessage">
                     New message
                 </button>
             </div>

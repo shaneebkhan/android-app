@@ -9,9 +9,15 @@ class Partner extends Model {
      * @private
      */
     _compute() {
-        const { id, messageLIDs=[] } = this;
+        const {
+            displayName,
+            id,
+            messageLIDs=[],
+            name,
+        } = this;
         Object.assign(this, {
             _model: 'res.partner',
+            $name: name || displayName,
             lid: `res.partner_${id}`,
             messageLIDs,
         });
