@@ -443,7 +443,7 @@ class GettextAlias(object):
                 if cr:
                     # Try to use ir.translation to benefit from global cache if possible
                     env = odoo.api.Environment(cr, odoo.SUPERUSER_ID, {})
-                    res = env['ir.translation']._get_source(None, ('code','sql_constraint'), lang, source)
+                    res = env['ir.translation']._get_source(None, ('code'), lang, source)
                 else:
                     _logger.debug('no context cursor detected, skipping translation for "%r"', source)
             else:
@@ -901,17 +901,15 @@ def trans_generate(lang, modules, cr):
         if not callable(msg):
             push_translation(encode(module), term_type, encode(model), 0, msg)
 
-    def push_local_constraints(module, model, cons_type='sql_constraints'):
+    def push_local_constraints(module, model):
         """ Climb up the class hierarchy and ignore inherited constraints from other modules. """
-        term_type = 'sql_constraint' if cons_type == 'sql_constraints' else 'constraint'
-        msg_pos = 2 if cons_type == 'sql_constraints' else 1
         for cls in model.__class__.__mro__:
             if getattr(cls, '_module', None) != module:
                 continue
-            constraints = getattr(cls, '_local_' + cons_type, [])
+            constraints = getattr(cls, '_local_constraints', [])
             for constraint in constraints:
-                push_constraint_msg(module, term_type, model._name, constraint[msg_pos])
-            
+                push_constraint_msg(module, 'constraint', model._name, constraint[1])
+
     cr.execute(query_models, query_param)
 
     for (_, model, module) in cr.fetchall():
@@ -920,9 +918,7 @@ def trans_generate(lang, modules, cr):
             continue
         Model = env[model]
         if Model._constraints:
-            push_local_constraints(module, Model, 'constraints')
-        if Model._sql_constraints:
-            push_local_constraints(module, Model, 'sql_constraints')
+            push_local_constraints(module, Model)
 
     installed_modules = [
         m['name']
