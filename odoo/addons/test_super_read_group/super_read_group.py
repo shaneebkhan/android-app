@@ -54,11 +54,6 @@ class lazymapping(defaultdict):
 def join(list):
     return ", ".join(list)
 
-def lazy_name_get(self):
-    """ Evaluate self.name_get() lazily. """
-    names = lazy(lambda: dict(self.name_get()))
-    return [(rid, lazy(operator.getitem, names, rid)) for rid in self.ids]
-
 def process_date(date):
     if isinstance(date, str):
         return datetime.datetime.strptime(date, DEFAULT_SERVER_DATE_FORMAT)
@@ -133,12 +128,19 @@ class Base(models.AbstractModel):
     _inherit = 'base'
 
     @api.model
-    def _get_annotated_groupby(self, groupby_spec, query):
-        """ A groupby_spec defines a function from the model to some other set
-            This defines by taking kernel pair an equivalence relation on the model
-            and that equivalence defines a quotient of the model.
+    def _get_annotated_groupby(self, groupby_spec, query, fetched_data):
+        """ A groupby_spec defines a function (g: M -> T) from the model (M) to some other set (T)
+            This defines by taking kernel pair an equivalence relation (R) on the model
+            and that equivalence defines a quotient (M/R = Im(g)) of the model.
             The annotated groupby associated with a groupby spec is a way to specify
             how to fetch the quotient elements, present them, and manipulate them
+
+                                R ===> M -->> M/R >--> T 
+                                       |               ^
+                                       |_______________|
+                                               g
+
+            An element e of M/R corresponds to an equivalence class c of records
 
             An annotated groupby must have the following attributes:
 
@@ -148,9 +150,9 @@ class Base(models.AbstractModel):
                 - expr
                 - alias
                 (Used to process query results)
-                - process_value
-                - get_label
-                - get_domain
+                - process_value: determines how to process the values of expr returned by psycopg2
+                - get_label: determines how to label the quotient elements
+                - get_domain: determines the equivalence class of a quotient element via a domain
 
             Note that a list of groupby_specs [gs_i] determines a list [R_i] of equivalence relation, and
             finally a single equivalence relation which is the intersection of the R_i.
@@ -169,9 +171,7 @@ class Base(models.AbstractModel):
             assert field_type in ('date', 'datetime'), "The interval %r is provided while the field %r is not of type date or datetime" % (interval, field_name)
 
         annotated_groupby = {
-            'field_name': field_name,
             'alias': groupby_spec,
-            'type': field_type,
         }
 
         # expr is what should be used in SELECT TERM
@@ -201,7 +201,12 @@ class Base(models.AbstractModel):
         else:
             annotated_groupby['process_value'] = identity
             annotated_groupby['get_domain'] = lambda value: [(field_name, '=', value)]
-            if field_type != 'many2one':
+            if field_type == 'selection':
+                selection = dict(self.fields_get([field_name])[field_name]['selection'])
+                annotated_groupby['get_label'] = lambda value: (selection[value] if value else False)
+            elif field_type == 'many2one':
+                self._process_many2one_groupby_spec(field_name, annotated_groupby, fetched_data)
+            elif field_type != 'many2one':
                 # many2ones get_label functions are defined later on
                 annotated_groupby['get_label'] = identity
             if field_type == 'boolean':
@@ -210,6 +215,58 @@ class Base(models.AbstractModel):
         annotated_groupby['expr'] = expr
 
         return annotated_groupby
+
+    @api.model
+    def _process_many2one_groupby_spec(self, field_name, annotated_groupby, fetched_data):
+
+        def lazy_name_get(self):
+            """ Evaluate self.name_get() lazily. """
+            names = lazy(lambda: dict(self.name_get()))
+            return [(rid, lazy(operator.getitem, names, rid)) for rid in self.ids]
+
+
+        annotated_groupby['get_label'] = lambda id: labels[id]
+
+        # we should fix here the get_domain function
+        # we have a reference to fetched_data
+        # --------------------------------------------------------------------------------
+        # SET get_label attribute FOR ANNOTATED GROUPBYS WITH ATTRIBUTE type 'many2one'
+        # --------------------------------------------------------------------------------
+
+        def add_many2ones_get_label_function(annotated_groupbys, fetched_data):
+            many2one_field_names = [
+                annotated_groupby['field_name'] 
+                for groupby_spec, annotated_groupby in annotated_groupbys.items() 
+                if annotated_groupby['type'] == 'many2one'
+            ]
+
+            comodel_record_ids = defaultdict(set)
+            comodels = defaultdict()
+
+            for data_point in fetched_data:
+                for field_name in many2one_field_names:
+                    if data_point[field_name]: 
+                        comodel_name = self._fields[field_name].comodel_name
+                        comodels[field_name] = comodel_name
+                        comodel_record_ids[comodel_name].add(data_point[field_name])
+
+            comodel_records = {
+                comodel_name: self.env[comodel_name].browse(comodel_record_ids)
+                for comodel_name, comodel_record_ids in comodel_record_ids.items()
+            }
+
+            comodel_record_labels = {}
+            for comodel_name, records in comodel_records.items():
+                comodel_record_labels[comodel_name] = dict(lazy_name_get(records.sudo()))
+
+            for groupby_spec, annotated_groupby in annotated_groupbys.items():
+                if annotated_groupby['type'] == 'many2one':
+                    labels = comodel_record_labels[comodels[annotated_groupby['field_name']]]
+
+
+        # pay attention to
+        # if fetched_data:
+        #     add_many2ones_get_label_function(annotated_groupbys, fetched_data)
 
     @api.model
     def super_read_group(self, domain, groups, measure_specs, grouping_sets, orderby=False, limit=None, offset=0):
@@ -278,9 +335,11 @@ class Base(models.AbstractModel):
         # Modify query by adding suitable joins (in case inherited fields are used)
         # --------------------------------------------------------------------------
 
+        fetched_data = []
+
         def __get_annotated_groupbys(groupby_specs):
             return {
-                groupby_spec: self._get_annotated_groupby(groupby_spec, query)
+                groupby_spec: self._get_annotated_groupby(groupby_spec, query, fetched_data)
                 for groupby_spec in groupby_specs
             }
 
@@ -480,45 +539,7 @@ class Base(models.AbstractModel):
 
         self._cr.execute(query, query_params)
         fetched_data = self._cr.dictfetchall()
-
-        # --------------------------------------------------------------------------------
-        # SET get_label attribute FOR ANNOTATED GROUPBYS WITH ATTRIBUTE type 'many2one'
-        # --------------------------------------------------------------------------------
-
-        def add_many2ones_get_label_function(annotated_groupbys, fetched_data):
-            many2one_field_names = [
-                annotated_groupby['field_name'] 
-                for groupby_spec, annotated_groupby in annotated_groupbys.items() 
-                if annotated_groupby['type'] == 'many2one'
-            ]
-
-            comodel_record_ids = defaultdict(set)
-            comodels = defaultdict()
-
-            for data_point in fetched_data:
-                for field_name in many2one_field_names:
-                    if data_point[field_name]: 
-                        comodel_name = self._fields[field_name].comodel_name
-                        comodels[field_name] = comodel_name
-                        comodel_record_ids[comodel_name].add(data_point[field_name])
-
-            comodel_records = {
-                comodel_name: self.env[comodel_name].browse(comodel_record_ids)
-                for comodel_name, comodel_record_ids in comodel_record_ids.items()
-            }
-
-            comodel_record_labels = {}
-            for comodel_name, records in comodel_records.items():
-                comodel_record_labels[comodel_name] = dict(lazy_name_get(records.sudo()))
-
-            for groupby_spec, annotated_groupby in annotated_groupbys.items():
-                if annotated_groupby['type'] == 'many2one':
-                    labels = comodel_record_labels[comodels[annotated_groupby['field_name']]]
-                    annotated_groupby['get_label'] = lambda id: labels[id]
-
-        if fetched_data:
-            add_many2ones_get_label_function(annotated_groupbys, fetched_data)
-            
+       
         # ------------------------------------------------------------------------------------------
         # PROCESS AND SPLIT FETCHED DATA IN PARTS CORRESPONDING TO VARIOUS GROUPS AND GROUPING SETS
         # 
