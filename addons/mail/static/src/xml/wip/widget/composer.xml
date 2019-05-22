@@ -19,10 +19,6 @@
            t-props="{ options: inputOptions }"
            t-on-keydown="_onInputKeydown"
            t-ref="'input'"/>
-        <!-- <textarea class="o_input"
-                  placeholder="Write something..."
-                  t-on-keydown="_onInputKeydown"
-                  t-ref="'input'"/> -->
         <div class="o_commands">
             <t t-widget="EmojisButton"
                t-on-emoji-selection="_onEmojiSelection"/>

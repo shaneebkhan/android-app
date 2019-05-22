@@ -26,9 +26,9 @@ class ChatWindowHeader extends Component {
      */
     constructor(...args) {
         super(...args);
+        this.id = _.uniqueId('o_chat_window_header');
         this.template = 'mail.wip.widget.ChatWindowHeader';
         this.widgets = { Icon };
-        this._id = _.uniqueId('chat_window_header');
     }
 
     //--------------------------------------------------------------------------
@@ -73,10 +73,10 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        if (`click_${this._id}` in ev && !ev[`click_${this._id}`]) {
+        if (this.id in ev && !ev[this.id].click) {
             return;
         }
-        this.trigger('select', { threadLID: this.props.threadLID });
+        this.trigger('click', ev, { threadLID: this.props.threadLID });
     }
 
     /**
@@ -84,8 +84,11 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickClose(ev) {
-        ev[`click_${this._id}`] = false;
-        this.trigger('close', { threadLID: this.props.threadLID });
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
+        this.trigger('click-close', ev, { threadLID: this.props.threadLID });
     }
 
     /**
@@ -93,7 +96,10 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickExpand(ev) {
-        ev[`click_${this._id}`] = false;
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         if (['mail.channel', 'mail.box'].includes(this.thread._model)) {
             this.env.do_action('mail.action_wip_discuss', {
                 clear_breadcrumbs: false,
@@ -117,8 +123,11 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickShiftLeft(ev) {
-        ev[`click_${this._id}`] = false;
-        this.trigger('shift-left');
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
+        this.trigger('click-shift-left', ev);
     }
 
     /**
@@ -126,8 +135,11 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickShiftRight(ev) {
-        ev[`click_${this._id}`] = false;
-        this.trigger('shift-right');
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
+        this.trigger('click-shift-right', ev);
     }
 }
 

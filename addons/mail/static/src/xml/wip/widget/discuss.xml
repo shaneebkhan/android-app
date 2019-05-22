@@ -11,7 +11,7 @@
                 <t t-if="state.mobileNavbarTab === 'mailbox'"
                    t-widget="MobileMailboxSelection"
                    t-props="{ threadLID: props.threadLID }"
-                   t-on-select="_onSelectThread"/>
+                   t-on-click-select-thread="_onClickSelectThread"/>
                 <t t-if="state.mobileNavbarTab === 'mailbox'">
                     <t t-if="props.threadLID"
                        t-widget="Thread"
@@ -23,7 +23,7 @@
                 <t t-elif="!props.threadLID">
                    <t t-widget="ThreadPreviewList"
                       t-props="{ options: threadPreviewListOptions }"
-                      t-on-select-thread="_onSelectThread"/>
+                      t-on-click-select-thread="_onClickSelectThread"/>
                 </t>
                 <t t-widget="MobileNavbar"
                    t-props="{ active: state.mobileNavbarTab }"

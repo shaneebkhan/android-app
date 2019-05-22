@@ -3,7 +3,6 @@
 
     <input t-name="mail.wip.widget.AutocompleteInput" owl="1"
            t-on-blur="_onBlur"
-           t-on-click="_onClick"
            t-on-keydown="_onKeydown"/>
 
 </templates>

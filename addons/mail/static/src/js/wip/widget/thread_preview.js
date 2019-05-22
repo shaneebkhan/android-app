@@ -83,7 +83,7 @@ class ThreadPreview extends Component {
         if (`click_${this._id}` in ev && !ev[`click_${this._id}`]) {
             return;
         }
-        this.trigger('click', { threadLID: this.props.threadLID });
+        this.trigger('click', ev, { threadLID: this.props.threadLID });
     }
 
     /**

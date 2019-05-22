@@ -64,11 +64,12 @@ class ThreadPreviewList extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} threadLID
+     * @param {MouseEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.threadLID
      */
-    _onClickPreview({ threadLID }) {
-        this.trigger('select-thread', { threadLID });
+    _onClickPreview(ev, { threadLID }) {
+        this.trigger('click-select-thread', ev, { threadLID });
     }
 }
 

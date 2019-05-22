@@ -14,7 +14,7 @@ class EmojisButton extends Component {
         super(...args);
         this.template = 'mail.wip.widget.EmojisButton';
         this._$popover = undefined;
-        this._id = _.uniqueId('emojis_button');
+        this._documentEventListener = ev => this._onDocumentClick(ev);
         this._popover = undefined;
         this._popoverID = undefined;
     }
@@ -38,13 +38,13 @@ class EmojisButton extends Component {
             });
         });
         this._popover.on('selection', this, ({ source }) => this._onEmojiSelection({ source }));
-        $(document).on(`click.${this._id}`, ev => this._onDocumentClick(ev));
+        document.addEventListener('click', this._documentEventListener);
     }
 
     willUnmount() {
         this._hidePopover();
         this._popover.destroy();
-        $(document).off(`click.${this._id}`);
+        document.removeEventListener('click', this._documentEventListener);
     }
 
     //--------------------------------------------------------------------------

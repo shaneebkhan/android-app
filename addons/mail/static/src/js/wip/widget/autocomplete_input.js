@@ -5,6 +5,9 @@ const { Component } = owl;
 
 class AutocompleteInput extends Component {
 
+    /**
+     * @param {...any} args
+     */
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.AutocompleteInput';
@@ -32,6 +35,10 @@ class AutocompleteInput extends Component {
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {FocusEvent} ev
+     */
     _onAutocompleteFocus(ev) {
         if (this.props.focus) {
             this.props.focus(ev);
@@ -40,6 +47,11 @@ class AutocompleteInput extends Component {
         }
     }
 
+    /**
+     * @private
+     * @param {Object} ev
+     * @param {Object} ui
+     */
     _onAutocompleteSelect(ev, ui) {
         if (this.props.select) {
             this.props.select(ev, ui);
@@ -48,21 +60,30 @@ class AutocompleteInput extends Component {
         }
     }
 
+    /**
+     * @private
+     * @param {Object} req
+     * @param {function} res
+     */
     _onAutocompleteSource(req, res) {
         if (this.props.source) {
             this.props.source(req, res);
         }
     }
 
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onBlur(ev) {
-        ev.stopPropagation();
+        ev.stopPropagation(); // todo: replace with cleaner solution
         this.trigger('hide');
     }
 
-    _onClick(ev) {
-        ev.stopPropagation();
-    }
-
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onKeydown(ev) {
         if (ev.which === $.ui.keyCode.ESCAPE) {
             this.trigger('hide');

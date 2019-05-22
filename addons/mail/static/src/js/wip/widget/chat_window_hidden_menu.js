@@ -20,21 +20,24 @@ function mapStateToProps(state, ownProps) {
     };
 }
 
+const id = _.uniqueId('chat_window_hidden_menu');
+
 class HiddenMenu extends Component {
     /**
      * @param {...any} args
      */
     constructor(...args) {
         super(...args);
+        this.id = id;
         this.state = { toggleShow: false };
         this.template = 'mail.wip.widget.ChatWindowHiddenMenu';
         this.widgets = { ChatWindowHeader };
-        this._id = _.uniqueId('chat_window_hidden_menu');
+        this._documentEventListener = ev => this._onDocumentClick(ev);
     }
 
     mounted() {
         this._apply();
-        $(document).on(`click.${this._id}`, ev => this._onDocumentClick(ev));
+        document.addEventListener('click', this._documentEventListener);
     }
 
     patched() {
@@ -42,7 +45,7 @@ class HiddenMenu extends Component {
     }
 
     willUnmount() {
-        $(document).off(`click.${this._id}`);
+        document.removeEventListener('click', this._documentEventListener);
     }
 
     //--------------------------------------------------------------------------
@@ -107,7 +110,7 @@ class HiddenMenu extends Component {
         if (ev.target === this.el) {
             return;
         }
-        if (ev.target.closest('.o_hidden_menu')) {
+        if (ev.target.closest(`#${this.id}`)) {
             return;
         }
         this.state.toggleShow = false;

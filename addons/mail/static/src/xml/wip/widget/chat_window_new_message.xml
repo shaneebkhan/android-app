@@ -3,7 +3,9 @@
 
    <div t-name="mail.wip.widget.ChatWindowNewMessage" owl="1"
         class="o_chat_window o_new_message"
-        t-att-class="state.folded ? 'o_folded' : ''">
+        t-attf-class="{{ state.folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
+        t-att-id="id"
+        t-on-click="_onClick">
       <!-- header layout duplicates ChatWindowHeader due to lack of xpatch... -->
       <div class="o_wip_chat_window_header"
            t-on-click="_onClickToggleFold">
@@ -26,7 +28,7 @@
          </span>
          <t t-widget="AutocompleteInput"
             t-props="{ html: true, source: _onAutocompleteSource }"
-            t-ref="'autocompleteInput'"
+            t-ref="'input'"
             t-on-select="_onAutocompleteSelect"/>
       </div>
     </div>

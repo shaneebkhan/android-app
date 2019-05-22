@@ -25,16 +25,34 @@ class ChatWindow extends Component {
      */
     constructor(...args) {
         super(...args);
+        this.id = `o_chat_window_${this.props.threadLID}`;
+        this.state = { focused: false };
         this.template = 'mail.wip.widget.ChatWindow';
         this.widgets = { Composer, Header, Thread };
+
+        this._documentEventListener = ev => this._onDocumentClick(ev);
     }
 
     mounted() {
         this._applyOffset();
+        document.addEventListener('click', this._documentEventListener);
+    }
+
+    /**
+     * @param {Object} nextProps
+     * @param {string} [nextProps.threadLID]
+     */
+    willUpdateProps(nextProps) {
+        const { threadLID = this.props.threadLID } = nextProps;
+        this.id = `chat_window_${threadLID}`;
     }
 
     patched() {
         this._applyOffset();
+    }
+
+    willUnmount() {
+        document.removeEventListener('click', this._documentEventListener);
     }
 
     //--------------------------------------------------------------------------
@@ -90,6 +108,18 @@ class ChatWindow extends Component {
     }
 
     //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    focus() {
+        this.state.focused = true;
+        if (!this.showComposer) {
+            return;
+        }
+        this.refs.composer.focus();
+    }
+
+    //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
@@ -109,30 +139,92 @@ class ChatWindow extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onHeaderClose() {
-        this.trigger('close', { threadLID: this.props.threadLID });
+    _onClick(ev) {
+        if (this.id in ev && !ev[this.id].click) {
+            return;
+        }
+        this.focus();
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onHeaderSelect() {
+    _onClickHeader(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         this.trigger('toggle-fold', { threadLID: this.props.threadLID });
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onHeaderShiftLeft() {
+    _onClickCloseHeader(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
+        this.trigger('close', { threadLID: this.props.threadLID });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickShiftLeftHeader(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         this.trigger('shift-left', { threadLID: this.props.threadLID });
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onHeaderShiftRight() {
+    _onClickShiftRightHeader(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         this.trigger('shift-right', { threadLID: this.props.threadLID });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onDocumentClick(ev) {
+        if (ev.target === this.el) {
+            return;
+        }
+        if (
+            'o_systray_messaging_menu' in ev &&
+            'clickSelectedThread' in ev['o_systray_messaging_menu'] &&
+            ev['o_systray_messaging_menu'].clickSelectedThread === this.props.threadLID
+        ) {
+            return;
+        }
+        if (this.id in ev) {
+            return;
+        }
+        /**
+         * Necessary to escape ID if it contains '.' in order to use '#'
+         * in selector. e.g:
+         * 'chat_window_mail.channel_1' => 'chat_window_mail\\.channel_1'
+         * Work-around like [id="..."] requires much more processing
+         */
+        const escapedID = this.id.replace('.', '\\\\.');
+        if (ev.target.closest(`#${escapedID}`)) {
+            return;
+        }
+        this.state.focused = false;
     }
 
     /**

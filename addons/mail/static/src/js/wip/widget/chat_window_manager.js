@@ -12,10 +12,17 @@ const { Component, connect } = owl;
  * @return {Object}
  */
 function mapStateToProps(state) {
-    const { showNewMessage, threadLIDs } = state.chatWindowManager;
+    const {
+        autofocusCounter,
+        autofocusItem,
+        showNewMessage,
+        threadLIDs,
+    } = state.chatWindowManager;
 
     return {
         GLOBAL_WIDTH: state.global.innerWidth,
+        autofocusCounter,
+        autofocusItem,
         discussOpen: state.discuss.open,
         isMobile: state.isMobile,
         showNewMessage,
@@ -43,6 +50,8 @@ class ChatWindowManager extends Component {
         this.HIDDEN_MENU_WIDTH = 200; // max width, including width of dropup items
         this.START_GAP_WIDTH = 10;
         this.TEXT_DIRECTION = this.env._t.database.parameters.direction;
+        this._lastAutofocusedItem = undefined;
+        this._lastAutofocusedCounter = 0;
 
         /**
          * data computed with `_compute()`
@@ -58,6 +67,7 @@ class ChatWindowManager extends Component {
 
     mounted() {
         this._notifyAvailableVisibleSlots();
+        this._handleAutofocus();
     }
 
     /**
@@ -76,6 +86,7 @@ class ChatWindowManager extends Component {
 
     patched() {
         this._notifyAvailableVisibleSlots();
+        this._handleAutofocus();
     }
 
     //--------------------------------------------------------------------------
@@ -236,19 +247,68 @@ class ChatWindowManager extends Component {
     /**
      * @private
      */
+    _handleAutofocus() {
+        let handled = false;
+        const cwm = this.env.store.state.chatWindowManager;
+        const lastNotifiedAutofocusCounter = cwm.notifiedAutofocusCounter;
+        if (
+            !handled &&
+            this.props.autofocusCounter === lastNotifiedAutofocusCounter
+        ) {
+            handled = true;
+        }
+        if (
+            !handled &&
+            this._lastAutofocusedItem === this.props.autofocusItem &&
+            this._lastAutofocusedCounter === this.props.autofocusCounter
+        ) {
+            handled = true;
+        }
+        if (
+            !handled &&
+            this._lastAutofocusedItem === undefined
+        ) {
+            this.refs[this.props.autofocusItem].focus();
+            handled = true;
+        }
+        if (
+            !handled &&
+            this._lastAutofocusedItem === this.props.autofocusItem &&
+            this._lastAutofocusedCounter !== this.props.autofocusCounter
+        ) {
+            this.refs[this.props.autofocusItem].focus();
+            handled = true;
+        }
+        if (
+            !handled &&
+            this._lastAutofocusedItem !== this.props.autofocusItem
+        ) {
+            this.refs[this.props.autofocusItem].focus();
+            handled = true;
+        }
+        this._lastAutofocusedItem = this.props.autofocusItem;
+        this._lastAutofocusedCounter = this.props.autofocusCounter;
+        this.env.store.commit('chat_window_manager/notify_autofocus_counter',
+            this._lastAutofocusedCounter);
+    }
+
+    /**
+     * @private
+     */
     _notifyAvailableVisibleSlots() {
+        const cwm = this.env.store.state.chatWindowManager;
         if (
             (
-                this.props.availableVisibleSlots === undefined &&
+                this.props.notifiedAvailableVisibleSlots === undefined &&
                 this.computed.availableVisibleSlots !== undefined
             ) ||
             (
-                this.props.availableVisibleSlots !== undefined &&
+                this.props.notifiedAvailableVisibleSlots !== undefined &&
                 this.computed.availableVisibleSlots !== undefined &&
-                this.computed.availableVisibleSlots !== this.props.availableVisibleSlots
+                this.computed.availableVisibleSlots !== cwm.notifiedAvailableVisibleSlots
             )
         ) {
-            this.env.store.commit('chat_window_manager/set_available_visible_slots',
+            this.env.store.commit('chat_window_manager/notify_available_visible_slots',
                 this.computed.availableVisibleSlots);
         }
     }
@@ -321,6 +381,7 @@ class ChatWindowManager extends Component {
             this.env.store.commit('chat_window_manager/open_thread', { threadLID });
         } else {
             this.env.store.commit('chat_window_manager/swap_threads', {
+                autofocusFirst: true,
                 threadLID1: threadLID,
                 threadLID2: lastItem,
             });

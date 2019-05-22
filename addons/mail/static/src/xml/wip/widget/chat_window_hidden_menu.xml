@@ -2,7 +2,8 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.ChatWindowHiddenMenu" owl="1"
-         class="o_hidden_menu dropup">
+         class="o_hidden_menu dropup"
+         t-att-id="id">
         <div class="dropdown-toggle"
              t-att-class="state.toggleShow ? 'show' : ''"
              t-on-click="_onClickToggle">

@@ -6,27 +6,48 @@ const Header = require('mail.wip.widget.ChatWindowHeader');
 
 const { Component } = owl;
 
+const id = _.uniqueId('o_chat_window_new_message');
+
 class ChatWindowNewMessage extends Component {
     /**
      * @param {...any} args
      */
     constructor(...args) {
         super(...args);
-        this.state = { folded: false };
+        this.id = id;
+        this.state = {
+            focused: false,
+            folded: false,
+        };
         this.template = 'mail.wip.widget.ChatWindowNewMessage';
         this.widgets = { AutocompleteInput, Header };
+
+        this._documentEventListener = ev => this._onDocumentClick(ev);
 
         // bind since passed as props
         this._onAutocompleteSource = this._onAutocompleteSource.bind(this);
     }
 
     mounted() {
-        this.refs.autocompleteInput.focus();
         this._applyOffset();
+        document.addEventListener('click', this._documentEventListener);
     }
 
     patched() {
         this._applyOffset();
+    }
+
+    willUnmount() {
+        document.removeEventListener('click', this._documentEventListener);
+    }
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    focus() {
+        this.state.focused = true;
+        this.refs.input.focus();
     }
 
     //--------------------------------------------------------------------------
@@ -83,16 +104,58 @@ class ChatWindowNewMessage extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickClose() {
+    _onClick(ev) {
+        if (this.id in ev && !ev[this.id].click) {
+            return;
+        }
+        this.focus();
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickClose(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         this.trigger('close');
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickToggleFold() {
+    _onClickToggleFold(ev) {
+        if (!ev[this.id]) {
+            ev[this.id] = {};
+        }
+        ev[this.id].click = false;
         this.state.folded = !this.state.folded;
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onDocumentClick(ev) {
+        if (ev.target === this.el) {
+            return;
+        }
+        if (
+            'o_systray_messaging_menu' in ev &&
+            'clickNewMessage' in ev['o_systray_messaging_menu'] &&
+            ev['o_systray_messaging_menu'].clickNewMessage
+        ) {
+            return;
+        }
+        if (ev.target.closest(`#${this.id}`)) {
+            return;
+        }
+        this.state.focused = false;
     }
 }
 

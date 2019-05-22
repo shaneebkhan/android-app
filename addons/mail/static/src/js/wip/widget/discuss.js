@@ -166,6 +166,22 @@ class Discuss extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.threadLID
+     */
+    _onClickSelectThread(ev, { threadLID }) {
+        if (this.refs.thread && this.refs.thread.hasMessages) {
+            this.state.threadCachesInfo[this.props.threadCacheLID] = {
+                scrollTop: this.refs.thread.getScrollTop(),
+            };
+        }
+        this.env.store.commit('discuss/update', { threadLID });
+        this.trigger('thread_selected');
+    }
+
+    /**
+     * @private
      * @param {Object} param0
      * @param {integer} param0.id
      * @param {string} param0.model
@@ -212,21 +228,6 @@ class Discuss extends Component {
         });
         this.state.mobileNavbarTab = tab;
         this.trigger('update_cp');
-    }
-
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {string} param0.threadLID
-     */
-    _onSelectThread({ threadLID }) {
-        if (this.refs.thread && this.refs.thread.hasMessages) {
-            this.state.threadCachesInfo[this.props.threadCacheLID] = {
-                scrollTop: this.refs.thread.getScrollTop(),
-            };
-        }
-        this.env.store.commit('discuss/update', { threadLID });
-        this.trigger('thread_selected');
     }
 
     /**

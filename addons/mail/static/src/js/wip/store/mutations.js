@@ -39,9 +39,22 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.item either 'new_message' or minimized thread LID
      */
-    'chat_window_manager/open_new_message'({ state }) {
+    'chat_window_manager/focus_item'({ state }, { item }) {
+        const cwm = state.chatWindowManager;
+        cwm.autofocusItem = item;
+        cwm.autofocusCounter++;
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     */
+    'chat_window_manager/open_new_message'({ commit, state }) {
         state.chatWindowManager.showNewMessage = true;
+        commit('chat_window_manager/focus_item', { item: 'new_message' } );
     },
     /**
      * @param {Object} param0
@@ -65,26 +78,39 @@ const mutations = {
         const cwm = state.chatWindowManager;
         cwm.threadLIDs = cwm.threadLIDs.filter(lid => lid !== threadLID);
         cwm.threadLIDs.unshift(threadLID);
-        if (state.chatWindowManager.availableVisibleSlots === 1) {
+        if (state.chatWindowManager.notifiedAvailableVisibleSlots === 1) {
             commit('chat_window_manager/close_new_message');
         }
+        commit('chat_window_manager/focus_item', { item: threadLID });
     },
     /**
      * @param {Object} param0
      * @param {Object} param0.state
      * @param {integer} amount
      */
-    'chat_window_manager/set_available_visible_slots'({ state }, amount) {
-        state.chatWindowManager.availableVisibleSlots = amount;
+    'chat_window_manager/notify_available_visible_slots'({ state }, amount) {
+        state.chatWindowManager.notifiedAvailableVisibleSlots = amount;
     },
     /**
      * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {integer} counter
+     */
+    'chat_window_manager/notify_autofocus_counter'({ state }, counter) {
+        state.chatWindowManager.notifiedAutofocusCounter = counter;
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} param1.threadLID
      */
-    'chat_window_manager/shift_thread_left'({ set, state }, { threadLID }) {
+    'chat_window_manager/shift_thread_left'(
+        { commit, set, state },
+        { threadLID }
+    ) {
         const cwm = state.chatWindowManager;
         const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
         if (index === cwm.threadLIDs.length-1) {
@@ -95,15 +121,20 @@ const mutations = {
         const otherLID = cwm.threadLIDs[index+1];
         set(cwm.threadLIDs, index, otherLID);
         set(cwm.threadLIDs, index+1, threadLID);
+        commit('chat_window_manager/focus_item', { item: threadLID });
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} param1.threadLID
      */
-    'chat_window_manager/shift_thread_right'({ set, state }, { threadLID }) {
+    'chat_window_manager/shift_thread_right'(
+        { commit, set, state },
+        { threadLID }
+    ) {
         const cwm = state.chatWindowManager;
         const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
         if (index === 0) {
@@ -114,18 +145,21 @@ const mutations = {
         const otherLID = cwm.threadLIDs[index-1];
         set(cwm.threadLIDs, index, otherLID);
         set(cwm.threadLIDs, index-1, threadLID);
+        commit('chat_window_manager/focus_item', { item: threadLID });
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
+     * @param {boolean} [param1.autofocusFirst=false]
      * @param {string} param1.threadLID1
      * @param {string} param1.threadLID2
      */
     'chat_window_manager/swap_threads'(
-        { set, state },
-        { threadLID1, threadLID2 }
+        { commit, set, state },
+        { autofocusFirst=false, threadLID1, threadLID2 }
     ) {
         const cwm = state.chatWindowManager;
         const threadLIDs = cwm.threadLIDs;
@@ -136,6 +170,9 @@ const mutations = {
         }
         set(threadLIDs, index1, threadLID2);
         set(threadLIDs, index2, threadLID1);
+        if (autofocusFirst) {
+            commit('chat_window_manager/swap_threads', { item: threadLID1 });
+        }
     },
     /**
      * @param {Object} param0

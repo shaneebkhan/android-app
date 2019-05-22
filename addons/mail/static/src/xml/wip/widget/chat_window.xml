@@ -3,19 +3,22 @@
 
    <div t-name="mail.wip.widget.ChatWindow" owl="1"
         class="o_chat_window"
-        t-att-class="folded ? 'o_folded' : ''">
+        t-attf-class="{{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
+        t-att-id="id"
+        t-on-click="_onClick">
       <t t-widget="Header"
          t-props="{ options, threadLID: props.threadLID }"
-         t-on-close="_onHeaderClose"
-         t-on-select="_onHeaderSelect"
-         t-on-shift-left="_onHeaderShiftLeft"
-         t-on-shift-right="_onHeaderShiftRight"/>
+         t-on-click="_onClickHeader"
+         t-on-click-close="_onClickCloseHeader"
+         t-on-click-shift-left="_onClickShiftLeftHeader"
+         t-on-click-shift-right="_onClickShiftRightHeader"/>
       <t t-widget="Thread"
          t-props="{ options: threadOptions, threadLID: props.threadLID }"
          t-on-redirect="_onRedirect"/>
       <t t-if="showComposer"
          t-widget="Composer"
-         t-props="{ options: composerOptions, threadLID: props.threadLID }"/>
+         t-props="{ options: composerOptions, threadLID: props.threadLID }"
+         t-ref="'composer'"/>
     </div>
 
 </templates>

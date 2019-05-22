@@ -37,6 +37,14 @@
     border-radius: 6px 6px 0 0;
     box-shadow: -5px -5px 10px rgba(black, 0.18);
 
+    &:not(.o_focused) {
+        opacity: 0.8;
+    }
+
+    &.o_focused {
+        box-shadow: -5px -5px 10px rgba(black, 0.36);
+    }
+
     > .o_wip_chat_window_header {
         border-radius: 3px 3px 0 0;
     }
