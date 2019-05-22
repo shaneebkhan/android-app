@@ -13,18 +13,27 @@
         <field name="arch" type="xml">
             <form string="Account Generator">
                <sheet>
-                   <field name="generator" widget="radio"/>
-                   <group string="General Options">
-                       <field name="number_to_generate"/>
-                       <field name="number_of_lines"/>
-                   </group>
-                   <group string="Journal Entry Options" attrs="{'invisible': [('generator', 'not in', 'aml')]}">
-                       <field name="post"/>
-                   </group>
-                   <group string="Partner Options" attrs="{'invisible': [('generator', 'not in', ('partner', 'invoice'))]}">
-                       <field name="customer"/>
-                       <field name="supplier"/>
-                       <field name="company_type" widget="radio"/>
+                   <field name="generator" widget="radio" options="{'horizontal': true}"/>
+                   <group>
+                        <group string="General Options">
+                            <field name="number_to_generate"/>
+                            <field name="number_of_lines"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                        </group>
+                        <group string="Reference Pool">
+                            <field name="partner_ids" widget="many2many_tags"/>
+                            <field name="account_ids" widget="many2many_tags"/>
+                            <field name="journal_ids" widget="many2many_tags"/>
+                        </group>
+                        <group string="Journal Entry Options" attrs="{'invisible': [('generator', 'not in', ('aml', 'invoice'))]}">
+                            <field name="post"/>
+                        </group>
+                        <group string="Partner Options" attrs="{'invisible': [('generator', 'not in', ('partner', 'invoice'))]}">
+                            <field name="customer"/>
+                            <field name="supplier"/>
+                            <field name="company_type" widget="radio" attrs="{'invisible': [('generator', 'not in', ('partner'))]}"/>
+                        </group>
                    </group>
                 </sheet>
                 <footer>
