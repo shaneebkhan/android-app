@@ -5,18 +5,19 @@
          class="o_wip_chat_window_manager">
         <t t-foreach="computed.visible"
            t-as="data">
-            <t t-if="data.item === 'blank'"
-               t-widget="ChatWindowBlank"
+            <t t-if="data.item === 'new_message'"
+               t-widget="ChatWindowNewMessage"
                t-props="{ direction, offset: data.offset }"
-               t-key="'blank'"
-               t-ref="'blank'"
-               t-on-close="_onCloseChatWindowBlank"
-               t-on-select-thread="_onSelectThreadFromChatWindowBlank"/>
+               t-key="'new_message'"
+               t-on-close="_onCloseChatWindowNewMessage"
+               t-on-select-thread="_onSelectThreadFromChatWindowNewMessage"/>
             <t t-else=""
                t-widget="ChatWindow"
-               t-props="{ threadLID: data.item, direction, offset: data.offset }"
+               t-props="{ threadLID: data.item, direction, offset: data.offset, options: chatWindowOptions(data_index) }"
                t-key="data.item"
                t-on-close="_onCloseChatWindow"
+               t-on-shift-left="_onShiftLeftChatWindow"
+               t-on-shift-right="_onShiftRightChatWindow"
                t-on-redirect="_onRedirect"
                t-on-toggle-fold="_onToggleFoldChatWindow"/>
         </t>

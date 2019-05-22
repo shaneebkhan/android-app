@@ -2,7 +2,7 @@ odoo.define('mail.wip.widget.ChatWindowManager', function (require) {
 "use strict";
 
 const ChatWindow = require('mail.wip.widget.ChatWindow');
-const ChatWindowBlank = require('mail.wip.widget.ChatWindowBlank');
+const ChatWindowNewMessage = require('mail.wip.widget.ChatWindowNewMessage');
 const HiddenMenu = require('mail.wip.widget.ChatWindowHiddenMenu');
 
 const { Component, connect } = owl;
@@ -12,15 +12,14 @@ const { Component, connect } = owl;
  * @return {Object}
  */
 function mapStateToProps(state) {
-
-    const { items, ...cwm } = state.chatWindowManager;
+    const { showNewMessage, threadLIDs } = state.chatWindowManager;
 
     return {
-        ...cwm,
         GLOBAL_WIDTH: state.global.innerWidth,
         discussOpen: state.discuss.open,
         isMobile: state.isMobile,
-        items,
+        showNewMessage,
+        threadLIDs,
     };
 }
 
@@ -31,9 +30,11 @@ class ChatWindowManager extends Component {
     constructor(...args) {
         super(...args);
 
+        this.DEBUG = true;
+
         // owl
         this.template = 'mail.wip.widget.ChatWindowManager';
-        this.widgets = { ChatWindow, ChatWindowBlank, HiddenMenu };
+        this.widgets = { ChatWindow, ChatWindowNewMessage, HiddenMenu };
 
         // screen positioning
         this.BETWEEN_GAP_WIDTH = 5;
@@ -48,7 +49,15 @@ class ChatWindowManager extends Component {
          */
         this.computed = undefined;
 
+        if (this.DEBUG) {
+            window.chat_window_manager = this;
+        }
+
         this._compute();
+    }
+
+    mounted() {
+        this._notifyAvailableVisibleSlots();
     }
 
     /**
@@ -60,14 +69,13 @@ class ChatWindowManager extends Component {
      * so that it is handled as props.
      *
      * @param {Object} nextProps
-     * @param {integer} nextProps.GLOBAL_WIDTH
-     * @param {string[]} nextProps.items
      */
     willUpdateProps(nextProps) {
-        this._compute({
-            GLOBAL_WIDTH: nextProps.GLOBAL_WIDTH,
-            items: nextProps.items,
-        });
+        this._compute(nextProps);
+    }
+
+    patched() {
+        this._notifyAvailableVisibleSlots();
     }
 
     //--------------------------------------------------------------------------
@@ -85,19 +93,43 @@ class ChatWindowManager extends Component {
         }
     }
 
+    /**
+     * @param {integer} index index of visible chat window
+     * @return {Object}
+     */
+    chatWindowOptions(index) {
+        return {
+            displayExpand: true,
+            displayLeftShift: index < this.computed.visible.length - 1,
+            displayRightShift: this.props.showNewMessage ? index > 1 : index !== 0,
+        };
+    }
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
 
     /**
      * @private
-     * @param {Object} param0
+     * @param {Object} params
      * @param {integer} [param0.GLOBAL_WIDTH]
-     * @param {string[]} [param0.items]
+     * @param {boolean} [param0.discussOpen]
+     * @param {boolean} [param0.isMobile]
+     * @param {boolean} [param0.showNewMessage]
+     * @param {string[]} [param0.threadLIDs]
      * @return {Object}
      */
-    _compute({ GLOBAL_WIDTH, items }={}) {
+    _compute(params={}) {
+        const {
+            GLOBAL_WIDTH = this.props.GLOBAL_WIDTH,
+            discussOpen = this.props.discussOpen,
+            isMobile = this.props.isMobile,
+            showNewMessage = this.props.showNewMessage,
+            threadLIDs = this.props.threadLIDs,
+        } = params;
+        let items = [...threadLIDs];
         let computed = {
+            availableVisibleSlots: undefined,
             /**
              * Data related to hidden menu.
              */
@@ -112,7 +144,7 @@ class ChatWindowManager extends Component {
                  */
                 showMenu: false,
                 /**
-                 * List of hidden items. Useful to compute counter.
+                 * List of hidden threads. Useful to compute counter.
                  */
                 items: [],
             },
@@ -126,15 +158,13 @@ class ChatWindowManager extends Component {
             visible: [],
         };
 
-        if (!GLOBAL_WIDTH && !items) {
-            // use props
-            GLOBAL_WIDTH = this.props.GLOBAL_WIDTH;
-            items = this.props.items;
-        }
-
-        if (this.props.isMobile || this.props.discussOpen) {
+        if (isMobile || discussOpen) {
             this.computed = computed;
             return;
+        }
+
+        if (showNewMessage) {
+            items.unshift('new_message');
         }
 
         if (!items.length) {
@@ -167,6 +197,7 @@ class ChatWindowManager extends Component {
                     offset,
                 });
             }
+            computed.availableVisibleSlots = maxAmountWithoutHidden;
         } else if (maxAmountWithHidden > 0) {
             // some visible, some hidden
             let i;
@@ -187,16 +218,39 @@ class ChatWindowManager extends Component {
             for (let j = maxAmountWithHidden; j < items.length; j++) {
                 computed.hidden.items.push(items[j]);
             }
+            computed.availableVisibleSlots = maxAmountWithHidden;
         } else {
             // all hidden
+            if (showNewMessage) {
+                items.shift(); // remove 'new message' chat window from hidden
+            }
             computed.hidden.showMenu = true;
             computed.hidden.offset = this.START_GAP_WIDTH;
-            computed.hidden.items.push(items);
-        }
-        if (!computed.visible.length && computed.hidden.items.length) {
+            computed.hidden.items.concat(items);
             console.warn('cannot display any visible chat windows (screen is too small)');
+            computed.availableVisibleSlots = 0;
         }
         this.computed = computed;
+    }
+
+    /**
+     * @private
+     */
+    _notifyAvailableVisibleSlots() {
+        if (
+            (
+                this.props.availableVisibleSlots === undefined &&
+                this.computed.availableVisibleSlots !== undefined
+            ) ||
+            (
+                this.props.availableVisibleSlots !== undefined &&
+                this.computed.availableVisibleSlots !== undefined &&
+                this.computed.availableVisibleSlots !== this.props.availableVisibleSlots
+            )
+        ) {
+            this.env.store.commit('chat_window_manager/set_available_visible_slots',
+                this.computed.availableVisibleSlots);
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -209,14 +263,14 @@ class ChatWindowManager extends Component {
      * @param {string} param0.threadLID
      */
     _onCloseChatWindow({ threadLID }) {
-        this.env.store.commit('thread/close_chat_window', { threadLID });
+        this.env.store.commit('chat_window_manager/close_thread', { threadLID });
     }
 
     /**
      * @private
      */
-    _onCloseChatWindowBlank() {
-        this.env.store.commit('chat_window_manager/close_blank');
+    _onCloseChatWindowNewMessage() {
+        this.env.store.commit('chat_window_manager/close_new_message');
     }
 
     /**
@@ -235,7 +289,7 @@ class ChatWindowManager extends Component {
                     channelID: id,
                 });
             } else {
-                this.env.store.commit('chat_window_manager/open_item', { item: threadLID });
+                this.env.store.commit('chat_window_manager/open_thread', { threadLID });
             }
         } else if (model === 'res.partner') {
             const dm = Object.values(this.props.threads).find(thread =>
@@ -247,7 +301,7 @@ class ChatWindowManager extends Component {
                     type: 'chat',
                 });
             } else {
-                this.env.store.commit('chat_window_manager/open_item', { item: dm.lid });
+                this.env.store.commit('chat_window_manager/open_thread', { threadLID: dm.lid });
             }
         }
     }
@@ -262,11 +316,15 @@ class ChatWindowManager extends Component {
             length: l,
             [l-1]: { item: lastItem }
         } = this.computed.visible;
-        this.env.store.commit('chat_window_manager/swap_items', {
-            autocloseBlank: lastItem === 'blank',
-            item1: threadLID,
-            item2: lastItem,
-        });
+        if (lastItem === 'new_message') {
+            this.env.store.commit('chat_window_manager/close_new_message');
+            this.env.store.commit('chat_window_manager/open_thread', { threadLID });
+        } else {
+            this.env.store.commit('chat_window_manager/swap_threads', {
+                threadLID1: threadLID,
+                threadLID2: lastItem,
+            });
+        }
     }
 
     /**
@@ -274,11 +332,27 @@ class ChatWindowManager extends Component {
      * @param {Object} param0
      * @param {string} param0.threadLID
      */
-    _onSelectThreadFromChatWindowBlank({ threadLID }) {
-        this.env.store.commit('chat_window_manager/open_item', {
-            item: threadLID,
-            replaceBlank: true,
-        });
+    _onSelectThreadFromChatWindowNewMessage({ threadLID }) {
+        this.env.store.commit('chat_window_manager/close_new_message');
+        this.env.store.commit('chat_window_manager/open_thread', { threadLID });
+    }
+
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {string} param0.threadLID
+     */
+    _onShiftLeftChatWindow({ threadLID }) {
+        this.env.store.commit('chat_window_manager/shift_thread_left', { threadLID });
+    }
+
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {string} param0.threadLID
+     */
+    _onShiftRightChatWindow({ threadLID }) {
+        this.env.store.commit('chat_window_manager/shift_thread_right', { threadLID });
     }
 
     /**

@@ -3,7 +3,7 @@
 
     <div t-name="mail.wip.widget.Message" owl="1"
          class="o_message"
-         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ isStarred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }}"
+         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ isStarred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }} {{ props.message.message_type === 'notification' ? 'o_notification' : '' }}"
          t-on-click="_onClick"
          t-att-data-message-lid="props.messageLID">
         <t t-if="options.squashed">

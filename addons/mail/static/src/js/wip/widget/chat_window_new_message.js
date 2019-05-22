@@ -1,4 +1,4 @@
-odoo.define('mail.wip.widget.ChatWindowBlank', function (require) {
+odoo.define('mail.wip.widget.ChatWindowNewMessage', function (require) {
 "use strict";
 
 const AutocompleteInput = require('mail.wip.widget.AutocompleteInput');
@@ -6,14 +6,14 @@ const Header = require('mail.wip.widget.ChatWindowHeader');
 
 const { Component } = owl;
 
-class ChatWindow extends Component {
+class ChatWindowNewMessage extends Component {
     /**
      * @param {...any} args
      */
     constructor(...args) {
         super(...args);
         this.state = { folded: false };
-        this.template = 'mail.wip.widget.ChatWindowBlank';
+        this.template = 'mail.wip.widget.ChatWindowNewMessage';
         this.widgets = { AutocompleteInput, Header };
 
         // bind since passed as props
@@ -21,6 +21,7 @@ class ChatWindow extends Component {
     }
 
     mounted() {
+        this.refs.autocompleteInput.focus();
         this._applyOffset();
     }
 
@@ -95,6 +96,6 @@ class ChatWindow extends Component {
     }
 }
 
-return ChatWindow;
+return ChatWindowNewMessage;
 
 });

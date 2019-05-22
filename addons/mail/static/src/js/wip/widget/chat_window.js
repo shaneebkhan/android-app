@@ -59,6 +59,19 @@ class ChatWindow extends Component {
     }
 
     /**
+     * @return {Object}
+     */
+    get options() {
+        let options;
+        if (this.props.options) {
+            options = { ...this.props.options };
+        } else {
+            options = {};
+        }
+        return options;
+    }
+
+    /**
      * @return {boolean}
      */
     get showComposer() {
@@ -106,6 +119,20 @@ class ChatWindow extends Component {
      */
     _onHeaderSelect() {
         this.trigger('toggle-fold', { threadLID: this.props.threadLID });
+    }
+
+    /**
+     * @private
+     */
+    _onHeaderShiftLeft() {
+        this.trigger('shift-left', { threadLID: this.props.threadLID });
+    }
+
+    /**
+     * @private
+     */
+    _onHeaderShiftRight() {
+        this.trigger('shift-right', { threadLID: this.props.threadLID });
     }
 
     /**

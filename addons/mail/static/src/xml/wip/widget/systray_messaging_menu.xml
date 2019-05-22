@@ -47,7 +47,8 @@
                 </button>
             </div>
             <t t-widget="ThreadPreviewList"
-               t-props="{ filter: state.filter }"/>
+               t-props="{ filter: state.filter }"
+               t-on-select-thread="_onSelectThread"/>
         </div>
     </li>
 

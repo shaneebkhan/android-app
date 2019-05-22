@@ -97,7 +97,7 @@ const actions = {
             if (state.discuss.open) {
                 commit('discuss/update', { threadLID });
             } else {
-                commit('chat_window_manager/open_item', { item: threadLID });
+                commit('chat_window_manager/open_thread', { threadLID });
             }
         }
     },
@@ -131,7 +131,7 @@ const actions = {
                     threadLID,
                 });
             } else {
-                commit('chat_window_manager/open_item', { item: threadLID });
+                commit('chat_window_manager/open_thread', { threadLID });
             }
         }
     },
@@ -660,7 +660,7 @@ const actions = {
             kwargs: getThreadFetchMessagesKwargs(
                 { state },
                 { threadLID })
-        });
+        }, { shadow: true });
         commit('thread/loaded', {
             messagesData,
             searchDomain,
@@ -714,7 +714,7 @@ const actions = {
                 { state },
                 { threadLID }
             )
-        });
+        }, { shadow: true });
         commit('thread/loaded', {
             messagesData,
             searchDomain,
@@ -738,14 +738,11 @@ const actions = {
             return;
         }
         if (thread._model === 'mail.channel') {
-            const seen_message_id = await env.rpc(
-                {
-                    model: 'mail.channel',
-                    method: 'channel_seen',
-                    args: [[thread.id]]
-                },
-                { shadow: true }
-            );
+            const seen_message_id = await env.rpc({
+                model: 'mail.channel',
+                method: 'channel_seen',
+                args: [[thread.id]]
+            }, { shadow: true });
             commit('thread/update', {
                 changes: { seen_message_id },
                 threadLID,
@@ -755,6 +752,20 @@ const actions = {
             changes: { message_unread_counter: 0 },
             threadLID,
         });
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.threadLID
+     */
+    'thread/open'({ commit, state }, { threadLID }) {
+        if (state.discuss.open) {
+            commit('discuss/update', { threadLID });
+        } else {
+            commit('chat_window_manager/open_thread', { threadLID });
+        }
     },
     /**
      * @param {Object} param0
@@ -910,12 +921,19 @@ const actions = {
             threadLID,
         });
     },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string[]} param1.threadLIDs
+     */
     async 'threads/load_previews'(
         { commit, env, state },
         {  threadLIDs }
-        ) {
-        const threads = threadLIDs.map(threadLID =>
-            state.threads[threadLID]);
+    ) {
+        const threads = threadLIDs.map(threadLID => state.threads[threadLID]);
         const channelIDs = threads.reduce((list, thread) => {
             if (thread._model === 'mail.channel') {
                 return list.concat(thread.id);

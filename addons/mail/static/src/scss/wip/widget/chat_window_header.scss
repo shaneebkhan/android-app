@@ -9,16 +9,17 @@
 
     > .o_commands {
         display: flex;
+        height: 100%;
+        align-items:center;
 
         > div {
-            margin: 0 5px;
+            padding: 0 8px;
+            display: flex;
+            height: 100%;
+            align-items: center;
 
-            &:first-of-type {
-                margin-left: 0;
-            }
-
-            &:last-of-type {
-                margin-right: 0;
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.1);
             }
         }
     }
@@ -39,6 +40,10 @@
 
         &:last-of-type {
             margin-right: 10px;
+
+            &.o_commands {
+                margin-right: 0px; // no margin for commands
+            }
         }
     }
 }

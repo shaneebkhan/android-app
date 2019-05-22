@@ -5,9 +5,11 @@
         class="o_chat_window"
         t-att-class="folded ? 'o_folded' : ''">
       <t t-widget="Header"
-         t-props="{ threadLID: props.threadLID }"
+         t-props="{ options, threadLID: props.threadLID }"
          t-on-close="_onHeaderClose"
-         t-on-select="_onHeaderSelect"/>
+         t-on-select="_onHeaderSelect"
+         t-on-shift-left="_onHeaderShiftLeft"
+         t-on-shift-right="_onHeaderShiftRight"/>
       <t t-widget="Thread"
          t-props="{ options: threadOptions, threadLID: props.threadLID }"
          t-on-redirect="_onRedirect"/>

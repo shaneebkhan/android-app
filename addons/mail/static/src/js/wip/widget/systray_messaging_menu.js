@@ -30,7 +30,6 @@ class SystrayMessagingMenu extends Component {
         };
         this.template = 'mail.wip.widget.SystrayMessagingMenu';
         this.widgets = { ThreadPreviewList };
-
         this._id = _.uniqueId('systray_messaging_menu');
 
         if (this.DEBUG) {
@@ -39,11 +38,23 @@ class SystrayMessagingMenu extends Component {
     }
 
     mounted() {
-        $(document).on('click.' + this._id, ev => this._onDocumentClick(ev));
+        $(document).on(`click.${this._id}`, ev => this._onDocumentClick(ev));
     }
 
     willUnmount() {
-        $(document).off('click.' + this._id);
+        $(document).off(`click.${this._id}`);
+    }
+
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     */
+    _reset() {
+        this.state.filter = 'all';
+        this.state.toggleShow = false;
     }
 
     //--------------------------------------------------------------------------
@@ -62,8 +73,8 @@ class SystrayMessagingMenu extends Component {
      * @private
      */
     _onClickNewMessage() {
-        this.env.store.commit('chat_window_manager/open_item', { item: 'blank' });
-        this.state.toggleShow = false;
+        this.env.store.commit('chat_window_manager/open_new_message');
+        this._reset();
     }
 
     /**
@@ -87,8 +98,17 @@ class SystrayMessagingMenu extends Component {
         if (ev.target.closest('.o_mail_wip_systray_messaging_menu')) {
             return;
         }
-        this.state.filter = 'all';
-        this.state.toggleShow = false;
+        this._reset();
+    }
+
+    /**
+     * @private
+     * @param {Object} param0
+     * @param {string} param0.threadLID
+     */
+    _onSelectThread({ threadLID }) {
+        this.env.store.dispatch('thread/open', { threadLID });
+        this._reset();
     }
 }
 

@@ -30,23 +30,21 @@ class EmojisButton extends Component {
                 placement: 'top',
                 trigger: 'click',
                 offset: '0, 1',
-                content: function () {
+                content() {
                     const $this = $(this);
                     self._popoverID = $this.attr('aria-describedby');
                     return self._popover.el;
                 }
             });
         });
-        this._popover.on('selection', this, ({ source }) =>
-            this._onEmojiSelection({ source })
-        );
-        $(document).on('click.' + this._id, ev => this._onDocumentClick(ev));
+        this._popover.on('selection', this, ({ source }) => this._onEmojiSelection({ source }));
+        $(document).on(`click.${this._id}`, ev => this._onDocumentClick(ev));
     }
 
     willUnmount() {
         this._hidePopover();
         this._popover.destroy();
-        $(document).off('click.' + this._id);
+        $(document).off(`click.${this._id}`);
     }
 
     //--------------------------------------------------------------------------

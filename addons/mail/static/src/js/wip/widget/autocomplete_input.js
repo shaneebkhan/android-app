@@ -11,13 +11,21 @@ class AutocompleteInput extends Component {
     }
 
     mounted() {
-        this.el.focus();
+        this.trigger('mounted');
         $(this.el).autocomplete({
             select: (ev, ui) => this._onAutocompleteSelect(ev, ui),
             source: (req, res) => this._onAutocompleteSource(req, res),
             focus: ev => this._onAutocompleteFocus(ev),
             html: this.props.html || false
         });
+    }
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    focus() {
+        this.el.focus();
     }
 
     //--------------------------------------------------------------------------

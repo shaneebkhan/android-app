@@ -5,8 +5,9 @@
 .o_mail_wip_systray_messaging_menu {
 
     > a > .o_counter {
-        position: absolute;
-        transform: translate(-25%, 60%);
+        position: relative;
+        transform: translate(-5px, -5px);
+        margin-right: -10px; // "cancel" right padding of systray items
     }
 
     > .dropdown-menu {

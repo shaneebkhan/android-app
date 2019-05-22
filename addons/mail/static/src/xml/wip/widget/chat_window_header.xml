@@ -14,15 +14,36 @@
         </div>
         <div class="o_autogrow"/>
         <div class="o_commands">
+            <div t-if="options.displayLeftShift"
+                 class="o_command o_left_shift"
+                 aria-label="Shift left"
+                 title="Shift left"
+                 t-key="'shift_left'"
+                 t-on-click="_onClickShiftLeft">
+                <i class="fa fa-angle-left"/>
+            </div>
+            <div t-if="options.displayRightShift"
+                 class="o_command o_right_shift"
+                 aria-label="Shift right"
+                 title="Shift right"
+                 t-key="'shift_right'"
+                 t-on-click="_onClickShiftRight">
+                <i class="fa fa-angle-right"/>
+            </div>
             <div t-if="options.displayExpand"
-                 class="o_command o_expand fa fa-expand"
+                 class="o_command o_expand"
                  aria-label="Open in Discuss"
                  title="Open in Discuss"
-                 t-on-click="_onClickExpand"/>
-            <div class="o_command o_close fa fa-close"
+                 t-key="'expand'"
+                 t-on-click="_onClickExpand">
+                <i class="fa fa-expand"/>
+            </div>
+            <div class="o_command o_close"
                  aria-label="Close chat window"
                  title="Close chat window"
-                 t-on-click="_onClickClose"/>
+                 t-on-click="_onClickClose">
+                <i class="fa fa-close"/>
+            </div>
         </div>
     </div>
 

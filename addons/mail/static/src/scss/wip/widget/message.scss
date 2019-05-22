@@ -148,6 +148,10 @@
 .o_message {
     background-color: white;
 
+    &.o_notification {
+        background-color: gray('200');
+    }
+
     > .o_core > .o_header > .o_author_name {
         font-weight: bold;
     }

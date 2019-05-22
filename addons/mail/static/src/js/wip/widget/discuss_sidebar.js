@@ -86,6 +86,13 @@ class Sidebar extends Component {
 
     /**
      * @private
+     */
+    _onChannelAutocompleteMounted() {
+        this.refs.addChannelAutocompleteInput.focus();
+    }
+
+    /**
+     * @private
      * @param {Object} item
      * @param {intege} item.id
      * @param {string} [item.special]
@@ -144,6 +151,13 @@ class Sidebar extends Component {
             special: 'private'
         });
         res(items);
+    }
+
+    /**
+     * @private
+     */
+    _onChatAutocompleteMounted() {
+        this.refs.addChatAutocompleteInput.focus();
     }
 
     /**

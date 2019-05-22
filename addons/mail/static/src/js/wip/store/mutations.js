@@ -18,69 +18,124 @@ const mutations = {
      * @param {Object} param0
      * @param {Object} param0.state
      */
-    'chat_window_manager/close_blank'({ state }) {
-        const cwm = state.chatWindowManager;
-        cwm.items = cwm.items.filter(item => item !== 'blank');
+    'chat_window_manager/close_new_message'({ state }) {
+        state.chatWindowManager.showNewMessage = false;
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.threadLID
+     */
+    'chat_window_manager/close_thread'({ commit }, { threadLID }) {
+        commit('thread/update', {
+            threadLID,
+            changes: {
+                fold_state: 'closed',
+                is_minimized: false,
+            },
+        });
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     */
+    'chat_window_manager/open_new_message'({ state }) {
+        state.chatWindowManager.showNewMessage = true;
     },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {string} param1.item either 'blank' or a thread LID
-     * @param {boolean} [param1.replaceBlank=false]
+     * @param {string} param1.threadLID
      */
-    'chat_window_manager/open_item'(
+    'chat_window_manager/open_thread'(
         { commit, state },
-        { item, replaceBlank=false }
+        { threadLID }
     ) {
-        const cwm = state.chatWindowManager;
-        if (item === 'blank') {
-            cwm.items = cwm.items.filter(it => it !== item);
-            cwm.items.unshift(item);
-            return;
-        }
-        // item is a threadLID
         commit('thread/update', {
-            threadLID: item,
+            threadLID,
             changes: {
                 fold_state: 'open',
                 is_minimized: true,
             },
         });
-        if (replaceBlank) {
-            commit('chat_window_manager/swap_items', {
-                autocloseBlank: true,
-                item1: item,
-                item2: 'blank',
-            });
+        // force this thread to be 1st item
+        const cwm = state.chatWindowManager;
+        cwm.threadLIDs = cwm.threadLIDs.filter(lid => lid !== threadLID);
+        cwm.threadLIDs.unshift(threadLID);
+        if (state.chatWindowManager.availableVisibleSlots === 1) {
+            commit('chat_window_manager/close_new_message');
         }
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {integer} amount
+     */
+    'chat_window_manager/set_available_visible_slots'({ state }, amount) {
+        state.chatWindowManager.availableVisibleSlots = amount;
     },
     /**
      * @param {Object} param0
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {boolean} [param1.autocloseBlank=false]
-     * @param {string} param1.item1
-     * @param {string} param1.item2
+     * @param {string} param1.threadLID
      */
-    'chat_window_manager/swap_items'(
+    'chat_window_manager/shift_thread_left'({ set, state }, { threadLID }) {
+        const cwm = state.chatWindowManager;
+        const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
+        if (index === cwm.threadLIDs.length-1) {
+            // already left-most
+            console.log('already left-most thread');
+            return;
+        }
+        const otherLID = cwm.threadLIDs[index+1];
+        set(cwm.threadLIDs, index, otherLID);
+        set(cwm.threadLIDs, index+1, threadLID);
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.set
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.threadLID
+     */
+    'chat_window_manager/shift_thread_right'({ set, state }, { threadLID }) {
+        const cwm = state.chatWindowManager;
+        const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
+        if (index === 0) {
+            // already right-most
+            console.log('already right-most thread');
+            return;
+        }
+        const otherLID = cwm.threadLIDs[index-1];
+        set(cwm.threadLIDs, index, otherLID);
+        set(cwm.threadLIDs, index-1, threadLID);
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.set
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.threadLID1
+     * @param {string} param1.threadLID2
+     */
+    'chat_window_manager/swap_threads'(
         { set, state },
-        { autocloseBlank=false, item1, item2 }
+        { threadLID1, threadLID2 }
     ) {
         const cwm = state.chatWindowManager;
-        const items = cwm.items;
-        const index1 = items.findIndex(item => item === item1);
-        const index2 = items.findIndex(item => item === item2);
+        const threadLIDs = cwm.threadLIDs;
+        const index1 = threadLIDs.findIndex(lid => lid === threadLID1);
+        const index2 = threadLIDs.findIndex(lid => lid === threadLID2);
         if (index1 === -1 || index2 === -1) {
             return;
         }
-        set(items, index1, item2);
-        set(items, index2, item1);
-        if (autocloseBlank) {
-            cwm.items = cwm.items.filter(item => item !== 'blank');
-        }
+        set(threadLIDs, index1, threadLID2);
+        set(threadLIDs, index2, threadLID1);
     },
     /**
      * @param {Object} param0
@@ -741,8 +796,7 @@ const mutations = {
         commit('partner/update', {
             partnerLID,
             changes: {
-                messageLIDs: partner.messageLIDs.filter(lid =>
-                    lid !== messageLID),
+                messageLIDs: partner.messageLIDs.filter(lid => lid !== messageLID),
             },
         });
     },
@@ -766,21 +820,6 @@ const mutations = {
         state.global.innerHeight = window.innerHeight;
         state.global.innerWidth = window.innerWidth;
         state.isMobile = config.device.isMobile;
-    },
-    /**
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param1
-     * @param {string} param1.threadLID
-     */
-    'thread/close_chat_window'({ commit }, { threadLID }) {
-        commit('thread/update', {
-            threadLID,
-            changes: {
-                fold_state: 'closed',
-                is_minimized: false,
-            },
-        });
     },
     /**
      * @param {Object} param0
@@ -978,11 +1017,14 @@ const mutations = {
         thread.update(changes);
         if (!wasMinimized && thread.is_minimized) {
             commit('thread/updating:register_minimized', { threadLID });
-        } else if (wasMinimized && !thread.is_minimized) {
+        }
+        if (wasMinimized && !thread.is_minimized) {
             commit('thread/updating:unregister_minimized', { threadLID });
-        } else if (!wasPinned && thread.isPinned) {
+        }
+        if (!wasPinned && thread.isPinned) {
             commit('thread/updating:register_pinned', { threadLID });
-        } else if (wasPinned && !thread.isPinned) {
+        }
+        if (wasPinned && !thread.isPinned) {
             commit('thread/updating:unregister_pinned', { threadLID });
         }
     },
@@ -1085,8 +1127,7 @@ const mutations = {
      * @param {Object} param1.threadLID
      */
     'thread/updating:register_minimized'({ state }, { threadLID }) {
-        const cwm = state.chatWindowManager;
-        cwm.items.push(threadLID);
+        state.chatWindowManager.threadLIDs.unshift(threadLID);
     },
     /**
      * @param {Object} param0
@@ -1105,7 +1146,7 @@ const mutations = {
      */
     'thread/updating:unregister_minimized'({ state }, { threadLID }) {
         const cwm = state.chatWindowManager;
-        cwm.items = cwm.items.filter(item => item !== threadLID);
+        cwm.threadLIDs = cwm.threadLIDs.filter(item => item !== threadLID);
     },
     /**
      * @param {Object} param0
@@ -1224,8 +1265,7 @@ const mutations = {
         commit('thread_cache/update', {
             threadCacheLID,
             changes: {
-                messageLIDs: cache.messageLIDs.filter(lid =>
-                    lid !== messageLID),
+                messageLIDs: cache.messageLIDs.filter(lid => lid !== messageLID),
             },
         });
     },

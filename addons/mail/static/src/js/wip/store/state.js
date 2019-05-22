@@ -25,14 +25,16 @@ function init() {
             threadLID: null,
             domain: [],
             menu_id: null,
-            open: null,
+            open: false,
             stringifiedDomain: '[]',
         },
         //----------------------------------------------------------------------
         // Chat Window Manager
         //----------------------------------------------------------------------
         chatWindowManager: {
-            items: [], // ordered list of minimized threads and/or 'blank' window.
+            availableVisibleSlots: undefined,
+            showNewMessage: false, // always right-most chat window
+            threadLIDs: [], // ordered list of minimized threads, from right to left.
         },
         //----------------------------------------------------------------------
         // Global

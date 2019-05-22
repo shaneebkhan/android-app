@@ -34,7 +34,7 @@ class HiddenMenu extends Component {
 
     mounted() {
         this._apply();
-        $(document).on('click.' + this._id, ev => this._onDocumentClick(ev));
+        $(document).on(`click.${this._id}`, ev => this._onDocumentClick(ev));
     }
 
     patched() {
@@ -42,21 +42,12 @@ class HiddenMenu extends Component {
     }
 
     willUnmount() {
-        $(document).off('click.' + this._id);
+        $(document).off(`click.${this._id}`);
     }
 
     //--------------------------------------------------------------------------
     // Getter / Setter
     //--------------------------------------------------------------------------
-
-    /**
-     * @return {Object}
-     */
-    get itemOptions() {
-        return {
-            displayExpand: false,
-        };
-    }
 
     /**
      * @return {integer}

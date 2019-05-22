@@ -2,7 +2,7 @@ odoo.define('mail.wip.service.ChatWindowService', function (require) {
 "use strict";
 
 const StoreMixin = require('mail.wip.old_widget.StoreMixin');
-const Root = require('mail.wip.widget.ChatWindowManager');
+const ChatWindowManager = require('mail.wip.widget.ChatWindowManager');
 
 const AbstractService = require('web.AbstractService');
 const core = require('web.core');
@@ -17,7 +17,7 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
         this._super.apply(this, arguments);
         this._webClientReady = false;
         if (this.DEBUG) {
-            window.chat_window_manager = this;
+            window.chat_window_service = this;
         }
     },
     /**
@@ -58,8 +58,8 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
             do_action: (...args) => this.do_action(...args),
             rpc: (...args) => this._rpc(...args),
         };
-        this.root = new Root(env);
-        this.root.mount(document.querySelector('body'));
+        this.component = new ChatWindowManager(env);
+        this.component.mount(document.querySelector('body'));
     },
 });
 

@@ -28,6 +28,7 @@ class ChatWindowHeader extends Component {
         super(...args);
         this.template = 'mail.wip.widget.ChatWindowHeader';
         this.widgets = { Icon };
+        this._id = _.uniqueId('chat_window_header');
     }
 
     //--------------------------------------------------------------------------
@@ -45,7 +46,13 @@ class ChatWindowHeader extends Component {
             options = {};
         }
         if (!('displayExpand' in options)) {
-            options.displayExpand = true;
+            options.displayExpand = false;
+        }
+        if (!('displayLeftShift' in options)) {
+            options.displayLeftShift = false;
+        }
+        if (!('displayRightShift' in options)) {
+            options.displayRightShift = false;
         }
         return options;
     }
@@ -66,7 +73,7 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        if ('o_select' in ev && !ev.o_select) {
+        if (`click_${this._id}` in ev && !ev[`click_${this._id}`]) {
             return;
         }
         this.trigger('select', { threadLID: this.props.threadLID });
@@ -77,7 +84,7 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickClose(ev) {
-        ev.o_select = false;
+        ev[`click_${this._id}`] = false;
         this.trigger('close', { threadLID: this.props.threadLID });
     }
 
@@ -86,7 +93,7 @@ class ChatWindowHeader extends Component {
      * @param {MouseEvent} ev
      */
     _onClickExpand(ev) {
-        ev.o_select = false;
+        ev[`click_${this._id}`] = false;
         if (['mail.channel', 'mail.box'].includes(this.thread._model)) {
             this.env.do_action('mail.action_wip_discuss', {
                 clear_breadcrumbs: false,
@@ -103,6 +110,24 @@ class ChatWindowHeader extends Component {
                 res_id: this.thread.id,
             });
         }
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickShiftLeft(ev) {
+        ev[`click_${this._id}`] = false;
+        this.trigger('shift-left');
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickShiftRight(ev) {
+        ev[`click_${this._id}`] = false;
+        this.trigger('shift-right');
     }
 }
 
