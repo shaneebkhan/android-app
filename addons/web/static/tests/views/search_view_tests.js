@@ -1262,7 +1262,7 @@ QUnit.module('Search View', {
             data: this.data,
             mockRPC: function (route, args) {
                 // there are two read_group calls (for the groupby lists [] and ["date_field:day"])
-                if (route === '/web/dataset/call_kw/partner/read_group') {
+                if (route === '/web/dataset/call_kw/partner/read_group_raw') {
                     var timeRangeMenuData = args.kwargs.context.timeRangeMenuData;
                     assert.ok(timeRangeMenuData.timeRange.length > 0, "time range should be non empty");
                 }

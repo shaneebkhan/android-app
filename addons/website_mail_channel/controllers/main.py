@@ -17,7 +17,7 @@ class MailGroup(http.Controller):
 
     def _get_archives(self, group_id):
         MailMessage = request.env['mail.message']
-        groups = MailMessage._read_group_raw(
+        groups = MailMessage.read_group_raw(
             [('model', '=', 'mail.channel'), ('res_id', '=', group_id), ('message_type', '!=', 'notification')],
             ['subject', 'date'],
             groupby=["date"], orderby="date desc")

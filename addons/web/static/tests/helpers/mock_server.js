@@ -838,6 +838,38 @@ var MockServer = Class.extend({
      * @returns {Object[]}
      */
     _mockReadGroup: function (model, kwargs) {
+        var self = this;
+        var result = this._mockReadGroupRaw(model, kwargs);
+        var dateGroupbys = _.uniq(kwargs.groupby).filter(function (gb) {
+            var fieldType = self.data[model].fields[gb.split(':')[0]].type;
+            return _.contains(['date', 'datetime'], fieldType);
+        });
+        result.forEach(function (group) {
+            dateGroupbys.forEach(function (gb) {
+                if (group[gb]) {
+                    group[gb] = group[gb][1];
+                }
+            });
+        });
+        return result;
+    },
+    /**
+     * Simulate a 'read_group_raw' call to the server.
+     *
+     * Note: most of the keys in kwargs are still ignored
+     *
+     * @private
+     * @param {string} model a string describing an existing model
+     * @param {Object} kwargs various options supported by read_group
+     * @param {string[]} kwargs.groupby fields that we are grouping
+     * @param {string[]} kwargs.fields fields that we are aggregating
+     * @param {Array} kwargs.domain the domain used for the read_group
+     * @param {boolean} kwargs.lazy still mostly ignored
+     * @param {integer} [kwargs.limit]
+     * @param {integer} [kwargs.offset]
+     * @returns {Object[]}
+     */
+    _mockReadGroupRaw: function (model, kwargs) {
         if (!('lazy' in kwargs)) {
             kwargs.lazy = true;
         }
@@ -952,11 +984,7 @@ var MockServer = Class.extend({
                     } else {
                         res[groupByField] = false;
                     }
-                } else {
-                    res[groupByField] = val;
-                }
-
-                if (field.type === 'date') {
+                } else if (field.type === 'date' && val) {
                     var aggregateFunction = groupByField.split(':')[1];
                     var startDate, endDate;
                     if (aggregateFunction === 'day') {
@@ -965,6 +993,9 @@ var MockServer = Class.extend({
                     } else if (aggregateFunction === 'week') {
                         startDate = moment(val, 'ww YYYY');
                         endDate = startDate.clone().add(1, 'weeks');
+                    } else if (aggregateFunction === 'quarter') {
+                        startDate = moment(val.slice(1), 'Q YYYY');
+                        endDate = startDate.clone().add(1, 'quarters');
                     } else if (aggregateFunction === 'year') {
                         startDate = moment(val, 'Y');
                         endDate = startDate.clone().add(1, 'years');
@@ -972,8 +1003,12 @@ var MockServer = Class.extend({
                         startDate = moment(val, 'MMMM YYYY');
                         endDate = startDate.clone().add(1, 'months');
                     }
+                    res[groupByField] = [startDate.format('YYYY-MM-DD') + '/'+ endDate.format('YYYY-MM-DD'), val];
                     res.__domain = [[fieldName, '>=', startDate.format('YYYY-MM-DD')], [fieldName, '<', endDate.format('YYYY-MM-DD')]].concat(res.__domain);
                 } else {
+                    res[groupByField] = val;
+                }
+                if (field.type !== 'date') {
                     res.__domain = [[fieldName, '=', val]].concat(res.__domain);
                 }
 
@@ -1318,6 +1353,9 @@ var MockServer = Class.extend({
 
             case 'read_group':
                 return Promise.resolve(this._mockReadGroup(args.model, args.kwargs));
+
+            case 'read_group_raw':
+                return Promise.resolve(this._mockReadGroupRaw(args.model, args.kwargs));
 
             case 'web_read_group':
                 return Promise.resolve(this._mockWebReadGroup(args.model, args.kwargs));

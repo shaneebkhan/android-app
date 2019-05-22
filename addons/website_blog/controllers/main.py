@@ -23,7 +23,7 @@ class WebsiteBlog(http.Controller):
         dom = blog and [('blog_id', '=', blog.id)] or []
         if not request.env.user.has_group('website.group_website_designer'):
             dom += [('post_date', '<=', fields.Datetime.now())]
-        groups = request.env['blog.post']._read_group_raw(
+        groups = request.env['blog.post'].read_group_raw(
             dom,
             ['name', 'post_date'],
             groupby=["post_date"], orderby="post_date desc")

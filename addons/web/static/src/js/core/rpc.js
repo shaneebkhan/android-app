@@ -51,7 +51,7 @@ return {
             params.kwargs.context = options.context || params.context || params.kwargs.context;
         }
 
-        if (options.method === 'read_group' || options.method === 'web_read_group') {
+        if (options.method === 'read_group' || options.method === 'read_group_raw' || options.method === 'web_read_group') {
             if (!(params.args && params.args[0] !== undefined)) {
                 params.kwargs.domain = options.domain || params.domain || params.kwargs.domain || [];
             }

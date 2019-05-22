@@ -129,7 +129,7 @@ class CustomerPortal(Controller):
         if fields is None:
             fields = ['name', 'create_date']
         groups = []
-        for group in request.env[model]._read_group_raw(domain, fields=fields, groupby=groupby, orderby=order):
+        for group in request.env[model].read_group_raw(domain, fields=fields, groupby=groupby, orderby=order):
             dates, label = group[groupby]
             date_begin, date_end = dates.split('/')
             groups.append({

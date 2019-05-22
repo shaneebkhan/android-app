@@ -334,7 +334,7 @@ QUnit.module('Views', {
             data: this.data,
             arch: '<pivot></pivot>',
             mockRPC: function (route, args) {
-                if (args.method === 'read_group') {
+                if (args.method === 'read_group_raw') {
                     assert.deepEqual(args.kwargs.fields, ['__count'],
                         "should make a read_group with no valid fields");
                 }
@@ -349,7 +349,7 @@ QUnit.module('Views', {
 
     QUnit.test('pivot view can be reloaded', async function (assert) {
         assert.expect(4);
-        var readGroupCount = 0;
+        var readGroupRawCount = 0;
 
         var pivot = await createView({
             View: PivotView,
@@ -357,8 +357,8 @@ QUnit.module('Views', {
             data: this.data,
             arch: '<pivot></pivot>',
             mockRPC: function (route, args) {
-                if (args.method === 'read_group') {
-                    readGroupCount++;
+                if (args.method === 'read_group_raw') {
+                    readGroupRawCount++;
                 }
                 return this._super(route, args);
             }
@@ -366,12 +366,12 @@ QUnit.module('Views', {
 
         assert.strictEqual(pivot.$('td.o_pivot_cell_value:contains(4)').length, 1,
                     "should contain a pivot cell with the number of all records");
-        assert.strictEqual(readGroupCount, 1, "should have done 1 rpc");
+        assert.strictEqual(readGroupRawCount, 1, "should have done 1 rpc");
 
         await testUtils.pivot.reload(pivot, {domain: [['foo', '>', 10]]});
         assert.strictEqual(pivot.$('td.o_pivot_cell_value:contains(2)').length, 1,
                     "should contain a pivot cell with the number of remaining records");
-        assert.strictEqual(readGroupCount, 2, "should have done 2 rpcs");
+        assert.strictEqual(readGroupRawCount, 2, "should have done 2 rpcs");
         pivot.destroy();
     });
 
@@ -741,7 +741,7 @@ QUnit.module('Views', {
     QUnit.test('can expand all rows', async function (assert) {
         assert.expect(7);
 
-        var nbReadGroups = 0;
+        var nbReadGroupRaws = 0;
         var pivot = await createView({
             View: PivotView,
             model: "partner",
@@ -751,22 +751,22 @@ QUnit.module('Views', {
                         '<field name="product_id" type="row"/>' +
                 '</pivot>',
             mockRPC: function (route, args) {
-                if (args.method === 'read_group') {
-                    nbReadGroups++;
+                if (args.method === 'read_group_raw') {
+                    nbReadGroupRaws++;
                 }
                 return this._super.apply(this, arguments);
             },
         });
 
-        assert.strictEqual(nbReadGroups, 2, "should have done 2 read_group RPCS");
+        assert.strictEqual(nbReadGroupRaws, 2, "should have done 2 read_group RPCS");
         assert.strictEqual(pivot.$('td.o_pivot_cell_value').text(), "321220",
             "should have proper values in cells (total, result 1, result 2)");
 
         // expand on date:days, product
-        nbReadGroups = 0;
+        nbReadGroupRaws = 0;
         await testUtils.pivot.reload(pivot, {groupBy: ['date:days', 'product_id']});
 
-        assert.strictEqual(nbReadGroups, 3, "should have done 3 read_group RPCS");
+        assert.strictEqual(nbReadGroupRaws, 3, "should have done 3 read_group RPCS");
         assert.containsN(pivot, 'tbody tr', 8,
             "should have 7 rows (total + 3 for December and 2 for October and April)");
 
@@ -778,10 +778,10 @@ QUnit.module('Views', {
             "should have 6 rows now");
 
         // expand all
-        nbReadGroups = 0;
+        nbReadGroupRaws = 0;
         await testUtils.dom.click(pivot.$buttons.find('.o_pivot_expand_button'));
 
-        assert.strictEqual(nbReadGroups, 3, "should have done 3 read_group RPCS");
+        assert.strictEqual(nbReadGroupRaws, 3, "should have done 3 read_group RPCS");
         assert.containsN(pivot, 'tbody tr', 8,
             "should have 8 rows again");
 
@@ -1343,7 +1343,7 @@ QUnit.module('Views', {
             data: this.data,
             arch: '<pivot></pivot>',
             mockRPC: function (route, args) {
-                if (args.method === 'read_group') {
+                if (args.method === 'read_group_raw') {
                     assert.deepEqual(args.kwargs.fields, ['__count'],
                         "should make a read_group with field __count");
                 }
