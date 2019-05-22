@@ -4,6 +4,7 @@ odoo.define('hr_holidays.dashboard.view_custo', function(require) {
     var core = require('web.core');
     var CalendarController = require("web.CalendarController");
     var CalendarView = require("web.CalendarView");
+    var CalendarRenderer = require("web.CalendarRenderer");
     var viewRegistry = require('web.view_registry');
 
     var _t = core._t;
@@ -11,7 +12,28 @@ odoo.define('hr_holidays.dashboard.view_custo', function(require) {
 
 
     var TimeOffCalendarController = CalendarController.extend({
-        events: _.extend({}, CalendarController.prototype.events, {
+        _update: function () {
+            var self = this;
+            return this._super.apply(this, arguments).then(function () {
+                self._rpc({
+                    model: self.modelName,
+                    method: 'get_unusual_days',
+                    args: [self.model.data.start_date.format('YYYY-MM-DD'), self.model.data.end_date.format('YYYY-MM-DD')],
+                    context: self.context,
+                }).then(function (data) {
+                    _.each(self.$el.find('td.fc-day'), function (td) {
+                        var $td = $(td);
+                        if (data[$td.data('date')]) {
+                            $td.addClass('o_calendar_disabled');
+                        }
+                    });
+                });
+            });
+        },
+    });
+
+    var TimeOffCalendarDashboardController = TimeOffCalendarController.extend({
+        events: _.extend({}, TimeOffCalendarController.prototype.events, {
             'click .o_header_calendar_button_prev': '_onPrev',
             'click .o_header_calendar_button_next': '_onNext',
             'click .btn-time-off': '_onNewTimeOff',
@@ -178,11 +200,19 @@ odoo.define('hr_holidays.dashboard.view_custo', function(require) {
             });
         },
     });
+
     var TimeOffCalendarView = CalendarView.extend({
         config: _.extend({}, CalendarView.prototype.config, {
             Controller: TimeOffCalendarController,
         }),
     });
 
+    var TimeOffCalendarDashboardView = TimeOffCalendarView.extend({
+        config: _.extend({}, TimeOffCalendarView.prototype.config, {
+            Controller: TimeOffCalendarDashboardController,
+        }),
+    });
+
     viewRegistry.add('time_off_calendar', TimeOffCalendarView);
+    viewRegistry.add('time_off_calendar_dashboard', TimeOffCalendarDashboardView);
 });
