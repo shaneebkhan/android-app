@@ -16,6 +16,7 @@
                    <field name="generator" widget="radio"/>
                    <group string="General Options">
                        <field name="number_to_generate"/>
+                       <field name="number_of_lines"/>
                    </group>
                    <group string="Journal Entry Options" attrs="{'invisible': [('generator', 'not in', 'aml')]}">
                        <field name="post"/>
@@ -30,6 +31,7 @@
                     <button name="generate_amls" type="object" string="Generate Amls" attrs="{'invisible': [('generator', '!=', 'aml')]}"/>
                     <button name="generate_partners" type="object" string="Generate Partners" attrs="{'invisible': [('generator', '!=', 'partner')]}"/>
                     <button name="generate_invoices" type="object" string="Generate Invoices" attrs="{'invisible': [('generator', '!=', 'invoice')]}"/>
+                    <button name="generate_bank_statement" type="object" string="Generate Bank Statements" attrs="{'invisible': [('generator', '!=', 'bank_statement')]}"/>
                 </footer>
             </form>
         </field>

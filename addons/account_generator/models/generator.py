@@ -12,11 +12,12 @@ class AccountGenerator(models.TransientModel):
     _name = "account.generator"
     _description = "Generator"
 
-    generator = fields.Selection([('aml', 'Journal Entry'), ('partner', 'Partner'), ('invoice', 'Invoice')], required=True, default='aml')
+    generator = fields.Selection([('aml', 'Journal Entry'), ('partner', 'Partner'), ('invoice', 'Invoice'), ('bank_statement', 'Bank Statement')], required=True, default='aml')
 
     number_to_generate = fields.Integer(default=10)
-    customer = fields.Boolean()
-    supplier = fields.Boolean()
+    number_of_lines = fields.Integer(default=10)
+    customer = fields.Boolean(default=True)
+    supplier = fields.Boolean(default=True)
     company_type = fields.Selection([('person', 'Person'), ('company', 'Company')], default='person')
     post = fields.Boolean()
 
@@ -93,7 +94,7 @@ class AccountGenerator(models.TransientModel):
             date = fake.date_time_between(start_date='-3y', end_date='now').date()
             create_vals.append({
                 'partner_id': random.choice(partner_ids).id,
-                'invoice_line_ids': [generate_line() for i in range(random.randint(1, 5))],
+                'invoice_line_ids': [generate_line() for i in range(random.randint(1, self.number_of_lines))],
                 'date_invoice': date,
             })
         invoice_ids = self.env['account.invoice'].create(create_vals)
@@ -107,4 +108,30 @@ class AccountGenerator(models.TransientModel):
             'view_id': False,
             'type': 'ir.actions.act_window',
             'domain': [('id', 'in', invoice_ids.ids)],
+        }
+
+    def generate_bank_statement(self):
+        def generate_line():
+            return (0, 0, {'date': fake.date_time_between(start_date='-3m', end_date='now').date(), 'name': fake.bs(), 'partner_id': random.choice(partner_ids).id, 'amount': random.uniform(-10000, 10000)})
+
+        company_id = self.env.user.company_id
+        journal_ids = self.env['account.journal'].search([('type', '=', 'bank')])
+        partner_ids = self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier)])
+
+        create_vals = []
+        for i in range(self.number_to_generate):
+            create_vals.append({
+                'journal_id': random.choice(journal_ids).id,
+                'line_ids': [generate_line() for i in range(random.randint(1, self.number_of_lines))],
+                'date': fields.Date.today(),
+            })
+        bank_statement_ids = self.env['account.bank.statement'].create(create_vals)
+        return {
+            'name': _('Generated Bank Statement'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'account.bank.statement',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', bank_statement_ids.ids)],
         }
