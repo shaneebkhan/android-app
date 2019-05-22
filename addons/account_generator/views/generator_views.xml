@@ -13,12 +13,21 @@
         <field name="arch" type="xml">
             <form string="Account Generator">
                <sheet>
-                   <group>
+                   <field name="generator"/>
+                   <group string="General Options">
                        <field name="number_to_generate"/>
+                   </group>
+                   <group string="Journal Entry Options" attrs="{'invisible': [('generator', '!=', 'aml')]}">
+                       <field name="post"/>
+                   </group>
+                   <group string="Partner Options" attrs="{'invisible': [('generator', '!=', 'partner')]}">
+                       <field name="customer"/>
+                       <field name="supplier"/>
                    </group>
                 </sheet>
                 <footer>
-                    <button name="generate_amls" type="object" string="Generate Amls"/>
+                    <button name="generate_amls" type="object" string="Generate Amls" attrs="{'invisible': [('generator', '!=', 'aml')]}"/>
+                    <button name="generate_partners" type="object" string="Generate Partners" attrs="{'invisible': [('generator', '!=', 'partner')]}"/>
                 </footer>
             </form>
         </field>

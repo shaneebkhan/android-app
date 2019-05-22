@@ -12,7 +12,12 @@ class AccountGenerator(models.TransientModel):
     _name = "account.generator"
     _description = "Generator"
 
+    generator = fields.Selection([('aml', 'Journal Entry'), ('partner', 'Partner')])
+
     number_to_generate = fields.Integer()
+    customer = fields.Boolean()
+    supplier = fields.Boolean()
+    post = fields.Boolean()
 
     def generate_amls(self):
         company_id = self.env.user.company_id
@@ -38,4 +43,18 @@ class AccountGenerator(models.TransientModel):
                 'date': date,
             })
         line_ids = self.env['account.move'].create(create_vals)
-        line_ids.post()
+        if self.post():
+            line_ids.post()
+
+    def generate_partners(self):
+        create_vals = []
+        for i in range(self.number_to_generate):
+            create_vals.append({
+                'name': faker.name(),
+                'customer': self.customer,
+                'supplier': self.supplier,
+                'street_name': faker.street_name(),
+                'street_number': faker.building_number(),
+                'city': faker.city(),
+            })
+        partner_ids = self.env['res.partner'].create(create_vals)
