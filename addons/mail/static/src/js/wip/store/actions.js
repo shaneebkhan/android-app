@@ -190,14 +190,16 @@ const actions = {
         { threadLID }
     ) {
         const thread = state.threads[threadLID];
-        if (!thread.documentID || !thread.mustFetchMessageIDs) {
-            return;
-        }
-        const [{ message_ids }] = await env.rpc({
-            model: thread._model,
-            method: 'read',
-            args: [[thread.id], ['message_ids']]
-        });
+        const message_ids = thread._messageIds;
+
+        // TODO: this is for document_thread inside chat window
+        // else {
+        //     const [{ message_ids }] = await env.rpc({
+        //         model: thread._model,
+        //         method: 'read',
+        //         args: [[thread.id], ['message_ids']]
+        //     });
+        // }
         const threadCacheLID = `${threadLID}_[]`;
         if (!state.threadCaches[threadCacheLID]) {
             commit('thread_cache/create', {
@@ -206,7 +208,7 @@ const actions = {
             });
         }
         const threadCache = state.threadCaches[threadCacheLID];
-        const loadedMessageIDs = threadCache.messagesLIDs
+        const loadedMessageIDs = threadCache.messageLIDs
             .filter(messageLID => message_ids.includes(state.messages[messageLID].id))
             .map(messageLID => state.messages[messageLID].id);
         const shouldFetch = message_ids
@@ -217,16 +219,23 @@ const actions = {
             return;
         }
         const idsToLoad = message_ids
-            .map(messageID => !loadedMessageIDs.includes(messageID))
+            .filter(messageID => !loadedMessageIDs.includes(messageID))
             .slice(0, state.MESSAGE_FETCH_LIMIT);
+        commit('thread_cache/update', {
+            threadCacheLID,
+            changes: { loading: true },
+        });
         const messagesData = await env.rpc({
             model: 'mail.message',
             method: 'message_format',
             args: [idsToLoad],
             context: session.user_context
         });
-        const messageLIDs = messagesData.map(data => commit('message/create', { ...data }));
-        await dispatch('message/mark_as_read', { messageLIDs });
+        commit('thread/loaded', {
+            messagesData,
+            threadLID,
+        });
+        // await dispatch('message/mark_as_read', { messageLIDs });
     },
     /**
      * @param {Object} param0
@@ -815,7 +824,7 @@ const actions = {
             data: {
                 attachment_ids,
                 canned_response_ids,
-                channel_ids,
+                channel_ids=[],
                 command,
                 content,
                 context,

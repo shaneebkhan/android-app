@@ -70,6 +70,7 @@
         'static/src/xml/wip/widget/chat_window_header.xml',
         'static/src/xml/wip/widget/chat_window_hidden_menu.xml',
         'static/src/xml/wip/widget/chat_window_manager.xml',
+        'static/src/xml/wip/widget/chatter.xml',
         'static/src/xml/wip/widget/composer.xml',
         'static/src/xml/wip/widget/discuss.xml',
         'static/src/xml/wip/widget/discuss_mobile_mailbox_selection.xml',

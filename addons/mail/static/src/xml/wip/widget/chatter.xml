@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <aside t-name="mail.wip.widget.Chatter" owl="1"
+         class="o_chatter">
+        <div class="o_chatter_topbar">
+            <button t-on-click="_onClickSend" type="button" class="btn btn-link o_chatter_button_new_message" title="Send a message">
+                Send message
+            </button>
+            <button t-on-click="_onClickLog" class="btn btn-link o_chatter_button_log_note" title="Log a note. Followers will not be notified.">
+                Log note
+            </button>
+            <button t-if="true" class="btn btn-link o_chatter_button_schedule_activity" title="Log or schedule an activity" disabled="disabled">
+                <i class="fa fa-clock-o" role="img" aria-label="Dates" title="Dates"/> <t t-if="isMobile">Activity</t><t t-else="">Schedule activity</t>
+            </button>
+        </div>
+
+        <t t-widget="Composer"
+           t-key="state.composerMode"
+           t-props="{ threadLID: props.threadLID, mode: state.composerMode }"/>
+
+        <t t-widget="Thread"
+           t-if="props.thread"
+           t-props="{ threadLID: props.threadLID }"/>
+
+    </aside>
+
+</templates>

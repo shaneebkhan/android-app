@@ -122,6 +122,7 @@
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/chat_window_hidden_menu.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/chat_window_manager.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/composer.js"></script>
+                <script type="text/javascript" src="/mail/static/src/js/wip/widget/chatter.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/discuss.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/discuss_mobile_mailbox_selection.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/wip/widget/discuss_mobile_navbar.js"></script>
