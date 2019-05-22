@@ -12,11 +12,12 @@ class AccountGenerator(models.TransientModel):
     _name = "account.generator"
     _description = "Generator"
 
-    generator = fields.Selection([('aml', 'Journal Entry'), ('partner', 'Partner')])
+    generator = fields.Selection([('aml', 'Journal Entry'), ('partner', 'Partner'), ('invoice', 'Invoice')], required=True, default='aml')
 
-    number_to_generate = fields.Integer()
+    number_to_generate = fields.Integer(default=10)
     customer = fields.Boolean()
     supplier = fields.Boolean()
+    company_type = fields.Selection([('person', 'Person'), ('company', 'Company')], default='person')
     post = fields.Boolean()
 
     def generate_amls(self):
@@ -45,16 +46,65 @@ class AccountGenerator(models.TransientModel):
         line_ids = self.env['account.move'].create(create_vals)
         if self.post():
             line_ids.post()
+        return {
+            'name': _('Generated Journal Entries'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'account.move',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', line_ids.ids)],
+        }
 
     def generate_partners(self):
         create_vals = []
         for i in range(self.number_to_generate):
             create_vals.append({
-                'name': faker.name(),
+                'name': fake.name(),
                 'customer': self.customer,
                 'supplier': self.supplier,
-                'street_name': faker.street_name(),
-                'street_number': faker.building_number(),
-                'city': faker.city(),
+                'company_type': self.company_type,
+                'street': fake.street_address(),
+                'city': fake.city(),
+                'phone': fake.phone_number(),
+                'email': fake.email(),
             })
         partner_ids = self.env['res.partner'].create(create_vals)
+        return {
+            'name': _('Generated Partners'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'res.partner',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', partner_ids.ids)],
+        }
+
+    def generate_invoices(self):
+        def generate_line():
+            return (0, 0, {'name': fake.bs(), 'account_id': random.choice(account_ids).id, 'quantity': random.randint(1, 50), 'price_unit': random.uniform(1, 10000)})
+
+        company_id = self.env.user.company_id
+        partner_ids = self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier)])
+        account_ids = self.env['account.account'].search([('company_id', '=', company_id.id)])
+
+        create_vals = []
+        for i in range(self.number_to_generate):
+            date = fake.date_time_between(start_date='-3y', end_date='now').date()
+            create_vals.append({
+                'partner_id': random.choice(partner_ids).id,
+                'invoice_line_ids': [generate_line() for i in range(random.randint(1, 5))],
+                'date_invoice': date,
+            })
+        invoice_ids = self.env['account.invoice'].create(create_vals)
+        if self.post:
+            invoice_ids.action_invoice_open()
+        return {
+            'name': _('Generated Invoices'),
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'res_model': 'account.invoice',
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'domain': [('id', 'in', invoice_ids.ids)],
+        }
