@@ -25,7 +25,7 @@
                     <field name="date"/>
                     <field name="name"/>
                     <field name="project_id" required="1"/>
-                    <field name="task_id" context="{'default_project_id': project_id}" domain="[('project_id', '=', project_id)]"/>
+                    <field name="task_id" context="{'default_project_id': project_id, 'hr_timesheet_display_remaining_hours': True}" domain="[('project_id', '=', project_id)]"/>
                     <field name="unit_amount" widget="timesheet_uom" sum="Total"/>
                 </tree>
             </field>
@@ -69,7 +69,7 @@
                             <group>
                                 <field name="date"/>
                                 <field name="project_id" required="1"/>
-                                <field name="task_id"/>
+                                <field name="task_id" context="{'hr_timesheet_display_remaining_hours': True}"/>
                                 <field name="name"/>
                                 <field name="company_id" groups="base.group_multi_company"/>
                             </group>
