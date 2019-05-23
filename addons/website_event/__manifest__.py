@@ -12,6 +12,8 @@
         'data/event_data.xml',
         'views/res_config_settings_views.xml',
         'views/event_templates.xml',
+        'views/event_components.xml',
+        'views/event_options.xml',
         'views/event_views.xml',
         'security/ir.model.access.csv',
         'security/event_security.xml',

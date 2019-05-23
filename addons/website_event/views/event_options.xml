@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+<!-- Index • Events List -->
+<template id="opt_index_events_list" inherit_id="website_event.index" active="True" customize_show="True" name="Events List">
+    <xpath expr="//t[@t-set='opt_index_events_list']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+    <xpath expr="//div[@id='o_we_main_col']" position="inside">
+        <t t-call="website_event.events_list"/>
+    </xpath>
+</template>
+
+<!-- Index • Sidebar -->
+<template id="opt_index_sidebar" inherit_id="website_event.index" active="True" customize_show="True" name="Right Sidebar">
+    <xpath expr="//t[@t-set='opt_index_sidebar']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+    <xpath expr="//div[@id='o_we_main_col']" position="after">
+        <t t-call="website_event.sidebar"/>
+    </xpath>
+</template>
+
+<!-- Index • Topbar -->
+<template id="opt_index_topbar" inherit_id="website_event.index" active="True" customize_show="True" name="Top Topbar">
+    <!-- <xpath expr="//t[@t-set='opt_index_topbar']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath> -->
+    <xpath expr="//section[@id='o_we_main']" position="before">
+        <t t-call="website_event.topbar">
+
+                <h3 class="my-0 navbar-brand mr-4">Events</h3>
+                <ul id="o_we_topbar_filters" class="nav"/>
+
+        </t>
+    </xpath>
+</template>
+
+<!-- Index Events • Layout • Columns -->
+<template id="opt_index_events_list_columns" inherit_id="website_event.events_list" active="True" customize_show="True" name="Layout • Columns">
+    <xpath expr="//t[@t-set='opt_events_list_columns']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+</template>
+
+<!-- Index Events • Style • Cards -->
+<template id="opt_index_events_list_cards" inherit_id="website_event.events_list" active="False" customize_show="True" name="Styles • Cards">
+    <xpath expr="//t[@t-set='opt_events_list_cards']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+</template>
+
+<!-- Index Events • Content • Images -->
+<template id="opt_index_events_list_images" inherit_id="website_event.events_list" active="True" customize_show="True" name="Content • Images">
+    <xpath expr="//t[@t-set='opt_events_list_images']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+</template>
+
+<!-- Index Events • Content • Speakers -->
+<template id="opt_index_events_list_speakers" inherit_id="website_event.events_list" active="False" customize_show="True" name="Content • Speakers">
+    <xpath expr="//t[@t-set='opt_events_list_speakers']" position="attributes">
+        <attribute name="t-value">True</attribute>
+    </xpath>
+</template>
+
+<!-- Topbar • Date Filters -->
+<template id="opt_we_time_filters" inherit_id="website_event.opt_index_topbar" active="True" customize_show="True" name="Filter by Date">
+    <xpath expr="//ul[@id='o_we_topbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <t t-call="website_event.time_filters"/>
+        </li>
+    </xpath>
+</template>
+
+<!-- Topbar • Category Filters -->
+<template id="opt_we_category_filters" inherit_id="website_event.opt_index_topbar" active="True" customize_show="True" name="Filter by Category">
+    <xpath expr="//ul[@id='o_we_topbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <t t-call="website_event.category_filters"/>
+        </li>
+    </xpath>
+</template>
+
+<!-- Topbar - Country Filters -->
+<template id="opt_we_location_filters" inherit_id="website_event.opt_index_topbar" active="True" customize_show="True" name="Filter by Country">
+    <xpath expr="//ul[@id='o_we_topbar_filters']" position="inside">
+        <li class="nav-item dropdown">
+            <t t-call="website_event.location_filters"/>
+        </li>
+    </xpath>
+</template>
+
+<!-- OPT - Topbar - Search Box -->
+<template id="opt_we_search_box" inherit_id="website_event.opt_index_topbar" active="True" customize_show="True" name="Search box">
+    <xpath expr="//ul[@id='o_we_topbar_filters']" position="after">
+        <t t-call="website_event.search_box">
+            <t t-set="_classes" t-value="'form-inline d-inline-block ml-auto'"/>
+        </t>
+    </xpath>
+</template>
+
+<!-- Index Sidebar - Events in your Country -->
+<template id="country_event" inherit_id="website_event.sidebar" active="True" customize_show="True" name="Country Events">
+    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+        <t t-call="website_event.s_country_events"/>
+    </xpath>
+</template>
+
+<!-- Index Sidebar - Events in your Country -->
+<template id="opt_index_about_us" inherit_id="website_event.sidebar" active="True" customize_show="True" name="About us">
+    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+        <t t-call="website_event.about_us"/>
+    </xpath>
+</template>
+
+<!-- Index Sidebar - Events in your Country -->
+<template id="opt_index_follow_us" inherit_id="website_event.sidebar" active="True" customize_show="True" name="Follow us">
+    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+        <t t-call="website_event.follow_us"/>
+    </xpath>
+</template>
+
+<!-- Layout • Topbar -->
+<template id="opt_layout_topbar" inherit_id="website_event.layout" active="True" customize_show="True" name="Top Bar">
+    <xpath expr="//t[@t-raw='0']" position="before">
+        <t t-call="website_event.topbar">
+            <div id="o_we_topbar_container" class="container justify-content-start">
+            </div>
+        </t>
+    </xpath>
+</template>
+
+
+<template id="breadcumb" inherit_id="website_event.opt_layout_topbar" active="True" customize_show="True" name="Breadcrumb">
+    <xpath expr="//div[@id='o_we_topbar_container']" position="before">
+        <ol id="o_we_breadcrumb" class="breadcrumb m-0 p-0">
+            <li class="breadcrumb-item">
+                <i class="fa fa-long-arrow-left mr-2"/>
+                <a href="/event">All Events</a>
+            </li>
+            <!-- TODO - Date -->
+            <li t-if="event.event_type_id" class="breadcrumb-item">
+                <i class="fa fa-folder-open mr-2"/><a t-attf-href="/event?type=#{event.event_type_id.id}" t-esc="event.event_type_id.name"/>
+            </li>
+            <li t-if="event.country_id" class="breadcrumb-item">
+                <i class="fa fa-map-marker mr-2"/><a t-attf-href="/event?country=#{event.country_id.id}" t-esc="event.country_id.name"/>
+            </li>
+            <li class="breadcrumb-item active">
+                <span t-field="event.name"/>
+            </li>
+        </ol>
+    </xpath>
+</template>
+
+<template id="submenu" inherit_id="website_event.layout" name="Submenu">
+    <xpath expr="//t[@t-raw='0']" position="before">
+    <div id="o_we_submenu" t-if="event.menu_id" class="navbar navbar-expand-md navbar-light my-3">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#o_wevent_navbar_event_content" aria-controls="o_wevent_navbar_event_content" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="o_wevent_navbar_event_content">
+            <ul class="navbar-nav">
+                <t t-foreach="event.menu_id.child_id" t-as="submenu">
+                    <t t-call="website.submenu">
+                        <t t-set="item_class" t-value="'nav-item'"/>
+                        <t t-set="link_class" t-value="'nav-link'"/>
+                    </t>
+                </t>
+            </ul>
+        </div>
+    </div>
+</xpath>
+</template>
+
+</odoo>

@@ -3,12 +3,17 @@
     background-color: gray('200');
 }
 
-.o_index_event_img_overlay {
-    // TODO - Vertically align the image inside this box.
+.o_event_header {
     height: 150px;
 }
 
-#o_index_toolbar {
+.o_event_img_overlay {
+    pointer-events: none;
+}
+
+
+
+#o_we_toolbar_filters {
     $dropdown-item-padding-y: 0.375rem;
     $dropdown-item-padding-x: 1rem;
     .dropdown-toggle {
@@ -38,4 +43,8 @@
             background-color: color-yiq($primary);
         }
     }
+}
+
+.country_events_list .toast {
+    box-shadow: none;
 }

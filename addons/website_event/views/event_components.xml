@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="blog_cover">
+        <div
+            t-att-data-use_size="use_size"
+            t-att-data-use_filters="use_filters"
+            t-att-data-use_text_size="use_text_size"
+            t-att-data-use_text_align="use_text_align"
+            t-attf-class="o_event_cover_container d-flex flex-column #{use_size and cover_properties.get('resize_class') or ''}  #{use_text_size and cover_properties.get('text_size_class') or ''} #{use_text_align and cover_properties.get('text_align_class') or ''} #{additionnal_classes or ''}">
+
+            <div class="o_blog_cover_component o_blog_cover_image" t-attf-style="background-image: #{cover_properties.get('background-image')};"/>
+            <div t-if="use_filters" t-attf-class="o_event_cover_component o_event_cover_filter #{cover_properties.get('background-color')}" t-attf-style="opacity: #{cover_properties.get('opacity', 0.0)};"/>
+            <t t-raw="0"/>
+        </div>
+    </template>
+
+<template id="events_list_loop" name="Default list of Events">
+
+    <t t-if="opt_events_list_images">
+        <t t-set="o_event_header" t-value="'o_event_header'"/>
+        <t t-set="o_event_date" t-value="'bg-light shadow rounded'"/>
+        <t t-set="o_event_img_overlay" t-value="'card-img-overlay'"/>
+    </t>
+
+    <t t-if="opt_events_list_cards">
+        <t t-set="o_event_wrapper" t-value="'card'"/>
+        <!-- <t t-set="o_event_img" t-value="'card-img-top'"/> -->
+        <t t-set="o_event_body" t-value="'card-body'"/>
+        <t t-set="o_event_body_title" t-value="'card-title'"/>
+        <t t-set="o_event_footer" t-value="'card-footer small d-flex justify-content-between'"/>
+    </t>
+
+
+
+
+    <!-- <span t-if="not event.website_published" class="badge badge-danger badge-pill px-3 py-2 text-uppercase">Unpublished</span>
+    <span t-if="event.is_participating" class="badge badge-info badge-pill px-3 py-2 text-uppercase">Participating</span> -->
+
+    <div t-foreach="event_ids" t-as="event" itemscope="itemscope" itemtype="http://schema.org/Event" t-attf-class="#{opt_event_size} my-3">
+    <article t-attf-class="o_event_wrapper #{o_event_wrapper}">
+
+        <header t-attf-class="overflow-hidden position-relative #{o_event_header} #{events_cover_properties[event_index].get('background-color')}">
+            <div t-attf-class="p-3 #{o_event_img_overlay or 'o_event_img_overlay'}">
+                <div t-attf-class="float-right text-center #{o_event_date or 'o_event_date'}">
+                    <div t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%b')" class="text-uppercase small pt-2 px-2"/>
+                    <div t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%d')" class="h5 font-weight-bold m-0 pb-2 px-2"/>
+                </div>
+            </div>
+            <t t-if="opt_events_list_images and events_cover_properties[event_index].get('img_url')">
+                <a t-attf-href="/event/#{ slug(event) }/#{(not event.menu_id) and 'register' or ''}" class="d-flex h-100">
+                    <img itemprop="image" t-att-src="events_cover_properties[event_index].get('img_url')" t-attf-class="img-fluid align-self-center #{o_event_img}" t-att-alt="event.name"/>
+                </a>
+            </t>
+        </header>
+
+        <div t-attf-class="#{o_event_body or 'o_event_body'}">
+            <h4 t-attf-class="mb-0 #{o_event_body_title or 'o_event_body_title mt-3'}">
+                <a itemprop="url" t-attf-href="/event/#{ slug(event) }/#{(not event.menu_id) and 'register' or ''}">
+                    <span itemprop="name" t-field="event.name"/>
+                </a>
+            </h4>
+            <small t-if="event.organizer_id" class="text-600 text-nowrap text-truncate">
+                Organized by <span t-field="event.organizer_id" itemprop="organizer"/>
+            </small>
+            <div class="my-3">
+                <span t-if="event.is_online" class="d-block"><b>Online</b> - <a href="#">Start watching</a></span>
+                <span t-else="" itemprop="location" t-field="event.address_id" t-options='{"widget": "contact", "fields": ["city"], "no_marker": "true"}'/>
+                <span t-field="event.with_context(tz=event.date_tz).date_begin" t-options='{"time_only":"True", "hide_seconds":"True"}'/>
+                <i class="fa fa-1x fa-caret-right mx-1"/>
+                <span t-field="event.with_context(tz=event.date_tz).date_end" t-options='{"time_only":"True", "hide_seconds":"True"}'/>
+            </div>
+            <small t-if="event.event_type_id">
+                <i class="fa fa-1x fa-fw fa-folder-open " role="img" aria-label="Event type" title="Event type"/>
+                <a t-attf-href="/event?type=#{event.event_type_id.id}">
+                    <t t-esc="event.event_type_id.name"/>
+                </a>
+            </small>
+
+            <hr t-if="not opt_events_list_cards"/>
+        </div>
+        <footer t-attf-class="o_event_footer #{o_event_footer}">
+            <t t-raw="price"/>
+            <!-- TODO - Display smallest and highest ticket price - eg. FREE ~ $99 -->
+            <t t-set="price">
+                <span itemprop="price" content="0">
+                    <b>$100 ~ $1,200</b>
+                </span>
+            </t>
+            <small><em>~125 tickets availables</em></small>
+        </footer>
+    </article>
+</div>
+</template>
+
+
+<template id="time_filters">
+    <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+        <!-- TODO - Display the active filter instead of this hardcoded label -->
+        <span>Next Event</span>
+    </a>
+    <div class="dropdown-menu">
+        <t t-foreach="dates" t-as="date">
+            <t t-if="date[3] or (date[0] in ('old','all'))">
+                <a t-attf-href="/event?{{ keep_query('country', 'type', date=date[0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('date') == date[0] and ' active' or ''}"><t t-esc="date[1]"/>
+                    <span t-if="date[3]" class="badge badge-pill py-1 px-2 ml-auto"><t t-esc="date[3]"/></span>
+                </a>
+            </t>
+        </t>
+    </div>
+</template>
+
+<template id="category_filters">
+    <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+        <!-- TODO - Display the active filter instead of this hardcoded label -->
+        <span>All Categories</span>
+    </a>
+    <div class="dropdown-menu">
+        <t t-foreach="types" t-as="type">
+            <t t-if="type['event_type_id']">
+                <a t-attf-href="/event?{{ keep_query('country', 'date', type=type['event_type_id'][0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('type') == str(type['event_type_id'] and type['event_type_id'][0]) and ' active' or ''}"><t t-esc="type['event_type_id'][1]"/>
+                    <span class="badge badge-pill ml-auto"><t t-esc="type['event_type_id_count']"/></span></a>
+            </t>
+        </t>
+    </div>
+</template>
+
+<template id="location_filters">
+    <a href="#" role="button" class="nav-link dropdown-toggle" data-toggle="dropdown">
+        <!-- TODO - Display the active filter instead of this hardcoded label -->
+        <span>All countries</span>
+    </a>
+    <div class="dropdown-menu">
+        <t t-foreach="countries" t-as="country">
+            <t t-if="country['country_id']">
+                <a t-attf-href="/event?{{ keep_query('type', 'date', country=country['country_id'][0]) }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('country') == str(country['country_id'] and country['country_id'][0]) and ' active' or ''}">
+                    <t t-esc="country['country_id'][1]"/>
+                    <span class="badge badge-pill ml-auto"><t t-esc="country['country_id_count']"/></span>
+                </a>
+            </t>
+            <t t-if="not country['country_id']">
+                <a t-attf-href="/event?{{ keep_query('type', 'date', country='online') }}" t-attf-class="dropdown-item d-flex align-items-center #{searches.get('country') == 'online' and ' active' or ''}">
+                    <span>Online Events</span>
+                    <span class="badge ml-auto"><t t-esc="country['country_id_count']"/></span>
+                </a>
+            </t>
+        </t>
+    </div>
+</template>
+
+<template id="search_box" name="Search box">
+    <!-- TODO - Make it works -->
+    <form id="o_we_search_box" t-attf-class="#{_classes}">
+        <div class="input-group">
+            <input class="form-control" type="search" placeholder="Search" aria-label="Search"/>
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="submit"><i class="fa fa-search"/></button>
+            </div>
+        </div>
+    </form>
+</template>
+
+
+
+<template id="about_us" name="About us">
+    <div class="o_we_sidebar_block pl-5 mb-5">
+        <h6 class="text-uppercase pb-2 mb-4 border-bottom font-weight-bold">About us</h6>
+        <div>
+            <p>Write a small text here to describe your events or company.</p>
+        </div>
+    </div>
+    <div id="oe_structure_website_event_about_us_1" class="oe_structure"/>
+</template>
+
+<!-- Follow us -->
+<template id="follow_us" name="Follow us">
+
+        <div class="o_we_sidebar_block pl-5">
+            <h6 class="text-uppercase pb-2 mb-4 border-bottom font-weight-bold">Follow Us</h6>
+            <div class="o_we_social_links d-flex flex-wrap mx-n1">
+                <t t-set="classes">bg-100 border mx-1 mb-2 rounded-circle d-flex align-items-center justify-content-center text-decoration-none</t>
+                <a t-if="website.social_facebook" t-att-href="website.social_facebook" aria-label="Facebook" title="Facebook" t-att-class="classes"><i class="fa fa-facebook-square text-facebook"/></a>
+                <a t-if="website.social_twitter" t-att-href="website.social_twitter" t-att-class="classes"><i class="fa fa-twitter text-twitter" aria-label="Twitter" title="Twitter"/></a>
+                <a t-if="website.social_linkedin" t-att-href="website.social_linkedin" t-att-class="classes"><i class="fa fa-linkedin text-linkedin" aria-label="LinkedIn" title="LinkedIn"/></a>
+                <a t-if="website.social_youtube" t-att-href="website.social_youtube" t-att-class="classes"><i class="fa fa-youtube-play text-youtube" aria-label="Youtube" title="Youtube"/></a>
+                <a t-if="website.social_googleplus" t-att-href="website.social_googleplus" t-att-class="classes"><i class="fa fa-google-plus-square text-google-plus" aria-label="Google Plus" title="Google Plus"/></a>
+                <a t-if="website.social_github" t-att-href="website.social_github" t-att-class="classes"><i class="fa fa-github text-github" aria-label="Github" title="Github"/></a>
+                <a t-if="website.social_instagram" t-att-href="website.social_instagram" t-att-class="classes"><i class="fa fa-instagram text-instagram" aria-label="Instagram" title="Instagram"/></a>
+                <a t-if="blog" t-att-href="'/blog/%s/feed' % (blog.id)" t-att-class="classes"><i class="fa fa-rss-square" aria-label="RSS" title="RSS"/></a>
+            </div>
+            <t t-call="website_mail.follow" t-if="event">
+                <t t-set="email" t-value="user_id.email"/>
+                <t t-set="object" t-value="blog"/>
+                <t t-set="div_class" t-value="'pt-2'"/>
+            </t>
+        </div>
+
+</template>
+
+<!-- Index Sidebar - Photos -->
+<template id="event_right_photos" inherit_id="website_event.sidebar" active="False" customize_show="True" name="Photos">
+    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+        <figure class="figure o_figure_relative_layout w-100">
+            <img class="figure-img img-fluid" src="/website_event/static/src/img/openerp_enterprise_of_the_year.png" alt=""/>
+            <figcaption class="figure-caption text-center"><a href="/event">Photos of Past Events</a></figcaption>
+        </figure>
+        <figure class="figure o_figure_relative_layout w-100">
+            <img class="figure-img img-fluid" src="/website_event/static/src/img/training.jpg" alt=""/>
+            <figcaption class="figure-caption text-center"><a href="/event">Our Trainings</a></figcaption>
+        </figure>
+    </xpath>
+</template>
+
+<!-- Index Sidebar - Quotes -->
+<template id="event_right_quotes" inherit_id="website_event.sidebar" active="False" customize_show="True" name="Quotes">
+    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+        <div class="card mb-3 bg-secondary">
+            <div class="card-body">
+                <blockquote class="m-0">
+                    <p>
+                        <i>Write here a quote from one of your attendees.
+                        It gives confidence in your
+                        events.</i>
+                    </p>
+                    <small>Author</small>
+                </blockquote>
+            </div>
+        </div>
+    </xpath>
+</template>
+
+</odoo>
