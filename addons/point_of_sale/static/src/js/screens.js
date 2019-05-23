@@ -1940,12 +1940,7 @@ var PaymentScreenWidget = ScreenWidget.extend({
         }
 
         var lines = order.get_paymentlines();
-        var due   = order.get_due();
-        var extradue = 0;
-        if (due && lines.length  && due !== order.get_due(lines[lines.length-1])) {
-            extradue = due;
-        }
-
+        var extradue = this.compute_extradue(order);
 
         this.$('.paymentlines-container').empty();
         var lines = $(QWeb.render('PaymentScreen-Paymentlines', { 
@@ -1964,6 +1959,14 @@ var PaymentScreenWidget = ScreenWidget.extend({
         });
             
         lines.appendTo(this.$('.paymentlines-container'));
+    },
+    compute_extradue: function (order) {
+        var lines = order.get_paymentlines();
+        var due   = order.get_due();
+        if (due && lines.length  && due !== order.get_due(lines[lines.length-1])) {
+            return due;
+        }
+        return 0;
     },
     click_paymentmethods: function(id) {
         var cashregister = null;
