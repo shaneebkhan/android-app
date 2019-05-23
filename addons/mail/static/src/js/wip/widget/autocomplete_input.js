@@ -14,7 +14,9 @@ class AutocompleteInput extends Component {
     }
 
     mounted() {
-        this.trigger('mounted');
+        if (this.props.focusOnMount) {
+            this.el.focus();
+        }
         $(this.el).autocomplete({
             select: (ev, ui) => this._onAutocompleteSelect(ev, ui),
             source: (req, res) => this._onAutocompleteSource(req, res),
@@ -49,14 +51,14 @@ class AutocompleteInput extends Component {
 
     /**
      * @private
-     * @param {Object} ev
+     * @param {Event} ev
      * @param {Object} ui
      */
     _onAutocompleteSelect(ev, ui) {
         if (this.props.select) {
             this.props.select(ev, ui);
         } else {
-            this.trigger("select", ui.item);
+            this.trigger("select", ev, ui);
         }
     }
 

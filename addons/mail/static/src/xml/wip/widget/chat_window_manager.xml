@@ -3,29 +3,21 @@
 
     <div t-name="mail.wip.widget.ChatWindowManager" owl="1"
          class="o_wip_chat_window_manager">
-        <t t-foreach="computed.visible"
+        <t t-foreach="props.computed.visible"
            t-as="data">
-            <t t-if="data.item === 'new_message'"
-               t-widget="ChatWindowNewMessage"
-               t-props="{ direction, offset: data.offset }"
-               t-key="'new_message'"
-               t-ref="'new_message'"
-               t-on-close="_onCloseChatWindowNewMessage"
-               t-on-select-thread="_onSelectThreadFromChatWindowNewMessage"/>
-            <t t-else=""
-               t-widget="ChatWindow"
-               t-props="{ threadLID: data.item, direction, offset: data.offset, options: chatWindowOptions(data_index) }"
+            <t t-widget="ChatWindow"
+               t-props="{ item: data.item, direction, offset: data.offset, options: chatWindowOptions(data_index) }"
                t-key="data.item"
                t-ref="data.item"
                t-on-close="_onCloseChatWindow"
+               t-on-select-thread="_onSelectThreadChatWindow"
                t-on-shift-left="_onShiftLeftChatWindow"
                t-on-shift-right="_onShiftRightChatWindow"
-               t-on-redirect="_onRedirect"
-               t-on-toggle-fold="_onToggleFoldChatWindow"/>
+               t-on-redirect="_onRedirect"/>
         </t>
-        <t t-if="computed.hidden.showMenu"
+        <t t-if="props.computed.hidden.showMenu"
            t-widget="HiddenMenu"
-           t-props="{ items: computed.hidden.items, direction, offset: computed.hidden.offset }"
+           t-props="{ items: props.computed.hidden.items, direction, offset: props.computed.hidden.offset }"
            t-ref="'hidden_menu'"
            t-key="'hidden_menu'"
            t-on-close-item="_onCloseChatWindow"

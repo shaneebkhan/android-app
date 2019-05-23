@@ -15,7 +15,7 @@ function mapStateToProps(state, ownProps) {
     return {
         GLOBAL_HEIGHT: state.global.innerHeight,
         threads: ownProps.items
-            .filter(item => item !== 'blank')
+            .filter(item => item !== 'new_message')
             .map(lid => state.threads[lid]),
     };
 }
@@ -32,12 +32,12 @@ class HiddenMenu extends Component {
         this.state = { toggleShow: false };
         this.template = 'mail.wip.widget.ChatWindowHiddenMenu';
         this.widgets = { ChatWindowHeader };
-        this._documentEventListener = ev => this._onDocumentClick(ev);
+        this._globalCaptureEventListener = ev => this._onClickCaptureGlobal(ev);
     }
 
     mounted() {
         this._apply();
-        document.addEventListener('click', this._documentEventListener);
+        document.addEventListener('click', this._globalCaptureEventListener, true);
     }
 
     patched() {
@@ -45,7 +45,7 @@ class HiddenMenu extends Component {
     }
 
     willUnmount() {
-        document.removeEventListener('click', this._documentEventListener);
+        document.removeEventListener('click', this._globalCaptureEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -97,20 +97,14 @@ class HiddenMenu extends Component {
 
     /**
      * @private
-     */
-    _onClickToggle() {
-        this.state.toggleShow = !this.state.toggleShow;
-    }
-
-    /**
-     * @private
      * @param {MouseEvent} ev
      */
-    _onDocumentClick(ev) {
+    _onClickCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
         if (ev.target === this.el) {
             return;
         }
-        if (ev.target.closest(`#${this.id}`)) {
+        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
             return;
         }
         this.state.toggleShow = false;
@@ -118,20 +112,35 @@ class HiddenMenu extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.threadLID
+     * @param {MouseEvent} ev
      */
-    _onItemClose({ threadLID }) {
-        this.trigger('close-item', { threadLID });
+    _onClickToggle(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.state.toggleShow = !this.state.toggleShow;
     }
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.threadLID
+     * @param {MouseEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.item
      */
-    _onItemSelect({ threadLID }) {
-        this.trigger('select-item', { threadLID });
+    _onCloseItem(ev, { item }) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('close-item', ev, { item });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.item
+     */
+    _onSelectItem(ev, { item }) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('select-item', ev, { item });
+        this.state.toggleShow = false;
     }
 }
 

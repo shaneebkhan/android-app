@@ -36,7 +36,7 @@ class Thread extends Component {
             this._loadThread();
         }
         this._renderedThreadCacheLID = this.props.threadCacheLID;
-        this.trigger('rendered');
+        this.trigger('rendered', {});
     }
 
     patched() {
@@ -51,7 +51,7 @@ class Thread extends Component {
             }
         }
         this._renderedThreadCacheLID = this.props.threadCacheLID;
-        this.trigger('rendered');
+        this.trigger('rendered', {});
     }
 
     //--------------------------------------------------------------------------
@@ -121,8 +121,16 @@ class Thread extends Component {
     // Handlers
     //--------------------------------------------------------------------------
 
-    _onRedirect({ id, model }) {
-        this.trigger('redirect', { id, model });
+    /**
+     * @private
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {integer} param1.id
+     * @param {string} param1.model
+     */
+    _onRedirect(ev, { id, model }) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('redirect', ev, { id, model });
     }
 }
 

@@ -25,7 +25,7 @@ class SystrayMessagingMenu extends Component {
     constructor(...args) {
         super(...args);
         this.DEBUG = true;
-        this.id = 'o_systray_messaging_menu';
+        this.id = 'systray_messaging_menu';
         this.state = {
             filter: 'all',
             toggleShow: false,
@@ -36,16 +36,15 @@ class SystrayMessagingMenu extends Component {
         if (this.DEBUG) {
             window.systray_messaging_menu = this;
         }
-
-        this._documentEventListener = ev => this._onDocumentClick(ev);
+        this._globalCaptureEventListener = ev => this._onClickCaptureGlobal(ev);
     }
 
     mounted() {
-        document.addEventListener('click', this._documentEventListener);
+        document.addEventListener('click', this._globalCaptureEventListener, true);
     }
 
     willUnmount() {
-        document.removeEventListener('click', this._documentEventListener);
+        document.removeEventListener('click', this._globalCaptureEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -68,7 +67,24 @@ class SystrayMessagingMenu extends Component {
      * @private
      * @param {MouseEvent} ev
      */
+    _onClickCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
+        if (ev.target === this.el) {
+            return;
+        }
+        if (ev.target.closest(`[data-odoo-id="${this.id}"`)) {
+            return;
+        }
+        this._reset();
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onClickFilter(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.filter = ev.currentTarget.dataset.filter;
     }
 
@@ -77,11 +93,12 @@ class SystrayMessagingMenu extends Component {
      * @param {MouseEvent} ev
      */
     _onClickNewMessage(ev) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].clickNewMessage = true;
-        this.env.store.commit('chat_window_manager/open_new_message');
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.env.store.commit('chat_window_manager/open', {
+            item: 'new_message',
+            mode: 'last_visible',
+        });
         this._reset();
     }
 
@@ -90,23 +107,11 @@ class SystrayMessagingMenu extends Component {
      * @param {MouseEvent} ev
      */
     _onClickToggleShow(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         ev.preventDefault(); // no redirect href
-        ev.stopPropagation(); // no bootstrap click handler
+        ev.stopPropagation(); // no bootstrap click handler fixme: maybe use our own flesh dropdown menu?
         this.state.toggleShow = !this.state.toggleShow;
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onDocumentClick(ev) {
-        if (ev.target === this.el) {
-            return;
-        }
-        if (ev.target.closest(`#${this.id}`)) {
-            return;
-        }
-        this._reset();
     }
 
     /**
@@ -115,11 +120,9 @@ class SystrayMessagingMenu extends Component {
      * @param {Object} param1
      * @param {string} param1.threadLID
      */
-    _onClickSelectThread(ev, { threadLID }) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].clickSelectedThread = threadLID;
+    _onSelectThread(ev, { threadLID }) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.env.store.dispatch('thread/open', { threadLID });
         this._reset();
     }

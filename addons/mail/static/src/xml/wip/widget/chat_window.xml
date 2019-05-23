@@ -3,22 +3,36 @@
 
    <div t-name="mail.wip.widget.ChatWindow" owl="1"
         class="o_chat_window"
-        t-attf-class="{{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
-        t-att-id="id"
-        t-on-click="_onClick">
+        t-attf-class="{{ props.item === 'new_message' ? 'o_new_message' : '' }}  {{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
+        t-att-data-odoo-id="id"
+        t-on-mousedown="_onMousedown">
       <t t-widget="Header"
-         t-props="{ options, threadLID: props.threadLID }"
-         t-on-click="_onClickHeader"
-         t-on-click-close="_onClickCloseHeader"
-         t-on-click-shift-left="_onClickShiftLeftHeader"
-         t-on-click-shift-right="_onClickShiftRightHeader"/>
-      <t t-widget="Thread"
-         t-props="{ options: threadOptions, threadLID: props.threadLID }"
-         t-on-redirect="_onRedirect"/>
-      <t t-if="showComposer"
-         t-widget="Composer"
-         t-props="{ options: composerOptions, threadLID: props.threadLID }"
-         t-ref="'composer'"/>
+         t-props="{ options, item: props.item }"
+         t-on-close="_onCloseHeader"
+         t-on-select="_onSelectHeader"
+         t-on-shift-left="_onShiftLeftHeader"
+         t-on-shift-right="_onShiftRightHeader"/>
+      <t t-if="props.thread">
+         <t t-widget="Thread"
+            t-props="{ options: threadOptions, threadLID: props.item }"
+            t-on-redirect="_onRedirect"/>
+         <t t-if="showComposer"
+            t-widget="Composer"
+            t-props="{ options: composerOptions, threadLID: props.item }"
+            t-ref="'composer'"
+            t-on-focus="_onFocusComposer"/>
+      </t>
+      <div t-else=""
+           class="o_selection"
+           t-key="'selection'">
+         <span class="o_label">
+            To:
+         </span>
+         <t t-widget="AutocompleteInput"
+            t-props="{ html: true, source: _onAutocompleteSource }"
+            t-ref="'input'"
+            t-on-select="_onAutocompleteSelect"/>
+      </div>
     </div>
 
 </templates>

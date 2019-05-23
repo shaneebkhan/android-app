@@ -45,7 +45,8 @@ class MobileMailboxSelection extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        this.trigger('click-select-thread', ev, {
+        if (ev.odooPrevented) { return; }
+        this.trigger('select-thread', ev, {
             threadLID: ev.currentTarget.dataset.mailboxLid,
         });
     }

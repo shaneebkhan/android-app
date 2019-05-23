@@ -920,7 +920,6 @@
             this.__owl__ = {
                 id: id,
                 vnode: null,
-                isStarted: false,
                 isMounted: false,
                 isDestroyed: false,
                 parent: p,
@@ -1160,7 +1159,6 @@
             if (this.__owl__.isDestroyed) {
                 return Promise.resolve(h("div"));
             }
-            this.__owl__.isStarted = true;
             const qweb = this.env.qweb;
             if (!this.template) {
                 let tmap = TEMPLATE_MAP[qweb.id];
@@ -1229,8 +1227,7 @@
          */
         _mount(vnode, elm) {
             this.__owl__.vnode = patch(elm, vnode);
-            if (this.__owl__.parent &&
-                this.__owl__.parent.__owl__.isMounted &&
+            if (this.__owl__.parent.__owl__.isMounted &&
                 !this.__owl__.isMounted) {
                 this._callMounted();
             }
@@ -1596,6 +1593,9 @@
                     props.push(`${key}: _${val}`);
                 }
             }
+            function formatter(expr) {
+                return "${" + ctx.formatExpression(expr) + "}";
+            }
             for (let i = 0; i < attributes.length; i++) {
                 let name = attributes[i].name;
                 const value = attributes[i].textContent;
@@ -1644,7 +1644,9 @@
                         // attribute contains 'non letters' => we want to quote it
                         attName = '"' + attName + '"';
                     }
-                    const formattedExpr = value.replace(/\{\{.*?\}\}/g, s => "${" + ctx.formatExpression(s.slice(2, -2)) + "}");
+                    const formattedExpr = value
+                        .replace(/\{\{.*?\}\}/g, s => formatter(s.slice(2, -2)))
+                        .replace(/\#\{.*?\}/g, s => formatter(s.slice(2, -1)));
                     const attID = ctx.generateID();
                     let staticVal = node.getAttribute(attName);
                     if (staticVal) {
@@ -1706,6 +1708,8 @@
             }
         }
     }
+    // dev mode enables better error messages or more costly validations
+    QWeb.dev = false;
     //------------------------------------------------------------------------------
     // Compilation Context
     //------------------------------------------------------------------------------
@@ -2129,26 +2133,51 @@
     //------------------------------------------------------------------------------
     // t-on
     //------------------------------------------------------------------------------
+    // these are pieces of code that will be injected into the event handler if
+    // modifiers are specified
+    const MODS_CODE = {
+        prevent: "e.preventDefault();",
+        self: "if (e.target !== this.elm) {return}",
+        stop: "e.stopPropagation();"
+    };
     QWeb.addDirective({
         name: "on",
         priority: 90,
         atNodeCreation({ ctx, fullName, value, nodeID }) {
             ctx.rootContext.shouldDefineOwner = true;
-            const eventName = fullName.slice(5);
+            const [eventName, ...mods] = fullName.slice(5).split(".");
             if (!eventName) {
                 throw new Error("Missing event name with t-on directive");
             }
             let extraArgs;
-            let handler = value.replace(/\(.*\)/, function (args) {
+            let handlerName = value.replace(/\(.*\)/, function (args) {
                 extraArgs = args.slice(1, -1);
                 return "";
             });
-            let error = `(function () {throw new Error('Missing handler \\'' + '${handler}' + \`\\' when evaluating template '${ctx.templateName.replace(/`/g, "'")}'\`)})()`;
-            if (extraArgs) {
-                ctx.addLine(`p${nodeID}.on['${eventName}'] = (context['${handler}'] || ${error}).bind(owner, ${ctx.formatExpression(extraArgs)});`);
+            ctx.addIf(`!context['${handlerName}']`);
+            ctx.addLine(`throw new Error('Missing handler \\'' + '${handlerName}' + \`\\' when evaluating template '${ctx.templateName.replace(/`/g, "'")}'\`)`);
+            ctx.closeIf();
+            let params = extraArgs
+                ? `owner, ${ctx.formatExpression(extraArgs)}`
+                : "owner";
+            let handler;
+            if (mods.length > 0) {
+                handler = `function (e) {`;
+                handler += mods
+                    .map(function (mod) {
+                    return MODS_CODE[mod];
+                })
+                    .join("");
+                handler += `context['${handlerName}'].call(${params}, e);}`;
             }
             else {
-                ctx.addLine(`extra.handlers['${eventName}' + ${nodeID}] = extra.handlers['${eventName}' + ${nodeID}] || (context['${handler}'] || ${error}).bind(owner);`);
+                handler = `context['${handlerName}'].bind(${params})`;
+            }
+            if (extraArgs) {
+                ctx.addLine(`p${nodeID}.on['${eventName}'] = ${handler};`);
+            }
+            else {
+                ctx.addLine(`extra.handlers['${eventName}' + ${nodeID}] = extra.handlers['${eventName}' + ${nodeID}] || ${handler};`);
                 ctx.addLine(`p${nodeID}.on['${eventName}'] = extra.handlers['${eventName}' + ${nodeID}];`);
             }
         }
@@ -2159,7 +2188,7 @@
     QWeb.addDirective({
         name: "ref",
         priority: 95,
-        atNodeCreation({ ctx, nodeID, value, addNodeHook }) {
+        atNodeCreation({ ctx, value, addNodeHook }) {
             const refKey = `ref${ctx.generateID()}`;
             ctx.addLine(`const ${refKey} = ${ctx.formatExpression(value)}`);
             addNodeHook("create", `context.refs[${refKey}] = n.elm;`);
@@ -2231,7 +2260,7 @@
     QWeb.addDirective({
         name: "transition",
         priority: 96,
-        atNodeCreation({ ctx, value, addNodeHook }) {
+        atNodeCreation({ value, addNodeHook }) {
             let name = value;
             const hooks = {
                 create: `this.utils.transitionCreate(n.elm, '${name}');`,
@@ -2246,6 +2275,148 @@
     //------------------------------------------------------------------------------
     // t-widget
     //------------------------------------------------------------------------------
+    /**
+     * The t-widget directive is certainly a complicated and hard to maintain piece
+     * of code.  To help you, fellow developer, if you have to maintain it, I offer
+     * you this advice: Good luck...
+     *
+     * Since it is not 'direct' code, but rather code that generates other code, it
+     * is not easy to understand.  To help you, here  is a detailed and commented
+     * explanation of the code generated by the t-widget directive for the following
+     * situation:
+     * ```xml
+     *   <t t-widget="child" t-key="'somestring'" t-props="{flag:state.flag}"/>
+     * ```
+     *
+     * ```js
+     * // this is the virtual node representing the parent div
+     * let c1 = [], p1 = { key: 1 };
+     * var vn1 = h("div", p1, c1);
+     *
+     * // t-widget directive: we start by evaluating the expression given by t-key:
+     * let key5 = "somestring";
+     *
+     * // We keep the index of the position of the widget in the closure.  We push
+     * // null to reserve the slot, and will replace it later by the widget vnode,
+     * // when it will be ready (do not forget that preparing/rendering a widget is
+     * // asynchronous)
+     * let _2_index = c1.length;
+     * c1.push(null);
+     *
+     * // def3 is the deferred that will contain later either the new widget
+     * // creation, or the props update...
+     * let def3;
+     *
+     * // this is kind of tricky: we need here to find if the widget was already
+     * // created by a previous rendering.  This is done by checking the internal
+     * // `cmap` (children map) of the parent widget: it maps keys to widget ids,
+     * // and, then, if there is an id, we look into the children list to get the
+     * // instance
+     * let w4 =
+     *   key5 in context.__owl__.cmap
+     *   ? context.__owl__.children[context.__owl__.cmap[key5]]
+     *   : false;
+     *
+     * // we evaluate here the props given to the component. It is done here to be
+     * // able to easily reference it later, and also, it might be an expensive
+     * // computation, so it is certainly better to do it only once
+     * let props4 = { flag: context["state"].flag };
+     *
+     * // If we have a widget, currently rendering, but not ready yet, and which was
+     * // rendered with different props, we do not want to wait for it to be ready,
+     * // then update it. We simply destroy it, and start anew.
+     * if (
+     *   w4 &&
+     *   w4.__owl__.renderPromise &&
+     *   !w4.__owl__.isStarted &&
+     *   props4 !== w4.__owl__.renderProps
+     * ) {
+     *   w4.destroy();
+     *   w4 = false;
+     * }
+     *
+     * if (!w4) {
+     *   // in this situation, we need to create a new widget.  First step is
+     *   // to get a reference to the class, then create an instance with
+     *   // current context as parent, and the props.
+     *   let W4 = context.widgets["child"];
+     *   if (!W4) {
+     *     throw new Error("Cannot find the definition of widget 'child'");
+     *   }
+     *   w4 = new W4(owner, props4);
+     *
+     *   // Whenever we rerender the parent widget, we need to be sure that we
+     *   // are able to find the widget instance. To do that, we register it to
+     *   // the parent cmap (children map).  Note that the 'template' key is
+     *   // used here, since this is what identify the widget from the template
+     *   // perspective.
+     *   context.__owl__.cmap[key5] = w4.__owl__.id;
+     *
+     *   // _prepare is called, to basically call willStart, then render the
+     *   // widget
+     *   def3 = w4._prepare();
+     *
+     *   def3 = def3.then(vnode => {
+     *     // we create here a virtual node for the parent (NOT the widget). This
+     *     // means that the vdom of the parent will be stopped here, and from
+     *     // the parent's perspective, it simply is a vnode with no children.
+     *     // However, it shares the same dom element with the component root
+     *     // vnode.
+     *     let pvnode = h(vnode.sel, { key: key5 });
+     *
+     *     // we add hooks to the parent vnode so we can interact with the new
+     *     // widget at the proper time
+     *     pvnode.data.hook = {
+     *       insert(vn) {
+     *         // the _mount method will patch the widget vdom into the elm vn.elm,
+     *         // then call the mounted hooks. However, suprisingly, the snabbdom
+     *         // patch method actually replace the elm by a new elm, so we need
+     *         // to synchronise the pvnode elm with the resulting elm
+     *         let nvn = w4._mount(vnode, vn.elm);
+     *         pvnode.elm = nvn.elm;
+     *       },
+     *       remove() {
+     *         // apparently, in some cases, it is necessary to call the destroy
+     *         // method here
+     *         w4.destroy();
+     *       },
+     *       destroy() {
+     *         // and here...
+     *         w4.destroy();
+     *       }
+     *     };
+     *     // the pvnode is inserted at the correct position in the div's children
+     *     c1[_2_index] = pvnode;
+     *
+     *     // we keep here a reference to the parent vnode (representing the
+     *     // widget, so we can reuse it later whenever we update the widget
+     *     w4.__owl__.pvnode = pvnode;
+     *   });
+     * } else {
+     *   // this is the 'update' path of the directive.
+     *   // the call to _updateProps is the actual widget update
+     *   def3 = w4._updateProps(props4, extra.forceUpdate, extra.patchQueue);
+     *   def3 = def3.then(() => {
+     *     // if widget was destroyed in the meantime, we do nothing (so, this
+     *     // means that the parent's element children list will have a null in
+     *     // the widget's position, which will cause the pvnode to be removed
+     *     // when it is patched.
+     *     if (w4.__owl__.isDestroyed) {
+     *       return;
+     *     }
+     *     // like above, we register the pvnode to the children list, so it
+     *     // will not be patched out of the dom.
+     *     let pvnode = w4.__owl__.pvnode;
+     *     c1[_2_index] = pvnode;
+     *   });
+     * }
+     *
+     * // we register the deferred here so the parent can coordinate its patch operation
+     * // with all the children.
+     * extra.promises.push(def3);
+     * return vn1;
+     * ```
+     */
     QWeb.addDirective({
         name: "widget",
         extraNames: ["props", "keepalive"],
@@ -2336,13 +2507,11 @@
             }
             ctx.addLine(`let w${widgetID} = ${templateID} in context.__owl__.cmap ? context.__owl__.children[context.__owl__.cmap[${templateID}]] : false;`);
             ctx.addLine(`let props${widgetID} = ${props || "{}"};`);
-            ctx.addLine(`let sameProps${widgetID} = w${widgetID} && props${widgetID} === w${widgetID}.__owl__.renderProps`);
-            ctx.addIf(`w${widgetID} && w${widgetID}.__owl__.renderPromise && !w${widgetID}.__owl__.vnode && !sameProps${widgetID}`);
+            ctx.addIf(`w${widgetID} && w${widgetID}.__owl__.renderPromise && !w${widgetID}.__owl__.vnode && props${widgetID} !== w${widgetID}.__owl__.renderProps`);
             ctx.addLine(`w${widgetID}.destroy();`);
             ctx.addLine(`w${widgetID} = false`);
             ctx.closeIf();
-            ctx.addLine(`let isNew${widgetID} = !w${widgetID};`);
-            ctx.addIf(`isNew${widgetID}`);
+            ctx.addIf(`!w${widgetID}`);
             // new widget
             ctx.addLine(`let W${widgetID} = context.widgets['${value}'];`);
             // maybe only do this in dev mode...
@@ -2353,15 +2522,15 @@
                 ctx.addLine(`w${widgetID}.on('${event}', owner, owner['${method}'])`);
             }
             ctx.addLine(`def${defID} = w${widgetID}._prepare();`);
-            ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;pvnode.data.hook = {insert(vn){let nvn=w${widgetID}._mount(vnode, vn.elm);pvnode.elm=nvn.elm;${refExpr}},remove(){${finalizeWidgetCode}},destroy(){${finalizeWidgetCode}}}; w${widgetID}.__owl__.pvnode = pvnode;});`);
+            ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}, hook: {insert(vn){let nvn=w${widgetID}._mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}},remove(){${finalizeWidgetCode}},destroy(){${finalizeWidgetCode}}}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;w${widgetID}.__owl__.pvnode = pvnode;});`);
             ctx.addElse();
             // need to update widget
-            ctx.addIf(`w${widgetID}.__owl__.renderPromise && sameProps${widgetID}`);
-            ctx.addLine(`def${defID} = w${widgetID}.__owl__.renderPromise;`);
-            ctx.addElse();
             ctx.addLine(`def${defID} = w${widgetID}._updateProps(props${widgetID}, extra.forceUpdate, extra.patchQueue);`);
-            ctx.closeIf();
-            ctx.addLine(`def${defID} = def${defID}.then(()=>{if (w${widgetID}.__owl__.isDestroyed) {return};${tattStyle ? `w${widgetID}.el.style=${tattStyle};` : ""}${updateClassCode}let pvnode=h(w${widgetID}.__owl__.pvnode.sel, {key: ${templateID}});pvnode.elm=w${widgetID}.el;pvnode.data.hook = {insert(a){a.elm.parentNode.replaceChild(w${widgetID}.el,a.elm);a.elm=w${widgetID}.el;w${widgetID}.__mount();},remove(){${finalizeWidgetCode}}, destroy() {${finalizeWidgetCode}}};c${ctx.parentNode}[_${dummyID}_index]=pvnode;});`);
+            let keepAliveCode = "";
+            if (keepAlive) {
+                keepAliveCode = `pvnode.data.hook.insert = vn => {vn.elm.parentNode.replaceChild(w${widgetID}.el,vn.elm);vn.elm=w${widgetID}.el;w${widgetID}.__mount();};`;
+            }
+            ctx.addLine(`def${defID} = def${defID}.then(()=>{if (w${widgetID}.__owl__.isDestroyed) {return};${tattStyle ? `w${widgetID}.el.style=${tattStyle};` : ""}${updateClassCode}let pvnode=w${widgetID}.__owl__.pvnode;${keepAliveCode}c${ctx.parentNode}[_${dummyID}_index]=pvnode;});`);
             ctx.closeIf();
             ctx.addLine(`extra.promises.push(def${defID});`);
             if (node.hasAttribute("t-if") ||
@@ -2596,8 +2765,6 @@
      * - loadTemplates
      * - escape
      * - debounce
-     * - patch
-     * - unpatch
      */
     function whenReady(fn) {
         if (document.readyState === "complete") {
@@ -2678,61 +2845,13 @@
             }
         };
     }
-    function patch$1(C, patchName, patch) {
-        const proto = C.prototype;
-        if (!proto.__patches) {
-            proto.__patches = {
-                origMethods: {},
-                patches: {},
-                current: []
-            };
-        }
-        if (proto.__patches.patches[patchName]) {
-            throw new Error(`Patch [${patchName}] already exists`);
-        }
-        proto.__patches.patches[patchName] = patch;
-        applyPatch(proto, patch);
-        proto.__patches.current.push(patchName);
-        function applyPatch(proto, patch) {
-            Object.keys(patch).forEach(function (methodName) {
-                const method = patch[methodName];
-                if (typeof method === "function") {
-                    const original = proto[methodName];
-                    if (!(methodName in proto.__patches.origMethods)) {
-                        proto.__patches.origMethods[methodName] = original;
-                    }
-                    proto[methodName] = function (...args) {
-                        this._super = original;
-                        return method.call(this, ...args);
-                    };
-                }
-            });
-        }
-    }
-    function unpatch(C, patchName) {
-        const proto = C.prototype;
-        const patchInfo = proto.__patches;
-        delete proto.__patches;
-        // reset to original
-        for (let k in patchInfo.origMethods) {
-            proto[k] = patchInfo.origMethods[k];
-        }
-        // apply other patches
-        for (let name of patchInfo.current) {
-            if (name !== patchName) {
-                patch$1(C, name, patchInfo.patches[name]);
-            }
-        }
-    }
 
     var _utils = /*#__PURE__*/Object.freeze({
         whenReady: whenReady,
         loadJS: loadJS,
         loadTemplates: loadTemplates,
         escape: escape,
-        debounce: debounce,
-        patch: patch$1,
-        unpatch: unpatch
+        debounce: debounce
     });
 
     /**
@@ -2741,6 +2860,22 @@
      *
      * Note that dynamic values, such as a date or a commit hash are added by rollup
      */
+    const __info__ = {};
+    Object.defineProperty(__info__, "mode", {
+        get() {
+            return QWeb.dev ? "dev" : "prod";
+        },
+        set(mode) {
+            QWeb.dev = mode === "dev";
+            if (QWeb.dev) {
+                const url = `https://github.com/odoo/owl/blob/master/doc/tooling.md#development-mode`;
+                console.warn(`Owl is running in 'dev' mode.  This is not suitable for production use. See ${url} for more information.`);
+            }
+            else {
+                console.log(`Owl is now running in 'prod' mode.`);
+            }
+        }
+    });
     const utils = _utils;
 
     exports.Component = Component;
@@ -2748,12 +2883,13 @@
     exports.Observer = Observer;
     exports.QWeb = QWeb;
     exports.Store = Store;
+    exports.__info__ = __info__;
     exports.connect = connect;
     exports.utils = utils;
 
-    exports._version = '0.10.0';
-    exports._date = '2019-05-16T15:49:45.110Z';
-    exports._hash = 'f59759e';
-    exports._url = 'https://github.com/odoo/owl';
+    exports.__info__.version = '0.11.0';
+    exports.__info__.date = '2019-05-24T15:24:26.346Z';
+    exports.__info__.hash = 'b032be2';
+    exports.__info__.url = 'https://github.com/odoo/owl';
 
 }(this.owl = this.owl || {}));

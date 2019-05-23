@@ -10,7 +10,6 @@ const _t = core._t;
 
 function init() {
     const odoobot = new Partner({ id: 'odoobot', name: _t("OdooBot") });
-
     return {
         //----------------------------------------------------------------------
         // Misc.
@@ -18,6 +17,79 @@ function init() {
         MESSAGE_FETCH_LIMIT: 30,
         cannedResponses: {},
         commands: {},
+        //----------------------------------------------------------------------
+        // Chat Window Manager
+        //----------------------------------------------------------------------
+        /**
+         * State slice related to the chat window manager
+         */
+        chatWindowManager: {
+            /**
+             * Counter used to determine when an autofocus behaviour should
+             * occur. This is necessary in case the autofocusItem does not
+             * change, but we want to autofocus it nonetheless.
+             */
+            autofocusCounter: 0,
+            /**
+             * Reference to chat window manager item (either 'new_message' or a
+             * minimized thread LID) that should be auto-focus. If this value is
+             * set and differs from locally value tracked by chat window
+             * manager, it should auto-focus the corresponding item. For
+             * instance, if this value is 'new_message', it should auto-focus
+             * the 'new_message' chat window.
+             */
+            autofocusItem: undefined,
+            /**
+             * Computed data from items and their screen position. To be used
+             * by the chat window manager to draw chat windows on screen.
+             * This property should only be modified by the mutation
+             * `chat_window_manager/_compute`. New object is assigned on
+             * changes.
+             */
+            computed: {
+                /**
+                 * Amount of visible slots available for items.
+                 */
+                availableVisibleSlots: 0,
+                /**
+                 * Data related to the hidden menu.
+                 */
+                hidden: {
+                    /**
+                     * List of hidden items. Useful to compute counter. Items are
+                     * ordered by their `items` order.
+                     */
+                    items: [],
+                    /**
+                     * Offset of hidden menu starting point from the starting point
+                     * of chat window manager. Makes only sense if it is visible.
+                     */
+                    offset: 0,
+                    /**
+                     * Whether hidden menu is visible or not
+                     */
+                    showMenu: false,
+                },
+                /**
+                 * Data related to visible chat windows. Index determine order of
+                 * items. Value: { item, offset }.
+                 * Offset is offset of starting point of chat window from starting
+                 * point of chat window manager. Items are ordered by their `items`
+                 * order.
+                 */
+                visible: [],
+            },
+            /**
+             * Ordered list of items, from right to left.
+             */
+            items: [],
+            /**
+             * Tracked internal autofocus counter of chat window manager.
+             * This is used to dismiss autofocus on chat window manager in case
+             * it is mounted and the autofocus counter has not changed.
+             */
+            notifiedAutofocusCounter: 0,
+        },
         //----------------------------------------------------------------------
         // Discuss
         //----------------------------------------------------------------------
@@ -52,52 +124,6 @@ function init() {
              * changes.
              */
             stringifiedDomain: '[]',
-        },
-        //----------------------------------------------------------------------
-        // Chat Window Manager
-        //----------------------------------------------------------------------
-        /**
-         * State slice related to the chat window manager
-         */
-        chatWindowManager: {
-            /**
-             * Counter used to determine when an autofocus behaviour should
-             * occur. This is necessary in case the autofocusItem does not
-             * change, but we want to autofocus it nonetheless.
-             */
-            autofocusCounter: 0,
-            /**
-             * Reference to chat window manager item (either 'new_message' or a
-             * minimized thread LID) that should be auto-focus. If this value is
-             * set and differs from locally value tracked by chat window
-             * manager, it should auto-focus the corresponding item. For
-             * instance, if this value is 'new_message', it should auto-focus
-             * the 'new_message' chat window autocomplete input.
-             */
-            autofocusItem: undefined,
-            /**
-             * Tracked available amount of visible slots for chat windows.
-             * Notified by chat window manager, as store may have dedicated
-             * behaviour based on that. For instance, it has to remove
-             * 'new_message' chat window in case there is only 1 available slot
-             * while opening a thread.
-             */
-            notifiedAvailableVisibleSlots: undefined,
-            /**
-             * Tracked autofocus internal autofocus counter of chat window
-             * manager. This is used to dismiss autofocus on chat window manager
-             * in case it is mounted and the autofocus counter has not changed.
-             */
-            notifiedAutofocusCounter: undefined,
-            /**
-             * Whether the 'new_message' chat window is visible or not. This
-             * chat window is always the right-most one.
-             */
-            showNewMessage: false,
-            /**
-             * Ordered list of minimized threads, from right to left.
-             */
-            threadLIDs: [],
         },
         //----------------------------------------------------------------------
         // Global

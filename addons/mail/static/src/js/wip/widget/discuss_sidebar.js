@@ -86,29 +86,25 @@ class Sidebar extends Component {
 
     /**
      * @private
+     * @param {Event} ev
+     * @param {Object} ui
+     * @param {Object} ui.item
+     * @param {integer} ui.item.id
+     * @param {string} [ui.item.special]
      */
-    _onChannelAutocompleteMounted() {
-        this.refs.addChannelAutocompleteInput.focus();
-    }
-
-    /**
-     * @private
-     * @param {Object} item
-     * @param {intege} item.id
-     * @param {string} [item.special]
-     */
-    _onChannelAutocompleteSelect(item) {
+    _onChannelAutocompleteSelect(ev, ui) {
+        if (ev.odooPrevented) { return; }
         if (!this._channelAutocompleteLastSearchVal) {
             return;
         }
-        if (item.special) {
+        if (ui.item.special) {
             this.env.store.dispatch('channel/create', {
                 name: this._channelAutocompleteLastSearchVal,
-                public: item.special,
+                public: ui.item.special,
                 type: 'channel'
             });
         } else {
-            this.env.store.dispatch('channel/join', { channelID: item.id });
+            this.env.store.dispatch('channel/join', { channelID: ui.item.id });
         }
         this.state.isAddingChannel = false;
     }
@@ -155,24 +151,21 @@ class Sidebar extends Component {
 
     /**
      * @private
+     * @param {Event} ev
+     * @param {Object} ui
+     * @param {Object} ui.item
+     * @param {integer} ui.item.id
      */
-    _onChatAutocompleteMounted() {
-        this.refs.addChatAutocompleteInput.focus();
-    }
-
-    /**
-     * @private
-     * @param {Object} item
-     * @param {integer} item.id
-     */
-    _onChatAutocompleteSelect(item) {
-        const partnerID = item.id;
+    _onChatAutocompleteSelect(ev, ui) {
+        if (ev.odooPrevented) { return; }
+        const partnerID = ui.item.id;
         const chat = this.env.store.getters['thread/chat_from_partner']({
             partnerLID: `res.partner_${partnerID}`,
         });
         if (chat) {
-            this.trigger('select-thread', { threadLID: chat.lid });
+            this.trigger('select-thread', ev, { threadLID: chat.lid });
         } else {
+            ev.odooPrevented = true;
             this.env.store.dispatch('channel/create', {
                 autoselect: true,
                 partnerID,
@@ -198,15 +191,21 @@ class Sidebar extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickChannelAdd() {
+    _onClickChannelAdd(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.isAddingChannel = true;
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickChannelTitle() {
+    _onClickChannelTitle(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         return this.env.do_action({
             name: this.env._t("Public Channels"),
             type: 'ir.actions.act_window',
@@ -218,38 +217,52 @@ class Sidebar extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickChatAdd() {
-        return (this.state.isAddingChat = true);
+    _onClickChatAdd(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.state.isAddingChat = true;
     }
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} threadLID
+     * @param {MouseEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.threadLID
      */
-    _onClickItem({ threadLID }) {
-        return this.trigger('select-thread', { threadLID });
+    _onClickItem(ev, { threadLID }) {
+        if (ev.odooPrevented) { return; }
+        return this.trigger('select-thread', ev, { threadLID });
     }
 
     /**
      * @private
+     * @param {Event} ev
      */
-    _onHideAddChannel() {
-        return (this.state.isAddingChannel = false);
+    _onHideAddChannel(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.state.isAddingChannel = false;
     }
 
     /**
      * @private
+     * @param {Event} ev
      */
-    _onHideAddChat() {
-        return (this.state.isAddingDm = false);
+    _onHideAddChat(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.state.isAddingDm = false;
     }
 
     /**
      * @private
+     * @param {KeyboardEvent} ev
      */
-    _onInputQuickSearch() {
+    _onInputQuickSearch(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.quickSearchValue = this.refs.quickSearch.value;
     }
 }

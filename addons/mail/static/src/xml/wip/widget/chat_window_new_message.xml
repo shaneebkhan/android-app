@@ -4,7 +4,7 @@
    <div t-name="mail.wip.widget.ChatWindowNewMessage" owl="1"
         class="o_chat_window o_new_message"
         t-attf-class="{{ state.folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
-        t-att-id="id"
+        t-att-data-odoo-id="id"
         t-on-click="_onClick">
       <!-- header layout duplicates ChatWindowHeader due to lack of xpatch... -->
       <div class="o_wip_chat_window_header"

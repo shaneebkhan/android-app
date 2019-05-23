@@ -4,12 +4,16 @@
     <div t-name="mail.wip.widget.ChatWindowHeader" owl="1"
          class="o_wip_chat_window_header"
          t-on-click="_onClick">
-        <t t-widget="Icon"
-           t-props="{ threadLID: props.threadLID }"/>
-        <div class="o_name">
-            <t t-esc="props.name"/>
+        <t t-if="props.thread"
+           t-widget="Icon"
+           t-props="{ threadLID: props.item }"/>
+        <div class="o_name"
+             t-key="'name'">
+            <t t-esc="name"/>
         </div>
-        <div t-if="props.thread.message_unread_counter > 0" class="o_counter" t-key="'counter'">
+        <div t-if="props.thread and props.thread.message_unread_counter > 0"
+             class="o_counter"
+             t-key="'counter'">
             (<t t-esc="props.thread.message_unread_counter"/>)
         </div>
         <div class="o_autogrow"/>

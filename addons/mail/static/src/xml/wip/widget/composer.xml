@@ -17,7 +17,8 @@
          class="o_core">
         <t t-widget="AutoresizeInput"
            t-props="{ options: inputOptions }"
-           t-on-keydown="_onInputKeydown"
+           t-on-focus="_onFocusInput"
+           t-on-keydown="_onKeydownInput"
            t-ref="'input'"/>
         <div class="o_commands">
             <t t-widget="EmojisButton"

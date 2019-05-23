@@ -29,10 +29,11 @@ class MobileNavbar extends Component {
 
     /**
      * @private
-     * @param {string} tab
+     * @param {MouseEvent} ev
      */
-    _onClick(tab) {
-        this.trigger('select', { tab });
+    _onClick(ev) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('select', ev, { tab: ev.currentTarget.dataset.tab });
     }
 }
 

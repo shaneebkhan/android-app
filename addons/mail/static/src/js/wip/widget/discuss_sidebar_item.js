@@ -31,6 +31,7 @@ class DiscussSidebarItem extends Component {
      */
     constructor(...args) {
         super(...args);
+        this.id = "discuss_sidebar";
         this.template = 'mail.wip.widget.DiscussSidebarItem';
         this.state = { renaming: false };
         this.widgets = { EditableText, Icon };
@@ -87,16 +88,29 @@ class DiscussSidebarItem extends Component {
 
     /**
      * @private
+     * @param {Event} ev
      */
-    _onCancelRenaming() {
+    _onCancelRenaming(ev) {
+        if (ev.odooPrevented) { return; }
         this.state.renaming = false;
     }
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClick() {
-        this.trigger('click', { threadLID: this.props.threadLID });
+    _onClick(ev) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('click', ev, { threadLID: this.props.threadLID });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickEditableText(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
     }
 
     /**
@@ -104,7 +118,10 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClickLeave(ev) {
-        ev.stopPropagation();
+        if (ev.odooPrevented) {
+            return;
+        }
+        ev.odooPrevented = true;
         let prom;
         if (this.props.thread.create_uid === this.env.session.uid) {
             prom = this._askAdminConfirmation();
@@ -122,7 +139,8 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClickRename(ev) {
-        ev.stopPropagation();
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.renaming = true;
     }
 
@@ -131,7 +149,8 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClickSettings(ev) {
-        ev.stopPropagation();
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         return this.env.do_action({
             type: 'ir.actions.act_window',
             res_model: this.props.thread._model,
@@ -146,7 +165,8 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClickUnpin(ev) {
-        ev.stopPropagation();
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         return this.env.store.dispatch('channel/unsubscribe', {
             threadLID: this.props.threadLID,
         });
@@ -154,10 +174,13 @@ class DiscussSidebarItem extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.newName
+     * @param {KeyboardEvent} ev
+     * @param {Object} param1
+     * @param {string} param1.newName
      */
-    _onRename({ newName }) {
+    _onRename(ev, { newName }) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.renaming = false;
         this.env.store.dispatch('thread/rename', {
             name: newName,

@@ -69,7 +69,8 @@ class ThreadPreviewList extends Component {
      * @param {string} param1.threadLID
      */
     _onClickPreview(ev, { threadLID }) {
-        this.trigger('click-select-thread', ev, { threadLID });
+        if (ev.odooPrevented) { return; }
+        this.trigger('select-thread', ev, { threadLID });
     }
 }
 

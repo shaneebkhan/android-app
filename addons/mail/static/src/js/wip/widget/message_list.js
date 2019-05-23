@@ -266,24 +266,29 @@ class MessageList extends Component {
      * @param {MouseEvent} ev
      */
     _onClickLoadMore(ev) {
+        if (ev.odooPrevented) { return; }
         ev.preventDefault();
         this._loadMore();
     }
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {integer} param0.id
-     * @param {string} param0.model
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {integer} param1.id
+     * @param {string} param1.model
      */
-    _onRedirect({ id, model }) {
-        this.trigger('redirect', { id, model });
+    _onRedirect(ev, { id, model }) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('redirect', ev, { id, model });
     }
 
     /**
      * @private
+     * @param {ScrollEvent} ev
      */
-    _onScroll() {
+    _onScroll(ev) {
+        if (ev.odooPrevented) { return; }
         if (!this.el) {
             // could be unmounted in the meantime (due to throttled behavior)
             return;

@@ -95,8 +95,10 @@ class Composer extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClickSend() {
+    _onClickSend(ev) {
+        if (ev.odooPrevented) { return; }
         if (!this.refs.input.value) {
             return;
         }
@@ -105,10 +107,12 @@ class Composer extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.source
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {string} param1.source
      */
-    _onEmojiSelection({ source }) {
+    _onEmojiSelection(ev, { source }) {
+        if (ev.odooPrevented) { return; }
         const input = this.refs.input;
         const cursorPosition = input.getSelectionRange(input);
         const leftSubstring = input.value.substring(0, cursorPosition.start);
@@ -122,9 +126,18 @@ class Composer extends Component {
 
     /**
      * @private
+     * @param {FocusEvent} ev
+     */
+    _onFocusInput(ev) {
+        this.trigger('focus', ev);
+    }
+
+    /**
+     * @private
      * @param {KeyboardEvent} ev
      */
-    _onInputKeydown(ev) {
+    _onKeydownInput(ev) {
+        if (ev.odooPrevented) { return; }
         if (ev.which === $.ui.keyCode.ENTER) {
             if (!this.refs.input.value) {
                 return;

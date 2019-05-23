@@ -72,6 +72,7 @@ const actions = {
      * @param {Object} param0.env
      * @param {Object} param1
      * @param {boolean} [param1.autoselect=false]
+     * @param {string} [param1.chatWindowOpenMode]
      * @param {string} param1.name
      * @param {integer|undefined} [param1.partnerID=undefined]
      * @param {string|undefined} [param1.public=undefined]
@@ -79,7 +80,14 @@ const actions = {
      */
     async 'channel/create'(
         { commit, env, state },
-        { autoselect=false, name, partnerID, public: publicStatus, type }
+        {
+            autoselect=false,
+            chatWindowOpenMode,
+            name,
+            partnerID,
+            public: publicStatus,
+            type,
+        }
     ) {
         const data = await env.rpc({
             model: 'mail.channel',
@@ -97,7 +105,10 @@ const actions = {
             if (state.discuss.open) {
                 commit('discuss/update', { threadLID });
             } else {
-                commit('chat_window_manager/open_thread', { threadLID });
+                commit('chat_window_manager/open', {
+                    item: threadLID,
+                    mode: chatWindowOpenMode,
+                });
             }
         }
     },
@@ -109,10 +120,11 @@ const actions = {
      * @param {Object} param1
      * @param {boolean} [param1.autoselect=false]
      * @param {integer} param1.channelID
+     * @param {string} [param1.chatWindowOpenMode]
      */
     async 'channel/join'(
         { commit, env, state },
-        { autoselect=false, channelID }
+        { autoselect=false, channelID, chatWindowOpenMode }
     ) {
         let channel = state.threads[`mail.channel_${channelID}`];
         if (channel) {
@@ -131,7 +143,10 @@ const actions = {
                     threadLID,
                 });
             } else {
-                commit('chat_window_manager/open_thread', { threadLID });
+                commit('chat_window_manager/open', {
+                    item: threadLID,
+                    mode: chatWindowOpenMode,
+                });
             }
         }
     },
@@ -764,7 +779,10 @@ const actions = {
         if (state.discuss.open) {
             commit('discuss/update', { threadLID });
         } else {
-            commit('chat_window_manager/open_thread', { threadLID });
+            commit('chat_window_manager/open', {
+                item: threadLID,
+                mode: 'last_visible',
+            });
         }
     },
     /**

@@ -68,16 +68,16 @@ class Discuss extends Component {
             open: true,
             threadLID: this.env.discuss.initThreadLID,
         });
-        this._wasMobile = this.isMobile;
-        this.trigger('ready');
+        this._wasMobile = this.props.isMobile;
+        this.trigger('ready', {});
     }
 
     patched() {
-        if (this._wasMobile === this.isMobile) {
+        if (this._wasMobile === this.props.isMobile) {
             return;
         }
-        this._wasMobile = this.isMobile;
-        if (this.isMobile) {
+        this._wasMobile = this.props.isMobile;
+        if (this.props.isMobile) {
             // adapt active mobile navbar tab based on thread in desktop
             this.state.mobileNavbarTab = !this.props.thread ? this.state.mobileNavbarTab
                 : this.props.thread._model === 'mail.box' ? 'mailbox'
@@ -85,7 +85,7 @@ class Discuss extends Component {
                 : this.props.thread.channel_type === 'chat' ? 'chat'
                 : this.state.mobileNavbarTab;
         }
-        this.trigger('update_cp');
+        this.trigger('update_cp', {});
     }
 
     willUnmount() {
@@ -101,8 +101,8 @@ class Discuss extends Component {
      */
     get composerOptions() {
         return {
-            displayAvatar: !this.isMobile,
-            displaySendButton: !this.isMobile,
+            displayAvatar: !this.props.isMobile,
+            displaySendButton: !this.props.isMobile,
         };
     }
 
@@ -166,28 +166,15 @@ class Discuss extends Component {
 
     /**
      * @private
-     * @param {MouseEvent} ev
+     * @param {Event} ev
      * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {integer} param1.id
+     * @param {string} param1.model
      */
-    _onClickSelectThread(ev, { threadLID }) {
-        if (this.refs.thread && this.refs.thread.hasMessages) {
-            this.state.threadCachesInfo[this.props.threadCacheLID] = {
-                scrollTop: this.refs.thread.getScrollTop(),
-            };
-        }
-        this.env.store.commit('discuss/update', { threadLID });
-        this.trigger('thread_selected');
-    }
-
-    /**
-     * @private
-     * @param {Object} param0
-     * @param {integer} param0.id
-     * @param {string} param0.model
-     */
-    _onRedirect({ id, model }) {
+    _onRedirect(ev, { id, model }) {
+        if (ev.odooPrevented) { return; }
         if (model === 'mail.channel') {
+            ev.odooPrevented = true;
             const threadLID = `${model}_${id}`;
             const channel = this.env.store.state.threads[threadLID];
             if (!channel) {
@@ -199,6 +186,7 @@ class Discuss extends Component {
                 this.env.store.commit('discuss/update', { threadLID });
             }
         } else if (model === 'res.partner') {
+            ev.odooPrevented = true;
             const chat = this.env.store.getters['thread/chat_from_partner']({
                 partnerLID: `res.partner_${id}`,
             });
@@ -216,10 +204,12 @@ class Discuss extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.tab
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {string} param1.tab
      */
-    _onSelectMobileNavbarTab({ tab }) {
+    _onSelectMobileNavbarTab(ev, { tab }) {
+        if (ev.odooPrevented) { return; }
         if (this.state.mobileNavbarTab === tab) {
             return;
         }
@@ -227,14 +217,32 @@ class Discuss extends Component {
             threadLID: tab === 'mailbox' ? 'mail.box_inbox' : null,
         });
         this.state.mobileNavbarTab = tab;
-        this.trigger('update_cp');
+        this.trigger('update_cp', ev);
     }
 
     /**
      * @private
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {string} param1.threadLID
      */
-    _onThreadRendered() {
-        this.trigger('update_cp');
+    _onSelectThread(ev, { threadLID }) {
+        if (ev.odooPrevented) { return; }
+        if (this.refs.thread && this.refs.thread.hasMessages) {
+            this.state.threadCachesInfo[this.props.threadCacheLID] = {
+                scrollTop: this.refs.thread.getScrollTop(),
+            };
+        }
+        this.env.store.commit('discuss/update', { threadLID });
+        this.trigger('thread_selected', ev);
+    }
+
+    /**
+     * @private
+     * @param {Event} ev
+     */
+    _onThreadRendered(ev) {
+        this.trigger('update_cp', ev);
     }
 }
 

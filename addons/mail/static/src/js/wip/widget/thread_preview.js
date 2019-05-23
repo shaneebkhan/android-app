@@ -34,7 +34,7 @@ class ThreadPreview extends Component {
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.ThreadPreview';
-        this._id = _.uniqueId('thread_preview');
+        this.id = _.uniqueId('thread_preview');
     }
 
     //--------------------------------------------------------------------------
@@ -80,9 +80,7 @@ class ThreadPreview extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        if (`click_${this._id}` in ev && !ev[`click_${this._id}`]) {
-            return;
-        }
+        if (ev.odooPrevented) { return; }
         this.trigger('click', ev, { threadLID: this.props.threadLID });
     }
 
@@ -91,7 +89,8 @@ class ThreadPreview extends Component {
      * @param {MouseEvent} ev
      */
     _onClickMarkAsRead(ev) {
-        ev[`click_${this._id}`] = false;
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.env.store.dispatch('thread/mark_as_seen', {
             threadLID: this.props.threadLID,
         });

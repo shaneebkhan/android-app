@@ -5,19 +5,22 @@
          class="o_mobile_navbar">
         <div class="o_tab"
              t-att-class="active === 'mailbox' ? 'o_active' : ''"
-             t-on-click="_onClick('mailbox')">
+             data-tab="mailbox"
+             t-on-click="_onClick">
              <span class="fa fa-inbox o_icon"/>
              <span class="o_label">Mailboxes</span>
         </div>
         <div class="o_tab"
              t-att-class="active === 'chat' ? 'o_active' : ''"
-             t-on-click="_onClick('chat')">
+             data-tab="chat"
+             t-on-click="_onClick">
              <span class="fa fa-user o_icon"/>
              <span class="o_label">Chat</span>
         </div>
         <div class="o_tab"
              t-att-class="active === 'channel' ? 'o_active' : ''"
-             t-on-click="_onClick('channel')">
+             data-tab="channel"
+             t-on-click="_onClick">
              <span class="fa fa-users o_icon"/>
              <span class="o_label">Channels</span>
         </div>

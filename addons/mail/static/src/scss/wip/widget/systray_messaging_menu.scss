@@ -33,6 +33,10 @@
 
 .o_mail_wip_systray_messaging_menu {
 
+    &.show {
+        background-color: rgba(black, 0.1);
+    }
+
     > a {
 
         > i {

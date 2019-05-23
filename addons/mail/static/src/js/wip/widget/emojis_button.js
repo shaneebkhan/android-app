@@ -14,7 +14,7 @@ class EmojisButton extends Component {
         super(...args);
         this.template = 'mail.wip.widget.EmojisButton';
         this._$popover = undefined;
-        this._documentEventListener = ev => this._onDocumentClick(ev);
+        this._globalCaptureEventListener = ev => this._onClickCaptureGlobal(ev);
         this._popover = undefined;
         this._popoverID = undefined;
     }
@@ -37,14 +37,14 @@ class EmojisButton extends Component {
                 }
             });
         });
-        this._popover.on('selection', this, ({ source }) => this._onEmojiSelection({ source }));
-        document.addEventListener('click', this._documentEventListener);
+        this._popover.on('selection', this, (ev, { source }) => this._onEmojiSelection(ev, { source }));
+        document.addEventListener('click', this._globalCaptureEventListener, true);
     }
 
     willUnmount() {
         this._hidePopover();
         this._popover.destroy();
-        document.removeEventListener('click', this._documentEventListener);
+        document.removeEventListener('click', this._globalCaptureEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -67,7 +67,8 @@ class EmojisButton extends Component {
      * @private
      * @param {MouseEvent} ev
      */
-    _onDocumentClick(ev) {
+    _onClickCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
         if (ev.target === this.el) {
             return;
         }
@@ -82,12 +83,14 @@ class EmojisButton extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {string} param0.source
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {string} param1.source
      */
-    _onEmojiSelection({ source }) {
+    _onEmojiSelection(ev, { source }) {
+        if (ev.odooPrevented) { return; }
         this._hidePopover();
-        this.trigger('emoji-selection', { source });
+        this.trigger('emoji-selection', ev, { source });
     }
 }
 

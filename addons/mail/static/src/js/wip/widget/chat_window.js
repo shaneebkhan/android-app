@@ -1,6 +1,7 @@
 odoo.define('mail.wip.widget.ChatWindow', function (require) {
 "use strict";
 
+const AutocompleteInput = require('mail.wip.widget.AutocompleteInput');
 const Header = require('mail.wip.widget.ChatWindowHeader');
 const Composer = require('mail.wip.widget.Composer');
 const Thread = require('mail.wip.widget.Thread');
@@ -10,12 +11,12 @@ const { Component, connect } = owl;
 /**
  * @param {Object} state
  * @param {Object} ownProps
- * @param {string} ownProps.threadLID
+ * @param {string} ownProps.item
  * @return {Object}
  */
 function mapStateToProps(state, ownProps) {
     return {
-        thread: state.threads[ownProps.threadLID],
+        thread: state.threads[ownProps.item],
     };
 }
 
@@ -25,26 +26,32 @@ class ChatWindow extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.id = `o_chat_window_${this.props.threadLID}`;
-        this.state = { focused: false };
+        this.id = `chat_window_${this.props.item}`;
+        this.state = {
+            focused: false,
+            folded: false, // used for 'new_message' chat window
+        };
         this.template = 'mail.wip.widget.ChatWindow';
-        this.widgets = { Composer, Header, Thread };
-
-        this._documentEventListener = ev => this._onDocumentClick(ev);
+        this.widgets = { AutocompleteInput, Composer, Header, Thread };
+        this._globalCaptureMousedownEventListener = ev => this._onMousedownCaptureGlobal(ev);
+        this._globalCaptureFocusEventListener = ev => this._onFocusCaptureGlobal(ev);
+        // bind since passed as props
+        this._onAutocompleteSource = this._onAutocompleteSource.bind(this);
     }
 
     mounted() {
         this._applyOffset();
-        document.addEventListener('click', this._documentEventListener);
+        document.addEventListener('mousedown', this._globalCaptureMousedownEventListener, true);
+        document.addEventListener('focus', this._globalCaptureFocusEventListener, true);
     }
 
     /**
      * @param {Object} nextProps
-     * @param {string} [nextProps.threadLID]
+     * @param {string} [nextProps.item]
      */
     willUpdateProps(nextProps) {
-        const { threadLID = this.props.threadLID } = nextProps;
-        this.id = `chat_window_${threadLID}`;
+        const { item = this.props.item } = nextProps;
+        this.id = `chat_window_${item}`;
     }
 
     patched() {
@@ -52,7 +59,8 @@ class ChatWindow extends Component {
     }
 
     willUnmount() {
-        document.removeEventListener('click', this._documentEventListener);
+        document.removeEventListener('mousedown', this._globalCaptureMousedownEventListener, true);
+        document.removeEventListener('focus', this._globalCaptureFocusEventListener, true);
     }
 
     //--------------------------------------------------------------------------
@@ -73,7 +81,10 @@ class ChatWindow extends Component {
      * @return {boolean}
      */
     get folded() {
-        return this.props.thread.fold_state === 'folded';
+        if (this.props.thread) {
+            return this.props.thread.fold_state === 'folded';
+        }
+        return this.state.folded;
     }
 
     /**
@@ -93,7 +104,10 @@ class ChatWindow extends Component {
      * @return {boolean}
      */
     get showComposer() {
-        return this.props.thread._model !== 'mail.box';
+        if (this.props.thread) {
+            return this.props.thread._model !== 'mail.box';
+        }
+        return false;
     }
 
     /**
@@ -113,10 +127,14 @@ class ChatWindow extends Component {
 
     focus() {
         this.state.focused = true;
-        if (!this.showComposer) {
-            return;
+        if (!this.props.thread) {
+            this.refs.input.focus();
+        } else {
+            if (!this.showComposer) {
+                return;
+            }
+            this.refs.composer.focus();
         }
-        this.refs.composer.focus();
     }
 
     //--------------------------------------------------------------------------
@@ -139,89 +157,66 @@ class ChatWindow extends Component {
 
     /**
      * @private
-     * @param {MouseEvent} ev
+     * @param {Event} ev
+     * @param {Object} ui
+     * @param {Object} ui.item
+     * @param {integer} ui.item.id
      */
-    _onClick(ev) {
-        if (this.id in ev && !ev[this.id].click) {
-            return;
+    _onAutocompleteSelect(ev, ui) {
+        if (ev.odooPrevented) { return; }
+        const partnerID = ui.item.id;
+        const partnerLID = `res.partner_${partnerID}`;
+        const chat = this.env.store.getters['thread/chat_from_partner']({ partnerLID });
+        if (chat) {
+            this.trigger('select-thread', ev, {
+                item: this.props.item,
+                threadLID: chat.lid,
+            });
+        } else {
+            this.trigger('close', ev, { item: this.props.item });
+            this.env.store.dispatch('channel/create', {
+                autoselect: true,
+                partnerID,
+                type: 'chat'
+            });
         }
-        this.focus();
+    }
+
+    /**
+     * @private
+     * @param {Object} req
+     * @param {string} req.term
+     * @param {function} res
+     */
+    _onAutocompleteSource(req, res) {
+        return this.env.store.dispatch('partner/search', {
+            callback: res,
+            limit: 10,
+            value: _.escape(req.term)
+        });
     }
 
     /**
      * @private
      * @param {MouseEvent} ev
      */
-    _onClickHeader(ev) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].click = false;
-        this.trigger('toggle-fold', { threadLID: this.props.threadLID });
+    _onCloseHeader(ev) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('close', ev, { item: this.props.item });
     }
 
     /**
      * @private
-     * @param {MouseEvent} ev
+     * @param {FocusEvent} ev
      */
-    _onClickCloseHeader(ev) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].click = false;
-        this.trigger('close', { threadLID: this.props.threadLID });
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onClickShiftLeftHeader(ev) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].click = false;
-        this.trigger('shift-left', { threadLID: this.props.threadLID });
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onClickShiftRightHeader(ev) {
-        if (!ev[this.id]) {
-            ev[this.id] = {};
-        }
-        ev[this.id].click = false;
-        this.trigger('shift-right', { threadLID: this.props.threadLID });
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onDocumentClick(ev) {
+    _onFocusCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
         if (ev.target === this.el) {
+            this.state.focused = true;
             return;
         }
-        if (
-            'o_systray_messaging_menu' in ev &&
-            'clickSelectedThread' in ev['o_systray_messaging_menu'] &&
-            ev['o_systray_messaging_menu'].clickSelectedThread === this.props.threadLID
-        ) {
-            return;
-        }
-        if (this.id in ev) {
-            return;
-        }
-        /**
-         * Necessary to escape ID if it contains '.' in order to use '#'
-         * in selector. e.g:
-         * 'chat_window_mail.channel_1' => 'chat_window_mail\\.channel_1'
-         * Work-around like [id="..."] requires much more processing
-         */
-        const escapedID = this.id.replace('.', '\\\\.');
-        if (ev.target.closest(`#${escapedID}`)) {
+        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
+            this.state.focused = true;
             return;
         }
         this.state.focused = false;
@@ -229,12 +224,84 @@ class ChatWindow extends Component {
 
     /**
      * @private
-     * @param {Object} param0
-     * @param {integer} param0.id
-     * @param {string} param0.model
+     * @param {FocusEvent} ev
      */
-    _onRedirect({ id, model }) {
-        this.trigger('redirect', { id, model });
+    _onFocusComposer(ev) {
+        if (ev.odooPrevented) { return; }
+        this.state.focused = true;
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onMousedown(ev) {
+        if (ev.odooPrevented) { return; }
+        if (ev.button !== 0) { return; } // ignore non-main buttons
+        ev.odooPrevented = true;
+        this.focus();
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onMousedownCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
+        if (ev.button !== 0) { return; } // ignore non-main buttons
+        if (ev.target === this.el) {
+            this.state.focused = true;
+            return;
+        }
+        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
+            this.state.focused = true;
+            return;
+        }
+        this.state.focused = false;
+    }
+
+    /**
+     * @private
+     * @param {Event} ev
+     * @param {Object} param1
+     * @param {integer} param1.id
+     * @param {string} param1.model
+     */
+    _onRedirect(ev, { id, model }) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('redirect', ev, { id, model });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onSelectHeader(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        if (!this.props.thread) {
+            this.state.folded = !this.state.folded;
+        } else {
+            this.env.store.commit('thread/toggle_fold', { threadLID: this.props.item });
+        }
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onShiftLeftHeader(ev) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('shift-left', ev, { item: this.props.item });
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onShiftRightHeader(ev) {
+        if (ev.odooPrevented) { return; }
+        this.trigger('shift-right', ev, { item: this.props.item });
     }
 }
 

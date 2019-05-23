@@ -18,32 +18,133 @@ const mutations = {
      * @param {Object} param0
      * @param {Object} param0.state
      */
-    'chat_window_manager/close_new_message'({ state }) {
-        state.chatWindowManager.showNewMessage = false;
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {Object} param1
-     * @param {string} param1.threadLID
-     */
-    'chat_window_manager/close_thread'({ commit }, { threadLID }) {
-        commit('thread/update', {
-            threadLID,
-            changes: {
-                fold_state: 'closed',
-                is_minimized: false,
-            },
-        });
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {Object} param1
-     * @param {string} param1.item either 'new_message' or minimized thread LID
-     */
-    'chat_window_manager/focus_item'({ state }, { item }) {
+    'chat_window_manager/_compute'({ state }) {
+        const BETWEEN_GAP_WIDTH = 5;
+        const CHAT_WINDOW_WIDTH = 325;
+        const END_GAP_WIDTH = 10;
+        const GLOBAL_WIDTH = state.global.innerWidth;
+        const HIDDEN_MENU_WIDTH = 200; // max width, including width of dropup items
+        const START_GAP_WIDTH = 10;
         const cwm = state.chatWindowManager;
+        const discussOpen = state.discuss.open;
+        const isMobile = state.isMobile;
+        const items = cwm.items;
+        let computed = {
+            /**
+             * Amount of visible slots available for items.
+             */
+            availableVisibleSlots: 0,
+            /**
+             * Data related to the hidden menu.
+             */
+            hidden: {
+                /**
+                 * List of hidden items. Useful to compute counter. Items are
+                 * ordered by their `items` order.
+                 */
+                items: [],
+                /**
+                 * Offset of hidden menu starting point from the starting point
+                 * of chat window manager. Makes only sense if it is visible.
+                 */
+                offset: 0,
+                /**
+                 * Whether hidden menu is visible or not
+                 */
+                showMenu: false,
+            },
+            /**
+             * Data related to visible chat windows. Index determine order of
+             * items. Value: { item, offset }.
+             * Offset is offset of starting point of chat window from starting
+             * point of chat window manager. Items are ordered by their `items`
+             * order.
+             */
+            visible: [],
+        };
+        if (isMobile || discussOpen) {
+            cwm.computed = computed;
+            return;
+        }
+        if (!items.length) {
+            cwm.computed = computed;
+            return;
+        }
+        const relativeGlobalWidth = GLOBAL_WIDTH - START_GAP_WIDTH - END_GAP_WIDTH;
+        const maxAmountWithoutHidden = Math.floor(
+            relativeGlobalWidth / (CHAT_WINDOW_WIDTH + BETWEEN_GAP_WIDTH));
+        const maxAmountWithHidden = Math.floor(
+            (relativeGlobalWidth - HIDDEN_MENU_WIDTH - BETWEEN_GAP_WIDTH) /
+            (CHAT_WINDOW_WIDTH + BETWEEN_GAP_WIDTH));
+        if (items.length <= maxAmountWithoutHidden) {
+            // all visible
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const offset = START_GAP_WIDTH + i * (CHAT_WINDOW_WIDTH + BETWEEN_GAP_WIDTH);
+                computed.visible.push({ item, offset });
+            }
+            computed.availableVisibleSlots = maxAmountWithoutHidden;
+        } else if (maxAmountWithHidden > 0) {
+            // some visible, some hidden
+            let i;
+            for (i = 0; i < maxAmountWithHidden; i++) {
+                const item = items[i];
+                const offset = START_GAP_WIDTH + i * ( CHAT_WINDOW_WIDTH + BETWEEN_GAP_WIDTH );
+                computed.visible.push({ item, offset });
+            }
+            if (items.length > maxAmountWithHidden) {
+                computed.hidden.showMenu = true;
+                computed.hidden.offset = computed.visible[i-1].offset
+                    + CHAT_WINDOW_WIDTH + BETWEEN_GAP_WIDTH;
+            }
+            for (let j = maxAmountWithHidden; j < items.length; j++) {
+                computed.hidden.items.push(items[j]);
+            }
+            computed.availableVisibleSlots = maxAmountWithHidden;
+        } else {
+            // all hidden
+            computed.hidden.showMenu = true;
+            computed.hidden.offset = START_GAP_WIDTH;
+            computed.hidden.items.concat(items);
+            console.warn('cannot display any visible chat windows (screen is too small)');
+            computed.availableVisibleSlots = 0;
+        }
+        cwm.computed = computed;
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.item either 'new_message' or thread LID, a valid
+     *   item in `items` list of chat window manager.
+     */
+    'chat_window_manager/close'({ commit, state }, { item }) {
+        const cwm = state.chatWindowManager;
+        cwm.items = cwm.items.filter(i => i !== item);
+        if (item !== 'new_message') {
+            commit('thread/update', {
+                threadLID: item,
+                changes: {
+                    fold_state: 'closed',
+                    is_minimized: false,
+                },
+            });
+        }
+        commit('chat_window_manager/_compute');
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.item either 'new_message' or minimized thread LID,
+     *   a valid item in `items` list of chat window manager
+     */
+    'chat_window_manager/focus'({ state }, { item }) {
+        const cwm = state.chatWindowManager;
+        if (!cwm.computed.visible.map(v => v.item).includes(item)) {
+            return;
+        }
         cwm.autofocusItem = item;
         cwm.autofocusCounter++;
     },
@@ -51,45 +152,26 @@ const mutations = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
-     */
-    'chat_window_manager/open_new_message'({ commit, state }) {
-        state.chatWindowManager.showNewMessage = true;
-        commit('chat_window_manager/focus_item', { item: 'new_message' } );
-    },
-    /**
-     * @param {Object} param0
-     * @param {function} param0.commit
-     * @param {Object} param0.state
      * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {string} param1.item item that is invisible
      */
-    'chat_window_manager/open_thread'(
-        { commit, state },
-        { threadLID }
-    ) {
-        commit('thread/update', {
-            threadLID,
-            changes: {
-                fold_state: 'open',
-                is_minimized: true,
-            },
-        });
-        // force this thread to be 1st item
+    'chat_window_manager/make_visible'({ commit, state }, { item }) {
         const cwm = state.chatWindowManager;
-        cwm.threadLIDs = cwm.threadLIDs.filter(lid => lid !== threadLID);
-        cwm.threadLIDs.unshift(threadLID);
-        if (state.chatWindowManager.notifiedAvailableVisibleSlots === 1) {
-            commit('chat_window_manager/close_new_message');
+        const {
+            length: l,
+            [l-1]: { item: lastItem }
+        } = cwm.computed.visible;
+        commit('chat_window_manager/swap', {
+            item1: item,
+            item2: lastItem,
+        });
+        const thread = state.threads[item];
+        if (thread && thread.fold_state !== 'open') {
+            commit('thread/update', {
+                threadLID: item,
+                changes: { fold_state: 'open' },
+            });
         }
-        commit('chat_window_manager/focus_item', { item: threadLID });
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {integer} amount
-     */
-    'chat_window_manager/notify_available_visible_slots'({ state }, amount) {
-        state.chatWindowManager.notifiedAvailableVisibleSlots = amount;
     },
     /**
      * @param {Object} param0
@@ -102,26 +184,75 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {boolean} [param1.focus=true]
+     * @param {string} param1.item either a thread LID or 'new_message', if the
+     *   item is already in `items` and visible, simply focuses it. If it is
+     *   already in `items` and invisible, it swaps with last visible chat
+     *   window. New item is added based on provided mode.
+     * @param {string} [param1.mode='last'] either 'last' or 'last_visible'
      */
-    'chat_window_manager/shift_thread_left'(
-        { commit, set, state },
-        { threadLID }
+    'chat_window_manager/open'(
+        { commit, state },
+        { focus=true, item, mode='last' }
     ) {
         const cwm = state.chatWindowManager;
-        const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
-        if (index === cwm.threadLIDs.length-1) {
-            // already left-most
-            console.log('already left-most thread');
-            return;
+        const thread = state.threads[item];
+        if (cwm.items.includes(item)) {
+            // open already minimized item
+            if (mode === 'last_visible' && cwm.computed.hidden.items.includes(item)) {
+                commit('chat_window_manager/make_visible', { item });
+            }
+        } else {
+            // new item
+            cwm.items.push(item);
+            if (item !== 'new_message') {
+                commit('thread/update', {
+                    threadLID: item,
+                    changes: {
+                        fold_state: 'open',
+                        is_minimized: true,
+                    },
+                });
+            }
+            commit('chat_window_manager/_compute');
+            if (mode === 'last_visible') {
+                commit('chat_window_manager/make_visible', { item });
+            }
         }
-        const otherLID = cwm.threadLIDs[index+1];
-        set(cwm.threadLIDs, index, otherLID);
-        set(cwm.threadLIDs, index+1, threadLID);
-        commit('chat_window_manager/focus_item', { item: threadLID });
+        if (thread && thread.fold_state !== 'open') {
+            commit('thread/update', {
+                threadLID: item,
+                changes: { fold_state: 'open' },
+            });
+        }
+        if (focus) {
+            commit('chat_window_manager/focus', { item });
+        }
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.oldItem item to replace
+     * @param {string} param1.newItem item to replace with
+     */
+    'chat_window_manager/replace'({ commit, state }, { oldItem, newItem }) {
+        commit('chat_window_manager/swap', {
+            item1: newItem,
+            item2: oldItem,
+        });
+        commit('chat_window_manager/close', { item: oldItem });
+        const thread = state.threads[newItem];
+        if (thread && !thread.fold_state !== 'open') {
+            commit('thread/update', {
+                threadLID: newItem,
+                changes: { fold_state: 'open' },
+            });
+        }
+        commit('chat_window_manager/focus', { item: newItem });
     },
     /**
      * @param {Object} param0
@@ -129,23 +260,47 @@ const mutations = {
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {string} param1.item either 'new_message' or thread LID
      */
-    'chat_window_manager/shift_thread_right'(
+    'chat_window_manager/shift_left'(
         { commit, set, state },
-        { threadLID }
+        { item }
     ) {
         const cwm = state.chatWindowManager;
-        const index = cwm.threadLIDs.findIndex(lid => lid === threadLID);
+        const index = cwm.items.findIndex(i => i === item);
+        if (index === cwm.items.length-1) {
+            // already left-most
+            return;
+        }
+        const otherItem = cwm.items[index+1];
+        set(cwm.items, index, otherItem);
+        set(cwm.items, index+1, item);
+        commit('chat_window_manager/_compute');
+        commit('chat_window_manager/focus', { item });
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {function} param0.set
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.item either 'new_message' or thread LID
+     */
+    'chat_window_manager/shift_right'(
+        { commit, set, state },
+        { item }
+    ) {
+        const cwm = state.chatWindowManager;
+        const index = cwm.items.findIndex(i => i === item);
         if (index === 0) {
             // already right-most
-            console.log('already right-most thread');
             return;
         }
-        const otherLID = cwm.threadLIDs[index-1];
-        set(cwm.threadLIDs, index, otherLID);
-        set(cwm.threadLIDs, index-1, threadLID);
-        commit('chat_window_manager/focus_item', { item: threadLID });
+        const otherItem = cwm.items[index-1];
+        set(cwm.items, index, otherItem);
+        set(cwm.items, index-1, item);
+        commit('chat_window_manager/_compute');
+        commit('chat_window_manager/focus', { item });
     },
     /**
      * @param {Object} param0
@@ -153,26 +308,23 @@ const mutations = {
      * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {boolean} [param1.autofocusFirst=false]
-     * @param {string} param1.threadLID1
-     * @param {string} param1.threadLID2
+     * @param {string} param1.item1
+     * @param {string} param1.item2
      */
-    'chat_window_manager/swap_threads'(
+    'chat_window_manager/swap'(
         { commit, set, state },
-        { autofocusFirst=false, threadLID1, threadLID2 }
+        { item1, item2 }
     ) {
         const cwm = state.chatWindowManager;
-        const threadLIDs = cwm.threadLIDs;
-        const index1 = threadLIDs.findIndex(lid => lid === threadLID1);
-        const index2 = threadLIDs.findIndex(lid => lid === threadLID2);
+        const items = cwm.items;
+        const index1 = items.findIndex(i => i === item1);
+        const index2 = items.findIndex(i => i === item2);
         if (index1 === -1 || index2 === -1) {
             return;
         }
-        set(threadLIDs, index1, threadLID2);
-        set(threadLIDs, index2, threadLID1);
-        if (autofocusFirst) {
-            commit('chat_window_manager/swap_threads', { item: threadLID1 });
-        }
+        set(items, index1, item2);
+        set(items, index2, item1);
+        commit('chat_window_manager/_compute');
     },
     /**
      * @param {Object} param0
@@ -851,12 +1003,14 @@ const mutations = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
      * @param {Object} param0.state
      */
-    'resize'({ state }) {
+    'resize'({ commit, state }) {
         state.global.innerHeight = window.innerHeight;
         state.global.innerWidth = window.innerWidth;
         state.isMobile = config.device.isMobile;
+        commit('chat_window_manager/_compute');
     },
     /**
      * @param {Object} param0
@@ -1052,11 +1206,20 @@ const mutations = {
         const wasMinimized = thread.is_minimized;
         const wasPinned = thread.pinned;
         thread.update(changes);
-        if (!wasMinimized && thread.is_minimized) {
-            commit('thread/updating:register_minimized', { threadLID });
+        const cwm = state.chatWindowManager;
+        if (
+            !wasMinimized &&
+            thread.is_minimized &&
+            !cwm.items.includes(threadLID)
+        ) {
+            commit('chat_window_manager/open', { item: threadLID });
         }
-        if (wasMinimized && !thread.is_minimized) {
-            commit('thread/updating:unregister_minimized', { threadLID });
+        if (
+            wasMinimized &&
+            !thread.is_minimized &&
+            cwm.items.includes(threadLID)
+        ) {
+            commit('chat_window_manager/close', { item: threadLID });
         }
         if (!wasPinned && thread.isPinned) {
             commit('thread/updating:register_pinned', { threadLID });
@@ -1163,27 +1326,8 @@ const mutations = {
      * @param {Object} param1
      * @param {Object} param1.threadLID
      */
-    'thread/updating:register_minimized'({ state }, { threadLID }) {
-        state.chatWindowManager.threadLIDs.unshift(threadLID);
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {Object} param1
-     * @param {Object} param1.threadLID
-     */
     'thread/updating:register_pinned'({ state }, { threadLID }) {
         state.threadPinnedLIDs.push(threadLID);
-    },
-    /**
-     * @param {Object} param0
-     * @param {Object} param0.state
-     * @param {Object} param1
-     * @param {Object} param1.threadLID
-     */
-    'thread/updating:unregister_minimized'({ state }, { threadLID }) {
-        const cwm = state.chatWindowManager;
-        cwm.threadLIDs = cwm.threadLIDs.filter(item => item !== threadLID);
     },
     /**
      * @param {Object} param0

@@ -5,6 +5,9 @@ const { Component } = owl;
 
 class EditableText extends Component {
 
+    /**
+     * @param {...any} args
+     */
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.EditableText';
@@ -19,39 +22,55 @@ class EditableText extends Component {
     }
 
     willUnmount() {
-        this.trigger('cancel');
+        this.trigger('cancel', {});
     }
 
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
 
-    _onBlur() {
-        this.trigger('cancel');
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onBlur(ev) {
+        this.trigger('cancel', ev);
     }
 
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onClick(ev) {
-        ev.stopPropagation();
+        this.trigger('click', ev);
     }
 
+    /**
+     * @private
+     * @param {KeyboardEvent} ev
+     */
     _onKeydown(ev) {
         switch (ev.key) {
             case 'Enter':
                 this._onKeydownEnter(ev);
                 break;
             case 'Escape':
-                this.trigger('cancel');
+                this.trigger('cancel', ev);
                 break;
         }
     }
 
-    _onKeydownEnter() {
+    /**
+     * @private
+     * @param {KeyboardEvent} ev
+     */
+    _onKeydownEnter(ev) {
         const value = this.el.value;
         const newName = value || this.props.placeholder;
         if (this.props.value !== newName) {
-            this.trigger('validate', { newName: newName });
+            this.trigger('validate', ev, { newName: newName });
         } else {
-            this.trigger('cancel');
+            this.trigger('cancel', ev);
         }
     }
 }

@@ -212,7 +212,7 @@ QUnit.test('sidebar: add channel', async function (assert) {
 
     await this.createDiscuss();
 
-    assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add').length, 1, "should be able to add channel from heade");
+    assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add').length, 1, "should be able to add channel from header");
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add').title, "Add or join a channel");
 
     await testUtils.dom.click(document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add'));

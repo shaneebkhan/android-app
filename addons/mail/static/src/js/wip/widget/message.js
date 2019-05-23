@@ -31,6 +31,7 @@ class Message extends Component {
      */
     constructor(...args) {
         super(...args);
+        this.id = `message_${this.props.messageLID}`;
         this.template = 'mail.wip.widget.Message';
         this.state = {
             timeElapsed: mailUtils.timeFromNow(this.props.message.$date),
@@ -194,8 +195,11 @@ class Message extends Component {
 
     /**
      * @private
+     * @param {MouseEvent} ev
      */
-    _onClick() {
+    _onClick(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         this.state.toggledClick = !this.state.toggledClick;
     }
 
@@ -204,14 +208,14 @@ class Message extends Component {
      * @param {MouseEvent} ev
      */
     _onClickAuthor(ev) {
-        ev.preventDefault();
+        if (ev.odooPrevented) { return; }
         if (!this.options.redirectAuthor) {
             return;
         }
         if (!this.props.author) {
             return;
         }
-        this.trigger('redirect', {
+        this.trigger('redirect', ev, {
             id: this.props.author.id,
             model: this.props.author._model,
         });
@@ -222,8 +226,8 @@ class Message extends Component {
      * @param {MouseEvent} ev
      */
     _onClickOrigin(ev) {
-        ev.preventDefault();
-        this.trigger('redirect', {
+        if (ev.odooPrevented) { return; }
+        this.trigger('redirect', ev, {
             id: this.props.origin.id,
             model: this.props.origin._model,
         });
@@ -234,7 +238,8 @@ class Message extends Component {
      * @param {MouseEvent} ev
      */
     _onClickStar(ev) {
-        ev.stopPropagation();
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
         return this.env.store.dispatch('message/toggle_star', {
             messageLID: this.props.messageLID,
         });

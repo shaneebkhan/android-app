@@ -4,6 +4,7 @@
     <textarea t-name="mail.wip.widget.AutoresizeInput" owl="1"
               class="o_input"
               placeholder="Write something..."
+              t-on-focus="_onFocus"
               t-on-keydown="_onKeydown"
               t-on-input="_onInput"/>
 

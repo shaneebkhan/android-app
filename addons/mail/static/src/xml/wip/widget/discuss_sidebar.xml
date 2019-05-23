@@ -35,9 +35,8 @@
                      t-key="'add_item_channel'">
                     <t t-widget="AutocompleteInput"
                        t-ref="'addChannelAutocompleteInput'"
-                       t-props="{ html: true, source: _onChannelAutocompleteSource }"
+                       t-props="{ focusOnMount: true, html: true, source: _onChannelAutocompleteSource }"
                        t-on-hide="_onHideAddChannel"
-                       t-on-mounted="_onChannelAutocompleteMounted"
                        t-on-select="_onChannelAutocompleteSelect"/>
                 </div>
                 <t t-foreach="quickSearchChannels" t-as="channel">
@@ -63,10 +62,9 @@
                      class="o_item o_add"
                      t-key="'add_item_chat'">
                     <t t-widget="AutocompleteInput"
-                       t-props="{ source: _onChatAutocompleteSource }"
+                       t-props="{ focusOnMount: true, source: _onChatAutocompleteSource }"
                        t-ref="'addChatAutocompleteInput'"
                        t-on-hide="_onHideAddChat"
-                       t-on-mounted="_onChatAutocompleteMounted"
                        t-on-select="_onChatAutocompleteSelect"/>
                 </div>
                 <t t-foreach="quickSearchChats" t-as="chat">

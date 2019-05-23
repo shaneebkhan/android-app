@@ -121,9 +121,19 @@ class AutoresizeInput extends Component {
 
     /**
      * @private
+     * @param {FocusEvent} ev
      */
-    _onInput() {
-        this. _compute();
+    _onFocus(ev) {
+        this.trigger('focus', ev);
+    }
+
+    /**
+     * @private
+     * @param {InputEvent} ev
+     */
+    _onInput(ev) {
+        this._compute();
+        this.trigger('input', ev);
     }
     /**
      * @private

@@ -3,29 +3,29 @@
 
     <div t-name="mail.wip.widget.ChatWindowHiddenMenu" owl="1"
          class="o_hidden_menu dropup"
-         t-att-id="id">
+         t-att-data-odoo-id="id">
         <div class="dropdown-toggle"
              t-att-class="state.toggleShow ? 'show' : ''"
              t-on-click="_onClickToggle">
             <div class="o_icon fa fa-comments-o"/>
             <div class="o_window_counter">
-                <t t-esc="props.threads.length"/>
+                <t t-esc="props.items.length"/>
             </div>
         </div>
         <ul class="dropdown-menu dropdown-menu-right"
             t-att-class="state.toggleShow ? 'show' : ''"
             role="menu"
             t-ref="'list'">
-            <t t-foreach="props.threads"
-               t-as="thread">
+            <t t-foreach="props.items"
+               t-as="item">
                <li class="o_item"
                    role="menuitem"
-                   t-key="'li_' + thread.lid">
+                   t-key="'li_' + item">
                     <t t-widget="ChatWindowHeader"
-                       t-props="{ options: itemOptions, threadLID: thread.lid }"
-                       t-key="'item_' + thread.lid"
-                       t-on-close="_onItemClose"
-                       t-on-select="_onItemSelect"/>
+                       t-props="{ options: itemOptions, item }"
+                       t-key="'item_' + item"
+                       t-on-close="_onCloseItem"
+                       t-on-select="_onSelectItem"/>
                 </li>
             </t>
         </ul>

@@ -7,11 +7,17 @@ const { Component } = owl;
 
 class EmojisPopover extends Component {
 
+    /**
+     * @param {...any} args
+     */
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.EmojisPopover';
     }
 
+    /**
+     * @return {Object[]}
+     */
     get emojis() {
         return emojis;
     }
@@ -20,8 +26,13 @@ class EmojisPopover extends Component {
     // Handlers
     //--------------------------------------------------------------------------
 
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onClickEmoji(ev) {
-        this.trigger('selection', {
+        if (ev.odooPrevented) { return; }
+        this.trigger('selection', ev, {
             source: ev.currentTarget.dataset.source
         });
     }

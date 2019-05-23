@@ -4,6 +4,7 @@
     <div t-name="mail.wip.widget.DiscussSidebarItem" owl="1"
          class="o_item"
          t-attf-class="{{ props.threadLID === 'mail.box_starred' ? 'o_starred_box' : '' }}"
+         t-att-odoo-id="id"
          t-on-click="_onClick"
          t-att-data-thread-lid="props.threadLID">
         <div class="o_active_indicator" t-att-class="props.isActive ? 'o_active' : ''"/>
@@ -13,6 +14,7 @@
             <t t-widget="EditableText"
                t-props="{ placeholder: props.directPartner.name, value: props.name }"
                t-on-cancel="_onCancelRenaming"
+               t-on-click="_onClickEditableText"
                t-on-validate="_onRename"/>
         </div>
         <div t-else=""
