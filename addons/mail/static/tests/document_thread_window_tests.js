@@ -10,7 +10,6 @@ QUnit.module('mail', {}, function () {
 QUnit.module('Thread Window', {}, function () {
 QUnit.module('Document Thread', {
     beforeEach: function () {
-        var partnerID = 44;
         this.data = {
             'mail.message': {
                 fields: {
@@ -48,7 +47,7 @@ QUnit.module('Document Thread', {
                 },
                 records: [{
                     id: 1,
-                    author_id: [1, 'Me'],
+                    author_id: [44, 'Me'],
                     body: '<p>Some Message on a document</p>',
                     channel_ids: [],
                     model: 'some.res.model',
@@ -60,7 +59,7 @@ QUnit.module('Document Thread', {
                     id: 2,
                     model: 'some.res.model',
                     needaction: true,
-                    needaction_partner_ids: [partnerID],
+                    needaction_partner_ids: [44],
                     record_name: "Some Record",
                     res_id: 1,
                 }],
@@ -80,9 +79,7 @@ QUnit.module('Document Thread', {
                 },
             },
         };
-        this.session = {
-            partner_id: partnerID, // so that needaction messages are treated as needactions
-        };
+        this.session = { partner_id: 44 };
         this.services = mailTestUtils.getMailServices();
     },
 });
@@ -199,8 +196,11 @@ QUnit.test('post messages in a document thread window', function (assert) {
         },
     });
     testUtils.mock.intercept(messagingMenu, 'call_service', function (ev) {
-        if (ev.data.service === 'local_storage' && ev.data.method === 'setItem' &&
-            ev.data.args[0] === 'mail.document_threads_last_message') {
+        if (
+            ev.data.service === 'local_storage' &&
+            ev.data.method === 'setItem' &&
+            ev.data.args[0] === 'mail.document_threads_last_message'
+        ) {
             assert.deepEqual(ev.data.args[1], newMessage,
                 "should write sent message in local storage, to share info with other tabs");
         }
