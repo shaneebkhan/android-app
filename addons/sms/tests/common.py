@@ -74,3 +74,48 @@ class MockSMS(common.BaseCase):
 
     def _clear_sms_sent(self):
         self._sms = []
+
+    def assertSMSFailed(self, partners, error_code):
+        failed_sms = self.env['sms.sms'].search([
+            ('partner_id', 'in', partners.ids),
+            ('state', '=', 'error')
+        ])
+        self.assertEqual(len(failed_sms), len(partners))
+        self.assertEqual(set(failed_sms.mapped('error_code')), set([error_code]))
+
+    def assertSMSOutgoing(self, partners, content=None):
+        outgoing_sms = self.env['sms.sms'].search([
+            ('partner_id', 'in', partners.ids),
+            ('state', '=', 'outgoing')
+        ])
+        self.assertEqual(len(outgoing_sms), len(partners))
+        self.assertEqual(set(outgoing_sms.mapped('body')), set([content]))
+
+    def assertSMSNotification(self, partners, content, messages, partners_notif_vals=None):
+        notifications = self.env['mail.notification'].search([
+            ('res_partner_id', 'in', partners.ids),
+            ('mail_message_id', 'in', messages.ids),
+            ('is_sms', '=', True),
+        ])
+        if partners_notif_vals:
+            success_partners = partners.filtered(lambda p: p.id not in partners_notif_vals or partners_notif_vals[p.id]['state'] == 'sent')
+            success_notifications = notifications.filtered(lambda n: n.res_partner_id in success_partners)
+        else:
+            success_partners = partners
+            success_notifications = notifications
+
+        self.assertEqual(notifications.mapped('res_partner_id'), partners)
+        if success_notifications:
+            self.assertEqual(set(success_notifications.mapped('email_status')), set(['sent']))
+        self.assertSMSSent(success_partners.mapped('mobile'), content)
+
+        if partners_notif_vals:
+            for pid, values in partners_notif_vals.items():
+                partner_notification = notifications.filtered(lambda n: n.res_partner_id.id == pid)
+                self.assertTrue(len(partner_notification))
+                self.assertEqual(partner_notification.email_status, values['state'])
+                self.assertEqual(partner_notification.failure_type, values['failure_type'])
+                self.assertSMSFailed(partner_notification.res_partner_id, values['failure_type'])
+
+        for message in messages:
+            self.assertIn(content, message.body)
