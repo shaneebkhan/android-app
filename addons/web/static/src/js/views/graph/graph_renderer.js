@@ -414,6 +414,7 @@ odoo.define('web.GraphRenderer', function (require) {
                         ticks: {
                             callback: this._formatValue.bind(this),
                             suggestedMin: 0,
+                            mirror: true,
                         }
                     }],
                 };
