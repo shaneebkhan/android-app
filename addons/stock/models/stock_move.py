@@ -1137,7 +1137,7 @@ class StockMove(models.Model):
                 .filtered(lambda p: p.quant_ids and len(p.quant_ids) > 1):
             if len(result_package.quant_ids.mapped('location_id')) > 1:
                 raise UserError(_('You cannot move the same package content more than once in the same transfer or split the same package into two location.'))
-        picking = moves_todo and moves_todo[0].picking_id or False
+        pickings = moves_todo and moves_todo.mapped('picking_id') or False
         moves_todo.write({'state': 'done', 'date': fields.Datetime.now()})
         moves_todo.mapped('move_dest_ids')._action_assign()
 
@@ -1146,8 +1146,10 @@ class StockMove(models.Model):
         if self.env.context.get('is_scrap'):
             return moves_todo
 
-        if picking and not cancel_backorder:
-            picking._create_backorder()
+        if pickings:
+            pickings_to_backorder = pickings._check_backorder()
+            if pickings_to_backorder and not cancel_backorder:
+                pickings_to_backorder._create_backorder()
         return moves_todo
 
     def unlink(self):
