@@ -249,7 +249,7 @@ class Lead(models.Model):
             team = self.env['crm.team'].browse(self._context['team_id'])
             if user_id in team.member_ids.ids:
                 return {}
-        team_id = self.env['crm.team']._get_default_team_id(user_id=user_id, domain=[('use_leads', '=', True)] if self._context.get('default_type') == "lead" else [])
+        team_id = self.env['crm.team']._get_default_team_id(user_id=user_id, domain=[('use_leads', '=', True)] if self._context.get('default_type') == "lead" or self.type == 'lead' else [])
         return {'team_id': team_id}
 
     @api.onchange('user_id')

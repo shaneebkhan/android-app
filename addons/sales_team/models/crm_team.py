@@ -21,7 +21,7 @@ class CrmTeam(models.Model):
 
     @api.model
     @api.returns('self', lambda value: value.id if value else False)
-    def _get_default_team_id(self, user_id=None, domain=[]):
+    def _get_default_team_id(self, user_id=None, domain=None):
         if not user_id:
             user_id = self.env.uid
         team_id = self.env['crm.team'].sudo().search([
@@ -31,7 +31,8 @@ class CrmTeam(models.Model):
         if not team_id and 'default_team_id' in self.env.context:
             team_id = self.env['crm.team'].browse(self.env.context.get('default_team_id'))
         if not team_id:
-            default_team_id = self.env['crm.team'].search(domain, limit=1)
+            team_domain = domain or []
+            default_team_id = self.env['crm.team'].search(team_domain, order="sequence ASC", limit=1)
             if default_team_id:
                 try:
                     default_team_id.check_access_rule('read')
@@ -46,6 +47,7 @@ class CrmTeam(models.Model):
         return [(6, 0, [self.env.uid])]
 
     name = fields.Char('Sales Team', required=True, translate=True)
+    sequence = fields.Integer('Sequence', default=10)
     active = fields.Boolean(default=True, help="If the active field is set to false, it will allow you to hide the Sales Team without removing it.")
     company_id = fields.Many2one('res.company', string='Company',
                                  default=lambda self: self.env.company_id)
