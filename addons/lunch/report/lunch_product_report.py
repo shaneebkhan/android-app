@@ -12,7 +12,7 @@ class LunchProductReport(models.Model):
     _order = 'is_favorite desc, is_new desc, last_order_date asc, product_id asc'
 
     id = fields.Integer('ID')
-    product_id = fields.Integer('Product ID')
+    product_id = fields.Many2one('lunch.product', 'Product')
     name = fields.Char('Product Name')
     category_id = fields.Many2one('lunch.product.category', 'Product Category')
     description = fields.Text('Description')
@@ -53,15 +53,14 @@ class LunchProductReport(models.Model):
 
     @api.multi
     def write(self, values):
-        user_id = self.env.user.id
         if 'is_favorite' in values:
-            for report in self:
-                if values['is_favorite']:
-                    self.env.cr.execute('''INSERT INTO lunch_product_favorite_user_rel(product_id, user_id) VALUES (%s, %s)''',
-                                (report.product_id, user_id))
-                else:
-                    self.env.cr.execute('''DELETE FROM lunch_product_favorite_user_rel WHERE product_id=%s AND user_id=%s''',
-                                (report.product_id, user_id))
+            if values['is_favorite']:
+                commands = [(4, product_id) for product_id in self.mapped('product_id').ids]
+            else:
+                commands = [(3, product_id) for product_id in self.mapped('product_id').ids]
+            self.env.user.write({
+                'favorite_lunch_product_ids': commands,
+            })
 
     def init(self):
         tools.drop_view_if_exists(self._cr, self._table)
@@ -86,7 +85,7 @@ class LunchProductReport(models.Model):
                 RIGHT JOIN res_users users ON users.company_id = product.company_id -- multi company
                 LEFT JOIN lunch_product_favorite_user_rel fav ON fav.product_id = product.id AND fav.user_id = users.id
                 JOIN res_groups_users_rel groups ON groups.uid = users.id -- only generate for internal users
-                JOIN lunch_order l_order ON l_order.product_id = product.id AND l_order.user_id = users.id AND l_order.date <= current_date
+                LEFT JOIN lunch_order l_order ON l_order.product_id = product.id AND l_order.user_id = users.id AND l_order.date <= current_date
                 WHERE users.active AND product.active AND groups.gid = %%s --only take into account active products and users
                 GROUP BY product.id, product.name, product.category_id, product.description, product.price, product.supplier_id, product.company_id, product.active, users.id, is_favorite, is_new
             );

@@ -549,7 +549,7 @@ QUnit.module('LunchKanbanView', {
                             views: [[false, 'form']],
                             target: 'new',
                             context: {
-                                default_product_id: undefined,
+                                default_product_id: 1,
                                 line_id: false,
                             },
                         },
