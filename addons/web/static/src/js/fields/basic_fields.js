@@ -1527,6 +1527,7 @@ var AbstractFieldBinary = AbstractField.extend({
     _clearFile: function (){
         var self = this;
         this.set_filename('');
+        this.$('.o_input_file').val('');
         if (!this.isDestroyed()) {
             this._setValue(false).then(function() {
                 self._render();
