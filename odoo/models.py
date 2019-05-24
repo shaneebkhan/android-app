@@ -227,7 +227,7 @@ VALID_AGGREGATE_FUNCTIONS = {
 
 
 class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
-    """ Base class for Odoo models.
+    """Base class for Odoo models.
 
     Odoo models are created by inheriting:
 
@@ -251,38 +251,77 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     explicit representation: a record is represented as a recordset of one
     record.
 
-    To create a class that should not be instantiated, the _register class
-    attribute may be set to False.
+    To create a class that should not be instantiated,
+    the :attr:`~odoo.models.BaseModel._register` attribute may be set to False.
     """
-    _auto = False               # don't create any database backend
-    _register = False           # not visible in ORM registry
-    _abstract = True            # whether model is abstract
-    _transient = False          # whether model is transient
 
-    _name = None                # the model name
-    _description = None         # the model's informal name
-    _custom = False             # should be True for custom models only
+    _auto = False
+    """Whether a database table should be created (default: ``True``)
+    If set to ``False``, override :meth:`~odoo.models.BaseModel.init`
+    to create the database table.
 
-    _inherit = None             # Python-inherited models ('model' or ['model'])
-    _inherits = {}              # inherited models {'parent_model': 'm2o_field'}
-    _constraints = []           # Python constraints (old API)
+    .. tip:: To create a model without any table, inherit
+            from :class:`~odoo.models.AbstractModel`.
+    """
+    _register = False           #: not visible in ORM registry
+    _abstract = True            #: whether model is abstract
+    _transient = False          #: whether model is transient
 
-    _table = None               # SQL table name used by model
-    _sequence = None            # SQL sequence to use for ID field
-    _sql_constraints = []       # SQL constraints [(name, sql_def, message)]
+    _name = None                #: the model name (in dot-notation, module namespace)
+    _description = None         #: the model's informal name
+    _custom = False             #: should be True for custom models only
 
-    _rec_name = None            # field to use for labeling records
-    _order = 'id'               # default order for searching results
-    _parent_name = 'parent_id'  # the many2one field used as parent field
-    _parent_store = False       # set to True to compute parent_path field
-    _date_name = 'date'         # field to use for default calendar view
-    _fold_name = 'fold'         # field to determine folded groups in kanban views
+    _inherit = None
+    """Python-inherited models ('model' or ['model'])
 
-    _needaction = False         # whether the model supports "need actions" (see mail)
-    _translate = True           # False disables translations export for this model
+    * If :attr:`._name` is set, names of parent models to inherit from.
+        Can be a ``str`` if inheriting from a single parent
+    * If :attr:`._name` is unset, name of a single model to extend in-place
+    """
+    _inherits = {}
+    """dictionary mapping the _name of the parent business objects to the
+    names of the corresponding foreign key fields to use::
 
-    _depends = {}               # dependencies of models backed up by sql views
-                                # {model_name: field_names, ...}
+      _inherits = {
+          'a.model': 'a_field_id',
+          'b.model': 'b_field_id'
+      }
+
+    implements composition-based inheritance: the new model exposes all
+    the fields of the inherited models but stores none of them:
+    the values themselves remain stored on the linked record.
+
+    .. ??? .. warning::
+
+      if the same field is defined on multiple
+      :attr:`~odoo.models.Model._inherits`-ed
+
+    """
+    _constraints = []           #: Python constraints (old API)
+
+    _table = None               #: SQL table name used by model if :attr:`_auto`
+    _sequence = None            #: SQL sequence to use for ID field
+    _sql_constraints = []       #: SQL constraints [(name, sql_def, message)]
+
+    _rec_name = None            #: field to use for labeling records, default: ``name``
+    _order = 'id'               #: default order field for searching results
+    _parent_name = 'parent_id'  #: the many2one field used as parent field
+    _parent_store = False
+    """set to True to compute parent_path field.
+
+    Alongside a :attr:`~.parent_path` field, sets up an indexed storage
+    of the tree structure of records, to enable faster hierarchical queries
+    on the records of the current model using the ``child_of`` and
+    ``parent_of`` domain operators.
+    """
+    _date_name = 'date'         #: field to use for default calendar view
+    _fold_name = 'fold'         #: field to determine folded groups in kanban views
+
+    _needaction = False         #: whether the model supports "need actions" (see mail)
+    _translate = True           #: False disables translations export for this model
+
+    #: dependencies of models backed up by sql views {model_name: field_names, ...}
+    _depends = {}
 
     # default values for _transient_vacuum()
     _transient_check_count = 0
@@ -350,7 +389,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
               ----------------------------
                2013-06-18 08:30:37.292809
 
-              >>> str(datetime.datetime.utcnow())
+              str(datetime.datetime.utcnow())
               '2013-06-18 08:31:32.821177'
         """
         def add(name, field):
@@ -1458,14 +1497,15 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
         Get the detailed composition of the requested view like fields, model, view architecture
 
-        :param view_id: id of the view or None
-        :param view_type: type of the view to return if view_id is None ('form', 'tree', ...)
-        :param toolbar: true to include contextual actions
+        :param int view_id: id of the view or None
+        :param str view_type: type of the view to return if view_id is None ('form', 'tree', ...)
+        :param bool toolbar: true to include contextual actions
         :param submenu: deprecated
-        :return: dictionary describing the composition of the requested view (including inherited views and extensions)
+        :return: composition of the requested view (including inherited views and extensions)
+        :rtype: dict
         :raise AttributeError:
-                            * if the inherited view has unknown position to work with other than 'before', 'after', 'inside', 'replace'
-                            * if some tag other than 'position' is found in parent view
+                * if the inherited view has unknown position to work with other than 'before', 'after', 'inside', 'replace'
+                * if some tag other than 'position' is found in parent view
         :raise Invalid ArchitectureError: if there is view type other than form, tree, calendar, search etc defined on the structure
         """
         View = self.env['ir.ui.view']
@@ -1877,7 +1917,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     def _read_group_prepare(self, orderby, aggregated_fields, annotated_groupbys, query):
         """
         Prepares the GROUP BY and ORDER BY terms for the read_group method. Adds the missing JOIN clause
-        to the query if order should be computed against m2o field. 
+        to the query if order should be computed against m2o field.
         :param orderby: the orderby definition in the form "%(field)s %(order)s"
         :param aggregated_fields: list of aggregated fields in the query
         :param annotated_groupbys: list of dictionaries returned by _read_group_process_groupby
@@ -1969,9 +2009,9 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         return {
             'field': split[0],
             'groupby': gb,
-            'type': field_type, 
+            'type': field_type,
             'display_format': display_formats[gb_function or 'month'] if temporal else None,
-            'interval': time_intervals[gb_function or 'month'] if temporal else None,                
+            'interval': time_intervals[gb_function or 'month'] if temporal else None,
             'tz_convert': tz_convert,
             'qualified_field': qualified_field,
         }
@@ -1996,8 +2036,8 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
     @api.model
     def _read_group_format_result(self, data, annotated_groupbys, groupby, domain):
         """
-            Helper method to format the data contained in the dictionary data by 
-            adding the domain corresponding to its values, the groupbys in the 
+            Helper method to format the data contained in the dictionary data by
+            adding the domain corresponding to its values, the groupbys in the
             context and by properly formatting the date/datetime values.
 
         :param data: a single group
@@ -2063,10 +2103,9 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
     @api.model
     def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-        """
-        Get the list of records in list view grouped by the given ``groupby`` fields
+        """Get the list of records in list view grouped by the given ``groupby`` fields.
 
-        :param domain: list specifying search criteria [['field_name', 'operator', 'value'], ...]
+        :param list domain: list specifying search criteria [['field_name', 'operator', 'value'], ...]
         :param list fields: list of fields present in the list view specified on the object.
                 Each element is either 'field' (field name, using the default aggregation),
                 or 'field:agg' (aggregate field with aggregation function 'agg'),
@@ -2074,10 +2113,10 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                 The possible aggregation functions are the ones provided by PostgreSQL
                 (https://www.postgresql.org/docs/current/static/functions-aggregate.html)
                 and 'count_distinct', with the expected meaning.
-        :param list groupby: list of groupby descriptions by which the records will be grouped.  
+        :param list groupby: list of groupby descriptions by which the records will be grouped.
                 A groupby description is either a field (then it will be grouped by that field)
                 or a string 'field:groupby_function'.  Right now, the only functions supported
-                are 'day', 'week', 'month', 'quarter' or 'year', and they only make sense for 
+                are 'day', 'week', 'month', 'quarter' or 'year', and they only make sense for
                 date/datetime fields.
         :param int offset: optional number of records to skip
         :param int limit: optional max number of records to return
@@ -2085,7 +2124,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
                              overriding the natural sort ordering of the
                              groups, see also :py:meth:`~osv.osv.osv.search`
                              (supported only for many2one fields currently)
-        :param bool lazy: if true, the results are only grouped by the first groupby and the 
+        :param bool lazy: if true, the results are only grouped by the first groupby and the
                 remaining groupbys are put in the __context key.  If false, all the groupbys are
                 done in one call.
         :return: list of dictionaries(one dictionary for each record) containing:
@@ -2230,7 +2269,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             # Right now, read_group only fill results in lazy mode (by default).
             # If you need to have the empty groups in 'eager' mode, then the
             # method _read_group_fill_results need to be completely reimplemented
-            # in a sane way 
+            # in a sane way
             result = self._read_group_fill_results(
                 domain, groupby_fields[0], groupby[len(annotated_groupbys):],
                 aggregated_fields, count_field, result, read_group_order=order,
@@ -3022,21 +3061,19 @@ Fields:
 
     @api.multi
     def get_metadata(self):
-        """
-        Returns some metadata about the given records.
+        """Return some metadata about the given records.
 
         :return: list of ownership dictionaries for each requested record
         :rtype: list of dictionaries with the following keys:
 
-                    * id: object id
-                    * create_uid: user who created the record
-                    * create_date: date when the record was created
-                    * write_uid: last user who changed the record
-                    * write_date: date of the last change to the record
-                    * xmlid: XML ID to use to refer to this record (if there is one), in format ``module.name``
-                    * noupdate: A boolean telling if the record will be updated or not
+            * id: object id
+            * create_uid: user who created the record
+            * create_date: date when the record was created
+            * write_uid: last user who changed the record
+            * write_date: date of the last change to the record
+            * xmlid: XML ID to use to refer to this record (if there is one), in format ``module.name``
+            * noupdate: A boolean telling if the record will be updated or not
         """
-
         IrModelData = self.env['ir.model.data'].sudo()
         if self._log_access:
             res = self.sudo().read(LOG_ACCESS_COLUMNS)
@@ -3247,7 +3284,7 @@ Fields:
 
         :raise AccessError: * if user has no write rights on the requested object
                             * if user tries to bypass access rules for write on the requested object
-        :raise ValidateError: if user tries to enter invalid value for a field that is not in selection
+        :raise ValidationError: if user tries to enter invalid value for a field that is not in selection
         :raise UserError: if a loop would be created in a hierarchy of objects a result of the operation (such as setting an object as its own parent)
 
         * For numeric fields (:class:`~odoo.fields.Integer`,
@@ -3549,7 +3586,7 @@ Fields:
         :return: the created records
         :raise AccessError: * if user has no create rights on the requested object
                             * if user tries to bypass access rules for create on the requested object
-        :raise ValidateError: if user tries to enter invalid value for a field that is not in selection
+        :raise ValidationError: if user tries to enter invalid value for a field that is not in selection
         :raise UserError: if a loop would be created in a hierarchy of objects a result of the operation (such as setting an object as its own parent)
         """
         if not vals_list:
@@ -4618,17 +4655,20 @@ Fields:
 
     @api.model
     def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None):
-        """
-        Performs a ``search()`` followed by a ``read()``.
+        """Perform a :meth:`search` followed by a :meth:`read`.
 
-        :param domain: Search domain, see ``args`` parameter in ``search()``. Defaults to an empty domain that will match all records.
-        :param fields: List of fields to read, see ``fields`` parameter in ``read()``. Defaults to all fields.
-        :param offset: Number of records to skip, see ``offset`` parameter in ``search()``. Defaults to 0.
-        :param limit: Maximum number of records to return, see ``limit`` parameter in ``search()``. Defaults to no limit.
-        :param order: Columns to sort result, see ``order`` parameter in ``search()``. Defaults to no sort.
+        :param domain: Search domain, see ``args`` parameter in :meth:`search`.
+            Defaults to an empty domain that will match all records.
+        :param fields: List of fields to read, see ``fields`` parameter in :meth:`read`.
+            Defaults to all fields.
+        :param int offset: Number of records to skip, see ``offset`` parameter in :meth:`search`.
+            Defaults to 0.
+        :param int limit: Maximum number of records to return, see ``limit`` parameter in :meth:`search`.
+            Defaults to no limit.
+        :param order: Columns to sort result, see ``order`` parameter in :meth:`search`.
+            Defaults to no sort.
         :return: List of dictionaries containing the asked fields.
-        :rtype: List of dictionaries.
-
+        :rtype: list(dict).
         """
         records = self.search(domain or [], offset=offset, limit=limit, order=order)
         if not records:
@@ -4739,7 +4779,14 @@ Fields:
         Returns a recordset for the ids provided as parameter in the current
         environment.
 
-        Can take no ids, a single id or an iterable of ids.
+        .. code-block:: python
+
+            self.browse([7, 18, 12])
+            res.partner(7, 18, 12)
+
+        :param ids: id(s)
+        :type ids: int,list(int),None
+        :return: recordset
         """
         if not ids:
             ids = ()
@@ -4768,8 +4815,9 @@ Fields:
     #
 
     def ensure_one(self):
-        """ Verifies that the current recorset holds a single record. Raises
-        an exception otherwise.
+        """Verify that the current recorset holds a single record.
+
+        :raise odoo.exceptions.ValueError: ``len(self) != 1``
         """
         try:
             # unpack to ensure there is only one value is faster than len when true and
@@ -4780,29 +4828,26 @@ Fields:
             raise ValueError("Expected singleton: %s" % self)
 
     def with_env(self, env):
-        """ Returns a new version of this recordset attached to the provided
-        environment
+        """Return a new version of this recordset attached to the provided environment.
+
+        :param env:
+        :type env: :class:`~odoo.api.Environment`
 
         .. warning::
             The new environment will not benefit from the current
             environment's data cache, so later data access may incur extra
             delays while re-fetching from the database.
             The returned recordset has the same prefetch object as ``self``.
-
-        :type env: :class:`~odoo.api.Environment`
         """
         return self._browse(env, self._ids, self._prefetch_ids)
 
     def sudo(self, user=SUPERUSER_ID):
-        """ sudo([user=SUPERUSER])
-
-        Returns a new version of this recordset attached to the provided
-        user.
+        """Return a new version of this recordset attached to the provided user id.
 
         By default this returns a ``SUPERUSER`` recordset, where access
         control and record rules are bypassed.
 
-        .. note::
+        .. warning::
 
             Using ``sudo`` could cause data access to cross the
             boundaries of record rules, possibly mixing records that
@@ -4913,12 +4958,32 @@ Fields:
             return vals if isinstance(vals, BaseModel) else []
 
     def mapped(self, func):
-        """ Apply ``func`` on all records in ``self``, and return the result as a
-            list or a recordset (if ``func`` return recordsets). In the latter
-            case, the order of the returned recordset is arbitrary.
+        """Apply ``func`` on all records in ``self``, and return the result as a
+        list or a recordset (if ``func`` return recordsets). In the latter
+        case, the order of the returned recordset is arbitrary.
 
-            :param func: a function or a dot-separated sequence of field names
-                (string); any falsy value simply returns the recordset ``self``
+        :param func: a function or a dot-separated sequence of field names
+        :type func: callable or str
+        :return: self if func is falsy, result of func applied to all ``self`` records.
+        :rtype: list or recordset
+
+        .. code-block:: python3
+
+            # returns a list of summing two fields for each record in the set
+            records.mapped(lambda r: r.field1 + r.field2)
+
+        The provided function can be a string to get field values:
+
+        .. code-block:: python3
+
+            # returns a list of names
+            records.mapped('name')
+
+            # returns a recordset of partners
+            record.mapped('partner_id')
+
+            # returns the union of all partner banks, with duplicates removed
+            record.mapped('partner_id.bank_ids')
         """
         if not func:
             return self                 # support for an empty path of fields
@@ -4945,10 +5010,19 @@ Fields:
         return recs
 
     def filtered(self, func):
-        """ Select the records in ``self`` such that ``func(rec)`` is true, and
-            return them as a recordset.
+        """Return the records in ``self`` satisfying ``func``.
 
-            :param func: a function or a dot-separated sequence of field names
+        :param func: a function or a dot-separated sequence of field names
+        :type func: callable or str
+        :return: recordset of records satisfying func, may be empty.
+
+        .. code-block:: python3
+
+            # only keep records whose company is the current user's
+            records.filtered(lambda r: r.company_id == user.company_id)
+
+            # only keep records whose partner is a company
+            records.filtered("partner_id.is_company")
         """
         if isinstance(func, str):
             name = func
@@ -4956,13 +5030,18 @@ Fields:
         return self.browse([rec.id for rec in self if func(rec)])
 
     def sorted(self, key=None, reverse=False):
-        """ Return the recordset ``self`` ordered by ``key``.
+        """Return the recordset ``self`` ordered by ``key``.
 
-            :param key: either a function of one argument that returns a
-                comparison key for each record, or a field name, or ``None``, in
-                which case records are ordered according the default model's order
+        :param key: either a function of one argument that returns a
+            comparison key for each record, or a field name, or ``None``, in
+            which case records are ordered according the default model's order
+        :type key: callable or str or None
+        :param bool reverse: if ``True``, return the result in reverse order
 
-            :param reverse: if ``True``, return the result in reverse order
+        .. code-block:: python3
+
+            # sort records by name
+            records.sorted(key=lambda r: r.name)
         """
         if key is None:
             recs = self.search([('id', 'in', self.ids)])
@@ -5666,23 +5745,23 @@ class Model(AbstractModel):
     The system will later instantiate the class once per database (on
     which the class' module is installed).
     """
-    _auto = True                # automatically create database backend
-    _register = False           # not visible in ORM registry, meant to be python-inherited only
-    _abstract = False           # not abstract
-    _transient = False          # not transient
+    _auto = True                #: automatically create database backend
+    _register = False           #: not visible in ORM registry, meant to be python-inherited only
+    _abstract = False           #: not abstract
+    _transient = False          #: not transient
 
 class TransientModel(Model):
     """ Model super-class for transient records, meant to be temporarily
-    persisted, and regularly vacuum-cleaned.
+    persistent, and regularly vacuum-cleaned.
 
     A TransientModel has a simplified access rights management, all users can
     create new records, and may only access the records they created. The super-
     user has unrestricted access to all TransientModel records.
     """
-    _auto = True                # automatically create database backend
-    _register = False           # not visible in ORM registry, meant to be python-inherited only
-    _abstract = False           # not abstract
-    _transient = True           # transient
+    _auto = True                #: automatically create database backend
+    _register = False           #: not visible in ORM registry, meant to be python-inherited only
+    _abstract = False           #: not abstract
+    _transient = True           #: transient
 
 def itemgetter_tuple(items):
     """ Fixes itemgetter inconsistency (useful in some cases) of not returning

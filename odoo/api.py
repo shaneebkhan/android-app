@@ -1,34 +1,9 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-""" This module provides the elements for managing two different API styles,
-    namely the "traditional" and "record" styles.
+"""The Odoo API module defines Odoo Environments and method decorators.
 
-    In the "traditional" style, parameters like the database cursor, user id,
-    context dictionary and record ids (usually denoted as ``cr``, ``uid``,
-    ``context``, ``ids``) are passed explicitly to all methods. In the "record"
-    style, those parameters are hidden into model instances, which gives it a
-    more object-oriented feel.
-
-    For instance, the statements::
-
-        model = self.pool.get(MODEL)
-        ids = model.search(cr, uid, DOMAIN, context=context)
-        for rec in model.browse(cr, uid, ids, context=context):
-            print rec.name
-        model.write(cr, uid, ids, VALUES, context=context)
-
-    may also be written as::
-
-        env = Environment(cr, uid, context) # cr, uid, context wrapped in env
-        model = env[MODEL]                  # retrieve an instance of MODEL
-        recs = model.search(DOMAIN)         # search returns a recordset
-        for rec in recs:                    # iterate over the records
-            print rec.name
-        recs.write(VALUES)                  # update all records in recs
-
-    Methods written in the "traditional" style are automatically decorated,
-    following some heuristics based on parameter names.
+.. todo:: Document this module
 """
 
 __all__ = [
@@ -137,8 +112,9 @@ def propagate(method1, method2):
 
 
 def constrains(*args):
-    """ Decorates a constraint checker. Each argument must be a field name
-    used in the check::
+    """Decorate a constraint checker.
+
+    Each argument must be a field name used in the check::
 
         @api.one
         @api.constrains('name', 'description')
@@ -148,7 +124,7 @@ def constrains(*args):
 
     Invoked on the records on which one of the named fields has been modified.
 
-    Should raise :class:`~odoo.exceptions.ValidationError` if the
+    Should raise :exc:`~odoo.exceptions.ValidationError` if the
     validation failed.
 
     .. warning::
@@ -169,32 +145,32 @@ def constrains(*args):
 
 
 def onchange(*args):
-    """ Return a decorator to decorate an onchange method for given fields.
-        Each argument must be a field name::
+    """Return a decorator to decorate an onchange method for given fields.
 
-            @api.onchange('partner_id')
-            def _onchange_partner(self):
-                self.message = "Dear %s" % (self.partner_id.name or "")
+    Each argument must be a field name::
 
-        In the form views where the field appears, the method will be called
-        when one of the given fields is modified. The method is invoked on a
-        pseudo-record that contains the values present in the form. Field
-        assignments on that record are automatically sent back to the client.
+        @api.onchange('partner_id')
+        def _onchange_partner(self):
+            self.message = "Dear %s" % (self.partner_id.name or "")
 
-        The method may return a dictionary for changing field domains and pop up
-        a warning message, like in the old API::
+    In the form views where the field appears, the method will be called
+    when one of the given fields is modified. The method is invoked on a
+    pseudo-record that contains the values present in the form. Field
+    assignments on that record are automatically sent back to the client.
 
-            return {
-                'domain': {'other_id': [('partner_id', '=', partner_id)]},
-                'warning': {'title': "Warning", 'message': "What is this?"},
-            }
+    The method may return a dictionary for changing field domains and pop up
+    a warning message, like in the old API::
 
+        return {
+            'domain': {'other_id': [('partner_id', '=', partner_id)]},
+            'warning': {'title': "Warning", 'message': "What is this?"},
+        }
 
-        .. warning::
+    .. warning::
 
-            ``@onchange`` only supports simple field names, dotted names
-            (fields of relational fields e.g. ``partner_id.tz``) are not
-            supported and will be ignored
+        ``@onchange`` only supports simple field names, dotted names
+        (fields of relational fields e.g. ``partner_id.tz``) are not
+        supported and will be ignored
     """
     return attrsetter('_onchange', args)
 
@@ -834,11 +810,11 @@ class Environment(Mapping):
         return object.__hash__(self)
 
     def __call__(self, cr=None, user=None, context=None):
-        """ Return an environment based on ``self`` with modified parameters.
+        """Return an environment based on ``self`` with modified parameters.
 
-            :param cr: optional database cursor to change the current cursor
-            :param user: optional user/user id to change the current user
-            :param context: optional context dictionary to change the current context
+        :param cr: optional database cursor to change the current cursor
+        :param user: optional user/user id to change the current user
+        :param context: optional context dictionary to change the current context
         """
         cr = self.cr if cr is None else cr
         uid = self.uid if user is None else int(user)
@@ -846,12 +822,14 @@ class Environment(Mapping):
         return Environment(cr, uid, context)
 
     def ref(self, xml_id, raise_if_not_found=True):
-        """ return the record corresponding to the given ``xml_id`` """
+        """Return the record corresponding to the given ``xml_id``."""
         return self['ir.model.data'].xmlid_to_object(xml_id, raise_if_not_found=raise_if_not_found)
 
     @property
     def user(self):
-        """ return the current user (as an instance) """
+        """Return the current user (as an instance).
+
+        :rtype: :class:`~odoo.addons.base.models.res_users`"""
         return self(user=SUPERUSER_ID)['res.users'].browse(self.uid)
 
     @property
@@ -889,7 +867,10 @@ class Environment(Mapping):
 
     @property
     def lang(self):
-        """ return the current language code """
+        """Return the current language code.
+
+        :rtype: str
+        """
         return self.context.get('lang')
 
     @contextmanager
