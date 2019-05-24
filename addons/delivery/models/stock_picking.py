@@ -82,7 +82,7 @@ class StockPicking(models.Model):
     weight_uom_name = fields.Char(string='Weight unit of measure label', compute='_compute_weight_uom_name', readonly=True, default=_get_default_weight_uom)
     package_ids = fields.Many2many('stock.quant.package', compute='_compute_packages', string='Packages')
     weight_bulk = fields.Float('Bulk Weight', compute='_compute_bulk_weight')
-    shipping_weight = fields.Float("Weight for Shipping", compute='_compute_shipping_weight', help="Total weight of the packages and products which are not in a package. That's the weight used to compute the cost of the shipping.")
+    shipping_weight = fields.Float("Weight for Shipping", compute='_compute_shipping_weight', help="Total weight of the products, packages included. Weight used to compute the cost of the shipping.")
     is_return_picking = fields.Boolean(compute='_compute_return_picking')
     return_label_ids = fields.One2many('ir.attachment', compute='_compute_return_label')
 
