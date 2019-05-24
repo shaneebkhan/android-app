@@ -21,9 +21,9 @@
                 </div>
                 <group name="main_group">
                     <group>
-                        <field name="product_id"
-                               help="Product this lot/serial number contains. You cannot change it anymore if it has already been moved."
-                               attrs="{'readonly': [('id', '!=', False), ('product_id', '!=', False)]}"/>
+                        <field name="product_tmpl_id" invisible="1"/>
+                        <field name="related_product_id" domain="[('product_tmpl_id', '=', product_tmpl_id)]" readonly="False" attrs="{'invisible': [('product_tmpl_id', '=', False)]}" help="Product this lot/serial number contains. You cannot change it anymore if it has already been moved."/>
+                        <field name="product_id" attrs="{'invisible': [('product_tmpl_id', '!=', False)]}" readonly="context.get('set_product_readonly', False)" force_save="1" help="Product this lot/serial number contains. You cannot change it anymore if it has already been moved."/>
                         <label for="product_qty" attrs="{'invisible': [('display_complete', '=', False)]}"/>
                         <div class="o_row" attrs="{'invisible': [('display_complete', '=', False)]}">
                             <field name="product_qty"/>

@@ -14,9 +14,13 @@ class ProductionLot(models.Model):
         'Lot/Serial Number', default=lambda self: self.env['ir.sequence'].next_by_code('stock.lot.serial'),
         required=True, help="Unique Lot/Serial Number")
     ref = fields.Char('Internal Reference', help="Internal reference number in case it differs from the manufacturer's lot/serial number")
+    product_tmpl_id = fields.Many2one('product.template', string='Product Template')
     product_id = fields.Many2one(
         'product.product', 'Product',
         domain=[('type', '=', 'product')], required=True)
+    related_product_id = fields.Many2one(
+        'product.product', 'Lot Product',
+        domain=[('type', '=', 'product')], related="product_id")
     product_uom_id = fields.Many2one(
         'uom.uom', 'Unit of Measure',
         related='product_id.uom_id', store=True, readonly=False)
@@ -74,3 +78,8 @@ class ProductionLot(models.Model):
         if self.user_has_groups('stock.group_stock_manager'):
             self = self.with_context(inventory_mode=True)
         return self.env['stock.quant']._get_quants_action()
+
+    @api.onchange('related_product_id')
+    def onchange_related_product_id(self):
+        if self.related_product_id:
+            self.product_id = self.related_product_id
