@@ -1605,6 +1605,7 @@ class MailThread(models.AbstractModel):
             cid_list = []
             name_list = []
 
+            attachement_values_list = []
             if body:
                 root = lxml.html.fromstring(tools.ustr(body))
                 # first list all attachments that will be needed in body
@@ -1613,7 +1614,6 @@ class MailThread(models.AbstractModel):
                         cids_in_body.add(node.get('src').split('cid:')[1])
                     elif node.get('data-filename'):
                         names_in_body.add(node.get('data-filename'))
-                attachement_values_list = []
 
             # generate values
             for attachment in attachments:

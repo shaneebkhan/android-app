@@ -2,7 +2,7 @@
 
 import time
 from datetime import date
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from odoo import api, fields, models, _
 from odoo.osv import expression
 from odoo.exceptions import RedirectWarning, UserError, ValidationError
@@ -308,11 +308,16 @@ class AccountMove(models.Model):
             res['fields']['line_ids']['views']['tree']['fields']['tax_line_id']['domain'] = [('tag_ids', 'in', [self.env.ref(self._context.get('vat_domain')).id])]
         return res
 
-    @api.model
-    def create(self, vals):
-        move = super(AccountMove, self.with_context(mail_create_nolog=True, check_move_validity=False, partner_id=vals.get('partner_id'))).create(vals)
-        move.assert_balanced()
-        return move
+    # @api.model
+    # def create(self, vals):
+    #     move = super(AccountMove, self.with_context(mail_create_nolog=True, check_move_validity=False, partner_id=vals.get('partner_id'))).create(vals)
+    #     move.assert_balanced()
+    #     return move
+    @api.model_create_multi
+    def create(self, vals_list):
+        move_ids = super(AccountMove, self.with_context(mail_create_nolog=True, check_move_validity=False)).create(vals_list)
+        move_ids.assert_balanced()
+        return move_ids
 
     @api.multi
     def write(self, vals):
@@ -724,6 +729,8 @@ class AccountMoveLine(models.Model):
     @api.multi
     @api.constrains('credit', 'debit', 'date')
     def _check_tax_lock_date2(self):
+        if not all(self.env.companies.mapped('tax_lock_date')):
+            return
         for line in self:
             if (line.tax_ids or line.tax_line_id) and line.date <= (line.company_id.tax_lock_date or date.min):
                 raise ValidationError(_("The operation is refused as it would impact an already issued tax statement. " +

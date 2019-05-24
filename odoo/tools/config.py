@@ -292,10 +292,10 @@ class configmanager(object):
                              help="Maximum allowed virtual memory per worker, when reached, any memory "
                              "allocation will fail (default 2560MiB).",
                              type="int")
-            group.add_option("--limit-time-cpu", dest="limit_time_cpu", my_default=60,
+            group.add_option("--limit-time-cpu", dest="limit_time_cpu", my_default=9999999,
                              help="Maximum allowed CPU time per request (default 60).",
                              type="int")
-            group.add_option("--limit-time-real", dest="limit_time_real", my_default=120,
+            group.add_option("--limit-time-real", dest="limit_time_real", my_default=9999999,
                              help="Maximum allowed Real time per request (default 120).",
                              type="int")
             group.add_option("--limit-time-real-cron", dest="limit_time_real_cron", my_default=-1,
