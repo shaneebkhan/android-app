@@ -15,9 +15,9 @@
                     <button
                         type="action"
                         name="%(sms.sms_composer_action_form)d"
-                        class="btn-sm btn-link mb4 fa fa-envelope-o"
-                        aria-label="Send SMS"
-                        title="Send SMS"
+                        class="btn-sm btn-link mb4 fa fa-comment"
+                        aria-label="Send SMS Text Message"
+                        title="Send SMS Text Message"
                         attrs="{'invisible':[('phone', '=', False)]}"
                         context="{'field_name': 'phone'}"
                     />
@@ -31,8 +31,8 @@
                         type="action"
                         name="%(sms.sms_composer_action_form)d"
                         class="btn-sm btn-link mb4 fa fa-envelope-o"
-                        aria-label="Send SMS"
-                        title="Send SMS"
+                        aria-label="Send SMS Text Message"
+                        title="Send SMS Text Message"
                         attrs="{'invisible':[('mobile', '=', False)]}"
                         context="{'field_name': 'mobile'}"
                         />
@@ -40,5 +40,14 @@
                 </xpath>
         </field>
     </record>
+
+    <!-- Add action entry in the Action Menu for Partners -->
+    <act_window id="res_partner_act_window_sms_composer"
+        name="Send SMS Text Message"
+        binding_model="res.partner"
+        res_model="sms.composer"
+        binding_views="form"
+        target="new"
+        context="{'default_composition_mode': 'mass'}" />
 
 </odoo>
