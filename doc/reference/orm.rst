@@ -1,10 +1,44 @@
 :banner: banners/orm_api.jpg
 
-.. _reference/orm:
+=======
+ORM API
+=======
 
-===
-ORM
-===
+.. automodule:: odoo.models
+
+Creating Models
+===============
+
+Model fields are defined as attributes on the model itself::
+
+    from odoo import models, fields
+    class AModel(models.Model):
+        _name = 'a.model.name'
+
+        field1 = fields.Char()
+
+.. warning:: this means you can not define a field and a method with the same
+             name, they will conflict
+
+By default, the field's label (user-visible name) is a capitalized version of
+the field name, this can be overridden with the ``string`` parameter::
+
+        field2 = fields.Integer(string="an other field")
+
+For the various field types and parameters, see :ref:`the fields reference
+<reference/fields>`.
+
+Default values are defined as parameters on fields, either a value::
+
+    name = fields.Char(default="a value")
+
+or a function called to compute the default value, which should return that
+value::
+
+    def _default_name(self):
+        return self.get_value()
+
+    name = fields.Char(default=_default_name)
 
 Recordsets
 ==========
@@ -14,6 +48,8 @@ set of records of the same model.
 
 .. warning:: contrary to what the name implies, it is currently possible for
              recordsets to contain duplicates. This may change in the future.
+
+.. todo is it still possible?
 
 Methods defined on a model are executed on a recordset, and their ``self`` is
 a recordset::
@@ -117,8 +153,116 @@ for partners and one for countries::
         country = partner.country_id        # first pass prefetches all partners
         countries.add(country.name)         # first pass prefetches all countries
 
-Set operations
+.. _reference/orm/models:
+.. _reference/orm/model:
+
+Models
+======
+
+.. autoclass:: odoo.models.BaseModel()
+
+    .. autoattribute:: _auto
+    .. autoattribute:: _register
+
+    .. autoattribute:: _name
+    .. autoattribute:: _description
+
+    .. autoattribute:: _inherit
+    .. autoattribute:: _inherits
+
+    .. autoattribute:: _rec_name
+    .. autoattribute:: _order
+
+    .. autoattribute:: _date_name
+    .. autoattribute:: _fold_name
+
+    .. autoattribute:: _translate
+
+AbstractModel
+-------------
+
+.. autoclass:: odoo.models.AbstractModel
+
+Model
+-----
+
+.. autoclass:: odoo.models.Model
+
+TransientModel
 --------------
+
+.. autoclass:: odoo.models.TransientModel
+
+.. _reference/orm/models/crud:
+
+Common ORM Methods
+==================
+
+.. currentmodule:: odoo.models
+
+Create/update
+-------------
+
+.. automethod:: Model.create
+
+.. automethod:: Model.copy
+
+.. automethod:: Model.default_get
+
+.. automethod:: Model.name_create
+
+.. automethod:: Model.write
+
+Read/search
+-----------
+
+.. automethod:: Model.browse
+
+.. automethod:: Model.name_search
+
+.. automethod:: Model.read_group
+
+.. automethod:: Model.search
+
+.. automethod:: Model.search_count
+
+Fields/Views
+''''''''''''
+
+.. automethod:: Model.fields_get
+
+.. automethod:: Model.fields_view_get
+
+Unlink
+------
+
+.. automethod:: Model.unlink
+
+.. _reference/orm/records/info:
+
+Record(set) information
+-----------------------
+
+.. autoattribute:: Model.ids
+
+.. attribute:: env
+
+    :class:`~odoo.api.Environment`
+
+.. todo:: Environment documentation
+
+.. automethod:: Model.exists
+
+.. automethod:: Model.ensure_one
+
+.. automethod:: Model.name_get
+
+.. automethod:: Model.get_metadata
+
+.. _reference/orm/records/operations:
+
+Operations
+----------
 
 Recordsets are immutable, but sets of the same model can be combined using
 various set operations, returning new recordsets. Set operations do *not*
@@ -140,53 +284,31 @@ preserve order.
 * ``set1 - set2`` returns a new recordset containing only records of ``set1``
   which are *not* in ``set2``
 
-Other recordset operations
---------------------------
-
 Recordsets are iterable so the usual Python tools are available for
 transformation (:func:`python:map`, :func:`python:sorted`,
 :func:`~python:itertools.ifilter`, ...) however these return either a
 :class:`python:list` or an :term:`python:iterator`, removing the ability to
 call methods on their result, or to use set operations.
 
-Recordsets therefore provide these operations returning recordsets themselves
+Recordsets therefore provide the following operations returning recordsets themselves
 (when possible):
 
-:meth:`~odoo.models.Model.filtered`
-    returns a recordset containing only records satisfying the provided
-    predicate function. The predicate can also be a string to filter by a
-    field being true or false::
+Filter
+''''''
 
-        # only keep records whose company is the current user's
-        records.filtered(lambda r: r.company_id == user.company_id)
+.. automethod:: Model.filtered
 
-        # only keep records whose partner is a company
-        records.filtered("partner_id.is_company")
+Map
+'''
 
-:meth:`~odoo.models.Model.sorted`
-    returns a recordset sorted by the provided key function. If no key
-    is provided, use the model's default sort order::
+.. automethod:: Model.mapped
 
-        # sort records by name
-        records.sorted(key=lambda r: r.name)
+Sort
+''''
 
-:meth:`~odoo.models.Model.mapped`
-    applies the provided function to each record in the recordset, returns
-    a recordset if the results are recordsets::
+.. automethod:: Model.sorted
 
-        # returns a list of summing two fields for each record in the set
-        records.mapped(lambda r: r.field1 + r.field2)
-
-    The provided function can be a string to get field values::
-
-        # returns a list of names
-        records.mapped('name')
-
-        # returns a recordset of partners
-        record.mapped('partner_id')
-
-        # returns the union of all partner banks, with duplicates removed
-        record.mapped('partner_id.bank_ids')
+.. _reference/orm/environment:
 
 Environment
 ===========
@@ -214,160 +336,180 @@ inherited. The environment can be used to get an empty recordset in an
 other model, and query that model::
 
     >>> self.env['res.partner']
-    res.partner
+    res.partner()
     >>> self.env['res.partner'].search([['is_company', '=', True], ['customer', '=', True]])
     res.partner(7, 18, 12, 14, 17, 19, 8, 31, 26, 16, 13, 20, 30, 22, 29, 15, 23, 28, 74)
+
+.. currentmodule:: odoo.api
+
+.. automethod:: Environment.ref
+
+.. autoattribute:: Environment.lang
+
+.. autoattribute:: Environment.user
+
+.. TODO cr, uid but not @property or methods of Environment class...
 
 Altering the environment
 ------------------------
 
-The environment can be customized from a recordset. This returns a new
-version of the recordset using the altered environment.
+.. currentmodule:: odoo.models
 
-:meth:`~odoo.models.Model.sudo`
-    creates a new environment with the provided user set, uses the
-    administrator if none is provided (to bypass access rights/rules in safe
-    contexts), returns a copy of the recordset it is called on using the
-    new environment::
+.. automethod:: Model.with_context
 
-        # create partner object as administrator
-        env['res.partner'].sudo().create({'name': "A Partner"})
+.. automethod:: Model.with_env
 
-        # list partners visible by the "public" user
-        public = env.ref('base.public_user')
-        env['res.partner'].sudo(public).search([])
+.. automethod:: Model.sudo
 
-:meth:`~odoo.models.Model.with_context`
-    #. can take a single positional parameter, which replaces the current
-       environment's context
-    #. can take any number of parameters by keyword, which are added to either
-       the current environment's context or the context set during step 1
+.. _reference/orm/sql:
 
-    ::
+SQL Execution
+-------------
 
-        # look for partner, or create one with specified timezone if none is
-        # found
-        env['res.partner'].with_context(tz=a_tz).find_or_create(email_address)
+The :attr:`~odoo.api.Environment.cr` attribute on environments is the
+cursor for the current database transaction and allows executing SQL directly,
+either for queries which are difficult to express using the ORM (e.g. complex
+joins) or for performance reasons::
 
-:meth:`~odoo.models.Model.with_env`
-    replaces the existing environment entirely
+    self.env.cr.execute("some_sql", param1, param2, param3)
 
-Common ORM methods
-==================
+Because models use the same cursor and the :class:`~odoo.api.Environment`
+holds various caches, these caches must be invalidated when *altering* the
+database in raw SQL, or further uses of models may become incoherent. It is
+necessary to clear caches when using ``CREATE``, ``UPDATE`` or ``DELETE`` in
+SQL, but not ``SELECT`` (which simply reads the database).
 
-.. maybe these clarifications/examples should be in the APIDoc?
+.. note::
+    Clearing caches can be performed using the
+    :meth:`~odoo.models.Model.invalidate_cache` method.
 
-:meth:`~odoo.models.Model.search`
-   Takes a :ref:`search domain <reference/orm/domains>`, returns a recordset
-   of matching records. Can return a subset of matching records (``offset``
-   and ``limit`` parameters) and be ordered (``order`` parameter)::
+.. automethod:: Model.invalidate_cache
 
-        >>> # searches the current model
-        >>> self.search([('is_company', '=', True), ('customer', '=', True)])
-        res.partner(7, 18, 12, 14, 17, 19, 8, 31, 26, 16, 13, 20, 30, 22, 29, 15, 23, 28, 74)
-        >>> self.search([('is_company', '=', True)], limit=1).name
-        'Agrolait'
+.. warning::
+    Executing raw SQL bypasses the ORM, and by consequent, Odoo security rules.
+    Please make sure your queries are sanitized when using user input and prefer using
+    ORM utilities if you don't really need to use SQL queries.
 
-   .. tip:: to just check if any record matches a domain, or count the number
-             of records which do, use
-             :meth:`~odoo.models.Model.search_count`
+.. _reference/fields:
+.. _reference/orm/fields:
 
-:meth:`~odoo.models.Model.create`
-    Takes a dictionary of field values, or a list of such dictionaries, and
-    returns a recordset containing the records created::
+Fields
+======
 
-        >>> self.create({'name': "Joe"})
-        res.partner(78)
-        >>> self.create([{'name': "Jack"}, {'name': "William"}, {'name': "Averell"}])
-        res.partner(79, 80, 81)
+.. currentmodule:: odoo.fields
 
-:meth:`~odoo.models.Model.write`
-    Takes a number of field values, writes them to all the records in its
-    recordset. Does not return anything::
+.. autoclass:: Field()
 
-        self.write({'name': "Newer Name"})
+.. .. autoattribute:: Field._slots
+      :annotation:
 
-:meth:`~odoo.models.Model.browse`
-    Takes a database id or a list of ids and returns a recordset, useful when
-    record ids are obtained from outside Odoo (e.g. round-trip through
-    external system)::
+.. _reference/fields/basic:
 
-        >>> self.browse([7, 18, 12])
-        res.partner(7, 18, 12)
+Basic Fields
+------------
 
-:meth:`~odoo.models.Model.exists`
-    Returns a new recordset containing only the records which exist in the
-    database. Can be used to check whether a record (e.g. obtained externally)
-    still exists::
+.. autoclass:: Boolean()
 
-        if not record.exists():
-            raise Exception("The record has been deleted")
+.. autoclass:: Char()
 
-    or after calling a method which could have removed some records::
+.. autoclass:: Float()
 
-        records.may_remove_some()
-        # only keep records which were not deleted
-        records = records.exists()
+.. autoclass:: Integer()
 
-:meth:`~odoo.api.Environment.ref`
-    Environment method returning the record matching a provided
-    :term:`external id`::
+.. _reference/fields/advanced:
 
-        >>> env.ref('base.group_public')
-        res.groups(2)
-
-:meth:`~odoo.models.Model.ensure_one`
-    checks that the recordset is a singleton (only contains a single record),
-    raises an error otherwise::
-
-        records.ensure_one()
-        # is equivalent to but clearer than:
-        assert len(records) == 1, "Expected singleton"
-
-Creating Models
-===============
-
-Model fields are defined as attributes on the model itself::
-
-    from odoo import models, fields
-    class AModel(models.Model):
-        _name = 'a.model.name'
-
-        field1 = fields.Char()
-
-.. warning:: this means you can not define a field and a method with the same
-             name, they will conflict
-
-By default, the field's label (user-visible name) is a capitalized version of
-the field name, this can be overridden with the ``string`` parameter::
-
-        field2 = fields.Integer(string="an other field")
-
-For the various field types and parameters, see :ref:`the fields reference
-<reference/orm/fields>`.
-
-Default values are defined as parameters on fields, either a value::
-
-    name = fields.Char(default="a value")
-
-or a function called to compute the default value, which should return that
-value::
-
-    def _default_name(self):
-        return self.get_value()
-    name = fields.Char(default=_default_name)
-
-Computed fields
+Advanced Fields
 ---------------
+
+.. autoclass:: Html()
+
+.. autoclass:: Monetary()
+
+.. autoclass:: Selection()
+
+.. autoclass:: Text()
+
+.. _reference/fields/date:
+
+Date(time) Fields
+'''''''''''''''''
+
+Dates and Datetimes are very important fields in any kind of business
+application, they are heavily used in many popular Odoo applications such as
+logistics or accounting and their misuse can create invisible yet painful
+bugs, this excerpt aims to provide Odoo developers with the knowledge required
+to avoid misusing these fields.
+
+When assigning a value to a Date/Datetime field, the following options are valid:
+
+* A string in the proper server format *(YYYY-MM-DD)* for Date fields,
+  *(YYYY-MM-DD HH:MM:SS)* for Datetime fields.
+* A `date` or `datetime` object.
+* `False` or `None`.
+
+If not sure of the type of the value being assigned to a Date/Datetime object,
+the best course of action is to pass the value to
+:func:`~odoo.fields.Date.to_date` or :func:`~odoo.fields.Datetime.to_datetime`
+which will attempt to convert the value to a date or datetime object
+respectively, which can then be assigned to the field in question.
+
+.. admonition:: Example
+
+    To parse date/datetimes coming from external sources::
+
+        fields.Date.to_date(self._context.get('date_from'))
+
+Date / Datetime comparison best practices:
+
+* Date fields can **only** be compared to date objects.
+* Datetime fields can **only** be compared to datetime objects.
+
+.. warning:: Strings representing dates and datetimes can be compared
+             between each other, however the result may not be the expected
+             result, as a datetime string will always be greater than a
+             date string, therefore this practice is **heavily**
+             discouraged.
+
+Common operations with dates and datetimes such as addition, substraction or
+fetching the start/end of a period are exposed through both
+:class:`~odoo.fields.Date` and :class:`~odoo.fields.Datetime`.
+These helpers are also available by importing `odoo.tools.date_utils`.
+
+.. TODO info on timezones?
+
+.. autoclass:: Date()
+    :members: today, context_today, to_date, to_string, start_of, end_of, add, subtract
+
+.. autoclass:: Datetime()
+    :members: now, today, context_timestamp, to_datetime, to_string, start_of, end_of, add, subtract
+
+.. _reference/fields/relational:
+
+Relational Fields
+'''''''''''''''''
+
+.. autoclass:: Many2one()
+
+.. autoclass:: One2many()
+
+.. autoclass:: Many2many()
+
+.. autoclass:: Reference()
+
+.. _reference/fields/compute:
+
+Computed Fields
+'''''''''''''''
 
 Fields can be computed (instead of read straight from the database) using the
 ``compute`` parameter. **It must assign the computed value to the field**. If
 it uses the values of other *fields*, it should specify those fields using
-:func:`~odoo.api.depends`::
+:func:`~odoo.api.depends`.::
 
     from odoo import api
     total = fields.Float(compute='_compute_total')
 
+    @api.multi
     @api.depends('value', 'tax')
     def _compute_total(self):
         for record in self:
@@ -375,6 +517,7 @@ it uses the values of other *fields*, it should specify those fields using
 
 * dependencies can be dotted paths when using sub-fields::
 
+    @api.multi
     @api.depends('line_ids.value')
     def _compute_total(self):
         for record in self:
@@ -382,10 +525,10 @@ it uses the values of other *fields*, it should specify those fields using
 
 * computed fields are not stored by default, they are computed and
   returned when requested. Setting ``store=True`` will store them in the
-  database and automatically enable searching
+  database and automatically enable searching.
 * searching on a computed field can also be enabled by setting the ``search``
   parameter. The value is a method name returning a
-  :ref:`reference/orm/domains`::
+  :ref:`reference/orm/domains`.::
 
     upper_name = field.Char(compute='_compute_upper', search='_search_upper')
 
@@ -394,16 +537,25 @@ it uses the values of other *fields*, it should specify those fields using
             operator = 'ilike'
         return [('name', operator, value)]
 
-* to allow *setting* values on a computed field, use the ``inverse``
+  The search method is invoked when processing domains before doing an
+  actual search on the model. It must return a domain equivalent to the
+  condition: ``field operator value``.
+
+.. TODO and/or by setting the store to True for search domains ?
+
+* Computed fields are readonly by default. To allow *setting* values on a computed field, use the ``inverse``
   parameter. It is the name of a function reversing the computation and
   setting the relevant fields::
 
     document = fields.Char(compute='_get_document', inverse='_set_document')
 
+    @api.multi
     def _get_document(self):
         for record in self:
             with open(record.get_document_path) as f:
                 record.document = f.read()
+
+    @api.multi
     def _set_document(self):
         for record in self:
             if not record.document: continue
@@ -416,13 +568,16 @@ it uses the values of other *fields*, it should specify those fields using
     discount_value = fields.Float(compute='_apply_discount')
     total = fields.Float(compute='_apply_discount')
 
-    @depends('value', 'discount')
+    @api.multi
+    @api.depends('value', 'discount')
     def _apply_discount(self):
         for record in self:
             # compute actual discount from discount percentage
             discount = record.value * record.discount
             record.discount_value = discount
             record.total = record.value - discount
+
+.. _reference/fields/related:
 
 Related fields
 ''''''''''''''
@@ -433,6 +588,132 @@ the ``related`` parameter and like regular computed fields they can be
 stored::
 
     nickname = fields.Char(related='user_id.partner_id.name', store=True)
+
+The value of a related field is given by following a sequence of
+relational fields and reading a field on the reached model. The complete
+sequence of fields to traverse is specified by the attribute
+
+Some field attributes are automatically copied from the source field if
+they are not redefined: ``string``, ``help``, ``readonly``, ``required`` (only
+if all fields in the sequence are required), ``groups``, ``digits``, ``size``,
+``translate``, ``sanitize``, ``selection``, ``comodel_name``, ``domain``,
+``context``. All semantic-free attributes are copied from the source
+field.
+
+By default, the values of related fields are not stored to the database.
+Add the attribute ``store=True`` to make it stored, just like computed
+fields. Related fields are automatically recomputed when their
+dependencies are modified.
+may see different values for the field on a given record.
+
+.. note:: The related fields are computed in sudo mode.
+
+.. _reference/fields/automatic:
+
+Automatic fields
+----------------
+
+.. Documented
+
+.. attribute:: id
+
+    Identifier :class:`field <odoo.fields.Field>`
+
+    If length of current recordset is 1, return id of unique record in it.
+
+    Raise an Error otherwise.
+
+.. todo:: _log_access info
+
+.. attribute:: create_date
+
+    :class:`~odoo.fields.Datetime`
+
+.. attribute:: create_uid
+
+    :class:`~odoo.fields.Many2one`
+
+.. attribute:: write_date
+
+    :class:`~odoo.fields.Datetime`
+
+.. attribute:: write_uid
+
+    :class:`~odoo.fields.Many2one`
+
+.. _reference/orm/fields/reserved:
+
+Reserved Field names
+--------------------
+
+A few field names are reserved for pre-defined behaviors beyond that of
+automated fields. They should be defined on a model when the related
+behavior is desired:
+
+.. attribute:: name
+
+  default value for :attr:`~odoo.models.BaseModel._rec_name`, used to
+  display records in context where a representative "naming" is
+  necessary.
+
+  :class:`~odoo.fields.Char`
+
+.. attribute:: active
+
+  toggles the global visibility of the record, if ``active`` is set to
+  ``False`` the record is invisible in most searches and listing
+
+  :class:`~odoo.fields.Boolean`
+
+.. attribute:: sequence
+
+  Alterable ordering criteria, allows drag-and-drop reordering of models
+  in list views
+
+  :class:`~odoo.fields.Integer`
+
+.. attribute:: state
+
+  lifecycle stages of the object, used by the ``states`` attribute on
+  :class:`fields <odoo.fields.Field>`
+
+  :class:`~odoo.fields.Selection`
+
+.. attribute:: parent_id
+
+  used to order records in a tree structure and enables the ``child_of``
+  and ``parent_of`` operators in domains
+
+  :class:`~odoo.fields.Many2one`
+
+.. attribute:: parent_path
+
+  used to store an index of the tree structure when :attr:`~._parent_store`
+  is set to True - must be declared with ``index=True`` for proper operation.
+
+  :class:`~odoo.fields.Char`
+
+
+.. _reference/api/decorators:
+
+Method decorators
+=================
+
+.. automodule:: odoo.api
+    :members: multi, model, depends, constrains, onchange, returns
+
+.. .. currentmodule:: odoo.api
+
+.. .. autodata:: multi
+.. .. autodata:: model
+.. .. autodata:: depends
+.. .. autodata:: constrains
+.. .. autodata:: onchange
+.. .. autodata:: returns
+
+.. todo:: With sphinx 2.0 : autodecorator
+
+.. _reference/api/onchange:
 
 onchange: updating UI on the fly
 --------------------------------
@@ -476,413 +757,6 @@ added.
 
     It is not possible for a ``one2many`` or ``many2many`` field to modify
     itself via onchange. This is a webclient limitation - see `#2693 <https://github.com/odoo/odoo/issues/2693>`_.
-
-Low-level SQL
--------------
-
-The :attr:`~odoo.api.Environment.cr` attribute on environments is the
-cursor for the current database transaction and allows executing SQL directly,
-either for queries which are difficult to express using the ORM (e.g. complex
-joins) or for performance reasons::
-
-    self.env.cr.execute("some_sql", param1, param2, param3)
-
-Because models use the same cursor and the :class:`~odoo.api.Environment`
-holds various caches, these caches must be invalidated when *altering* the
-database in raw SQL, or further uses of models may become incoherent. It is
-necessary to clear caches when using ``CREATE``, ``UPDATE`` or ``DELETE`` in
-SQL, but not ``SELECT`` (which simply reads the database).
-
-Clearing caches can be performed using the
-:meth:`~odoo.models.BaseModel.invalidate_cache` method of the
-:class:`~odoo.models.BaseModel` object.
-
-.. _reference/orm/model:
-
-Model Reference
-===============
-
-.. - can't get autoattribute to import docstrings, so use regular attribute
-   - no autoclassmethod
-
-.. .. autoattribute:: odoo.models.BaseModel._name works
-  autoattribute doesn't seem to support :private-members: parameter
-  Therefore, we should specify all wanted attributes directly for it to work.
-  Should we adapt ORM in-code documentation and use autoattribute here instead.
-  Attribute documentation should begin with #: or be a docstring
-
-.. currentmodule:: odoo.models
-
-.. autoclass:: odoo.models.Model
-  :members:
-  :noindex:
-
-  .. rubric:: Structural attributes
-
-  .. attribute:: _name
-
-      business object name, in dot-notation (in module namespace)
-
-  .. attribute:: _rec_name
-
-      Alternative field to use as name, used by osv’s name_get()
-      (default: ``name``)
-
-  .. attribute:: _inherit
-
-      * If :attr:`._name` is set, names of parent models to inherit from.
-        Can be a ``str`` if inheriting from a single parent
-      * If :attr:`._name` is unset, name of a single model to extend
-        in-place
-
-      See :ref:`reference/orm/inheritance`.
-
-  .. attribute:: _order
-
-      Ordering field when searching without an ordering specified (default:
-      ``id``)
-
-      :type: str
-
-  .. attribute:: _auto
-
-    Whether a database table should be created (default: ``True``)
-
-    If set to ``False``, override :meth:`~odoo.models.BaseModel.init` to create the database
-    table
-
-    .. tip:: To create a model without any table, inherit
-            from ``odoo.models.AbstractModel``
-
-  .. attribute:: _table
-
-      Name of the table backing the model created when
-      :attr:`~odoo.models.Model._auto`, automatically generated by
-      default.
-
-  .. attribute:: _inherits
-
-      dictionary mapping the _name of the parent business objects to the
-      names of the corresponding foreign key fields to use::
-
-          _inherits = {
-              'a.model': 'a_field_id',
-              'b.model': 'b_field_id'
-          }
-
-      implements composition-based inheritance: the new model exposes all
-      the fields of the :attr:`~odoo.models.Model._inherits`-ed model but
-      stores none of them: the values themselves remain stored on the linked
-      record.
-
-      .. warning::
-
-          if the same field is defined on multiple
-          :attr:`~odoo.models.Model._inherits`-ed
-
-  .. attribute:: _sql_constraints
-
-      list of ``(name, sql_definition, message)`` triples defining SQL
-      constraints to execute when generating the backing table
-
-  .. attribute:: _parent_store
-
-      Alongside a :attr:`~.parent_path` field, sets up an indexed storage
-      of the tree structure of records, to enable faster hierarchical queries
-      on the records of the current model using the ``child_of`` and
-      ``parent_of`` domain operators.
-      (default: ``False``)
-
-      :type: bool
-
-  .. rubric:: CRUD
-
-  .. automethod:: create
-  .. automethod:: browse
-  .. automethod:: unlink
-  .. automethod:: write
-
-  .. automethod:: read
-  .. automethod:: read_group
-
-  .. rubric:: Searching
-
-  .. automethod:: search
-  .. automethod:: search_count
-  .. automethod:: name_search
-
-  .. rubric:: Recordset operations
-
-  .. autoattribute:: ids
-  .. automethod:: ensure_one
-  .. automethod:: exists
-  .. automethod:: filtered
-  .. automethod:: sorted
-  .. automethod:: mapped
-
-  .. rubric:: Environment swapping
-
-  .. automethod:: sudo
-  .. automethod:: with_context
-  .. automethod:: with_env
-
-  .. rubric:: Fields and views querying
-
-  .. automethod:: fields_get
-  .. automethod:: fields_view_get
-
-  .. rubric:: Miscellaneous methods
-
-  .. automethod:: default_get
-  .. automethod:: copy
-  .. automethod:: name_get
-  .. automethod:: name_create
-
-  .. _reference/orm/model/automatic:
-
-  .. rubric:: Automatic fields
-
-  .. attribute:: id
-
-    Identifier :class:`field <odoo.fields.Field>`
-
-  .. attribute:: _log_access
-
-    Whether log access fields (``create_date``, ``write_uid``, ...) should
-    be generated (default: ``True``)
-
-  .. attribute:: create_date
-
-    Date at which the record was created
-
-    :type: :class:`~odoo.field.Datetime`
-
-  .. attribute:: create_uid
-
-    Relational field to the user who created the record
-
-    :type: ``res.users``
-
-  .. attribute:: write_date
-
-    Date at which the record was last modified
-
-    :type: :class:`~odoo.field.Datetime`
-
-  .. attribute:: write_uid
-
-    Relational field to the last user who modified the record
-
-    :type: ``res.users``
-
-  .. rubric:: Reserved field names
-
-  A few field names are reserved for pre-defined behaviors beyond that of
-  automated fields. They should be defined on a model when the related
-  behavior is desired:
-
-  .. attribute:: name
-
-    default value for :attr:`~._rec_name`, used to
-    display records in context where a representative "naming" is
-    necessary.
-
-    :type: :class:`~odoo.fields.Char`
-
-  .. attribute:: active
-
-    toggles the global visibility of the record, if ``active`` is set to
-    ``False`` the record is invisible in most searches and listing
-
-    :type: :class:`~odoo.fields.Boolean`
-
-  .. attribute:: sequence
-
-    Alterable ordering criteria, allows drag-and-drop reordering of models
-    in list views
-
-    :type: :class:`~odoo.fields.Integer`
-
-  .. attribute:: state
-
-    lifecycle stages of the object, used by the ``states`` attribute on
-    :class:`fields <odoo.fields.Field>`
-
-    :type: :class:`~odoo.fields.Selection`
-
-  .. attribute:: parent_id
-
-    used to order records in a tree structure and enables the ``child_of``
-    and ``parent_of`` operators in domains
-
-    :type: :class:`~odoo.fields.Many2one`
-
-  .. attribute:: parent_path
-
-    used to store an index of the tree structure when :attr:`~._parent_store`
-    is set to True - must be declared with ``index=True`` for proper operation.
-
-    :type: :class:`~odoo.fields.Char`
-
-
-.. _reference/orm/decorators:
-
-Method decorators
-=================
-
-.. automodule:: odoo.api
-    :members: multi, model, depends, constrains, onchange, returns
-    :noindex:
-
-.. _reference/orm/fields:
-
-Fields
-======
-
-.. _reference/orm/fields/basic:
-
-Basic fields
-------------
-
-.. autodoc documents descriptors as attributes, even for the *definition* of
-   descriptors. As a result automodule:: odoo.fields lists all the field
-   classes as attributes without providing inheritance info or methods (though
-   we don't document methods as they're not useful for "external" devs)
-   (because we don't support pluggable field types) (or do we?)
-
-.. autoclass:: odoo.fields.Field
-    :noindex:
-
-.. _reference/orm/fields/boolean:
-
-.. autoclass:: odoo.fields.Boolean
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/char:
-
-.. autoclass:: odoo.fields.Char
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/float:
-
-.. autoclass:: odoo.fields.Float
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/integer:
-
-.. autoclass:: odoo.fields.Integer
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/html:
-
-.. autoclass:: odoo.fields.Html
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/monetary:
-
-.. autoclass:: odoo.fields.Monetary
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/selection:
-
-.. autoclass:: odoo.fields.Selection
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/text:
-
-.. autoclass:: odoo.fields.Text
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/date_datetime:
-
-Date and Datetime fields
-------------------------
-
-Dates and Datetimes are very important fields in any kind of business
-application, they are heavily used in many popular Odoo applications such as
-logistics or accounting and their misuse can create invisible yet painful
-bugs, this excerpt aims to provide Odoo developers with the knowledge required
-to avoid misusing these fields.
-
-When assigning a value to a Date/Datetime field, the following options are valid:
-    * A string in the proper server format **(YYYY-MM-DD)** for Date fields,
-      **(YYYY-MM-DD HH:MM:SS)** for Datetime fields.
-    * A `date` or `datetime` object.
-    * `False` or `None`.
-
-If not sure of the type of the value being assigned to a Date/Datetime object,
-the best course of action is to pass the value to
-:func:`~odoo.fields.Date.to_date` or :func:`~odoo.fields.Datetime.to_datetime`
-which will attempt to convert the value to a date or datetime object
-respectively, which can then be assigned to the field in question.
-
-.. admonition:: Example
-
-    To parse date/datetimes coming from external sources::
-
-        fields.Date.to_date(self._context.get('date_from'))
-
-Date / Datetime comparison best practices:
-    * Date fields can **only** be compared to date objects.
-    * Datetime fields can **only** be compared to datetime objects.
-
-    .. warning:: Strings representing dates and datetimes can be compared
-                 between each other, however the result may not be the expected
-                 result, as a datetime string will always be greater than a
-                 date string, therefore this practice is **heavily**
-                 discouraged.
-
-Common operations with dates and datetimes such as addition, substraction or
-fetching the start/end of a period are exposed through both
-:class:`~odoo.fields.Date` and :class:`~odoo.fields.Datetime`.
-These helpers are also available by importing `odoo.tools.date_utils`.
-
-.. autoclass:: odoo.fields.Date
-    :show-inheritance:
-    :members: today, context_today, to_date, to_string, start_of, end_of, add, subtract
-    :noindex:
-
-.. autoclass:: odoo.fields.Datetime
-    :show-inheritance:
-    :members: now, today, context_timestamp, to_datetime, to_string, start_of, end_of, add, subtract
-    :noindex:
-
-.. _reference/orm/fields/relational:
-
-Relational fields
------------------
-
-.. _reference/orm/fields/many2one:
-
-.. autoclass:: odoo.fields.Many2one
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/one2many:
-
-.. autoclass:: odoo.fields.One2many
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/many2many:
-
-.. autoclass:: odoo.fields.Many2many
-    :show-inheritance:
-    :noindex:
-
-.. _reference/orm/fields/reference:
-
-.. autoclass:: odoo.fields.Reference
-    :show-inheritance:
-    :noindex:
 
 .. _reference/orm/inheritance:
 
@@ -953,7 +827,7 @@ will yield:
     :lines: 13
 
 .. note:: it will also yield the various :ref:`automatic fields
-          <reference/orm/model/automatic>` unless they've been disabled
+          <reference/fields/automatic>` unless they've been disabled
 
 Delegation
 ----------
@@ -963,7 +837,9 @@ at runtime) but less power: using the :attr:`~odoo.models.Model._inherits`
 a model *delegates* the lookup of any field not found on the current model
 to "children" models. The delegation is performed via
 :class:`~odoo.fields.Reference` fields automatically set up on the parent
-model. The main difference is in the meaning. When using Delegation, the model
+model.
+
+The main difference is in the meaning. When using Delegation, the model
 **has one** instead of **is one**, turning the relationship in a composition
 instead of inheritance:
 
@@ -990,10 +866,30 @@ and it's possible to write directly on the delegated field:
 .. warning:: when using delegation inheritance, methods are *not* inherited,
              only fields
 
+Fields Incremental Definition
+-----------------------------
+
+A field is defined as class attribute on a model class. If the model
+is extended, one can also extend the field definition by redefining
+a field with the same name and same type on the subclass.
+In that case, the attributes of the field are taken from the parent class
+and overridden by the ones given in subclasses.
+
+For instance, the second class below only adds a tooltip on the field
+``state``::
+
+    class First(models.Model):
+        _name = 'foo'
+        state = fields.Selection([...], required=True)
+
+    class Second(models.Model):
+        _inherit = 'foo'
+        state = fields.Selection(help="Blah blah blah")
+
 .. _reference/orm/domains:
 
-Domains
-=======
+Search Domains
+==============
 
 A domain is a list of criteria, each criterion being a triple (either a
 ``list`` or a ``tuple``) of ``(field_name, operator, value)`` where:
@@ -1002,6 +898,7 @@ A domain is a list of criteria, each criterion being a triple (either a
     a field name of the current model, or a relationship traversal through
     a :class:`~odoo.fields.Many2one` using dot-notation e.g. ``'street'``
     or ``'partner_id.country'``
+
 ``operator`` (``str``)
     an operator used to compare the ``field_name`` with the ``value``. Valid
     operators are:
@@ -1062,9 +959,7 @@ Domain criteria can be combined using logical operators in *prefix* form:
 ``'!'``
     logical *NOT*, arity 1.
 
-    .. tip:: Mostly to negate combinations of criteria
-        :class: aphorism
-
+    .. note:: Mostly to negate combinations of criteria
         Individual criterion generally have a negative form (e.g. ``=`` ->
         ``!=``, ``<`` -> ``>=``) which is simpler than negating the positive.
 
@@ -1085,3 +980,13 @@ Domain criteria can be combined using logical operators in *prefix* form:
             (name is 'ABC')
         AND (language is NOT english)
         AND (country is Belgium OR Germany)
+
+.. _reference/exceptions:
+
+Error management
+================
+
+.. automodule:: odoo.exceptions
+    :members: AccessDenied, AccessError, CacheMiss, MissingError, RedirectWarning, UserError, ValidationError
+
+.. TODO document UserError (using :undoc-members: shows RedirectWarning.name method)
