@@ -1,20 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="blog_cover">
-        <div
-            t-att-data-use_size="use_size"
-            t-att-data-use_filters="use_filters"
-            t-att-data-use_text_size="use_text_size"
-            t-att-data-use_text_align="use_text_align"
-            t-attf-class="o_event_cover_container d-flex flex-column #{use_size and cover_properties.get('resize_class') or ''}  #{use_text_size and cover_properties.get('text_size_class') or ''} #{use_text_align and cover_properties.get('text_align_class') or ''} #{additionnal_classes or ''}">
-
-            <div class="o_blog_cover_component o_blog_cover_image" t-attf-style="background-image: #{cover_properties.get('background-image')};"/>
-            <div t-if="use_filters" t-attf-class="o_event_cover_component o_event_cover_filter #{cover_properties.get('background-color')}" t-attf-style="opacity: #{cover_properties.get('opacity', 0.0)};"/>
-            <t t-raw="0"/>
-        </div>
-    </template>
-
 <template id="events_list_loop" name="Default list of Events">
 
     <t t-if="opt_events_list_images">
@@ -81,6 +67,7 @@
         </div>
         <footer t-attf-class="o_event_footer #{o_event_footer}">
             <t t-raw="price"/>
+
             <!-- TODO - Display smallest and highest ticket price - eg. FREE ~ $99 -->
             <t t-set="price">
                 <span itemprop="price" content="0">
@@ -163,11 +150,9 @@
 
 
 <template id="about_us" name="About us">
-    <div class="o_we_sidebar_block pl-5 mb-5">
+    <div class="o_we_sidebar_block p-4">
         <h6 class="text-uppercase pb-2 mb-4 border-bottom font-weight-bold">About us</h6>
-        <div>
-            <p>Write a small text here to describe your events or company.</p>
-        </div>
+        <p>Write a small text here to describe your events or company.</p>
     </div>
     <div id="oe_structure_website_event_about_us_1" class="oe_structure"/>
 </template>
@@ -175,10 +160,10 @@
 <!-- Follow us -->
 <template id="follow_us" name="Follow us">
 
-        <div class="o_we_sidebar_block pl-5">
+        <div class="o_we_sidebar_block p-4">
             <h6 class="text-uppercase pb-2 mb-4 border-bottom font-weight-bold">Follow Us</h6>
             <div class="o_we_social_links d-flex flex-wrap mx-n1">
-                <t t-set="classes">bg-100 border mx-1 mb-2 rounded-circle d-flex align-items-center justify-content-center text-decoration-none</t>
+                <t t-set="classes">bg-100 border p-3 mx-1 mb-2 rounded-circle d-flex align-items-center justify-content-center text-decoration-none</t>
                 <a t-if="website.social_facebook" t-att-href="website.social_facebook" aria-label="Facebook" title="Facebook" t-att-class="classes"><i class="fa fa-facebook-square text-facebook"/></a>
                 <a t-if="website.social_twitter" t-att-href="website.social_twitter" t-att-class="classes"><i class="fa fa-twitter text-twitter" aria-label="Twitter" title="Twitter"/></a>
                 <a t-if="website.social_linkedin" t-att-href="website.social_linkedin" t-att-class="classes"><i class="fa fa-linkedin text-linkedin" aria-label="LinkedIn" title="LinkedIn"/></a>
@@ -198,8 +183,8 @@
 </template>
 
 <!-- Index Sidebar - Photos -->
-<template id="event_right_photos" inherit_id="website_event.sidebar" active="False" customize_show="True" name="Photos">
-    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
+<template id="event_right_photos" name="Photos">
+
         <figure class="figure o_figure_relative_layout w-100">
             <img class="figure-img img-fluid" src="/website_event/static/src/img/openerp_enterprise_of_the_year.png" alt=""/>
             <figcaption class="figure-caption text-center"><a href="/event">Photos of Past Events</a></figcaption>
@@ -208,13 +193,12 @@
             <img class="figure-img img-fluid" src="/website_event/static/src/img/training.jpg" alt=""/>
             <figcaption class="figure-caption text-center"><a href="/event">Our Trainings</a></figcaption>
         </figure>
-    </xpath>
+
 </template>
 
 <!-- Index Sidebar - Quotes -->
-<template id="event_right_quotes" inherit_id="website_event.sidebar" active="False" customize_show="True" name="Quotes">
-    <xpath expr="//div[@id='o_we_sidebar']" position="inside">
-        <div class="card mb-3 bg-secondary">
+<template id="quotes" name="Quotes">
+        <div class="card mb-3 bg-200">
             <div class="card-body">
                 <blockquote class="m-0">
                     <p>
@@ -226,7 +210,6 @@
                 </blockquote>
             </div>
         </div>
-    </xpath>
 </template>
 
 </odoo>

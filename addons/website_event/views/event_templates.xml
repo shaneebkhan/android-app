@@ -30,7 +30,9 @@
 </template>
 
 <template id="sidebar" name="Right Sidebar">
-    <div id="o_we_sidebar" class="col-sm-12 col-md-3 col-lg-4 my-3 #{_classes}"/>
+    <div id="o_we_sidebar" t-attf-class="col-sm-12 col-md-3 col-lg-4 #{_classes}">
+        <t t-raw="0"/>
+    </div>
 </template>
 
 <template id="topbar" name="Top Bar">
@@ -110,7 +112,7 @@
                 <div id="o_we_banner_overlay" class="position-absolute w-100 h-100 bg-black-75"/>
                 <div class="container">
                     <div class="row pb-5">
-                        <div class="col-lg-6 py-5">
+                        <div class="col-lg-8 py-5">
                             <div class=" py-5">
                                 <!-- <span t-if="event.is_participating" class="badge badge-pill px-3 py-2">Participating</span> -->
                                 <h1 itemprop="name" t-field="event.name" class="display-4 text-white"/>
@@ -141,14 +143,14 @@
     </t>
 </template>
 
-<template id="event_description_full">
+<template id="event_description_full" name="Event">
     <t t-call="website_event.event_details">
-        <div class="row m-0 mt-n5">
+        <div class="row no-gutters mt-n5">
 
-            <div class="col-lg-8 bg-white p-4 mb-5">
+            <div id="o_we_main_col" class="col-lg-8 bg-white p-4 mb-5">
                 <div itemprop="description" t-field="event.description"/>
                 <!-- TODO - Comments -->
-                <!-- <ul class="list-unstyled" id="comment">
+                <ul class="list-unstyled" id="comment">
                     <li t-foreach="event.website_message_ids" t-as="comment" class="media mt-3">
                         <div class="media-body">
                             <t t-call="website.publish_management">
@@ -162,24 +164,21 @@
                             </small>
                         </div>
                     </li>
-                </ul> -->
+                </ul>
             </div>
 
 
-            <div class="col-lg-4 bg-light p-0 mb-5">
-                <div class="oe_structure"/>
-                <div class="p-5 border-400 border-bottom">
+                <!-- <div class="p-5 border-400 border-bottom">
                     <h6 class="text-uppercase text-muted mb-4">Date &amp; TIME</h6>
                     <div>
                         <span t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%A')"/>
                         <h4 class="my-1" t-esc="event.with_context(tz=event.date_tz).date_begin.strftime('%d %B %Y')"/>
-                        <!-- <i class="fa fa-clock-o text-muted mr-1"/> -->
+
                         <span class="d-inline-block" t-field="event.with_context(tz=event.date_tz).date_begin" t-options='{"time_only":"True", "hide_seconds":"True"}'/>
                         <t t-if="is_one_day">
                             <i class="fa fa-long-arrow-right mx-1"/>
                             <span class="d-inline-block" t-field="event.with_context(tz=event.date_tz).date_end" t-options='{"time_only":"True", "hide_seconds":"True"}'/>
                         </t>
-
                     </div>
                     <t t-if="not is_one_day">
                         <i class="fa fa-caret-down mx-3"/>
@@ -231,7 +230,7 @@
                             "fields": ["phone", "mobile", "email"]
                         }'/>
                     </div>
-                </div>
+                </div> -->
                 <!-- <div class="card bg-secondary my-3">
                     <h4 class="card-header">Social Stream</h4>
                     <div class="card-body">
@@ -247,9 +246,10 @@
                                 <a t-att-href="'http://twitter.com/search?q=%23'+event.twitter_hashtag" target="_blank" class="badge badge-primary">#<span t-field="event.twitter_hashtag"/></a>
                             </p>
                         </div>
-                    </div>-->
-                </div>
+                    </div>
+                </div> -->
 
+            <!-- </t> -->
         </div>
     </t>
 </template>
