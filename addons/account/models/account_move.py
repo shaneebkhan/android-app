@@ -308,11 +308,11 @@ class AccountMove(models.Model):
             res['fields']['line_ids']['views']['tree']['fields']['tax_line_id']['domain'] = [('tag_ids', 'in', [self.env.ref(self._context.get('vat_domain')).id])]
         return res
 
-    @api.model
-    def create(self, vals):
-        move = super(AccountMove, self.with_context(mail_create_nolog=True, check_move_validity=False, partner_id=vals.get('partner_id'))).create(vals)
-        move.assert_balanced()
-        return move
+    @api.model_create_multi
+    def create(self, vals_list):
+        move_ids = super(AccountMove, self.with_context(mail_create_nolog=True, check_move_validity=False)).create(vals_list)
+        move_ids.assert_balanced()
+        return move_ids
 
     @api.multi
     def write(self, vals):
