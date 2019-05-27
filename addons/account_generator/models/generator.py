@@ -138,7 +138,8 @@ class AccountGenerator(models.TransientModel):
     def create_records(self, model_name, create_vals):
         model = self.env[model_name]
         _logger.info('Start Create')
-        record_ids = model.create(create_vals)
+        model.check_access_rights('write')
+        record_ids = model.sudo().create(create_vals)
         _logger.info('{} created'.format(model._description))
         return record_ids, {
             'name': _('Generated {}'.format(model._description)),
