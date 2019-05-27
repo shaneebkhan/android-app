@@ -91,7 +91,6 @@
                         <page string="Miscellaneous">
                             <group>
                                 <group>
-                                    <field name="sequence"/>
                                     <field name="ready_to_produce" attrs="{'invisible': [('type','!=','normal')]}" string="Manufacturing Readiness" groups="mrp.group_mrp_routings"/>
                                     <field name="consumption" attrs="{'invisible': [('type','!=','normal')]}"/>
                                 </group>
@@ -113,9 +112,9 @@
             <field name="name">mrp.bom.tree</field>
             <field name="model">mrp.bom</field>
             <field name="arch" type="xml">
-                <tree string="Bill of Materials" default_order="product_tmpl_id">
+                <tree string="Bill of Materials">
                     <field name="active" invisible="1"/>
-                    <field name="sequence" invisible="1"/>
+                    <field name="sequence" widget="handle"/>
                     <field name="product_tmpl_id"/>
                     <field name="code"/>
                     <field name="product_id" groups="product.group_product_variant"/>
