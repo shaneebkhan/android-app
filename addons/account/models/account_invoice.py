@@ -1430,14 +1430,11 @@ class AccountInvoice(models.Model):
                                       'be added on the biggest tax found and no tax are specified.\n'
                                       'Please set up a tax or change the cash rounding method.'))
 
-    @api.multi
-    def _check_duplicate_supplier_reference(self):
-        for invoice in self:
-            # refuse to validate a vendor bill/credit note if there already exists one with the same reference for the same partner,
-            # because it's probably a double encoding of the same bill/credit note
-            if invoice.type in ('in_invoice', 'in_refund') and invoice.reference:
-                if self.search([('type', '=', invoice.type), ('reference', '=', invoice.reference), ('company_id', '=', invoice.company_id.id), ('commercial_partner_id', '=', invoice.commercial_partner_id.id), ('id', '!=', invoice.id)]):
-                    raise UserError(_("Duplicated vendor reference detected. You probably encoded twice the same vendor bill/credit note."))
+    @api.onchange('reference')
+    def _onchange_reference(self):
+        if self.type in ('in_invoice', 'in_refund') and self.reference:
+            if self.search([('type', '=', self.type), ('reference', '=', self.reference), ('company_id', '=', self.company_id.id), ('commercial_partner_id', '=', self.commercial_partner_id.id), ('id', '!=', self.id or self._origin.id)]):
+                return {'warning': {'title': "Warning", 'message': "Duplicated vendor reference detected. You probably encoded twice the same vendor bill/credit note."}}
 
     @api.multi
     def invoice_validate(self):
@@ -1476,7 +1473,6 @@ class AccountInvoice(models.Model):
 
             invoice.write(vals)
 
-        self._check_duplicate_supplier_reference()
         return True
 
     @api.model
