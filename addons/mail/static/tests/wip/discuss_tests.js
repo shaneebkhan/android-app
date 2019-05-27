@@ -1,108 +1,18 @@
-odoo.define('mail.wip.discuss_test', function (require) {
+odoo.define('mail.wip.discuss_tests', function (require) {
 "use strict";
 
-const BusService = require('bus.BusService');
+const {
+    afterEach: utilsAfterEach,
+    beforeEach: utilsBeforeEach,
+    createDiscuss,
+} = require('mail.wip.test_utils');
 
-const Discuss = require('mail.wip.old_widget.Discuss');
-const StoreService = require('mail.wip.service.Store');
-
-const AbstractStorageService = require('web.AbstractStorageService');
-const Class = require('web.Class');
-const RamStorage = require('web.RamStorage');
 const testUtils = require('web.test_utils');
-const Widget = require('web.Widget');
-
-async function pause() {
-    await new Promise(resolve => {});
-}
-
-const MockMailService = Class.extend({
-    bus_service() {
-        return BusService.extend({
-            _poll() {}, // Do nothing
-            isOdooFocused() { return true; },
-            updateOption() {},
-        });
-    },
-    local_storage() {
-        return AbstractStorageService.extend({
-            storage: new RamStorage(),
-        });
-    },
-    store_service() {
-        return StoreService;
-    },
-    getServices() {
-        return {
-            bus_service: this.bus_service(),
-            local_storage: this.local_storage(),
-            store: this.store_service(),
-        };
-    },
-});
-
-/**
- * Create asynchronously a discuss widget.
- *
- * @param {Object} params
- * @return {Promise} resolved with the discuss widget
- */
-async function createDiscuss(params) {
-    const Parent = Widget.extend({
-        do_push_state: function () {},
-    });
-    const parent = new Parent();
-    params.archs = params.archs || {
-        'mail.message,false,search': '<search/>',
-    };
-    params.services = new MockMailService().getServices();
-    testUtils.mock.addMockEnvironment(parent, params);
-    const discuss = new Discuss(parent, params);
-    const selector = params.debug ? 'body' : '#qunit-fixture';
-
-    // override 'destroy' of discuss so that it calls 'destroy' on the parent
-    // instead, which is the parent of discuss and the mockServer.
-    discuss.destroy = function () {
-        // remove the override to properly destroy discuss and its children
-        // when it will be called the second time (by its parent)
-        delete discuss.destroy;
-        parent.destroy();
-    };
-
-    await discuss.appendTo($(selector));
-    discuss.on_attach_callback(); // trigger mounting of discuss root
-    await testUtils.nextTick(); // render
-    return discuss;
-}
 
 QUnit.module('mail.wip', {}, function () {
 QUnit.module('Discuss', {
     beforeEach() {
-        // patch _.debounce and _.throttle to be fast and synchronous
-        this.underscoreDebounce = _.debounce;
-        this.underscoreThrottle = _.throttle;
-        _.debounce = _.identity;
-        _.throttle = _.identity;
-
-        this.data = {
-            initMessaging: {
-                channel_slots: {},
-                commands: [],
-                is_moderator: false,
-                mail_failures: [],
-                mention_partner_suggestions: [],
-                menu_id: false,
-                moderation_counter: 0,
-                moderation_channel_ids: [],
-                needaction_inbox_counter: 0,
-                shortcodes: [],
-                starred_counter: 0,
-            },
-            'mail.message': {
-                fields: {},
-            },
-        };
-
+        utilsBeforeEach(this);
         this.createDiscuss = async params => {
             if (this.discuss) {
                 this.discuss.destroy();
@@ -111,9 +21,7 @@ QUnit.module('Discuss', {
         };
     },
     afterEach() {
-        // unpatch _.debounce and _.throttle
-        _.debounce = this.underscoreDebounce;
-        _.throttle = this.underscoreThrottle;
+        utilsAfterEach(this);
         if (this.discuss) {
             this.discuss.destroy();
         }

@@ -200,7 +200,10 @@
                 <script type="text/javascript" src="/mail/static/tests/mail_status_manager_tests.js"></script>
 
                 <!-- WIP -->
+                <script type="text/javascript" src="/mail/static/tests/wip/chat_window_manager_tests.js"></script>
                 <script type="text/javascript" src="/mail/static/tests/wip/discuss_tests.js"></script>
+                <script type="text/javascript" src="/mail/static/tests/wip/systray_messaging_menu_tests.js"></script>
+                <script type="text/javascript" src="/mail/static/tests/wip/test_utils.js"></script>
             </xpath>
         </template>
 

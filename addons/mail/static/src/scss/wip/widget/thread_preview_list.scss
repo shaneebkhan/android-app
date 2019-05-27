@@ -5,6 +5,13 @@
  .o_mail_wip_thread_preview_list {
     display: flex;
     flex-flow: column;
+
+    > .o_no_conversation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 50px;
+    }
 }
 
 // ------------------------------------------------------------------

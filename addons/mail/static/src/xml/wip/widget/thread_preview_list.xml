@@ -3,12 +3,17 @@
 
     <div t-name="mail.wip.widget.ThreadPreviewList" owl="1"
          class="o_mail_wip_thread_preview_list">
-        <t t-foreach="props.threadLIDs"
-           t-as="threadLID"
-           t-widget="ThreadPreview"
-           t-key="threadLID"
-           t-props="{ threadLID }"
-           t-on-click="_onClickPreview"/>
+        <div t-if="props.threadLIDs.length === 0" class="o_no_conversation">
+            No conversation yet...
+        </div>
+        <t t-else="">
+            <t t-foreach="props.threadLIDs"
+               t-as="threadLID"
+               t-widget="ThreadPreview"
+               t-key="threadLID"
+               t-props="{ threadLID }"
+               t-on-click="_onClickPreview"/>
+        </t>
     </div>
 
 </templates>
