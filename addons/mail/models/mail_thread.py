@@ -2026,7 +2026,7 @@ class MailThread(models.AbstractModel):
             self._notify_record_by_email(message, partner_email_rdata, msg_vals=msg_vals, model_description=model_description, mail_auto_delete=mail_auto_delete)
         if notifications:
             self.env['bus.bus'].sudo().sendmany(notifications)
-        return True
+        return rdata
 
     def _notify_record_by_email(self, message, partners_data, msg_vals=False, model_description=False, mail_auto_delete=True, send_after_commit=False):
         """ Method to send email linked to notified messages.
@@ -2057,7 +2057,6 @@ class MailThread(models.AbstractModel):
         except ValueError:
             _logger.warning('QWeb template %s not found when sending notification emails. Sending without layouting.' % (template_xmlid))
             base_template = False
-
 
         mail_subject = message.subject or (message.record_name and 'Re: %s' % message.record_name) # in cache, no queries
         # prepare notification mail values
@@ -2218,13 +2217,14 @@ class MailThread(models.AbstractModel):
         # get values from msg_vals or from message if msg_vals doen't exists
         pids = msg_vals.get('partner_ids', []) if msg_vals else msg_sudo.partner_ids.ids
         cids = msg_vals.get('channel_ids', []) if msg_vals else msg_sudo.channel_ids.ids
+        message_type = msg_vals.get('message_type') if msg_vals else msg_sudo.message_type
         subtype_id = msg_vals.get('subtype_id') if msg_vals else msg_sudo.subtype_id.id
         # is it possible to have record but no subtype_id ?
         recipient_data = {
             'partners': [],
             'channels': [],
         }
-        res = self.env['mail.followers']._get_recipient_data(self, subtype_id, pids, cids)
+        res = self.env['mail.followers']._get_recipient_data(self, message_type, subtype_id, pids, cids)
         if not res:
             return recipient_data
 
@@ -2239,11 +2239,11 @@ class MailThread(models.AbstractModel):
                 if notif == 'inbox':
                     recipient_data['partners'].append(dict(pdata, notif=notif, type='user'))
                 elif not pshare and notif:  # has an user and is not shared, is therefore user
-                    recipient_data['partners'].append(dict(pdata, notif='email', type='user'))
+                    recipient_data['partners'].append(dict(pdata, notif=notif, type='user'))
                 elif pshare and notif:  # has an user but is shared, is therefore portal
-                    recipient_data['partners'].append(dict(pdata, notif='email', type='portal'))
+                    recipient_data['partners'].append(dict(pdata, notif=notif, type='portal'))
                 else:  # has no user, is therefore customer
-                    recipient_data['partners'].append(dict(pdata, notif='email', type='customer'))
+                    recipient_data['partners'].append(dict(pdata, notif=notif if notif else 'email', type='customer'))
             elif cid:
                 recipient_data['channels'].append({'id': cid, 'notif': notif, 'type': ctype})
 

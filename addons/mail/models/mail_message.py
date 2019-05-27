@@ -540,13 +540,45 @@ class Message(models.Model):
             'moderation_status',
         ]
 
+    def _get_mail_failure_dict(self):
+        return {
+            'message_id': self.id,
+            'record_name': self.record_name,
+            'model_name': self.env['ir.model']._get(self.model).display_name,
+            'uuid': self.message_id,
+            'res_id': self.res_id,
+            'model': self.model,
+            'last_message_date': self.date,
+            'module_icon': '/mail/static/src/img/smiley/mailfailure.jpg',
+        }
+
     @api.multi
     def _format_mail_failures(self):
-        """
-        A shorter message to notify a failure update
-        """
+        """ A shorter message to notify a failure update """
         failures_infos = []
+
+        # prepare notifications computation in batch
+        all_notifications = self.env['mail.notification'].sudo().search([
+            ('mail_message_id', 'in', self.ids)
+        ])
+        msg_to_notification = dict((msg_id, self.env['mail.notification'].sudo()) for msg_id in self.ids)
+        for notification in all_notifications:
+            msg_to_notification[notification.mail_message_id.id] |= notification
+
         # for each channel, build the information header and include the logged partner information
+        for message in self:
+            notifications = msg_to_notification[message.id]
+            if not any(notification.is_email for notification in notifications):
+                continue
+            info = dict(message._get_mail_failure_dict(),
+                        failure_type='mail',
+                        notifications=dict((notif.res_partner_id.id, (notif.email_status, notif.res_partner_id.name)) for notif in notifications))
+            failures_infos.append(info)
+        return failures_infos
+
+    @api.multi
+    def _notify_mail_failure_update(self):
+        messages = self.env['mail.message']
         for message in self:
             # Check if user has access to the record before displaying a notification about it.
             # In case the user switches from one company to another, it might happen that he doesn't
@@ -558,24 +590,10 @@ class Message(models.Model):
                     record.check_access_rule('read')
                 except AccessError:
                     continue
-            info = {
-                'message_id': message.id,
-                'record_name': message.record_name,
-                'model_name': self.env['ir.model']._get(message.model).display_name,
-                'uuid': message.message_id,
-                'res_id': message.res_id,
-                'model': message.model,
-                'last_message_date': message.date,
-                'module_icon': '/mail/static/src/img/smiley/mailfailure.jpg',
-                'notifications': dict((notif.res_partner_id.id, (notif.email_status, notif.res_partner_id.name)) for notif in message.notification_ids.sudo())
-            }
-            failures_infos.append(info)
-        return failures_infos
+                else:
+                    messages |= message
 
-    @api.multi
-    def _notify_failure_update(self):
-        authors = {}
-        for author, author_messages in groupby(self, itemgetter('author_id')):
+        for author, author_messages in groupby(messages, itemgetter('author_id')):
             self.env['bus.bus'].sendone(
                 (self._cr.dbname, 'res.partner', author.id),
                 {'type': 'mail_failure', 'elements': self.env['mail.message'].concat(*author_messages)._format_mail_failures()}

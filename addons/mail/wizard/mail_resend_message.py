@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import _, api, fields, models
-from ast import literal_eval
+from odoo import api, fields, models
 from odoo.exceptions import UserError
+
 
 class MailResendMessage(models.TransientModel):
     _name = 'mail.resend.message'
@@ -28,7 +28,7 @@ class MailResendMessage(models.TransientModel):
         message_id = self._context.get('mail_message_to_resend')
         if message_id:
             mail_message_id = self.env['mail.message'].browse(message_id)
-            notification_ids = mail_message_id.notification_ids.filtered(lambda notif: notif.email_status in ('exception', 'bounce'))
+            notification_ids = mail_message_id.notification_ids.filtered(lambda notif: notif.is_email and notif.email_status in ('exception', 'bounce'))
             partner_ids = [(0, 0,
                 {
                     "partner_id": notif.res_partner_id.id,
@@ -66,7 +66,7 @@ class MailResendMessage(models.TransientModel):
                 record = self.env[message.model].browse(message.res_id) if message.is_thread_message() else self.env['mail.thread']
 
                 email_partners_data = []
-                for pid, cid, active, pshare, ctype, notif, groups in self.env['mail.followers']._get_recipient_data(None, False, pids=to_send.ids):
+                for pid, cid, active, pshare, ctype, notif, groups in self.env['mail.followers']._get_recipient_data(None, 'comment', False, pids=to_send.ids):
                     if pid and notif == 'email' or not notif:
                         pdata = {'id': pid, 'share': pshare, 'active': active, 'notif': 'email', 'groups': groups or []}
                         if not pshare and notif:  # has an user and is not shared, is therefore user
@@ -78,15 +78,15 @@ class MailResendMessage(models.TransientModel):
 
                 record._notify_record_by_email(message, email_partners_data, send_after_commit=False)
 
-            self.mail_message_id._notify_failure_update()
+            self.mail_message_id._notify_mail_failure_update()
         return {'type': 'ir.actions.act_window_close'}
 
     @api.multi
     def cancel_mail_action(self):
         for wizard in self:
             for notif in wizard.notification_ids:
-                notif.filtered(lambda notif: notif.email_status in ('exception', 'bounce')).sudo().write({'email_status': 'canceled'})
-            wizard.mail_message_id._notify_failure_update()
+                notif.filtered(lambda notif: notif.is_email and notif.email_status in ('exception', 'bounce')).sudo().write({'email_status': 'canceled'})
+            wizard.mail_message_id._notify_mail_failure_update()
         return {'type': 'ir.actions.act_window_close'}
 
 
@@ -100,38 +100,3 @@ class PartnerResend(models.TransientModel):
     resend = fields.Boolean(string="Send Again", default=True)
     resend_wizard_id = fields.Many2one('mail.resend.message', string="Resend wizard")
     message = fields.Char(string="Help message")
-
-
-class MailCancelResend(models.TransientModel):
-    _name = 'mail.resend.cancel'
-    _description = 'Dismiss notification for resend by model'
-
-    model = fields.Char(string='Model')
-    help_message = fields.Char(string='Help message', compute='_compute_help_message')
-
-    @api.multi
-    @api.depends('model')
-    def _compute_help_message(self):
-        for wizard in self:
-            wizard.help_message = _("Are you sure you want to discard %s mail delivery failures. You won't be able to re-send these mails later!") % (wizard._context.get('unread_counter'))
-
-    @api.multi
-    def cancel_resend_action(self):
-        author_id = self.env.user.partner_id.id
-        for wizard in self:
-            self._cr.execute("""
-                                SELECT notif.id, mes.id
-                                FROM mail_message_res_partner_needaction_rel notif
-                                JOIN mail_message mes
-                                    ON notif.mail_message_id = mes.id
-                                WHERE notif.email_status IN ('bounce', 'exception')
-                                    AND mes.model = %s
-                                    AND mes.author_id = %s
-                            """, (wizard.model, author_id))
-            res = self._cr.fetchall()
-            notif_ids = [row[0] for row in res]
-            messages_ids = list(set([row[1] for row in res]))
-            if notif_ids:
-                self.env["mail.notification"].browse(notif_ids).sudo().write({'email_status': 'canceled'})
-                self.env["mail.message"].browse(messages_ids)._notify_failure_update()
-        return {'type': 'ir.actions.act_window_close'}

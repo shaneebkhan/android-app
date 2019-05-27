@@ -169,7 +169,7 @@ class MailMail(models.Model):
                         'failure_reason': failure_reason,
                     })
                     messages = notifications.mapped('mail_message_id').filtered(lambda m: m.is_thread_message())
-                    messages._notify_failure_update()  # notify user that we have a failure
+                    messages._notify_mail_failure_update()  # notify user that we have a failure
                 (notifications - failed).sudo().write({
                     'email_status': 'sent',
                     'failure_type': '',
