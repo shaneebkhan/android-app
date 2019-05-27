@@ -17,6 +17,7 @@
         'data/mrp_data.xml',
         'wizard/mrp_product_produce_views.xml',
         'wizard/change_production_qty_views.xml',
+        'wizard/confirm_cancel_production.xml',
         'wizard/mrp_workcenter_block_view.xml',
         'wizard/stock_warn_insufficient_qty_views.xml',
         'views/mrp_views_menus.xml',
