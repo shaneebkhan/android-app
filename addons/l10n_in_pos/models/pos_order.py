@@ -24,3 +24,9 @@ class PosOrder(models.Model):
                     'product_uom_id': line.product_id.uom_id.id
                     })
         return res
+
+
+class pos_config(models.Model):
+    _inherit = 'pos.config'
+
+    rounded_total = fields.Boolean(string='Rounded Total', help="Display rounded total amount on receipt.")
