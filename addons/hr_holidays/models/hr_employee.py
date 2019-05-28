@@ -121,7 +121,7 @@ class HrEmployeeBase(models.AbstractModel):
         super(HrEmployeeBase, self)._onchange_parent_id()
         previous_manager = self._origin.parent_id.user_id
         manager = self.parent_id.user_id
-        if manager and (self.leave_manager_id == previous_manager or not self.leave_manager_id):
+        if manager and self.leave_manager_id == previous_manager:
             self.leave_manager_id = manager
 
     @api.multi
