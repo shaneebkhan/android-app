@@ -30,10 +30,12 @@ FormRenderer.include({
     on_attach_callback: function () {
         this._super.apply(this, arguments);
 
-        this.chatter.mount(this.$temporaryParentDiv[0]).then(() => {
-            $(this.chatter.el).unwrap();
-            this._handleAttributes($(this.chatter.el), this._chatterNode);
-        });
+        if (this.chatter) {
+            this.chatter.mount(this.$temporaryParentDiv[0]).then(() => {
+                $(this.chatter.el).unwrap();
+                this._handleAttributes($(this.chatter.el), this._chatterNode);
+            });
+        }
     },
 
     //--------------------------------------------------------------------------
@@ -65,7 +67,11 @@ FormRenderer.include({
         if (this.chatter) {
             this.chatter.destroy();
         }
-        this.chatter = new Chatter(this.env, { state });
+        this.chatter = new Chatter(this.env, {
+            mailFields: this.mailFields,
+            parent: this,
+            record: state,
+        });
     },
     /**
      * Overrides the function that renders the nodes to return the chatter's $el

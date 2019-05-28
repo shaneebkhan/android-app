@@ -10,6 +10,7 @@
         > .note-editing-area > .note-editable {
             max-height: 200px;
             min-height: 39px;
+            padding: 10px;
 
             > p {
                 margin-bottom: 0;
@@ -28,6 +29,7 @@
 
 .o_mail_wip_composer_input > .note-editor.note-frame {
     border: none;
+    background-color: white;
 
     > .note-resizebar {
         display: none;
