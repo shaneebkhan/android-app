@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <template id="lead_enrich_message_not_found">
+        <p>Lead Enrichment based on email address</p>
+        <div style="background-color:#ffffff;padding:15px;">
+            <span> No company data found based on the email address. No credit was consumed. </span>
+        </div>
+    </template>
+
+    <template id="lead_enrich_message_wrong_mail">
+        <p>Lead Enrichment based on email address</p>
+        <div style="background-color:#ffffff;padding:15px;">
+            <span>Enrichement could not be done as the domain of provided email address is one of an email provider.</span>
+        </div>
+    </template>
+
+    <template id="lead_enrich_message_no_mail">
+        <p>Lead Enrichment based on email address</p>
+        <div style="background-color:#ffffff;padding:15px;">
+            <span>Enrichement could not be done as no email address was provided.</span>
+        </div>
+    </template>
+
+    <template id="lead_enrich_message_no_credit">
+        <p>
+            <span><t t-esc="message_title"/></span>
+        </p>
+        <div style="background-color:#ffffff;padding:15px;">
+            <span>Your balance for Lead Enrichment is insufficient. Please go to your <a t-attf-href="{{url}}">iap account</a> to buy credits.</span>
+        </div>
+    </template>
+</odoo>
