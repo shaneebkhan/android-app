@@ -335,7 +335,9 @@
         <field name="name">mrp.production.work.order.gantt.production</field>
         <field name="model">mrp.workorder</field>
         <field name="arch" type="xml">
-            <gantt date_stop="date_planned_finished" date_start="date_planned_start" string="Operations" default_group_by="production_id" create="0">
+            <gantt date_stop="date_planned_finished" date_start="date_planned_start" string="Operations" default_group_by="production_id" create="0" progress="duration" decoration-danger="date_planned_start &lt; current_date">
+                <field name="date_planned_start"/>
+                <field name="duration"/>
             </gantt>
         </field>
     </record>
@@ -344,7 +346,9 @@
         <field name="name">mrp.workorder.view.gantt</field>
         <field name="model">mrp.workorder</field>
         <field name="arch" type="xml">
-            <gantt date_stop="date_planned_finished" date_start="date_planned_start" string="Operations" default_group_by="workcenter_id" create="0">
+            <gantt date_stop="date_planned_finished" date_start="date_planned_start" string="Operations" default_group_by="workcenter_id" create="0" progress="duration" decoration-danger="date_planned_start &lt; current_date">
+                <field name="date_planned_start"/>
+                <field name="duration"/>
             </gantt>
         </field>
     </record>
@@ -410,7 +414,7 @@
         <field name="view_mode">gantt,tree,form,calendar,pivot,graph</field>
         <field name="search_view_id" ref="view_mrp_production_workorder_form_view_filter"/>
         <field name="view_id" ref="mrp_workorder_view_gantt"/>
-        <field name="context">{'search_default_work_center': True}</field>
+        <field name="context">{'search_default_work_center': True,'search_default_ready': True,'search_default_pending': True,'search_default_progress': True}</field>
         <field name="help" type="html">
           <p class="o_view_nocontent_smiling_face">
             Start a new work order
@@ -431,7 +435,7 @@
         <field name="view_mode">gantt,tree,form,calendar,pivot,graph</field>
         <field name="search_view_id" ref="view_mrp_production_workorder_form_view_filter"/>
         <field name="view_id" ref="workcenter_line_gantt_production"/>
-        <field name="context">{'search_default_production': True}</field>
+        <field name="context">{'search_default_production': True,'search_default_ready': True,'search_default_pending': True,'search_default_progress': True}</field>
         <field name="help" type="html">
           <p class="o_view_nocontent_smiling_face">
             Start a new work order
