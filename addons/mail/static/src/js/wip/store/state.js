@@ -8,9 +8,16 @@ const core = require('web.core');
 
 const _t = core._t;
 
-function init() {
-    const odoobot = new Partner({ id: 'odoobot', name: _t("OdooBot") });
-    return {
+/**
+ * @param {Object} [alteration] used for tests to partially alter state initially
+ * @return {Object}
+ */
+function init(alteration) {
+    const odoobot = new Partner({
+        id: 'odoobot',
+        name: _t("OdooBot"),
+    });
+    let state = {
         //----------------------------------------------------------------------
         // Misc.
         //----------------------------------------------------------------------
@@ -174,6 +181,10 @@ function init() {
         isMyselfModerator: false,
         moderatedChannelIDs: [],
     };
+    if (alteration) {
+        state = Object.assign(state, alteration);
+    }
+    return state;
 }
 
 return { init };

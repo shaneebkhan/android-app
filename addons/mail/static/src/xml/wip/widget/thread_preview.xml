@@ -7,6 +7,7 @@
     <div t-name="mail.wip.widget.ThreadPreview" owl="1"
          class="o_preview"
          t-att-class="props.thread.message_unread_counter > 0 ? 'o_unread' : ''"
+         t-att-data-thread-lid="props.threadLID"
          t-on-click="_onClick">
         <div class="o_sidebar">
             <img class="rounded-circle"

@@ -5,6 +5,7 @@
         class="o_chat_window"
         t-attf-class="{{ props.item === 'new_message' ? 'o_new_message' : '' }}  {{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
         t-att-data-odoo-id="id"
+        t-attf-data-thread-lid="{{ props.thread ? props.thread.lid : '' }}"
         t-on-mousedown="_onMousedown">
       <t t-widget="Header"
          t-props="{ options, item: props.item }"

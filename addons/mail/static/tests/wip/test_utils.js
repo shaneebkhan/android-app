@@ -26,7 +26,7 @@ const MockMailService = Class.extend({
             updateOption() {},
         });
     },
-    chat_window_service() {
+    chat_window() {
         return ChatWindowService;
     },
     local_storage() {
@@ -40,7 +40,7 @@ const MockMailService = Class.extend({
     getServices() {
         return {
             bus_service: this.bus_service(),
-            chat_window_service: this.chat_window_service(),
+            chat_window: this.chat_window(),
             local_storage: this.local_storage(),
             store: this.store_service(),
         };
@@ -88,52 +88,15 @@ function beforeEach(self) {
 }
 
 /**
- * Create asynchronously chat window manager widget.
+ * Create chat window manager, discuss, and systray messaging menu
  *
  * @param {Object} params
+ * @param {boolean} [params.autoOpenDiscuss=false]
+ * @param {boolean} [params.debug=false]
+ * @param {Object} [params.initStoreStateAlteration]
  * @return {Promise}
  */
-async function createChatWindowManager(params) {
-    const Parent = Widget.extend({
-        do_push_state: function () {},
-    });
-    const parent = new Parent();
-    params.services = new MockMailService().getServices();
-    const selector = params.debug ? 'body' : '#qunit-fixture';
-    const {
-        CONTAINER: ORIGINAL_CONTAINER,
-        MODE: ORIGINAL_MODE,
-    } = params.services.chat_window_service.prototype;
-    Object.assign(params.services.chat_window_service.prototype, {
-        CONTAINER: selector,
-        MODE: 'demo',
-    });
-    testUtils.mock.addMockEnvironment(parent, params);
-    const widget = new Widget(parent);
-
-    widget.destroy = function () {
-        Object.assign(params.services.chat_window_service.prototype, {
-            CONTAINER: ORIGINAL_CONTAINER,
-            MODE: ORIGINAL_MODE,
-        });
-        delete widget.destroy;
-        widget.call('chat_window_service', 'destroy');
-        parent.destroy();
-    };
-
-    await widget.appendTo($(selector));
-    widget.call('chat_window_service', 'demo:web_client_ready');
-    await testUtils.nextTick(); // mounting of chat window manager
-    return widget;
-}
-
-/**
- * Create asynchronously a discuss widget.
- *
- * @param {Object} params
- * @return {Promise} resolved with the discuss widget
- */
-async function createDiscuss(params) {
+async function create(params) {
     const Parent = Widget.extend({
         do_push_state: function () {},
     });
@@ -142,54 +105,59 @@ async function createDiscuss(params) {
         'mail.message,false,search': '<search/>',
     };
     params.services = new MockMailService().getServices();
+    const selector = params.debug ? 'body' : '#qunit-fixture';
+    let ORIGINAL_STORE_SERVICE_TEST = params.services.store.prototype.TEST;
+    Object.assign(params.services.store.prototype.TEST, {
+        active: true,
+        initStateAlteration: params.initStoreStateAlteration || {
+            global: {
+                innerHeight: 1080,
+                innerWidth: 1920,
+            },
+            isMobile: false,
+        }
+    });
+    let ORIGINAL_CHAT_WINDOW_SERVICE_TEST = params.services.chat_window.prototype.TEST;
+    Object.assign(params.services.chat_window.prototype.TEST, {
+        active: true,
+        container: selector,
+    });
     testUtils.mock.addMockEnvironment(parent, params);
     const discuss = new Discuss(parent, params);
-    const selector = params.debug ? 'body' : '#qunit-fixture';
-
-    // override 'destroy' of discuss so that it calls 'destroy' on the parent
-    // instead, which is the parent of discuss and the mockServer.
-    discuss.destroy = function () {
-        // remove the override to properly destroy discuss and its children
-        // when it will be called the second time (by its parent)
-        delete discuss.destroy;
-        parent.destroy();
-    };
-
-    await discuss.appendTo($(selector));
-    discuss.on_attach_callback(); // trigger mounting of discuss component
-    await testUtils.nextTick(); // render
-    return discuss;
-}
-
-/**
- * Create asynchronously a systray messaging menu widget.
- *
- * @param {Object} params
- * @return {Promise} resolved with the systray messaging menu widget
- */
-async function createSystrayMessagingMenu(params) {
-    const Parent = Widget.extend({
-        do_push_state: function () {},
-    });
-    const parent = new Parent();
-    params.services = new MockMailService().getServices();
-    testUtils.mock.addMockEnvironment(parent, params);
     const menu = new SystrayMessagingMenu(parent, params);
-    const selector = params.debug ? 'body' : '#qunit-fixture';
+    const widget = new Widget(parent);
 
-    // override 'destroy' of systray messaging menu so that it calls 'destroy'
-    // on the parent instead, which is the parent of the menu and the mockServer.
-    menu.destroy = function () {
-        // remove the override to properly destroy menu and its children
-        // when it will be called the second time (by its parent)
-        delete menu.destroy;
-        parent.destroy();
-    };
+    Object.assign(widget, {
+        closeDiscuss() {
+            discuss.on_detach_callback();
+        },
+        destroy() {
+            params.services.chat_window.prototype.TEST = ORIGINAL_CHAT_WINDOW_SERVICE_TEST;
+            params.services.store.prototype.TEST = ORIGINAL_STORE_SERVICE_TEST;
+            delete widget.destroy;
+            delete window.o_test_store;
+            widget.call('chat_window', 'destroy');
+            parent.destroy();
+        },
+        openDiscuss() {
+            discuss.on_attach_callback();
+        },
+    });
 
+    await widget.appendTo($(selector));
+    widget.call('chat_window', 'test:web_client_ready'); // trigger mounting of chat window manager
     await menu.appendTo($(selector));
     menu.on_attach_callback(); // trigger mounting of menu component
-    await testUtils.nextTick(); // render
-    return menu;
+    await discuss.appendTo($(selector));
+    if (params.autoOpenDiscuss) {
+        widget.openDiscuss();
+    }
+    await testUtils.nextTick(); // mounting of chat window manager, discuss, and systray messaging menu
+    const store = await widget.call('store', 'get');
+    if (params.debug) {
+        window.o_test_store = store;
+    }
+    return { store, widget };
 }
 
 async function pause() {
@@ -203,9 +171,7 @@ async function pause() {
 return {
     afterEach,
     beforeEach,
-    createChatWindowManager,
-    createDiscuss,
-    createSystrayMessagingMenu,
+    create,
     pause,
 };
 

@@ -12,8 +12,10 @@ const _t = core._t;
 
 const ChatWindowService =  AbstractService.extend(StoreMixin, {
     DEBUG: true,
-    CONTAINER: 'body',
-    MODE: 'prod',
+    TEST: {
+        active: false,
+        container: 'body',
+    },
     dependencies: ['store'],
     init() {
         this._super.apply(this, arguments);
@@ -27,14 +29,14 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
      */
     start() {
         this._super.apply(this, arguments);
-        if (this.MODE === 'prod') {
+        if (!this.TEST.active) {
             core.bus.on('hide_home_menu', this, this._onHideHomeMenu.bind(this));
             core.bus.on('show_home_menu', this, this._onShowHomeMenu.bind(this));
             core.bus.on('web_client_ready', this, this._onWebClientReady.bind(this));
         } else {
-            this['demo:hide_home_menu'] = this._onHideHomeMenu;
-            this['demo:show_home_menu'] = this._onShowHomeMenu;
-            this['demo:web_client_ready'] = this._onWebClientReady;
+            this['test:hide_home_menu'] = this._onHideHomeMenu;
+            this['test:show_home_menu'] = this._onShowHomeMenu;
+            this['test:web_client_ready'] = this._onWebClientReady;
         }
     },
     /**
@@ -70,7 +72,13 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
             rpc: (...args) => this._rpc(...args),
         };
         this.component = new ChatWindowManager(env);
-        this.component.mount(document.querySelector(this.CONTAINER));
+        let parentNode;
+        if (this.TEST.active) {
+            parentNode = document.querySelector(this.TEST.container);
+        } else {
+            parentNode = document.querySelector('body');
+        }
+        this.component.mount(parentNode);
     },
 
     //--------------------------------------------------------------------------

@@ -7,7 +7,6 @@ const Partner = require('mail.wip.model.Partner');
 const Thread = require('mail.wip.model.Thread');
 const ThreadCache = require('mail.wip.model.ThreadCache');
 
-const config = require('web.config');
 const core = require('web.core');
 const session = require('web.session');
 
@@ -600,8 +599,13 @@ const mutations = {
             commit('thread/insert', {
                 _model: model,
                 id: res_id,
-                name: record_name,
             });
+            if (message.record_name) {
+                commit('thread/update', {
+                    threadLID: message.originLID,
+                    name: record_name,
+                });
+            }
         }
         // 3a. link message <- threads
         for (let threadLID of message.threadLIDs) {
@@ -1005,11 +1009,19 @@ const mutations = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {integer} param1.globalInnerHeight
+     * @param {integer} param1.globalInnerWidth
+     * @param {boolean} param1.isMobile
      */
-    'resize'({ commit, state }) {
-        state.global.innerHeight = window.innerHeight;
-        state.global.innerWidth = window.innerWidth;
-        state.isMobile = config.device.isMobile;
+    'resize'({ commit, state }, {
+        globalInnerHeight,
+        globalInnerWidth,
+        isMobile,
+    }) {
+        state.global.innerHeight = globalInnerHeight;
+        state.global.innerWidth = globalInnerWidth;
+        state.isMobile = isMobile; // config.device.isMobile;
         commit('chat_window_manager/_compute');
     },
     /**

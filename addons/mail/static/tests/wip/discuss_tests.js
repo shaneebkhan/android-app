@@ -4,7 +4,7 @@ odoo.define('mail.wip.discuss_tests', function (require) {
 const {
     afterEach: utilsAfterEach,
     beforeEach: utilsBeforeEach,
-    createDiscuss,
+    create,
 } = require('mail.wip.test_utils');
 
 const testUtils = require('web.test_utils');
@@ -13,17 +13,22 @@ QUnit.module('mail.wip', {}, function () {
 QUnit.module('Discuss', {
     beforeEach() {
         utilsBeforeEach(this);
-        this.createDiscuss = async params => {
-            if (this.discuss) {
-                this.discuss.destroy();
+        this.create = async params => {
+            if (this.widget) {
+                this.widget.destroy();
             }
-            this.discuss = await createDiscuss({ ...params, data: this.data });
+            let { widget } = await create({
+                ...params,
+                autoOpenDiscuss: true,
+                data: this.data,
+            });
+            this.widget = widget;
         };
     },
     afterEach() {
         utilsAfterEach(this);
-        if (this.discuss) {
-            this.discuss.destroy();
+        if (this.widget) {
+            this.widget.destroy();
         }
     }
 });
@@ -31,7 +36,7 @@ QUnit.module('Discuss', {
 QUnit.test('basic rendering', async function (assert) {
     assert.expect(4);
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar').length, 1, "should have a sidebar section");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content').length, 1, "should have content section");
@@ -42,7 +47,7 @@ QUnit.test('basic rendering', async function (assert) {
 QUnit.test('basic rendering: sidebar', async function (assert) {
     assert.expect(19);
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group').length, 3, "should have 3 groups in sidebar");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_mailbox').length, 1, "should have group 'Mailbox' in sidebar");
@@ -68,7 +73,7 @@ QUnit.test('basic rendering: sidebar', async function (assert) {
 QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
     assert.expect(6);
 
-    await this.createDiscuss();
+    await this.create();
 
     const inbox = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_mailbox > .o_item[data-thread-lid="mail.box_inbox"]');
 
@@ -83,7 +88,7 @@ QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
 QUnit.test('sidebar: default active inbox', async function (assert) {
     assert.expect(1);
 
-    await this.createDiscuss();
+    await this.create();
 
     const inbox = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_mailbox > .o_item[data-thread-lid="mail.box_inbox"]');
 
@@ -93,7 +98,7 @@ QUnit.test('sidebar: default active inbox', async function (assert) {
 QUnit.test('sidebar: change item', async function (assert) {
     assert.expect(4);
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss .o_item[data-thread-lid="mail.box_inbox"] > .o_active_indicator').classList.contains('o_active'), true, "inbox should be active by default");
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss .o_item[data-thread-lid="mail.box_starred"] > .o_active_indicator').classList.contains('o_active'), false, "starred should be inactive by default");
@@ -109,7 +114,7 @@ QUnit.test('sidebar: inbox with counter', async function (assert) {
 
     Object.assign(this.data.initMessaging, { needaction_inbox_counter: 100 });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss .o_item[data-thread-lid="mail.box_inbox"] > .o_counter').length, 1, "should have a counter when different from 0");
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss .o_item[data-thread-lid="mail.box_inbox"] > .o_counter').textContent, "100", "should have counter value");
@@ -118,7 +123,7 @@ QUnit.test('sidebar: inbox with counter', async function (assert) {
 QUnit.test('sidebar: add channel', async function (assert) {
     assert.expect(3);
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add').length, 1, "should be able to add channel from header");
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_header > .o_add').title, "Add or join a channel");
@@ -141,7 +146,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item').length, 1, "should have one channel item");
 
@@ -181,7 +186,7 @@ QUnit.test('sidebar: channel rendering with needaction counter', async function 
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     const channel = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item');
 
@@ -212,7 +217,7 @@ QUnit.test('sidebar: public/private channel rendering', async function (assert) 
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item').length, 2, "should have 2 channel items");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item[data-thread-lid="mail.channel_100"]').length, 1, "should have channel1 (ID 100)");
@@ -241,7 +246,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item').length, 1, "should have one chat item");
 
@@ -276,7 +281,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     const chat = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item');
 
@@ -320,7 +325,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item').length, 3, "should have 3 chat items");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item[data-thread-lid="mail.channel_11"]').length, 1, "should have Partner1 (ID 11)");
@@ -353,7 +358,7 @@ QUnit.test('sidebar: chat custom name', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     const chat = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item');
     assert.strictEqual(chat.querySelector(':scope > .o_name').textContent, "Marc", "chat should have custom name as name");
@@ -376,7 +381,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'channel_set_custom_name') {
                 return Promise.resolve();
@@ -410,7 +415,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
 QUnit.test('default thread rendering', async function (assert) {
     assert.expect(2);
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_thread > .o_empty').length, 1, "should have empty thread");
     assert.strictEqual(document.querySelector('.o_mail_wip_discuss > .o_content > .o_thread > .o_empty').textContent.trim(), "There are no messages in this conversation.");
@@ -419,7 +424,7 @@ QUnit.test('default thread rendering', async function (assert) {
 QUnit.test('initially load messages from inbox', async function (assert) {
     assert.expect(3);
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 assert.strictEqual(args.kwargs.limit, 30, "should fetch up to 30 messages");
@@ -434,7 +439,7 @@ QUnit.test('initially load messages from inbox', async function (assert) {
 QUnit.test('default select thread in discuss params', async function (assert) {
     assert.expect(1);
 
-    await this.createDiscuss({
+    await this.create({
         params: { default_active_id: 'mail.box_starred' },
     });
 
@@ -444,7 +449,7 @@ QUnit.test('default select thread in discuss params', async function (assert) {
 QUnit.test('auto-select thread in discuss context', async function (assert) {
     assert.expect(1);
 
-    await this.createDiscuss({
+    await this.create({
         context: { active_id: 'mail.box_starred' },
     });
 
@@ -464,7 +469,7 @@ QUnit.test('load single message from channel initially', async function (assert)
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 assert.strictEqual(args.kwargs.limit, 30, "should fetch up to 30 messages");
@@ -507,7 +512,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return Promise.resolve([{
@@ -560,7 +565,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return Promise.resolve([{
@@ -611,7 +616,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
 QUnit.test('inbox messages are never squashed', async function (assert) {
     assert.expect(3);
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 // fetching messages from inbox
@@ -668,7 +673,7 @@ QUnit.test('load all messages from channel initially, less than fetch limit (29 
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 assert.strictEqual(args.kwargs.limit, 30, "should fetch up to 30 messages");
@@ -719,7 +724,7 @@ QUnit.test('load more messages from channel', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -800,7 +805,7 @@ QUnit.test('auto-scroll to bottom of thread', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return new Promise(resolve => {
@@ -851,7 +856,7 @@ QUnit.test('load more messages from channel (auto-load on scroll)', async functi
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -937,7 +942,7 @@ QUnit.test('new messages indicator', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -991,7 +996,7 @@ QUnit.test('new messages indicator', async function (assert) {
         res_id: 20,
     };
     const notifications = [ [['my-db', 'mail.channel', 20], data] ];
-    this.discuss.call('bus_service', 'trigger', 'notification', notifications);
+    this.widget.call('bus_service', 'trigger', 'notification', notifications);
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_thread > .o_message_list > .o_message').length, 26, "should have 26 messages");
@@ -1028,7 +1033,7 @@ QUnit.skip('restore thread scroll position', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -1150,7 +1155,7 @@ QUnit.test('message origin redirect to channel', async function (assert) {
         res_id: 2,
     }];
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -1213,7 +1218,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 step++;
@@ -1290,7 +1295,7 @@ QUnit.test('sidebar quick search', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item').length, 20, "should have 20 channel items");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar > input.o_quick_search').length, 1, "should have quick search in sidebar");
@@ -1333,7 +1338,7 @@ QUnit.test('basic control panel rendering', async function (assert) {
         },
     });
 
-    await this.createDiscuss();
+    await this.create();
 
     assert.strictEqual(document.querySelector('.o_mail_wip_old_discuss > .o_cp_controller > .o_control_panel > .breadcrumb').textContent, "Inbox", "display inbox in the breadcrumb");
     const markAllReadButton = document.querySelector('.o_mail_wip_old_discuss > .o_cp_controller > .o_control_panel > .o_cp_left > .o_cp_buttons > div > button.o_mark_all_read');
@@ -1371,7 +1376,7 @@ QUnit.test('inbox: mark all messages as read', async function (assert) {
         },
     });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return Promise.resolve([{
@@ -1407,7 +1412,7 @@ QUnit.test('inbox: mark all messages as read', async function (assert) {
                     type: 'mark_as_read',
                 };
                 const notifications = [ [['my-db', 'res.partner'], data] ];
-                self.discuss.call('bus_service', 'trigger', 'notification', notifications);
+                self.widget.call('bus_service', 'trigger', 'notification', notifications);
                 return Promise.resolve();
 
             }
@@ -1439,7 +1444,7 @@ QUnit.test('starred: unstar all', async function (assert) {
 
     Object.assign(this.data.initMessaging, { starred_counter: 2 });
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return Promise.resolve([{
@@ -1476,7 +1481,7 @@ QUnit.test('starred: unstar all', async function (assert) {
                     type: 'toggle_star',
                 };
                 const notifications = [ [['my-db', 'res.partner'], data] ];
-                self.discuss.call('bus_service', 'trigger', 'notification', notifications);
+                self.widget.call('bus_service', 'trigger', 'notification', notifications);
                 return Promise.resolve();
 
             }
@@ -1529,7 +1534,7 @@ QUnit.test('toggle_star message', async function (assert) {
         starred_partner_ids: [],
     };
 
-    await this.createDiscuss({
+    await this.create({
         mockRPC(route, args) {
             if (args.method === 'message_fetch') {
                 return Promise.resolve([messageData]);
@@ -1545,7 +1550,7 @@ QUnit.test('toggle_star message', async function (assert) {
                     type: 'toggle_star',
                 };
                 const notifications = [ [['my-db', 'res.partner'], data] ];
-                self.discuss.call('bus_service', 'trigger', 'notification', notifications);
+                self.widget.call('bus_service', 'trigger', 'notification', notifications);
                 return Promise.resolve();
             }
             return this._super.apply(this, arguments);
