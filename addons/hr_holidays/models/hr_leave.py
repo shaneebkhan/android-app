@@ -741,6 +741,14 @@ class HolidaysRequest(models.Model):
 
         current_employee = self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
         self.filtered(lambda hol: hol.validation_type == 'both').write({'state': 'validate1', 'first_approver_id': current_employee.id})
+
+        # NOTE: This is an fp request asked by apr ...
+        # RLI FIXME: This should be removed ASAP as it is unnecessary overhead and spam (tracking should be enough)
+        for holiday in self:
+            if holiday.employee_id.user_id:
+                holiday.message_post(body=_('Your %s planned on %s has been refused' % (holiday.holiday_status_id.display_name, holiday.date_from)),
+                                    partner_ids=holiday.employee_id.user_id.partner_id.ids)
+
         self.filtered(lambda hol: not hol.validation_type == 'both').action_validate()
         if not self.env.context.get('leave_fast_create'):
             self.activity_update()
@@ -802,6 +810,13 @@ class HolidaysRequest(models.Model):
                 holiday.meeting_id.unlink()
             # If a category that created several holidays, cancel all related
             holiday.linked_request_ids.action_refuse()
+
+            # NOTE: This is an fp request asked by apr ...
+            # RLI FIXME: This should be removed ASAP as it is unnecessary overhead and spam (tracking should be enough)
+            if holiday.employee_id.user_id:
+                holiday.message_post(body=_('Your %s planned on %s has been refused' % (holiday.holiday_status_id.display_name, holiday.date_from)),
+                                    partner_ids=holiday.employee_id.user_id.partner_id.ids)
+
         self._remove_resource_leave()
         self.activity_update()
         return True

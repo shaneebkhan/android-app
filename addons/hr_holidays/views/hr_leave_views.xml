@@ -474,8 +474,6 @@
         <field name="context">{
             'search_default_year': 1,
             'search_default_group_employee': 1,
-            'search_default_managed_people': 1,
-            'search_default_my_team_leaves': 1,
             'form_view_ref': 'hr_holidays.hr_leave_view_form_manager',
         }</field>
         <field name="domain">[('holiday_type','=','employee'), ('state', '!=', 'refuse')]</field>
