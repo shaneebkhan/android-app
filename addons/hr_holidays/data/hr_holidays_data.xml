@@ -7,8 +7,6 @@
             <field name="allocation_type">fixed</field>
             <field name="validation_type">both</field>
             <field name="color_name">black</field>
-            <field name="validity_start" eval="time.strftime('%Y-01-01')"/>
-            <field name="validity_stop" eval="time.strftime('%Y-12-31')"/>
             <field name="leave_notif_subtype_id" eval="ref('mt_leave')"/>
             <field name="allocation_notif_subtype_id" eval="ref('mt_leave_allocation')"/>
         </record>
