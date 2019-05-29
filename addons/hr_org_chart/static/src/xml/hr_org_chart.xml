@@ -14,6 +14,7 @@
                 t-att-alt="employee.name"
                 t-att-data-employee-id="employee.id"
                 t-att-href="employee.link"/>
+                <div t-field="employee.image_small" t-options='{"widget": "bgimage", "tag": "span"}' />
             <div t-if="is_self"
                 class="o_media_object rounded-circle"
                 t-att-style="'background-image:url(\'/web/image/hr.employee.public/' + employee.id + '/image/\')'"/>
