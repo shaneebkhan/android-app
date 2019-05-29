@@ -127,6 +127,11 @@ class AccountMove(models.Model):
             partner = move.line_ids.mapped('partner_id')
             move.partner_id = partner.id if len(partner) == 1 else False
 
+    @api.depends('line_ids')
+    def _compute_reconciled_items_count(self):
+        for move in self:
+            move.reconciled_items_count = len(move.line_ids._reconciled_lines())
+
     @api.onchange('date')
     def _onchange_date(self):
         '''On the form view, a change on the date will trigger onchange() on account.move
@@ -166,6 +171,8 @@ class AccountMove(models.Model):
     reverse_entry_id = fields.Many2one('account.move', String="Reverse entry", store=True, readonly=True)
     to_check = fields.Boolean(string='To Check', default=False, help='If this checkbox is ticked, it means that the user was not sure of all the related informations at the time of the creation of the move and that the move needs to be checked again.')
     tax_type_domain = fields.Char(store=False, help='Technical field used to have a dynamic taxes domain on the form view.')
+    # Technical field to hide Reconciled Entries stat button
+    reconciled_items_count = fields.Integer(compute='_compute_reconciled_items_count', string='# of reconciled Items')
 
     @api.constrains('line_ids', 'journal_id')
     def _validate_move_modification(self):
@@ -1534,14 +1541,17 @@ class AccountMoveLine(models.Model):
             tables, where_clause, where_clause_params = query.get_sql()
         return tables, where_clause, where_clause_params
 
+    def _reconciled_lines(self):
+        ids = []
+        for aml in self.filtered('account_id.reconcile'):
+            ids.extend([r.debit_move_id.id for r in aml.matched_debit_ids] if aml.credit > 0 else [r.credit_move_id.id for r in aml.matched_credit_ids])
+            ids.append(aml.id)
+        return ids
+
     @api.multi
     def open_reconcile_view(self):
-        [action] = self.env.ref('account.action_account_moves_all').read()
-        ids = []
-        for aml in self:
-            if aml.account_id.reconcile:
-                ids.extend([r.debit_move_id.id for r in aml.matched_debit_ids] if aml.credit > 0 else [r.credit_move_id.id for r in aml.matched_credit_ids])
-                ids.append(aml.id)
+        [action] = self.env.ref('account.action_account_moves_all_a').read()
+        ids = self._reconciled_lines()
         action['domain'] = [('id', 'in', ids)]
         return action
 

@@ -407,6 +407,7 @@
                     <sheet>
                         <field name="tax_type_domain" invisible="1"/>
                         <field name="id" invisible="1"/>
+                        <field name="reconciled_items_count" invisible="1"/>
                         <div class="oe_button_box">
                             <button name="action_view_reverse_entry"
                                 type="object"
@@ -419,7 +420,8 @@
                                 class="oe_stat_button"
                                 icon="fa-bars"
                                 type="object"
-                                string="Reconciled entries">
+                                string="Reconciled entries"
+                                attrs="{'invisible': [('reconciled_items_count', '&lt;=', 1)]}">
                             </button>
                         </div>
                     <h1>
