@@ -377,7 +377,7 @@
                                     <td>Twitter</td>
                                 </tr>
                                 <tr>
-                                    <th><span id="linkedin-badge"/></th>
+                                    <th><span id="linkedin-badge">0</span></th>
                                     <td>LinkedIn</td>
                                 </tr>
                             </tbody>
