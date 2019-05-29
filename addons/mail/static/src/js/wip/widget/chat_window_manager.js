@@ -67,6 +67,17 @@ class ChatWindowManager extends Component {
     }
 
     /**
+     * @return {Array}
+     */
+    get reverseVisible() {
+        return [...this.props.computed.visible].reverse();
+    }
+
+    //--------------------------------------------------------------------------
+    // Public
+    //--------------------------------------------------------------------------
+
+    /**
      * @param {integer} index index of visible chat window
      * @return {Object}
      */

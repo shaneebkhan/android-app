@@ -1,27 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <div t-name="mail.wip.widget.ChatWindowManager" owl="1"
-         class="o_wip_chat_window_manager">
-        <t t-foreach="props.computed.visible"
-           t-as="data">
-            <t t-widget="ChatWindow"
-               t-props="{ item: data.item, direction, offset: data.offset, options: chatWindowOptions(data_index) }"
-               t-key="data.item"
-               t-ref="data.item"
-               t-on-close="_onCloseChatWindow"
-               t-on-select-thread="_onSelectThreadChatWindow"
-               t-on-shift-left="_onShiftLeftChatWindow"
-               t-on-shift-right="_onShiftRightChatWindow"
-               t-on-redirect="_onRedirect"/>
-        </t>
-        <t t-if="props.computed.hidden.showMenu"
-           t-widget="HiddenMenu"
-           t-props="{ items: props.computed.hidden.items, direction, offset: props.computed.hidden.offset }"
-           t-ref="'hidden_menu'"
-           t-key="'hidden_menu'"
-           t-on-close-item="_onCloseChatWindow"
-           t-on-select-item="_onSelectChatWindow"/>
-    </div>
+   <div t-name="mail.wip.widget.ChatWindowManager" owl="1"
+        class="o_wip_chat_window_manager">
+      <!-- Note: DOM elements are ordered from left to right -->
+      <t t-if="props.computed.hidden.showMenu"
+         t-widget="HiddenMenu"
+         t-props="{ items: props.computed.hidden.items, direction, offset: props.computed.hidden.offset }"
+         t-ref="hidden_menu"
+         t-key="'hidden_menu'"
+         t-on-close-item="_onCloseChatWindow"
+         t-on-select-item="_onSelectChatWindow"/>
+      <t t-set="visibleAmount" t-value="props.computed.visible.length"/>
+      <t t-foreach="reverseVisible"
+         t-as="data">
+         <t t-widget="ChatWindow"
+            t-props="{ item: data.item, direction, offset: data.offset, options: chatWindowOptions(visibleAmount - data_index - 1) }"
+            t-key="data.item"
+            t-ref="{{ data.item }}"
+            t-on-close="_onCloseChatWindow"
+            t-on-select-thread="_onSelectThreadChatWindow"
+            t-on-shift-left="_onShiftLeftChatWindow"
+            t-on-shift-right="_onShiftRightChatWindow"
+            t-on-redirect="_onRedirect"/>
+      </t>
+   </div>
 
 </templates>

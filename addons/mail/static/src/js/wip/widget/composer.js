@@ -69,6 +69,10 @@ class Composer extends Component {
         this.refs.input.focus();
     }
 
+    focusout() {
+        this.refs.input.focusout();
+    }
+
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------

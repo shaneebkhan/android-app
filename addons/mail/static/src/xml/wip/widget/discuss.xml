@@ -16,7 +16,7 @@
                     <t t-if="props.threadLID"
                        t-widget="Thread"
                        t-props="{ options: threadOptions, threadLID: props.threadLID }"
-                       t-ref="'thread'"
+                       t-ref="thread"
                        t-on-redirect="_onRedirect"/>
                     <div t-else="" class="o_empty">No conversation.</div>
                 </t>
@@ -34,7 +34,7 @@
                 <!-- chat/channel selection (mobile) -->
                 <t t-widget="Thread"
                    t-props="{ options: threadOptions, threadLID: props.threadLID }"
-                   t-ref="'thread'"
+                   t-ref="thread"
                    t-on-redirect="_onRedirect"
                    t-on-rendered="_onThreadRendered"/>
                 <t t-if="showComposer"
@@ -51,7 +51,7 @@
                 <t t-if="props.threadLID">
                     <t t-widget="Thread"
                        t-props="{ options: threadOptions, threadLID: props.threadLID }"
-                       t-ref="'thread'"
+                       t-ref="thread"
                        t-key="props.threadLID"
                        t-on-redirect="_onRedirect"
                        t-on-rendered="_onThreadRendered"/>

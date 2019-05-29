@@ -33,7 +33,7 @@ class ChatWindow extends Component {
         };
         this.template = 'mail.wip.widget.ChatWindow';
         this.widgets = { AutocompleteInput, Composer, Header, Thread };
-        this._globalCaptureMousedownEventListener = ev => this._onMousedownCaptureGlobal(ev);
+        this._globalCaptureClickEventListener = ev => this._onClickCaptureGlobal(ev);
         this._globalCaptureFocusEventListener = ev => this._onFocusCaptureGlobal(ev);
         // bind since passed as props
         this._onAutocompleteSource = this._onAutocompleteSource.bind(this);
@@ -41,7 +41,7 @@ class ChatWindow extends Component {
 
     mounted() {
         this._applyOffset();
-        document.addEventListener('mousedown', this._globalCaptureMousedownEventListener, true);
+        document.addEventListener('click', this._globalCaptureClickEventListener, true);
         document.addEventListener('focus', this._globalCaptureFocusEventListener, true);
     }
 
@@ -151,6 +151,21 @@ class ChatWindow extends Component {
         this.el.style[oppositeFrom] = 'auto';
     }
 
+    /**
+     * @private
+     */
+    _focusout() {
+        this.state.focused = false;
+        if (!this.props.thread) {
+            this.refs.input.focusout();
+        } else {
+            if (!this.showComposer) {
+                return;
+            }
+            this.refs.composer.focusout();
+        }
+    }
+
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
@@ -200,6 +215,31 @@ class ChatWindow extends Component {
      * @private
      * @param {MouseEvent} ev
      */
+    _onClick(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.odooPrevented = true;
+        this.focus();
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
+    _onClickCaptureGlobal(ev) {
+        if (ev.odooPrevented) { return; }
+        if (ev.target === this.el) {
+            return;
+        }
+        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
+            return;
+        }
+        this._focusout();
+    }
+
+    /**
+     * @private
+     * @param {MouseEvent} ev
+     */
     _onCloseHeader(ev) {
         if (ev.odooPrevented) { return; }
         this.trigger('close', ev, { item: this.props.item });
@@ -212,11 +252,11 @@ class ChatWindow extends Component {
     _onFocusCaptureGlobal(ev) {
         if (ev.odooPrevented) { return; }
         if (ev.target === this.el) {
-            this.state.focused = true;
+            this.focus();
             return;
         }
         if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
-            this.state.focused = true;
+            this.focus();
             return;
         }
         this.state.focused = false;
@@ -229,35 +269,6 @@ class ChatWindow extends Component {
     _onFocusComposer(ev) {
         if (ev.odooPrevented) { return; }
         this.state.focused = true;
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onMousedown(ev) {
-        if (ev.odooPrevented) { return; }
-        if (ev.button !== 0) { return; } // ignore non-main buttons
-        ev.odooPrevented = true;
-        this.focus();
-    }
-
-    /**
-     * @private
-     * @param {MouseEvent} ev
-     */
-    _onMousedownCaptureGlobal(ev) {
-        if (ev.odooPrevented) { return; }
-        if (ev.button !== 0) { return; } // ignore non-main buttons
-        if (ev.target === this.el) {
-            this.state.focused = true;
-            return;
-        }
-        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
-            this.state.focused = true;
-            return;
-        }
-        this.state.focused = false;
     }
 
     /**

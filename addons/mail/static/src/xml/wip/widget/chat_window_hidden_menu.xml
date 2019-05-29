@@ -15,7 +15,7 @@
         <ul class="dropdown-menu dropdown-menu-right"
             t-att-class="state.toggleShow ? 'show' : ''"
             role="menu"
-            t-ref="'list'">
+            t-ref="list">
             <t t-foreach="props.items"
                t-as="item">
                <li class="o_item"

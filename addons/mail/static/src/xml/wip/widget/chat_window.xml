@@ -6,7 +6,7 @@
         t-attf-class="{{ props.item === 'new_message' ? 'o_new_message' : '' }}  {{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
         t-att-data-odoo-id="id"
         t-attf-data-thread-lid="{{ props.thread ? props.thread.lid : '' }}"
-        t-on-mousedown="_onMousedown">
+        t-on-click="_onClick">
       <t t-widget="Header"
          t-props="{ options, item: props.item }"
          t-on-close="_onCloseHeader"
@@ -20,7 +20,7 @@
          <t t-if="showComposer"
             t-widget="Composer"
             t-props="{ options: composerOptions, threadLID: props.item }"
-            t-ref="'composer'"
+            t-ref="composer"
             t-on-focus="_onFocusComposer"/>
       </t>
       <div t-else=""
@@ -31,7 +31,7 @@
          </span>
          <t t-widget="AutocompleteInput"
             t-props="{ html: true, source: _onAutocompleteSource }"
-            t-ref="'input'"
+            t-ref="input"
             t-on-select="_onAutocompleteSelect"/>
       </div>
     </div>

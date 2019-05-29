@@ -13,7 +13,7 @@
         <t t-else=""
            t-widget="MessageList"
            t-props="{ threadCacheLID: props.threadCacheLID, threadLID: props.threadLID, options }"
-           t-ref="'messageList'"
+           t-ref="messageList"
            t-on-redirect="_onRedirect"/>
     </div>
 

@@ -57,7 +57,7 @@ const mutations = {
              * items. Value: { item, offset }.
              * Offset is offset of starting point of chat window from starting
              * point of chat window manager. Items are ordered by their `items`
-             * order.
+             * order
              */
             visible: [],
         };
@@ -327,13 +327,43 @@ const mutations = {
     },
     /**
      * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     */
+    'discuss/close'({ commit, state }) {
+        if (!state.discuss.open) {
+            return;
+        }
+        Object.assign(state.discuss, {
+            domain: [],
+            open: false,
+            stringifiedDomain: '[]',
+            threadLID: undefined,
+        });
+        commit('chat_window_manager/_compute');
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     */
+    'discuss/open'({ commit, state }) {
+        if (state.discuss.open) {
+            return;
+        }
+        state.discuss.open = true;
+        commit('chat_window_manager/_compute');
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} changes
      * @param {Array} [changes.domain]
      * @param {boolean} [changes.open]
      * @param {string} [changes.threadLID]
      */
-    'discuss/update'({ state }, changes) {
+    'discuss/update'({ commit, state }, changes) {
         if (changes.stringifiedDomain) {
             throw new Error('cannot set stringified domain on discuss state (read-only)');
         }
@@ -346,8 +376,12 @@ const mutations = {
         ) {
             shouldRecomputeStringifiedDomain = true;
         }
-        if ('open' in changes && !changes.open) {
-            state.discuss.threadLID = undefined;
+        if ('open' in changes) {
+            if (changes.open) {
+                commit('discuss/open');
+            } else {
+                commit('discuss/close');
+            }
         }
         Object.assign(state.discuss, changes);
         if (shouldRecomputeStringifiedDomain) {

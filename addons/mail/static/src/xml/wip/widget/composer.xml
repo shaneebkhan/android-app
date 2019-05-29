@@ -19,7 +19,7 @@
            t-props="{ options: inputOptions }"
            t-on-focus="_onFocusInput"
            t-on-keydown="_onKeydownInput"
-           t-ref="'input'"/>
+           t-ref="input"/>
         <div class="o_commands">
             <t t-widget="EmojisButton"
                t-on-emoji-selection="_onEmojiSelection"/>

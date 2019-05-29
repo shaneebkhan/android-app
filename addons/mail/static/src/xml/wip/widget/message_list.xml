@@ -14,7 +14,7 @@
            class="o_load_more"
            t-key="'load_more'"
            t-on-click="_onClickLoadMore"
-           t-ref="'loadMore'">
+           t-ref="loadMore">
             Load more
         </a>
         <t t-set="current_day" t-value="0"/>
@@ -38,7 +38,7 @@
             <t t-widget="Message"
                t-props="{ messageLID, options: messageOptions(squashed), threadLID: props.threadLID }"
                t-key="messageLID"
-               t-ref="messageLID"
+               t-ref="{{ messageLID }}"
                t-on-redirect="_onRedirect"/>
             <t t-set="prev_message" t-value="message"/>
             <t t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and props.thread.seen_message_id === message.id">

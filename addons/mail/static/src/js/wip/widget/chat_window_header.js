@@ -106,7 +106,7 @@ class ChatWindowHeader extends Component {
                 active_id: this.props.thread.lid,
                 on_reverse_breadcrumb: () =>
                     // ideally discuss should do it itself...
-                    this.env.store.commit('discuss/update', { open: false }),
+                    this.env.store.commit('discuss/close'),
             });
         } else {
             this.do_action({

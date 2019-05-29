@@ -89,7 +89,7 @@ class Discuss extends Component {
     }
 
     willUnmount() {
-        this.env.store.commit('discuss/update', { open: false });
+        this.env.store.commit('discuss/close');
     }
 
     //--------------------------------------------------------------------------

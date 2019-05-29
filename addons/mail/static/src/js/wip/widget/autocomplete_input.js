@@ -33,6 +33,13 @@ class AutocompleteInput extends Component {
         this.el.focus();
     }
 
+    focusout() {
+        if (!this.el) {
+            return;
+        }
+        this.el.blur();
+    }
+
     //--------------------------------------------------------------------------
     // Handlers
     //--------------------------------------------------------------------------
