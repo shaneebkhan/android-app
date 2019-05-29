@@ -3,8 +3,8 @@
 from odoo import api, models
 
 
-class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
+class AccountMove(models.Model):
+    _inherit = 'account.move'
 
     def invoice_validate_send_email(self):
         for invoice in self.filtered(lambda x: x.type == 'out_invoice'):
@@ -18,7 +18,8 @@ class AccountInvoice(models.Model):
         return True
 
     @api.multi
-    def invoice_validate(self):
-        res = super(AccountInvoice, self).invoice_validate()
+    def post(self):
+        # OVERRIDE
+        res = super(AccountMove, self).post()
         self.invoice_validate_send_email()
         return res

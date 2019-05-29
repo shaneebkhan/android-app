@@ -33,11 +33,6 @@ class ProductTemplate(models.Model):
         return accounts
 
     @api.multi
-    def action_open_product_moves(self):
-        # TODO: remove me in master
-        pass
-
-    @api.multi
     def get_product_accounts(self, fiscal_pos=None):
         """ Add the stock journal related to product to the result of super()
         @return: dictionary which contains all needed information regarding stock accounts and journal and super (income+expense accounts)
@@ -249,11 +244,6 @@ class ProductProduct(models.Model):
             action['views'] = [(tree_view_ref.id, 'tree'), (form_view_ref.id, 'form')]
         return action
 
-    @api.multi
-    def action_open_product_moves(self):
-        #TODO: remove me in master
-        pass
-
     @api.model
     def _anglo_saxon_sale_move_lines(self, name, product, uom, qty, price_unit, currency=False, amount_currency=False, fiscal_position=False, account_analytic=False, analytic_tags=False):
         """Prepare dicts describing new journal COGS journal items for a product sale.
@@ -311,7 +301,7 @@ class ProductProduct(models.Model):
                 ]
         return []
 
-    def _get_anglo_saxon_price_unit(self, uom=False):
+    def _stock_account_get_anglo_saxon_price_unit(self, uom=False):
         price = self.standard_price
         if not self or not uom or self.uom_id.id == uom.id:
             return price or 0.0

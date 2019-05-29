@@ -8,7 +8,6 @@ from odoo.exceptions import UserError
 from datetime import datetime
 from lxml import etree
 from PyPDF2 import PdfFileReader
-from collections import namedtuple
 
 import io
 import base64
@@ -20,9 +19,8 @@ _logger = logging.getLogger(__name__)
 DEFAULT_FACTURX_DATE_FORMAT = '%Y%m%d'
 
 
-class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
-    _name = 'account.invoice'
+class AccountMove(models.Model):
+    _inherit = 'account.move'
 
     @api.multi
     def _export_as_facturx_xml(self):
@@ -58,17 +56,13 @@ class AccountInvoice(models.Model):
         '''
         amount_total_import = None
 
-        # type must be present in the context to get the right behavior of the _default_journal method (account.invoice).
-        # journal_id must be present in the context to get the right behavior of the _default_account method (account.invoice.line).
-        journal_id = self._default_journal()
-        self_ctx = self.with_context(journal_id=journal_id.id)
+        self_ctx = self.with_context(default_type='in_invoice')
 
         # self could be a single record (editing) or be empty (new).
-        view = journal_id.type == 'purchase' and 'account.invoice_supplier_form' or 'account.invoice_form'
-        with Form(self_ctx, view=view) as invoice_form:
+        with Form(self_ctx) as invoice_form:
 
             # Partner (first step to avoid warning 'Warning! You must first select a partner.').
-            partner_type = journal_id.type == 'purchase' and 'SellerTradeParty' or 'BuyerTradeParty'
+            partner_type = invoice_form.journal_id.type == 'purchase' and 'SellerTradeParty' or 'BuyerTradeParty'
             elements = tree.xpath('//ram:'+partner_type+'/ram:SpecifiedTaxRegistration/ram:ID', namespaces=tree.nsmap)
             partner = elements and self.env['res.partner'].search([('vat', '=', elements[0].text)], limit=1)
             if not partner:
@@ -84,17 +78,17 @@ class AccountInvoice(models.Model):
             # Reference.
             elements = tree.xpath('//rsm:ExchangedDocument/ram:ID', namespaces=tree.nsmap)
             if elements:
-                invoice_form.reference = elements[0].text
+                invoice_form.ref = elements[0].text
 
             # Name.
             elements = tree.xpath('//ram:BuyerOrderReferencedDocument/ram:IssuerAssignedID', namespaces=tree.nsmap)
             if elements:
-                invoice_form.name = elements[0].text
+                invoice_form.invoice_payment_ref = elements[0].text
 
             # Comment.
             elements = tree.xpath('//ram:IncludedNote/ram:Content', namespaces=tree.nsmap)
             if elements:
-                invoice_form.comment = elements[0].text
+                invoice_form.narration = elements[0].text
 
             # Refund type.
             # There is two modes to handle refund in Factur-X:
@@ -129,16 +123,14 @@ class AccountInvoice(models.Model):
             if elements:
                 date_str = elements[0].text
                 date_obj = datetime.strptime(date_str, DEFAULT_FACTURX_DATE_FORMAT)
-                invoice_form.date_invoice = date_obj.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                invoice_form.invoice_date = date_obj.strftime(DEFAULT_SERVER_DATE_FORMAT)
 
             # Due date.
             elements = tree.xpath('//ram:SpecifiedTradePaymentTerms/ram:DueDateDateTime/udt:DateTimeString', namespaces=tree.nsmap)
             if elements:
                 date_str = elements[0].text
                 date_obj = datetime.strptime(date_str, DEFAULT_FACTURX_DATE_FORMAT)
-                # Set to empty record set to avoid readonly on date_due, can not set to False or None in a Form
-                invoice_form.payment_term_id = self.env['account.payment.term']
-                invoice_form.date_due = date_obj.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                invoice_form.invoice_date_due = date_obj.strftime(DEFAULT_SERVER_DATE_FORMAT)
 
             # Invoice lines.
             elements = tree.xpath('//ram:IncludedSupplyChainTradeLineItem', namespaces=tree.nsmap)
@@ -188,19 +180,19 @@ class AccountInvoice(models.Model):
 
                         # Taxes
                         line_elements = element.xpath('.//ram:SpecifiedLineTradeSettlement/ram:ApplicableTradeTax/ram:RateApplicablePercent', namespaces=tree.nsmap)
-                        invoice_line_form.invoice_line_tax_ids.clear()
+                        invoice_line_form.tax_ids.clear()
                         for tax_element in line_elements:
                             percentage = float(tax_element.text)
 
                             tax = self.env['account.tax'].search([
                                 ('company_id', '=', invoice_form.company_id.id),
                                 ('amount_type', '=', 'percent'),
-                                ('type_tax_use', '=', journal_id.type),
+                                ('type_tax_use', '=', invoice_form.journal_id.type),
                                 ('amount', '=', percentage),
                             ], limit=1)
 
                             if tax:
-                                invoice_line_form.invoice_line_tax_ids.add(tax)
+                                invoice_line_form.tax_ids.add(tax)
             elif amount_total_import:
                 # No lines in BASICWL.
                 with invoice_form.invoice_line_ids.new() as invoice_line_form:
@@ -221,7 +213,7 @@ class AccountInvoice(models.Model):
     def message_post(self, **kwargs):
         # OVERRIDE
         # /!\ 'default_res_id' in self._context is used to don't process attachment when using a form view.
-        res = super(AccountInvoice, self).message_post(**kwargs)
+        res = super(AccountMove, self).message_post(**kwargs)
 
         if 'no_new_invoice' not in self.env.context and len(self) == 1 and self.state == 'draft':
             # Get attachments.

@@ -108,8 +108,14 @@ class AccountReconcileModel(models.Model):
     @api.multi
     def action_reconcile_stat(self):
         action = self.env.ref('account.action_move_journal_line').read()[0]
+        self._cr.execute('''
+            SELECT ARRAY_AGG(DISTINCT move_id)
+            FROM account_move_line
+            WHERE reconcile_model_id = %s
+        ''', [self.id])
         action.update({
-            'context': {'search_default_reconcile_model_id': self.name},
+            'context': {},
+            'domain': [('id', 'in', self._cr.fetchone()[0])],
             'help': """<p class="o_view_nocontent_empty_folder">{}</p>""".format(_('No move from this reconciliation model')),
         })
         return action

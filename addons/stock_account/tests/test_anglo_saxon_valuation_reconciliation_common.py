@@ -13,17 +13,26 @@ class ValuationReconciliationTestCase(AccountingTestCase):
 
     def check_reconciliation(self, invoice, picking, full_reconcile=True, operation='purchase'):
         interim_account_id = operation == 'purchase' and self.input_account.id or self.output_account.id
-        invoice_line = self.env['account.move.line'].search([('move_id','=', invoice.move_id.id), ('account_id', '=', interim_account_id)])
-        valuation_line = picking.move_lines.mapped('account_move_ids.line_ids').filtered(lambda x: x.account_id.id == interim_account_id)
+        invoice_line = invoice.line_ids.filtered(lambda line: line.account_id.id == interim_account_id)
 
-        self.assertEqual(len(invoice_line), 1, "Only one line should have been written by invoice in stock input account")
-        self.assertEqual(len(valuation_line), 1, "Only one line should have been written for stock valuation in stock input account")
-        self.assertTrue(valuation_line.reconciled or invoice_line.reconciled, "The valuation and invoice line should have been reconciled together.")
+        stock_moves = picking.move_lines
 
-        if full_reconcile:
-            self.assertTrue(valuation_line.full_reconcile_id, "The reconciliation should be total at that point.")
+        valuation_line = stock_moves.mapped('account_move_ids.line_ids').filtered(lambda x: x.account_id.id == interim_account_id)
+
+        if invoice.type in ('in_invoice', 'in_refund') and any(l.is_anglo_saxon_line for l in invoice_line):
+            self.assertEqual(len(invoice_line), 2, "Only two line2 should have been written by invoice in stock input account")
+            self.assertTrue(valuation_line.reconciled or invoice_line[0].reconciled or invoice_line[1].reconciled, "The valuation and invoice line should have been reconciled together.")
         else:
-            self.assertFalse(valuation_line.full_reconcile_id, "The reconciliation should not be total at that point.")
+            self.assertEqual(len(invoice_line), 1, "Only one line should have been written by invoice in stock input account")
+            self.assertTrue(valuation_line.reconciled or invoice_line.reconciled, "The valuation and invoice line should have been reconciled together.")
+
+        if invoice.type not in ('out_refund', 'in_refund'):
+            self.assertEqual(len(valuation_line), 1, "Only one line should have been written for stock valuation in stock input account")
+
+            if full_reconcile:
+                self.assertTrue(valuation_line.full_reconcile_id, "The reconciliation should be total at that point.")
+            else:
+                self.assertFalse(valuation_line.full_reconcile_id, "The reconciliation should not be total at that point.")
 
     def _process_pickings(self, pickings, date=False, quantity=False):
         if not date:

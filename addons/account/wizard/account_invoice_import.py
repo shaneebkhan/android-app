@@ -16,10 +16,10 @@ class ImportInvoiceImportWizard(models.TransientModel):
 
     @api.multi
     def _create_invoice_from_file(self, attachment):
-        self = self.with_context(default_journal_id=self.journal_id.id)
-        invoice_form = Form(self.env['account.invoice'], view='account.invoice_supplier_form')
+        self = self.with_context(default_journal_id=self.journal_id.id, type='in_invoice')
+        invoice_form = Form(self.env['account.move'])
         invoice = invoice_form.save()
-        attachment.write({'res_model': 'account.invoice', 'res_id': invoice.id})
+        attachment.write({'res_model': 'account.move', 'res_id': invoice.id})
         invoice.message_post(attachment_ids=[attachment.id])
         return invoice
 
@@ -35,17 +35,17 @@ class ImportInvoiceImportWizard(models.TransientModel):
         if not self.attachment_ids:
             raise UserError(_("No attachment was provided"))
 
-        invoices = self.env['account.invoice']
+        invoices = self.env['account.move']
         for attachment in self.attachment_ids:
             invoices += self._create_invoice(attachment)
 
-        form_view = self.env.context.get('journal_type') == 'purchase' and self.env.ref('account.invoice_supplier_form').id or self.env.ref('account.invoice_form').id
-        tree_view = self.env.context.get('journal_type') == 'purchase' and self.env.ref('account.invoice_supplier_tree').id or self.env.ref('account.invoice_tree').id
+        form_view = self.env.ref('account.view_move_form')
+        tree_view = self.env.ref('account.view_move_tree')
         action_vals = {
             'name': _('Generated Documents'),
             'domain': [('id', 'in', invoices.ids)],
             'view_type': 'form',
-            'res_model': 'account.invoice',
+            'res_model': 'account.move',
             'views': [[tree_view, "tree"], [form_view, "form"]],
             'type': 'ir.actions.act_window',
         }

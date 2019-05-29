@@ -2,9 +2,9 @@
 
 from odoo import fields, models
 
-class AccountInvoice(models.Model):
-    _name = 'account.invoice'
-    _inherit = 'account.invoice'
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
 
     l10n_sg_permit_number = fields.Char(string="Permit No.")
 

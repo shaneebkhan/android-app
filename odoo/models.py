@@ -5531,7 +5531,10 @@ Fields:
                     new_lines.mapped(subname)
 
         # create a new record with values, and attach ``self`` to it
-        record = self.new(values, origin=self)
+        ovalues = OrderedDict(values)
+        for field_name in names:
+            ovalues[field_name] = ovalues.pop(field_name)
+        record = self.new(ovalues, origin=self)
 
         # make a snapshot based on the initial values of record
         snapshot0 = snapshot1 = Snapshot(record, nametree)
@@ -5569,7 +5572,7 @@ Fields:
 
             # determine which fields have been modified
             for name in nametree:
-                if snapshot1[name] != snapshot0[name]:
+                if snapshot1[name] != snapshot0[name] and env.context.get('recursive_onchanges', True):
                     todo.append(name)
 
         # determine values that have changed by comparing snapshots

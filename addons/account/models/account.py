@@ -738,7 +738,7 @@ class AccountJournal(models.Model):
         if self.alias_id:
             self.alias_id.write(alias_values)
         else:
-            self.alias_id = self.env['mail.alias'].with_context(alias_model_name='account.invoice',
+            self.alias_id = self.env['mail.alias'].with_context(alias_model_name='account.move',
                 alias_parent_model_name='account.journal').create(alias_values)
 
         if vals.get('alias_name'):
@@ -1166,16 +1166,6 @@ class AccountTax(models.Model):
         if self.price_include:
             self.include_base_amount = True
 
-    def get_grouping_key(self, invoice_tax_val):
-        """ Returns a string that will be used to group account.invoice.tax sharing the same properties"""
-        self.ensure_one()
-        return str(invoice_tax_val['tax_id']) + '-' + \
-               str(invoice_tax_val.get('tax_repartition_line_id')) + '-' + \
-               str(invoice_tax_val['account_id']) + '-' + \
-               str(invoice_tax_val['account_analytic_id']) + '-' + \
-               str(invoice_tax_val.get('analytic_tag_ids', [])) + '-' + \
-               str(invoice_tax_val.get('tax_ids') or [])
-
     def _compute_amount(self, base_amount, price_unit, quantity=1.0, product=None, partner=None):
         """ Returns the amount of a single tax. base_amount is the actual amount on which the tax is applied, which is
             price_unit * quantity eventually affected by previous taxes (if tax is include_base_amount XOR price_include)
@@ -1196,7 +1186,7 @@ class AccountTax(models.Model):
             else:
                 return quantity * self.amount
 
-        price_include = self._context['force_price_include'] if 'force_price_include' in self._context else self.price_include
+        price_include = self._context.get('force_price_include', self.price_include)
 
         # base * (1 + tax_amount) = new_base
         if self.amount_type == 'percent' and not price_include:
@@ -1236,7 +1226,7 @@ class AccountTax(models.Model):
         return all_taxes
 
     @api.multi
-    def compute_all(self, price_unit, currency=None, quantity=1.0, product=None, partner=None, is_refund=False):
+    def compute_all(self, price_unit, currency=None, quantity=1.0, product=None, partner=None, is_refund=False, handle_price_include=True):
         """ Returns all information required to apply taxes (in self + their children in case of a tax group).
             We consider the sequence of the parent for group of taxes.
                 Eg. considering letters as taxes and alphabetic order as sequence :
@@ -1344,28 +1334,29 @@ class AccountTax(models.Model):
         incl_fixed_amount = incl_percent_amount = incl_division_amount = 0
         # Store the tax amounts we compute while searching for the total_excluded
         cached_tax_amounts = {}
-        for tax in reversed(taxes):
-            if tax.include_base_amount:
-                base = recompute_base(base, incl_fixed_amount, incl_percent_amount, incl_division_amount)
-                incl_fixed_amount = incl_percent_amount = incl_division_amount = 0
-                store_included_tax_total = True
-            if tax.price_include:
-                if tax.amount_type == 'percent':
-                    incl_percent_amount += tax.amount
-                elif tax.amount_type == 'division':
-                    incl_division_amount += tax.amount
-                elif tax.amount_type == 'fixed':
-                    incl_fixed_amount += quantity * tax.amount
-                else:
-                    # tax.amount_type == other (python)
-                    tax_amount = tax._compute_amount(base, price_unit, quantity, product, partner)
-                    incl_fixed_amount += tax_amount
-                    # Avoid unecessary re-computation
-                    cached_tax_amounts[i] = tax_amount
-                if store_included_tax_total:
-                    total_included_checkpoints[i] = base
-                    store_included_tax_total = False
-            i -= 1
+        if handle_price_include:
+            for tax in reversed(taxes):
+                if tax.include_base_amount:
+                    base = recompute_base(base, incl_fixed_amount, incl_percent_amount, incl_division_amount)
+                    incl_fixed_amount = incl_percent_amount = incl_division_amount = 0
+                    store_included_tax_total = True
+                if tax.price_include:
+                    if tax.amount_type == 'percent':
+                        incl_percent_amount += tax.amount
+                    elif tax.amount_type == 'division':
+                        incl_division_amount += tax.amount
+                    elif tax.amount_type == 'fixed':
+                        incl_fixed_amount += quantity * tax.amount
+                    else:
+                        # tax.amount_type == other (python)
+                        tax_amount = tax._compute_amount(base, price_unit, quantity, product, partner)
+                        incl_fixed_amount += tax_amount
+                        # Avoid unecessary re-computation
+                        cached_tax_amounts[i] = tax_amount
+                    if store_included_tax_total:
+                        total_included_checkpoints[i] = base
+                        store_included_tax_total = False
+                i -= 1
 
         total_excluded = recompute_base(base, incl_fixed_amount, incl_percent_amount, incl_division_amount)
 
@@ -1409,7 +1400,7 @@ class AccountTax(models.Model):
                     'price_include': tax.price_include,
                     'tax_exigibility': tax.tax_exigibility,
                     'tax_repartition_line_id': repartition_line.id,
-                    'tag_ids': [(6, False, repartition_line.tag_ids.ids)],
+                    'tag_ids': repartition_line.tag_ids.ids,
                 })
 
                 total_amount += line_amount
