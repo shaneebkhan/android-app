@@ -6,6 +6,7 @@ from odoo.tools import float_is_zero, float_compare, safe_eval, date_utils
 from odoo.tools.misc import formatLang
 from odoo.addons import decimal_precision as dp
 
+from collections import OrderedDict
 from datetime import date
 from itertools import groupby
 from stdnum.iso7064 import mod_97_10
@@ -790,6 +791,17 @@ class AccountMove(models.Model):
         # As the dynamic lines in this model are quite complex, we need to ensure some computations are done exactly
         # at the beginning / at the end of the onchange mechanism. So, the onchange recursivity is disabled on this
         # model.
+        if not isinstance(field_name, list):
+            field_name = [field_name]
+        if 'line_ids' in field_name:
+            o2m_field = 'line_ids'
+        elif 'invoice_line_ids' in field_name:
+            o2m_field = 'invoice_line_ids'
+        else:
+            o2m_field = None
+        if o2m_field:
+            values = OrderedDict(values)
+            values[o2m_field] = values.pop(o2m_field)
         self_ctx = self.with_context(recursive_onchanges=False)
         return super(AccountMove, self_ctx).onchange(values, field_name, field_onchange)
 
@@ -1292,32 +1304,31 @@ class AccountMove(models.Model):
             self_ctx = self.with_context(**ctx_vals)
             new_vals = self_ctx._add_missing_default_values(vals)
 
-            with self.env.do_in_onchange():
-                move = self_ctx.new(new_vals)
+            move = self_ctx.new(new_vals)
 
-                line_currency = move.currency_id if move.currency_id != move.company_id.currency_id else False
-                for line in move.line_ids:
-                    # Do something only on invoice lines.
-                    if line.exclude_from_invoice_tab:
-                        continue
+            line_currency = move.currency_id if move.currency_id != move.company_id.currency_id else False
+            for line in move.line_ids:
+                # Do something only on invoice lines.
+                if line.exclude_from_invoice_tab:
+                    continue
 
-                    # Ensure related fields are well copied.
-                    line.partner_id = move.partner_id
-                    line.date = move.date
-                    line.recompute_tax_line = True
-                    line.currency_id = line_currency
+                # Ensure related fields are well copied.
+                line.partner_id = move.partner_id
+                line.date = move.date
+                line.recompute_tax_line = True
+                line.currency_id = line_currency
 
-                    # Shortcut to load the demo data.
+                # Shortcut to load the demo data.
+                if not line.account_id:
+                    line.account_id = line._get_computed_account()
                     if not line.account_id:
-                        line.account_id = line._get_computed_account()
-                        if not line.account_id:
-                            if vals['type'] in ('out_invoice', 'out_refund', 'out_receipt'):
-                                line.account_id = move.journal_id.default_credit_account_id
-                            elif vals['type'] in ('in_invoice', 'in_refund', 'in_receipt'):
-                                line.account_id = move.journal_id.default_debit_account_id
+                        if vals['type'] in ('out_invoice', 'out_refund', 'out_receipt'):
+                            line.account_id = move.journal_id.default_credit_account_id
+                        elif vals['type'] in ('in_invoice', 'in_refund', 'in_receipt'):
+                            line.account_id = move.journal_id.default_debit_account_id
 
-                move.line_ids._onchange_price_subtotal()
-                move._recompute_dynamic_lines(recompute_all_taxes=True)
+            move.line_ids._onchange_price_subtotal()
+            move._recompute_dynamic_lines(recompute_all_taxes=True)
 
             values = {name: move[name] for name in move._cache}
             values = move._convert_to_write(values)
@@ -1568,7 +1579,8 @@ class AccountMove(models.Model):
             if line_vals.get('tax_repartition_line_id') and move_vals['type'] in ('out_refund', 'in_refund'):
                 # TODO: make it in an OCO way
                 tax_repartition_line = self.env['account.tax.repartition.line'].browse(line_vals['tax_repartition_line_id'])
-                new_tax_repartition_line = tax_repartition_line.refund_repartition_line_ids.filtered(
+                tax = tax_repartition_line.invoice_tax_id or tax_repartition_line.refund_tax_id
+                new_tax_repartition_line = tax.refund_repartition_line_ids.filtered(
                     lambda line: line.repartition_type == 'tax' and line.factor_percent == tax_repartition_line.factor_percent)
                 line_vals.update({
                     'tax_repartition_line_id': new_tax_repartition_line,

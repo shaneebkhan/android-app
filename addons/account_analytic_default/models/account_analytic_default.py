@@ -65,20 +65,21 @@ class AccountAnalyticDefault(models.Model):
         return res
 
 
-class AccountInvoiceLine(models.Model):
+class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
-        res = super(AccountInvoiceLine, self)._onchange_product_id()
+        res = super(AccountMoveLine, self)._onchange_product_id()
         rec = self.env['account.analytic.default'].account_get(
             product_id=self.product_id.id,
-            partner_id=self.invoice_id.commercial_partner_id.id,
+            partner_id=self.move_id.partner_id.id,
             account_id=self.account_id.id,
             user_id=self.env.uid,
-            date=self.invoice_id.date_due,
-            company_id=self.invoice_id.company_id.id
+            date=self.move_id.invoice_date_due,
+            company_id=self.move_id.company_id.id
         )
 
         self.account_analytic_id = rec.analytic_id.id
         self.analytic_tag_ids = rec.analytic_tag_ids.ids
+        return res

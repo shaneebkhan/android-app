@@ -5478,6 +5478,15 @@ Fields:
                         if field.type in ('one2many', 'many2many') else record[name]
                     )
 
+            def fetch(self, name):
+                """ Set the value of field ``name`` from the record's value. """
+                record = self['<record>']
+                subnames = self['<tree>'][name]
+                self[name] = (
+                    [Snapshot(line, subnames) for line in record[name]]
+                    if subnames else record[name]
+                )
+
             def diff(self, other):
                 """ Return the values in ``self`` that differ from ``other``.
                     Requires record cache invalidation for correct output!
@@ -5530,14 +5539,40 @@ Fields:
                 for subname in subnames:
                     new_lines.mapped(subname)
 
+        # Isolate changed x2many values, to handle inconsistent data sent from
+        # the client side: when a form view contains two one2many fields that
+        # overlap, the lines that appear in both fields may be sent with
+        # different data. Consider, for instance:
+        #
+        #   foo_ids: [line with value=1, ...]
+        #   bar_ids: [line with value=1, ...]
+        #
+        # If value=2 is set on 'line' in 'bar_ids', the client sends
+        #
+        #   foo_ids: [line with value=1, ...]
+        #   bar_ids: [line with value=2, ...]
+        #
+        # The idea is to put 'foo_ids' in cache first, so that the snapshot
+        # contains value=1 for line in 'foo_ids'. The snapshot is then updated
+        # with the value of `bar_ids`, which will contain value=2 on line.
+        values = dict(values)
+        changed_x2many = {
+            name: values.pop(name, [])
+            for name in names
+            if self._fields[name].type in ('one2many', 'many2many')
+        }
+
         # create a new record with values, and attach ``self`` to it
-        ovalues = OrderedDict(values)
-        for field_name in names:
-            ovalues[field_name] = ovalues.pop(field_name)
-        record = self.new(ovalues, origin=self)
+        record = self.new(values, origin=self)
 
         # make a snapshot based on the initial values of record
-        snapshot0 = snapshot1 = Snapshot(record, nametree)
+        snapshot0 = Snapshot(record, nametree)
+
+        # store changed values in cache, and update snapshot0
+        for name, value in changed_x2many.items():
+            field = self._fields[name]
+            record._cache[name] = field.convert_to_cache(value, record)
+            snapshot0.fetch(name)
 
         # determine which field(s) should be triggered an onchange
         todo = list(names or nametree)

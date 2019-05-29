@@ -75,7 +75,7 @@
             <field name="account_id" model="account.account" search="[
               ('user_type_id', '=', ref('account.data_account_type_revenue')),
               ('tag_ids', 'in', [ref('account.account_tag_financing')]),
-              ('company_id', '=', obj().env.company_id.id)]"/>
+              ('company_id', '=', obj().env.company.id)]"/>
         </record>
 
         <record id="demo_bank_statement_line_6" model="account.bank.statement.line">

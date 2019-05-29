@@ -1401,6 +1401,7 @@ class AccountTax(models.Model):
                     'tax_exigibility': tax.tax_exigibility,
                     'tax_repartition_line_id': repartition_line.id,
                     'tag_ids': repartition_line.tag_ids.ids,
+                    'tax_ids': [],
                 })
 
                 total_amount += line_amount
