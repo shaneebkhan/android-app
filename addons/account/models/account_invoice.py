@@ -1862,7 +1862,8 @@ class AccountInvoiceLine(models.Model):
         ondelete='cascade', index=True)
     invoice_type = fields.Selection(related='invoice_id.type', readonly=True)
     uom_id = fields.Many2one('uom.uom', string='Unit of Measure',
-        ondelete='set null', index=True, oldname='uos_id')
+        ondelete='set null', index=True, oldname='uos_id', domain="[('category_id', '=', product_uom_category_id)]")
+    product_uom_category_id = fields.Many2one(related='product_id.uom_id.category_id', readonly=True)
     product_id = fields.Many2one('product.product', string='Product',
         ondelete='restrict', index=True)
     account_id = fields.Many2one('account.account', string='Account', domain=[('deprecated', '=', False)],
@@ -1956,7 +1957,6 @@ class AccountInvoiceLine(models.Model):
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
-        domain = {}
         if not self.invoice_id:
             return
 
@@ -1976,7 +1976,6 @@ class AccountInvoiceLine(models.Model):
         if not self.product_id:
             if type not in ('in_invoice', 'in_refund'):
                 self.price_unit = 0.0
-            domain['uom_id'] = []
         else:
             self_lang = self
             if part.lang:
@@ -1994,13 +1993,11 @@ class AccountInvoiceLine(models.Model):
 
             if not self.uom_id or product.uom_id.category_id.id != self.uom_id.category_id.id:
                 self.uom_id = product.uom_id.id
-            domain['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
             if company and currency:
 
                 if self.uom_id and self.uom_id.id != product.uom_id.id:
                     self.price_unit = product.uom_id._compute_price(self.price_unit, self.uom_id)
-        return {'domain': domain}
 
     def _get_invoice_line_name_from_product(self):
         """ Returns the automatic name to give to the invoice line depending on

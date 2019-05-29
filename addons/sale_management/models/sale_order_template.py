@@ -54,7 +54,8 @@ class SaleOrderTemplateLine(models.Model):
     price_unit = fields.Float('Unit Price', required=True, digits=dp.get_precision('Product Price'))
     discount = fields.Float('Discount (%)', digits=dp.get_precision('Discount'), default=0.0)
     product_uom_qty = fields.Float('Quantity', required=True, digits=dp.get_precision('Product UoS'), default=1)
-    product_uom_id = fields.Many2one('uom.uom', 'Unit of Measure')
+    product_uom_id = fields.Many2one('uom.uom', 'Unit of Measure', domain="[('category_id', '=', product_uom_category_id)]")
+    product_uom_category_id = fields.Many2one(related='product_id.uom_id.category_id', readonly=True)
 
     display_type = fields.Selection([
         ('line_section', "Section"),
@@ -70,8 +71,6 @@ class SaleOrderTemplateLine(models.Model):
             self.name = name
             self.price_unit = self.product_id.lst_price
             self.product_uom_id = self.product_id.uom_id.id
-            domain = {'product_uom_id': [('category_id', '=', self.product_id.uom_id.category_id.id)]}
-            return {'domain': domain}
 
     @api.onchange('product_uom_id')
     def _onchange_product_uom(self):
@@ -111,7 +110,8 @@ class SaleOrderTemplateOption(models.Model):
     product_id = fields.Many2one('product.product', 'Product', domain=[('sale_ok', '=', True)], required=True)
     price_unit = fields.Float('Unit Price', required=True, digits=dp.get_precision('Product Price'))
     discount = fields.Float('Discount (%)', digits=dp.get_precision('Discount'))
-    uom_id = fields.Many2one('uom.uom', 'Unit of Measure ', required=True)
+    uom_id = fields.Many2one('uom.uom', 'Unit of Measure ', required=True, domain="[('category_id', '=', product_uom_category_id)]")
+    product_uom_category_id = fields.Many2one(related='product_id.uom_id.category_id', readonly=True)
     quantity = fields.Float('Quantity', required=True, digits=dp.get_precision('Product UoS'), default=1)
 
     @api.onchange('product_id')
