@@ -1,6 +1,8 @@
 odoo.define('mail.wip.widget.DiscussSidebarItem', function (require) {
 'use strict';
 
+const Partner = require('mail.wip.model.Partner');
+const Thread = require('mail.wip.model.Thread');
 const EditableText = require('mail.wip.widget.EditableText');
 const Icon = require('mail.wip.widget.ThreadIcon');
 
@@ -17,11 +19,16 @@ const { Component, connect } = owl;
  */
 function mapStateToProps(state, ownProps, getters) {
     const thread = state.threads[ownProps.threadLID];
-    return {
-        directPartner: state.partners[thread.directPartnerLID],
-        name: getters['thread/name']({ threadLID: ownProps.threadLID }),
+    let res = {
         thread,
+        threadName: getters['thread/name']({ threadLID: ownProps.threadLID }),
     };
+    if (thread.directPartnerLID) {
+        Object.assign(res, {
+            directPartner: state.partners[thread.directPartnerLID],
+        });
+    }
+    return res;
 }
 
 class DiscussSidebarItem extends Component {
@@ -101,16 +108,19 @@ class DiscussSidebarItem extends Component {
      */
     _onClick(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('click', ev, { threadLID: this.props.threadLID });
+        this.trigger('clicked', {
+            threadLID: this.props.threadLID,
+            originalEvent: ev,
+        });
     }
 
     /**
      * @private
-     * @param {MouseEvent} ev
+     * @param {CustomEvent} ev
      */
-    _onClickEditableText(ev) {
+    _onClickedEditableText(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
     }
 
     /**
@@ -118,10 +128,8 @@ class DiscussSidebarItem extends Component {
      * @param {MouseEvent} ev
      */
     _onClickLeave(ev) {
-        if (ev.odooPrevented) {
-            return;
-        }
-        ev.odooPrevented = true;
+        if (ev.odooPrevented) { return; }
+        ev.preventOdoo();
         let prom;
         if (this.props.thread.create_uid === this.env.session.uid) {
             prom = this._askAdminConfirmation();
@@ -140,7 +148,7 @@ class DiscussSidebarItem extends Component {
      */
     _onClickRename(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.renaming = true;
     }
 
@@ -150,7 +158,7 @@ class DiscussSidebarItem extends Component {
      */
     _onClickSettings(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         return this.env.do_action({
             type: 'ir.actions.act_window',
             res_model: this.props.thread._model,
@@ -166,7 +174,7 @@ class DiscussSidebarItem extends Component {
      */
     _onClickUnpin(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         return this.env.store.dispatch('channel/unsubscribe', {
             threadLID: this.props.threadLID,
         });
@@ -174,20 +182,43 @@ class DiscussSidebarItem extends Component {
 
     /**
      * @private
-     * @param {KeyboardEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.newName
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.newName
      */
-    _onRename(ev, { newName }) {
+    _onRename(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.renaming = false;
         this.env.store.dispatch('thread/rename', {
-            name: newName,
+            name: ev.detail.newName,
             threadLID: this.props.threadLID,
         });
     }
 }
+
+/**
+ * Props validation
+ */
+DiscussSidebarItem.props = {
+    directPartner: {
+        type: Partner,
+        optional: true,
+    },
+    isActive: {
+        type: Boolean,
+        default: false,
+    },
+    thread: {
+        type: Thread,
+    },
+    threadLID: {
+        type: String,
+    },
+    threadName: {
+        type: String,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(DiscussSidebarItem);
 

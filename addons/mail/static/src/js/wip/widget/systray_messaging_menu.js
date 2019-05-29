@@ -72,7 +72,7 @@ class SystrayMessagingMenu extends Component {
         if (ev.target === this.el) {
             return;
         }
-        if (ev.target.closest(`[data-odoo-id="${this.id}"`)) {
+        if (ev.target.closest(`[data-id="${this.id}"`)) {
             return;
         }
         this._reset();
@@ -84,7 +84,7 @@ class SystrayMessagingMenu extends Component {
      */
     _onClickFilter(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.filter = ev.currentTarget.dataset.filter;
     }
 
@@ -94,7 +94,7 @@ class SystrayMessagingMenu extends Component {
      */
     _onClickNewMessage(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.env.store.commit('chat_window_manager/open', {
             item: 'new_message',
             mode: 'last_visible',
@@ -108,7 +108,7 @@ class SystrayMessagingMenu extends Component {
      */
     _onClickToggleShow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         ev.preventDefault(); // no redirect href
         ev.stopPropagation(); // no bootstrap click handler fixme: maybe use our own flesh dropdown menu?
         this.state.toggleShow = !this.state.toggleShow;
@@ -116,17 +116,31 @@ class SystrayMessagingMenu extends Component {
 
     /**
      * @private
-     * @param {MouseEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.threadLID
      */
-    _onSelectThread(ev, { threadLID }) {
+    _onSelectThread(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
-        this.env.store.dispatch('thread/open', { threadLID });
+        ev.preventOdoo();
+        this.env.store.dispatch('thread/open', {
+            threadLID: ev.detail.threadLID,
+        });
         this._reset();
     }
 }
+
+/**
+ * Props validation
+ */
+SystrayMessagingMenu.props = {
+    counter: {
+        type: Number,
+    },
+    discussOpen: {
+        type: Boolean,
+    },
+};
 
 return connect(mapStateToProps)(SystrayMessagingMenu);
 

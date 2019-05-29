@@ -2,6 +2,7 @@
 <templates xml:space="preserve">
 
     <input t-name="mail.wip.widget.EditableText" owl="1"
+           class="o_mail_wip_editable_text"
            t-att-placeholder="props.placeholder"
            t-att-value="props.value"
            t-on-blur="_onBlur"

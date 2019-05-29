@@ -1,6 +1,9 @@
 odoo.define('mail.wip.store.mutations', function (require) {
 "use strict";
 
+const AttachmentViewer = require('mail.wip.widget.AttachmentViewer');
+
+const Attachment = require('mail.wip.model.Attachment');
 const MailFailure = require('mail.wip.model.MailFailure');
 const Message = require('mail.wip.model.Message');
 const Partner = require('mail.wip.model.Partner');
@@ -12,7 +15,126 @@ const session = require('web.session');
 
 const _t = core._t;
 
+const { Observer } = owl;
+
 const mutations = {
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} data
+     * @param {string} data.filename
+     * @param {integer} [data.id]
+     * @param {string} [data.mimetype]
+     * @param {string} [data.name]
+     * @param {integer} [data.size]
+     * @param {boolean} [data.temp=false]
+     * @param {boolean} [data.uploaded=false]
+     * @param {boolean} [data.uploading=false]
+     * @return {string} attachment LID
+     */
+    'attachment/create'({ state }, data) {
+        let {
+            filename,
+            id,
+            mimetype,
+            name,
+            size,
+            temp=false,
+            uploaded=false,
+            uploading=false,
+        } = data;
+        if (temp) {
+            id = state.attachmentNextTempID;
+            mimetype = '';
+            state.attachmentNextTempID--;
+        }
+        const attachment = new Attachment({
+            filename,
+            id,
+            mimetype,
+            name,
+            size,
+            temp,
+            uploaded,
+            uploading,
+        });
+        Observer.set(state.attachments, attachment.lid, attachment);
+        if (temp) {
+            if (!(attachment.$filename in state.attachmentTempLIDs)) {
+                Observer.set(state.attachmentTempLIDs, attachment.$filename, attachment.lid);
+            } else {
+                state.attachmentTempLIDs[attachment.$filename] = attachment.lid;
+            }
+        }
+        return attachment.lid;
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.attachmentLID
+     */
+    'attachment/delete'({ state }, { attachmentLID }) {
+        const attachment = state.attachments[attachmentLID];
+        // todo: remove attachment from store, when `observer.delete()` is implemented
+        if (attachment.temp) {
+            Observer.delete(state.attachmentTempLIDs, attachment.$filename);
+        }
+    },
+    /**
+     * Update existing attachment or create a new attachment
+     *
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {integer} param1.id
+     * @param {...Object} param1.kwargs
+     * @return {string} attachment local ID
+     */
+    'attachment/insert'({ commit, state }, { id, ...kwargs }) {
+        const attachmentLID = `ir.attachment_${id}`;
+        if (!state.attachments[attachmentLID]) {
+            commit('attachment/create', { id, ...kwargs });
+        } else {
+            commit('attachment/update', { attachmentLID, changes: kwargs });
+        }
+        return attachmentLID;
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.attachmentLID
+     * @param {Object} param1.changes
+     */
+    'attachment/update'({ state }, { changes, attachmentLID }) {
+        const attachment = state.threads[attachmentLID];
+        attachment.update(changes);
+    },
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param1
+     * @param {string|undefined} [param1.attachmentLID]
+     * @param {string[]} param1.attachmentLIDs
+     * @return {string|undefined} unique id of open dialog, if open
+     */
+    'attachments/view'({ commit }, { attachmentLID, attachmentLIDs }) {
+        if (!attachmentLIDs) {
+            return;
+        }
+        if (!attachmentLID) {
+            attachmentLID = attachmentLIDs[0];
+        }
+        if (!attachmentLIDs.includes(attachmentLID)) {
+            return;
+        }
+        return commit('dialog/open', {
+            Component: AttachmentViewer,
+            info: { attachmentLID, attachmentLIDs },
+        });
+    },
     /**
      * @param {Object} param0
      * @param {Object} param0.state
@@ -256,13 +378,12 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} param1.item either 'new_message' or thread LID
      */
     'chat_window_manager/shift_left'(
-        { commit, set, state },
+        { commit, state },
         { item }
     ) {
         const cwm = state.chatWindowManager;
@@ -272,21 +393,20 @@ const mutations = {
             return;
         }
         const otherItem = cwm.items[index+1];
-        set(cwm.items, index, otherItem);
-        set(cwm.items, index+1, item);
+        Observer.set(cwm.items, index, otherItem);
+        Observer.set(cwm.items, index+1, item);
         commit('chat_window_manager/_compute');
         commit('chat_window_manager/focus', { item });
     },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} param1.item either 'new_message' or thread LID
      */
     'chat_window_manager/shift_right'(
-        { commit, set, state },
+        { commit, state },
         { item }
     ) {
         const cwm = state.chatWindowManager;
@@ -296,22 +416,21 @@ const mutations = {
             return;
         }
         const otherItem = cwm.items[index-1];
-        set(cwm.items, index, otherItem);
-        set(cwm.items, index-1, item);
+        Observer.set(cwm.items, index, otherItem);
+        Observer.set(cwm.items, index-1, item);
         commit('chat_window_manager/_compute');
         commit('chat_window_manager/focus', { item });
     },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} param1.item1
      * @param {string} param1.item2
      */
     'chat_window_manager/swap'(
-        { commit, set, state },
+        { commit, state },
         { item1, item2 }
     ) {
         const cwm = state.chatWindowManager;
@@ -321,9 +440,50 @@ const mutations = {
         if (index1 === -1 || index2 === -1) {
             return;
         }
-        set(items, index1, item2);
-        set(items, index2, item1);
+        Observer.set(items, index1, item2);
+        Observer.set(items, index2, item1);
         commit('chat_window_manager/_compute');
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.id
+     */
+    'dialog/close'({ state }, { id }) {
+        state.dialogManager.dialogs = state.dialogManager.dialogs.filter(item =>
+            item.id !== id);
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {owl.Component} param1.Component
+     * @param {any} param1.info
+     * @return {string} unique id of the newly open dialog
+     */
+    'dialog/open'({ state }, { Component, info }) {
+        const id = _.uniqueId('o_mail_wip_dialog');
+        state.dialogManager.dialogs.push({
+            Component,
+            id,
+            info,
+        });
+        return id;
+    },
+    /**
+     * @param {Object} param0
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.id
+     * @param {any} param1.changes
+     */
+    'dialog/update_info'({ state }, { id, changes }) {
+        const dialog  = state.dialogManager.dialogs.find(dialog => dialog.id === id);
+        if (!dialog) {
+            return;
+        }
+        Object.assign(dialog.info, changes);
     },
     /**
      * @param {Object} param0
@@ -387,11 +547,6 @@ const mutations = {
         if (shouldRecomputeStringifiedDomain) {
             state.discuss.stringifiedDomain = JSON.stringify(state.discuss.domain);
         }
-        const thread = state.threads[state.discuss.threadLID];
-        if (!thread) {
-            return;
-        }
-        state.discuss.showComposer = thread._model !== 'mail.box';
     },
     /**
      * @param {Object} param0
@@ -446,7 +601,7 @@ const mutations = {
     'init/canned_responses'({ state }, shortcodes) {
         const cannedResponses = shortcodes
             .map(s => {
-                let { id, source, substitution } = s;
+                const { id, source, substitution } = s;
                 return { id, source, substitution };
             })
             .reduce((obj, cr) => {
@@ -471,13 +626,13 @@ const mutations = {
             channel_private_group=[],
         }
     ) {
-        for (let data of channel_channel) {
+        for (const data of channel_channel) {
             commit('thread/insert', { _model: 'mail.channel', ...data });
         }
-        for (let data of channel_direct_message) {
+        for (const data of channel_direct_message) {
             commit('thread/insert', { _model: 'mail.channel', ...data });
         }
-        for (let data of channel_private_group) {
+        for (const data of channel_private_group) {
             commit('thread/insert', { _model: 'mail.channel', ...data });
         }
     },
@@ -541,14 +696,13 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object[]} mailFailuresData
      */
     'init/mail_failures'({ set, state }, mailFailuresData) {
-        for (let data of mailFailuresData) {
-            let mailFailure = new MailFailure(data);
-            set(state.mailFailures, mailFailure.lid, mailFailure);
+        for (const data of mailFailuresData) {
+            const mailFailure = new MailFailure(data);
+            Observer.set(state.mailFailures, mailFailure.lid, mailFailure);
         }
     },
     /**
@@ -560,8 +714,8 @@ const mutations = {
         { commit },
         mentionPartnerSuggestionsData
     ) {
-        for (let suggestions of mentionPartnerSuggestionsData) {
-            for (let suggestion of suggestions) {
+        for (const suggestions of mentionPartnerSuggestionsData) {
+            for (const suggestion of suggestions) {
                 const { email, id, name } = suggestion;
                 commit('partner/insert', { email, id, name });
             }
@@ -570,7 +724,6 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {Array} [param1.author_id]
@@ -586,9 +739,13 @@ const mutations = {
      * @return {string} message local ID
      */
     'message/create'(
-        { commit, set, state },
+        { commit, state },
         {
-            author_id, author_id: [authorID, authorDisplayName]=[],
+            attachment_ids,
+            author_id, author_id: [
+                authorID,
+                authorDisplayName
+            ]=[],
             channel_ids,
             model,
             needaction_partner_ids,
@@ -600,6 +757,7 @@ const mutations = {
     ) {
         // 1. make message
         const message = new Message({
+            attachment_ids,
             author_id,
             channel_ids,
             model,
@@ -614,8 +772,7 @@ const mutations = {
             console.warn(`message with local ID "${messageLID}" already exists in store`);
             return;
         }
-        set(state.messages, messageLID, message);
-
+        Observer.set(state.messages, messageLID, message);
         // 2. author: create/update + link
         if (authorID) {
             const partnerLID = commit('partner/insert', {
@@ -627,7 +784,6 @@ const mutations = {
                 partnerLID,
             });
         }
-
         // 3. threads: create/update + link
         if (message.originLID) {
             commit('thread/insert', {
@@ -637,13 +793,13 @@ const mutations = {
             if (message.record_name) {
                 commit('thread/update', {
                     threadLID: message.originLID,
-                    name: record_name,
+                    changes: { name: record_name },
                 });
             }
         }
         // 3a. link message <- threads
-        for (let threadLID of message.threadLIDs) {
-            let threadCacheLID = `${threadLID}_[]`;
+        for (const threadLID of message.threadLIDs) {
+            const threadCacheLID = `${threadLID}_[]`;
             if (!state.threadCaches[threadCacheLID]) {
                 commit('thread_cache/create', { threadLID });
             }
@@ -652,6 +808,11 @@ const mutations = {
                 threadCacheLID,
             });
         }
+        // 4. attachments: create/update + link
+        for (const data of attachment_ids) {
+            commit('attachment/insert', data);
+        }
+
         return message;
     },
     /**
@@ -664,7 +825,7 @@ const mutations = {
      */
     'message/delete'({ commit, state }, { messageLID }) {
         delete state.messages[messageLID];
-        for (let cache of Object.values(state.threadCaches)) {
+        for (const cache of Object.values(state.threadCaches)) {
             if (cache.messageLIDs.includes(messageLID)) {
                 commit('thread_cache/update', {
                     threadCacheLID: cache.lid,
@@ -756,7 +917,7 @@ const mutations = {
         }
     ) {
         const message = state.messages[messageLID];
-        let prevAuthorLID = message.authorLID;
+        const prevAuthorLID = message.authorLID;
         const prevThreadLIDs = [ ...message.threadLIDs ];
 
         // 1. alter message
@@ -798,9 +959,9 @@ const mutations = {
         }
         const newThreadLIDs = message.threadLIDs.filter(threadLID =>
             !prevThreadLIDs.includes(threadLID));
-        for (let threadLID of newThreadLIDs) {
-            let thread = state.threads[threadLID];
-            for (let threadCacheLID of thread.cacheLIDs) {
+        for (const threadLID of newThreadLIDs) {
+            const thread = state.threads[threadLID];
+            for (const threadCacheLID of thread.cacheLIDs) {
                 commit('thread_cache/link_message', {
                     messageLID,
                     threadCacheLID,
@@ -818,7 +979,7 @@ const mutations = {
     'notification/needaction'({ commit, state }, { ...data }) {
         const message = commit('message/insert', { ...data });
         state.threads['mail.box_inbox'].counter++;
-        for (let threadLID of message.threadLIDs) {
+        for (const threadLID of message.threadLIDs) {
             const currentPartnerID = session.partner_id;
             const thread = state.threads[threadLID];
             if (
@@ -837,29 +998,29 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {Object} param0.getters
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {integer[]} [param1.message_ids=[]]
      */
     'notification/partner/mark_as_read'(
-        { commit, state },
+        { commit, getters, state },
         { message_ids=[] }
     ) {
         const inboxLID = 'mail.box_inbox';
         const inbox = state.threads[inboxLID];
-        for (let cacheLID of inbox.cacheLIDs) {
-            for (let messageID of message_ids) {
-                let messageLID = `mail.message_${messageID}`;
+        for (const cacheLID of inbox.cacheLIDs) {
+            for (const messageID of message_ids) {
+                const messageLID = `mail.message_${messageID}`;
                 commit('thread_cache/unlink_message', {
                     messageLID,
                     threadCacheLID: cacheLID,
                 });
             }
         }
-        const channels = Object.values(state.threads).filter(thread =>
-            thread._model === 'mail.channel');
-        for (let channel of channels) {
-            let channelLID = channel.lid;
+        const channels = getters['threads/mail_channel']();
+        for (const channel of channels) {
+            const channelLID = channel.lid;
             commit('thread/update', {
                 threadLID: channelLID,
                 changes: { message_needaction_counter: 0 },
@@ -892,9 +1053,9 @@ const mutations = {
                 threadLID: starredBoxLID,
             });
         }
-        for (let messageID of message_ids) {
-            let messageLID = `mail.message_${messageID}`;
-            let message = state.messages[messageLID];
+        for (const messageID of message_ids) {
+            const messageLID = `mail.message_${messageID}`;
+            const message = state.messages[messageLID];
             if (!message) {
                 continue;
             }
@@ -938,7 +1099,6 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {integer} param1.id
@@ -947,14 +1107,14 @@ const mutations = {
      * @param {string} [param1.name]
      * @return {string} partner local ID
      */
-    'partner/create'({ set, state }, data) {
+    'partner/create'({ state }, data) {
         const partner = new Partner({ ...data });
         const partnerLID = partner.lid;
         if (state.partners[partnerLID]) {
             console.warn(`partner with local ID "${partnerLID}" already exists in store`);
             return;
         }
-        set(state.partners, partnerLID, partner);
+        Observer.set(state.partners, partnerLID, partner);
         // todo: links
         return partnerLID;
     },
@@ -1061,7 +1221,6 @@ const mutations = {
     /**
      * @param {Object} param0
      * @param {function} param0.commit
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {Object[]} [param1.direct_partner]
@@ -1071,7 +1230,7 @@ const mutations = {
      * @return {string} thread local ID
      */
     'thread/create'(
-        { commit, set, state },
+        { commit, state },
         {
             direct_partner,
             is_minimized,
@@ -1093,9 +1252,9 @@ const mutations = {
             return;
         }
         /* Update thread data */
-        set(state.threads, threadLID, thread);
+        Observer.set(state.threads, threadLID, thread);
         /* Update thread relationships */
-        for (let member of members) {
+        for (const member of members) {
             commit('partner/insert', member);
         }
         if (direct_partner && direct_partner[0]) {
@@ -1113,7 +1272,7 @@ const mutations = {
             commit('thread/updating:register_pinned', { threadLID });
         }
         if (is_minimized) {
-            commit('thread/updating:register_minimized', { threadLID });
+            commit('chat_window_manager/open', { item: threadLID });
         }
         if (thread._model === 'mail.box') {
             commit('thread/updating:register_mailbox', { threadLID });
@@ -1164,14 +1323,8 @@ const mutations = {
     ) {
         if (!state.threads[threadLID]) {
             throw new Error('no thread exists for new thread cache');
-            // // todo: this is bad to determine model and id from spliting threadLID...
-            // const separatorIndex = threadLID.lastIndexOf('_');
-            // commit('thread/create', {
-            //     _model: threadLID.substring(0, separatorIndex),
-            //     id: Number(threadLID.substring(separatorIndex+1)),
-            // });
         }
-        let thread = state.threads[threadLID];
+        const thread = state.threads[threadLID];
         if (thread.cacheLIDs.includes(threadCacheLID)) {
             return;
         }
@@ -1204,7 +1357,7 @@ const mutations = {
             stringifiedDomain,
             threadLID,
         });
-        for (let data of messagesData) {
+        for (const data of messagesData) {
             // message auto-linked to thread cache on insert
             commit('message/insert', data);
         }
@@ -1386,7 +1539,6 @@ const mutations = {
     },
     /**
      * @param {Object} param0
-     * @param {function} param0.set
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {string} [param1.stringifiedDomain='[]']
@@ -1394,7 +1546,7 @@ const mutations = {
      * @return {string} thread cache local ID
      */
     'thread_cache/create'(
-        { commit, set, state },
+        { commit, state },
         { stringifiedDomain='[]', threadLID }
     ) {
         const threadCache = new ThreadCache({
@@ -1402,7 +1554,7 @@ const mutations = {
             threadLID,
         });
         const threadCacheLID = threadCache.lid;
-        set(state.threadCaches, threadCacheLID, threadCache);
+        Observer.set(state.threadCaches, threadCacheLID, threadCache);
         commit('thread/link_thread_cache', {
             threadCacheLID,
             threadLID,

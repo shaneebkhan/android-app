@@ -1,11 +1,12 @@
 odoo.define('mail.wip.widget.Discuss', function (require) {
 'use strict';
 
-const Composer = require('mail.wip.widget.Composer');
+const Thread = require('mail.wip.model.Thread');
+const ThreadCache = require('mail.wip.model.ThreadCache');
 const MobileMailboxSelection = require('mail.wip.widget.DiscussMobileMailboxSelection');
 const MobileNavbar = require('mail.wip.widget.DiscussMobileNavbar');
 const Sidebar = require('mail.wip.widget.DiscussSidebar');
-const Thread = require('mail.wip.widget.Thread');
+const ThreadWidget = require('mail.wip.widget.Thread');
 const ThreadPreviewList = require('mail.wip.widget.ThreadPreviewList');
 
 const { Component, connect } = owl;
@@ -22,13 +23,18 @@ function mapStateToProps(state) {
     const thread = state.threads[threadLID];
     const threadCacheLID = `${threadLID}_${stringifiedDomain}`;
     const threadCache = state.threadCaches[threadCacheLID];
-    return {
+    let res = {
         ...state.discuss,
         isMobile: state.isMobile,
-        thread,
-        threadCache,
         threadCacheLID,
     };
+    if (thread) {
+        Object.assign(res, { thread });
+    }
+    if (threadCache) {
+        Object.assign(res, { threadCache });
+    }
+    return res;
 }
 
 class Discuss extends Component {
@@ -44,11 +50,10 @@ class Discuss extends Component {
             threadCachesInfo: {},
         };
         this.widgets = {
-            Composer,
             MobileMailboxSelection,
             MobileNavbar,
             Sidebar,
-            Thread,
+            Thread: ThreadWidget,
             ThreadPreviewList,
         };
         /**
@@ -63,29 +68,32 @@ class Discuss extends Component {
     }
 
     mounted() {
+        if (this.props.threadLID !== this.env.discuss.initThreadLID) {
+            this.trigger('push_state_action_manager', {
+                threadLID: this.env.discuss.initThreadLID,
+            });
+        }
         this.env.store.commit('discuss/update', {
             domain: [],
             open: true,
             threadLID: this.env.discuss.initThreadLID,
         });
         this._wasMobile = this.props.isMobile;
-        this.trigger('ready', {});
     }
 
     patched() {
-        if (this._wasMobile === this.props.isMobile) {
-            return;
+        if (this._wasMobile !== this.props.isMobile) {
+            this._wasMobile = this.props.isMobile;
+            if (this.props.isMobile) {
+                // adapt active mobile navbar tab based on thread in desktop
+                this.state.mobileNavbarTab = !this.props.thread ? this.state.mobileNavbarTab
+                    : this.props.thread._model === 'mail.box' ? 'mailbox'
+                    : this.props.thread.channel_type === 'channel' ? 'channel'
+                    : this.props.thread.channel_type === 'chat' ? 'chat'
+                    : this.state.mobileNavbarTab;
+            }
         }
-        this._wasMobile = this.props.isMobile;
-        if (this.props.isMobile) {
-            // adapt active mobile navbar tab based on thread in desktop
-            this.state.mobileNavbarTab = !this.props.thread ? this.state.mobileNavbarTab
-                : this.props.thread._model === 'mail.box' ? 'mailbox'
-                : this.props.thread.channel_type === 'channel' ? 'channel'
-                : this.props.thread.channel_type === 'chat' ? 'chat'
-                : this.state.mobileNavbarTab;
-        }
-        this.trigger('update_cp', {});
+        this.trigger('update_control_panel');
     }
 
     willUnmount() {
@@ -97,16 +105,6 @@ class Discuss extends Component {
     //--------------------------------------------------------------------------
 
     /**
-     * @return {Object}
-     */
-    get composerOptions() {
-        return {
-            displayAvatar: !this.props.isMobile,
-            displaySendButton: !this.props.isMobile,
-        };
-    }
-
-    /**
      * @return {boolean}
      */
     get hasThreadMessages() {
@@ -114,13 +112,6 @@ class Discuss extends Component {
             return false;
         }
         return this.props.threadCache.messageLIDs.length > 0;
-    }
-
-    /**
-     * @return {boolean}
-     */
-    get showComposer() {
-        return this.props.thread._model !== 'mail.box';
     }
 
     /**
@@ -135,9 +126,15 @@ class Discuss extends Component {
             scrollTop = undefined;
         }
         return {
+            composerAttachmentEditable: true,
+            composerAttachmentLayout: 'card',
+            composerAttachmentLayoutCardLabel: true,
+            composerAvatar: !this.props.isMobile,
+            composerSendButton: !this.props.isMobile,
             domain: this.props.domain,
             redirectAuthor: this.props.thread.channel_type !== 'chat',
             scrollTop,
+            showComposer: this.props.thread._model !== 'mail.box',
             squashCloseMessages: this.props.thread._model !== 'mail.box',
         };
     }
@@ -167,14 +164,15 @@ class Discuss extends Component {
     /**
      * @private
      * @param {Event} ev
-     * @param {Object} param1
-     * @param {integer} param1.id
-     * @param {string} param1.model
+     * @param {Object} ev.detail
+     * @param {integer} ev.detail.id
+     * @param {string} ev.detail.model
      */
-    _onRedirect(ev, { id, model }) {
+    _onRedirect(ev) {
         if (ev.odooPrevented) { return; }
+        const { id, model } = ev.detail;
         if (model === 'mail.channel') {
-            ev.odooPrevented = true;
+            ev.preventOdoo();
             const threadLID = `${model}_${id}`;
             const channel = this.env.store.state.threads[threadLID];
             if (!channel) {
@@ -186,7 +184,7 @@ class Discuss extends Component {
                 this.env.store.commit('discuss/update', { threadLID });
             }
         } else if (model === 'res.partner') {
-            ev.odooPrevented = true;
+            ev.preventOdoo();
             const chat = this.env.store.getters['thread/chat_from_partner']({
                 partnerLID: `res.partner_${id}`,
             });
@@ -204,12 +202,14 @@ class Discuss extends Component {
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.tab
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.tab
      */
-    _onSelectMobileNavbarTab(ev, { tab }) {
+    _onSelectMobileNavbarTab(ev) {
         if (ev.odooPrevented) { return; }
+        ev.preventOdoo();
+        const { tab } = ev.detail;
         if (this.state.mobileNavbarTab === tab) {
             return;
         }
@@ -217,34 +217,65 @@ class Discuss extends Component {
             threadLID: tab === 'mailbox' ? 'mail.box_inbox' : null,
         });
         this.state.mobileNavbarTab = tab;
-        this.trigger('update_cp', ev);
+        this.trigger('update_control_panel', { originalEvent: ev });
     }
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.threadLID
      */
-    _onSelectThread(ev, { threadLID }) {
+    _onSelectThread(ev) {
         if (ev.odooPrevented) { return; }
         if (this.refs.thread && this.refs.thread.hasMessages) {
             this.state.threadCachesInfo[this.props.threadCacheLID] = {
                 scrollTop: this.refs.thread.getScrollTop(),
             };
         }
+        const { threadLID } = ev.detail;
         this.env.store.commit('discuss/update', { threadLID });
-        this.trigger('thread_selected', ev);
+        this.trigger('push_state_action_manager', {
+            threadLID,
+            originalEvent: ev,
+        });
     }
 
     /**
      * @private
-     * @param {Event} ev
+     * @param {CustomEvent} ev
      */
     _onThreadRendered(ev) {
-        this.trigger('update_cp', ev);
+        this.trigger('update_control_panel', { originalEvent: ev });
     }
 }
+
+/**
+ * Props validation
+ */
+Discuss.props = {
+    domain: {
+        type: Array,
+        default: [],
+    },
+    isMobile: {
+        type: Boolean,
+    },
+    thread: {
+        type: Thread,
+        optional: true,
+    },
+    threadCache: {
+        type: ThreadCache,
+        optional: true,
+    },
+    threadCacheLID: {
+        type: String,
+    },
+    threadLID: {
+        type: String,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(Discuss);
 

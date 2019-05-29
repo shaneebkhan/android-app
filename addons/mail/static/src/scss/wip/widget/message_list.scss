@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
- .o_message_list {
+ .o_mail_wip_message_list {
     display: flex;
     flex-flow: column;
     overflow: auto;
@@ -45,7 +45,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_message_list {
+.o_mail_wip_message_list {
     background-color: white;
 
     > .o_separator {

@@ -2,15 +2,11 @@ odoo.define('mail.form_renderer', function (require) {
 "use strict";
 
 var Chatter = require('mail.wip.widget.Chatter');
-const StoreMixin = require('mail.wip.old_widget.StoreMixin');
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
 
-const core = require('web.core');
 var FormRenderer = require('web.FormRenderer');
-const session = require('web.session');
 
-const _t = core._t;
-
-FormRenderer.include(StoreMixin);
+FormRenderer.include(EnvMixin);
 
 /**
  * Include the FormRenderer to instanciate the chatter area containing (a
@@ -28,7 +24,7 @@ FormRenderer.include({
     willStart: function () {
         return Promise.all([
             this._super.apply(this, arguments),
-            this.awaitStore(),
+            this.getEnv(),
         ]);
     },
     on_attach_callback: function () {
@@ -69,17 +65,7 @@ FormRenderer.include({
         if (this.chatter) {
             this.chatter.destroy();
         }
-        const env = {
-            qweb: core.qwebOwl,
-            session,
-            store: this.store,
-            call: (...args) => this.call(...args),
-            do_action: (...args) => this.do_action(...args),
-            rpc: (...args) => this._rpc(...args),
-            _t,
-        };
-
-        this.chatter = new Chatter(env, { state });
+        this.chatter = new Chatter(this.env, { state });
     },
     /**
      * Overrides the function that renders the nodes to return the chatter's $el

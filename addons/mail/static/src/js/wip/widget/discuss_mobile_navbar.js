@@ -37,6 +37,15 @@ class MobileNavbar extends Component {
     }
 }
 
+/**
+ * Props validation
+ */
+MobileNavbar.props = {
+    active: {
+        type: Boolean,
+    },
+};
+
 return MobileNavbar;
 
 });

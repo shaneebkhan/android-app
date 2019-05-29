@@ -2,19 +2,10 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_wip_discuss > .o_sidebar .o_item {
+.o_mail_wip_discuss_sidebar_item {
     display: flex;
     align-items: center;
     margin: 5px 0;
-
-    &.o_add {
-        margin-left: $o-mail-discuss-sidebar-active-indicator-width + $o-mail-discuss-sidebar-active-indicator-margin-right;
-        margin-right: $o-mail-discuss-sidebar-scrollbar-width;
-
-        > input {
-            width: 100%;
-        }
-    }
 
     &:hover > .o_commands {
         display: flex;
@@ -46,11 +37,11 @@
             margin-left: 3px;
             margin-right: 3px;
 
-            &:first-of-type {
+            &:first-child {
                 margin-left: 0px;
             }
 
-            &:last-of-type {
+            &:last-child {
                 margin-right: 0px;
             }
         }
@@ -59,6 +50,15 @@
     > .o_name {
         overflow: hidden;
         text-overflow: ellipsis;
+
+        &.o_editable {
+            margin-left: $o-mail-discuss-sidebar-active-indicator-width + $o-mail-discuss-sidebar-active-indicator-margin-right;
+            margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+
+            > .o_input {
+                width: 100%;
+            }
+        }
     }
 }
 
@@ -74,12 +74,6 @@
             border: none;
             background-color: gray('600');
         }
-    }
-
-    &.o_add > input {
-        outline: none;
-        border: none;
-        border-radius: 2px;
     }
 
     &:not(.o_active):hover {
@@ -98,13 +92,16 @@
         background-color: $o-brand-primary;
     }
 
-    > .o_editable_name > input {
-        outline: none;
-        border: none;
-        border-radius: 2px;
-    }
+    > .o_name {
 
-    > .o_name.o_unread {
-        font-weight: bold;
+        &.o_unread {
+            font-weight: bold;
+        }
+
+        > .o_input {
+            outline: none;
+            border: none;
+            border-radius: 2px;
+        }
     }
 }

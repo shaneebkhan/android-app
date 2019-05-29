@@ -4,7 +4,7 @@
     <li t-name="mail.wip.widget.SystrayMessagingMenu" owl="1"
          class="o_mail_wip_systray_messaging_menu"
          t-att-class="state.toggleShow ? 'show' : ''"
-         t-att-data-odoo-id="id">
+         t-att-data-id="id">
         <a class="o_toggler o-no-caret"
            t-att-class="state.toggleShow ? 'show' : ''"
            data-toggle="dropdown"
@@ -48,7 +48,7 @@
                 </button>
             </div>
             <t t-widget="ThreadPreviewList"
-               t-props="{ filter: state.filter }"
+               filter="state.filter"
                t-on-select-thread="_onSelectThread"/>
         </div>
     </li>

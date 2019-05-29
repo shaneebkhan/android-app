@@ -11,8 +11,8 @@
                t-as="threadLID"
                t-widget="ThreadPreview"
                t-key="threadLID"
-               t-props="{ threadLID }"
-               t-on-click="_onClickPreview"/>
+               threadLID="threadLID"
+               t-on-clicked="_onClickedPreview"/>
         </t>
     </div>
 

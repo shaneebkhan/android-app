@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.ThreadIcon" owl="1"
-         class="o_wip_thread_icon">
+         class="o_mail_wip_thread_icon">
         <t t-if="props.thread.channel_type === 'channel'">
          <div t-if="props.thread.public === 'private'"
               class="fa fa-lock"/>

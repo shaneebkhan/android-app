@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_manager > .o_hidden_menu {
+.o_mail_wip_chat_window_manager > .o_hidden_menu {
     position: fixed;
     bottom: 0;
     display: flex;
@@ -18,7 +18,7 @@
         flex: 1 1 auto;
         max-width: 100%;
 
-        > div {
+        > .o_item {
             margin: 0 3px;
 
             &.o_icon {
@@ -41,18 +41,18 @@
         z-index: 1001; // on top of bootstrap dropup menu
     }
 
-    > ul {
+    > .o_list {
         overflow: auto;
         margin: 0;
         padding: 0;
 
-        > li {
+        > .o_item {
 
-            &:not(:last-of-type) {
+            &:not(:last-child) {
                 margin-bottom: 1px;
             }
 
-            > .o_wip_chat_window_header {
+            > .o_chat_window_header {
                 max-width: 200px;
             }
 
@@ -64,7 +64,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_manager > .o_hidden_menu {
+.o_mail_wip_chat_window_manager > .o_hidden_menu {
     background-color: gray('900');
     border-radius: 6px 6px 0 0;
     color: white;
@@ -85,7 +85,7 @@
         background-color: $o-brand-primary;
     }
 
-    > ul > li {
+    > .o_list > .o_item {
         opacity: 0.95;
 
         &:hover {

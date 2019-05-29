@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_wip_discuss > .o_sidebar {
+.o_mail_wip_discuss_sidebar {
     display: flex;
     flex-flow: column;
     width: $o-mail-chat-sidebar-width;
@@ -21,15 +21,15 @@
             align-items: center;
             margin: 5px 0;
 
-            > div {
+            > .o_item {
                 margin-left: 3px;
                 margin-right: 3px;
 
-                &:first-of-type {
+                &:first-child {
                     margin-left: $o-mail-discuss-sidebar-active-indicator-margin-right;
                 }
 
-                &:last-of-type {
+                &:last-child {
                     margin-right: $o-mail-discuss-sidebar-scrollbar-width;
                 }
             }
@@ -51,7 +51,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_wip_discuss > .o_sidebar {
+.o_mail_wip_discuss_sidebar {
     background-color: gray('900');
     color: gray('300');
 

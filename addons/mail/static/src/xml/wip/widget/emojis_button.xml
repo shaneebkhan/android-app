@@ -2,7 +2,8 @@
 <templates xml:space="preserve">
 
     <button t-name="mail.wip.widget.EmojisButton" owl="1"
-            class="o_emojis o_command btn btn-secondary fa fa-smile-o"
+            class="o_mail_wip_emojis_button btn btn-secondary fa fa-smile-o"
+            t-att-class="state.open ? 'o_open' : ''"
             aria-label="Emojis"
             title="Emojis"
             type="button"

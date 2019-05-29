@@ -24,6 +24,14 @@ function init(alteration) {
         MESSAGE_FETCH_LIMIT: 30,
         cannedResponses: {},
         commands: {},
+
+        //----------------------------------------------------------------------
+        // Attachments
+        //----------------------------------------------------------------------
+        attachments: {},
+        attachmentNextTempID: -1,
+        attachmentTempLIDs: {}, // key: $filename, value: attachmentTempLID
+
         //----------------------------------------------------------------------
         // Chat Window Manager
         //----------------------------------------------------------------------
@@ -98,16 +106,27 @@ function init(alteration) {
             notifiedAutofocusCounter: 0,
         },
         //----------------------------------------------------------------------
+        // Dialog
+        //----------------------------------------------------------------------
+        /**
+         * State slice related to Dialogs & Dialog Manager
+         */
+        dialogManager: {
+            /**
+             * Ordered list of dialogs data, from bottom to top.
+             * Each item is an object with format { Component, id, info },
+             * where Component is an owl component class, id is the ID of the
+             * dialog, and info is an object with props provided to dialog item.
+             */
+            dialogs: [],
+        },
+        //----------------------------------------------------------------------
         // Discuss
         //----------------------------------------------------------------------
         /**
          * State slice related to the Discuss app
          */
         discuss: {
-            /**
-             * Current thread set on discuss app
-             */
-            threadLID: null,
             /**
              * Domain of the messages in the thread. Determine the thread cache
              * to use with provided thread LID.
@@ -131,6 +150,10 @@ function init(alteration) {
              * changes.
              */
             stringifiedDomain: '[]',
+            /**
+             * Current thread set on discuss app
+             */
+            threadLID: null,
         },
         //----------------------------------------------------------------------
         // Global

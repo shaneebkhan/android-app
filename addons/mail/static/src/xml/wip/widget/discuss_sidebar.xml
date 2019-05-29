@@ -2,17 +2,19 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.DiscussSidebar" owl="1"
-         class="o_sidebar">
+         class="o_mail_wip_discuss_sidebar">
         <div class="o_mailbox o_group" t-key="'mailbox'">
             <t t-foreach="props.mailboxes" t-as="mailbox">
                 <t t-widget="SidebarItem"
-                   t-props="{ threadLID: mailbox.lid, isActive: props.threadLID === mailbox.lid }"
-                   t-on-click="_onClickItem"
+                   class="o_item"
+                   isActive="props.threadLID === mailbox.lid"
+                   threadLID="mailbox.lid"
+                   t-on-clicked="_onClickedItem"
                    t-key="mailbox.lid"/>
             </t>
         </div>
         <hr class="o_separator" t-key="'separator'"/>
-        <input t-if="props.mailChannelAmount >= 20"
+        <input t-if="props.mailChannelAmount > 19"
                class="o_quick_search"
                placeholder="Quick search..."
                t-key="'quickSearch'"
@@ -20,12 +22,12 @@
                t-on-input="_onInputQuickSearch"/>
         <div class="o_channel o_group" t-key="'channel'">
             <div class="o_header">
-                <div class="o_title o_clickable"
+                <div class="o_item o_title o_clickable"
                      t-on-click="_onClickChannelTitle">
                     Channels
                 </div>
                 <div class="o_autogrow"/>
-                <div class="o_add fa fa-plus"
+                <div class="o_item o_add fa fa-plus"
                      title="Add or join a channel"
                      t-on-click="_onClickChannelAdd"/>
             </div>
@@ -34,25 +36,29 @@
                      class="o_item o_add"
                      t-key="'add_item_channel'">
                     <t t-widget="AutocompleteInput"
-                       t-props="{ focusOnMount: true, html: true, source: _onChannelAutocompleteSource }"
-                       t-on-hide="_onHideAddChannel"
-                       t-on-select="_onChannelAutocompleteSelect"/>
+                       focusOnMount="true"
+                       html="true"
+                       select="_onChannelAutocompleteSelect"
+                       source="_onChannelAutocompleteSource"
+                       t-on-hide="_onHideAddChannel"/>
                 </div>
                 <t t-foreach="quickSearchChannels" t-as="channel">
                     <t t-widget="SidebarItem"
-                       t-props="{ threadLID: channel.lid, isActive: props.threadLID === channel.lid }"
-                       t-on-click="_onClickItem"
+                       class="o_item"
+                       isActive="props.threadLID === channel.lid"
+                       threadLID="channel.lid"
+                       t-on-clicked="_onClickedItem"
                        t-key="channel.lid"/>
                 </t>
             </div>
         </div>
         <div class="o_chat o_group" t-key="'chat'">
             <div class="o_header">
-                <div class="o_title">
+                <div class="o_item o_title">
                     Direct Messages
                 </div>
                 <div class="o_autogrow"/>
-                <div class="o_add fa fa-plus"
+                <div class="o_item o_add fa fa-plus"
                      title="Start a conversation"
                      t-on-click="_onClickChatAdd"/>
             </div>
@@ -61,14 +67,17 @@
                      class="o_item o_add"
                      t-key="'add_item_chat'">
                     <t t-widget="AutocompleteInput"
-                       t-props="{ focusOnMount: true, source: _onChatAutocompleteSource }"
-                       t-on-hide="_onHideAddChat"
-                       t-on-select="_onChatAutocompleteSelect"/>
+                       focusOnMount="true"
+                       select="_onChatAutocompleteSelect"
+                       source="_onChatAutocompleteSource"
+                       t-on-hide="_onHideAddChat"/>
                 </div>
                 <t t-foreach="quickSearchChats" t-as="chat">
                     <t t-widget="SidebarItem"
-                       t-props="{ threadLID: chat.lid, isActive: props.threadLID === chat.lid }"
-                       t-on-click="_onClickItem"
+                       class="o_item"
+                       isActive="props.threadLID === chat.lid"
+                       threadLID="chat.lid"
+                       t-on-clicked="_onClickedItem"
                        t-key="chat.lid"/>
                 </t>
             </div>

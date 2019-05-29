@@ -2,39 +2,40 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.ChatWindowHeader" owl="1"
-         class="o_wip_chat_window_header"
+         class="o_mail_wip_chat_window_header"
          t-on-click="_onClick">
         <t t-if="props.thread"
            t-widget="Icon"
-           t-props="{ threadLID: props.item }"/>
-        <div class="o_name"
+           class="o_item o_icon"
+           threadLID="props.item"/>
+        <div class="o_item o_name"
              t-key="'name'">
             <t t-esc="name"/>
         </div>
         <div t-if="props.thread and props.thread.message_unread_counter > 0"
-             class="o_counter"
+             class="o_item o_counter"
              t-key="'counter'">
             (<t t-esc="props.thread.message_unread_counter"/>)
         </div>
         <div class="o_autogrow"/>
-        <div class="o_commands">
-            <div t-if="options.displayLeftShift"
-                 class="o_command o_left_shift"
+        <div class="o_item o_commands">
+            <div t-if="options.shiftLeft"
+                 class="o_command o_shift_left"
                  aria-label="Shift left"
                  title="Shift left"
                  t-key="'shift_left'"
                  t-on-click="_onClickShiftLeft">
                 <i class="fa fa-angle-left"/>
             </div>
-            <div t-if="options.displayRightShift"
-                 class="o_command o_right_shift"
+            <div t-if="options.shiftRight"
+                 class="o_command o_shift_right"
                  aria-label="Shift right"
                  title="Shift right"
                  t-key="'shift_right'"
                  t-on-click="_onClickShiftRight">
                 <i class="fa fa-angle-right"/>
             </div>
-            <div t-if="options.displayExpand"
+            <div t-if="options.expand"
                  class="o_command o_expand"
                  aria-label="Open in Discuss"
                  title="Open in Discuss"

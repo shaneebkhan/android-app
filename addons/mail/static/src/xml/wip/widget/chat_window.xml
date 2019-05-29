@@ -4,24 +4,23 @@
    <div t-name="mail.wip.widget.ChatWindow" owl="1"
         class="o_chat_window"
         t-attf-class="{{ props.item === 'new_message' ? 'o_new_message' : '' }}  {{ folded ? 'o_folded' : '' }} {{ state.focused ? 'o_focused' : '' }}"
-        t-att-data-odoo-id="id"
+        t-att-data-id="id"
         t-attf-data-thread-lid="{{ props.thread ? props.thread.lid : '' }}"
         t-on-click="_onClick">
       <t t-widget="Header"
-         t-props="{ options, item: props.item }"
+         item="props.item"
+         options="options"
+         t-on-clicked="_onClickedHeader"
          t-on-close="_onCloseHeader"
-         t-on-select="_onSelectHeader"
          t-on-shift-left="_onShiftLeftHeader"
          t-on-shift-right="_onShiftRightHeader"/>
       <t t-if="props.thread">
          <t t-widget="Thread"
-            t-props="{ options: threadOptions, threadLID: props.item }"
-            t-on-redirect="_onRedirect"/>
-         <t t-if="showComposer"
-            t-widget="Composer"
-            t-props="{ options: composerOptions, threadLID: props.item }"
-            t-ref="composer"
-            t-on-focus="_onFocusComposer"/>
+            t-ref="thread"
+            class="o_thread"
+            options="threadOptions"
+            threadLID="props.item"
+            t-on-focusin="_onFocusinThread"/>
       </t>
       <div t-else=""
            class="o_selection"
@@ -30,9 +29,10 @@
             To:
          </span>
          <t t-widget="AutocompleteInput"
-            t-props="{ html: true, source: _onAutocompleteSource }"
-            t-ref="input"
-            t-on-select="_onAutocompleteSelect"/>
+            html="true"
+            select="_onAutocompleteSelect"
+            source="_onAutocompleteSource"
+            t-ref="input"/>
       </div>
     </div>
 

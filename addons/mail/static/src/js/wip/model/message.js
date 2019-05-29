@@ -26,11 +26,20 @@ class Message extends Model {
             $body: this._computeBody(),
             $date: date ? moment(time.str_to_datetime(date)) : moment(),
             _model: 'mail.message',
+            attachmentLIDs: this._computeAttachmentLIDs(),
             authorLID: author_id ? `res.partner_${author_id[0]}` : undefined,
             lid: `mail.message_${id}`,
             originLID: res_id && model ? `${model}_${res_id}` : undefined,
             threadLIDs: this._computeThreadLIDs(),
         });
+    }
+
+    /**
+     * @private
+     * @return {string[]}
+     */
+    _computeAttachmentLIDs() {
+        return this.attachment_ids.map(({ id }) => `ir.attachment_${id}`);
     }
 
     /**

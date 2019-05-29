@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+   <div t-name="mail.wip.widget.Dialog" owl="1"
+        class="o_mail_wip_dialog">
+      <t t-widget="Component"
+         t-ref="component"
+         class="o_dialog_component"
+         t-att-data-dialog-id="props.id"
+         dialogID="props.id"
+         info="props.info"
+         t-on-close="_onClose"/>
+   </div>
+
+</templates>

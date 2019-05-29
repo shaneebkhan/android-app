@@ -64,15 +64,32 @@ class ThreadPreviewList extends Component {
 
     /**
      * @private
-     * @param {MouseEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.threadLID
      */
-    _onClickPreview(ev, { threadLID }) {
+    _onClickedPreview(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('select-thread', ev, { threadLID });
+        this.trigger('select-thread', {
+            threadLID: ev.detail.threadLID,
+            originalEvent: ev,
+        });
     }
 }
+
+/**
+ * Props validation
+ */
+ThreadPreviewList.props = {
+    filter: {
+        type: String,
+        default: 'all',
+    },
+    threadLIDs: {
+        type: Array,
+        element: String,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(ThreadPreviewList);
 

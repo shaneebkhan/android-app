@@ -57,7 +57,7 @@ const getters = {
      * @param {Object} param0.getters
      * @return {integer}
      */
-    'threads/global_unread_counter'({ getters }) {
+    'threads/global_unread_counter'({ getters, state }) {
         const unreadMailChannelCounter = getters['threads/mail_channel']()
             .reduce((acc, thread) => {
                 if (thread.message_unread_counter > 0) {
@@ -65,12 +65,8 @@ const getters = {
                 }
                 return acc;
             }, 0);
-        const mailboxCounter = getters['threads/mailbox']()
-            .reduce((acc, thread) => {
-                acc += thread.counter;
-                return acc;
-            }, 0);
-        return unreadMailChannelCounter + mailboxCounter;
+        const mailboxInboxCounter = state.threads['mail.box_inbox'].counter;
+        return unreadMailChannelCounter + mailboxInboxCounter;
     },
     /**
      * @param {Object} param0

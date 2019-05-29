@@ -2,82 +2,14 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_message {
+.o_mail_wip_message {
     display: flex;
     flex: 0 0 auto;
     padding: 3px 5px;
 
-    @mixin display-star {
-
-        // specific selector in order to have higher pririty than .o_sidebar.o_squashed > div
-        > .o_sidebar.o_squashed > .o_commands {
-            display: flex;
-
-            > .o_star {
-                display: flex;
-            }
-        }
-
-        .o_commands {
-            display: flex;
-
-            > .o_star {
-                display: flex;
-            }
-        }
-    }
-
-    @mixin display-commands {
-
-        // specific selector in order to have higher pririty than .o_sidebar.o_squashed > div
-        > .o_sidebar.o_squashed > .o_commands {
-            display: flex;
-
-            > div.o_command {
-                display: flex;
-            }
-        }
-
-        .o_commands {
-            display: flex;
-
-            > div.o_command {
-                display: flex;
-            }
-        }
-    }
-
-    @mixin display-squashed-sidebar-items {
-        > .o_sidebar.o_squashed > div {
-            display: flex;
-        }
-    }
-
-    &.o_starred {
-        @include display-star;
-    }
-
-    &.o_toggled_click {
-        @include display-commands;
-        @include display-squashed-sidebar-items;
-    }
-
-    &:hover {
-        @include display-commands;
-        @include display-squashed-sidebar-items;
-    }
-
-    .o_commands {
-        display: none;
-        align-items: center;
-
-        > .o_star {
-            font-size: 1.3rem;
-        }
-    }
-
     > .o_core {
         margin-right: 10px;
+        overflow: auto;
 
         > .o_content {
             flex: 1 1 auto;
@@ -89,6 +21,10 @@
             > p:last-of-type {
                 margin-bottom: 0;
             }
+        }
+
+        > .o_footer {
+            display: flex;
         }
 
         > .o_header {
@@ -122,22 +58,31 @@
         justify-content: center;
 
         &.o_squashed {
-            align-items: center;
+            align-items: flex-start;
 
-            > div {
-                display: none;
+            > .o_item {
+                display: flex;
             }
         }
 
-        > div {
+        > .o_item {
             margin-left: 3px;
             margin-right: 3px;
-        }
 
-        > img {
-            width: 36px;
-            height: 36px;
+            &.o_avatar {
+                width: 36px;
+                height: 36px;
+            }
         }
+    }
+}
+
+.o_mail_wip_message__commands {
+    display: flex;
+    align-items: center;
+
+    > .o_star {
+        font-size: 1.3rem;
     }
 }
 
@@ -145,8 +90,34 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_message {
+.o_mail_wip_message {
     background-color: white;
+
+    &:hover, &.o_toggled_click {
+
+        .o_mail_wip_message__commands {
+            opacity: 1;
+
+            > .o_command {
+                opacity: 1;
+            }
+        }
+
+        .o_mail_wip_message__sidebar_item {
+            opacity: 1;
+        }
+    }
+
+    &.o_starred {
+
+        .o_mail_wip_message__commands {
+            opacity: 1;
+
+            > .o_command.o_star {
+                opacity: 1;
+            }
+        }
+    }
 
     &.o_notification {
         background-color: gray('200');
@@ -155,9 +126,14 @@
     > .o_core > .o_header > .o_author_name {
         font-weight: bold;
     }
+}
 
-    .o_commands > .o_command {
+.o_mail_wip_message__commands {
+    opacity: 0;
+
+    > .o_command {
         cursor: pointer;
+        opacity: 0;
 
         &:not(:hover) {
             opacity: 0.6;
@@ -165,8 +141,8 @@
 
         &.o_star {
 
-            &:not(:hover) {
-                opacity: 0.8;
+            &:hover {
+                filter: brightness(0.9);
             }
 
             &:not(.o_starred) {
@@ -178,8 +154,12 @@
             }
         }
     }
+}
 
-    .o_date {
-        color: gray('500');
-    }
+.o_mail_wip_message__date {
+    color: gray('500');
+}
+
+.o_mail_wip_message__sidebar_item {
+    opacity: 0;
 }

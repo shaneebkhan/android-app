@@ -2,18 +2,17 @@ odoo.define('mail.wip.old_widget.Discuss', function (require) {
 "use strict";
 
 const InvitePartnerDialog = require('mail.wip.old_widget.DiscussInvitePartnerDialog');
-const StoreMixin = require('mail.wip.old_widget.StoreMixin');
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
 const DiscussOwl = require('mail.wip.widget.Discuss');
 
 const AbstractAction = require('web.AbstractAction');
 const core = require('web.core');
-const session = require('web.session');
 
 const _t = core._t;
 const qweb = core.qweb;
 
 
-const Discuss = AbstractAction.extend(StoreMixin, {
+const Discuss = AbstractAction.extend(EnvMixin, {
     DEBUG: true,
     template: 'mail.wip.old_widget.Discuss',
     hasControlPanel: true,
@@ -68,7 +67,7 @@ const Discuss = AbstractAction.extend(StoreMixin, {
     willStart() {
         return Promise.all([
             this._super.apply(this, arguments),
-            this.awaitStore()
+            this.getEnv()
         ]);
     },
     /**
@@ -93,34 +92,23 @@ const Discuss = AbstractAction.extend(StoreMixin, {
             // prevent twice call to on_attach_callback (FIXME)
             return;
         }
-        if (!this.store) {
-            throw new Error('[discuss] not yet store awaited...');
-        }
-        const env = {
-            _t,
+        Object.assign(this.env, {
             discuss: {
                 initThreadLID: this._initThreadLID,
             },
-            qweb: core.qwebOwl,
-            session,
-            store: this.store,
-            call: (...args) => this.call(...args),
-            do_action: (...args) => this.do_action(...args),
-            rpc: (...args) => this._rpc(...args),
-        };
-        this.component = new DiscussOwl(env);
+        });
+        this.component = new DiscussOwl(this.env);
         this.component.mount(this.$el[0]);
-        this.component.on('ready', this, () => {
-            this._pushStateActionManager();
+        this._pushStateActionManagerEventListener = ev => {
+            ev.preventOdoo();
+            this._pushStateActionManager(ev.detail.threadLID);
+        };
+        this._updateControlPanelEventListener = ev => {
+            ev.preventOdoo();
             this._updateControlPanel();
-        });
-        this.component.on('thread_selected', this, () => {
-            this._pushStateActionManager();
-            this._updateControlPanel();
-        });
-        this.component.on('update_cp', this, () => {
-            this._updateControlPanel();
-        });
+        };
+        this.el.addEventListener('push_state_action_manager', this._pushStateActionManagerEventListener);
+        this.el.addEventListener('update_control_panel', this._updateControlPanelEventListener);
     },
     /**
      * @override {web.AbstractAction}
@@ -131,6 +119,8 @@ const Discuss = AbstractAction.extend(StoreMixin, {
             this.component.destroy();
         }
         this.component = undefined;
+        this.el.removeEventListener('push_state_action_manager', this._pushStateActionManagerEventListener);
+        this.el.removeEventListener('update_control_panel', this._updateControlPanelEventListener);
     },
 
     //--------------------------------------------------------------------------
@@ -139,11 +129,12 @@ const Discuss = AbstractAction.extend(StoreMixin, {
 
     /**
      * @private
+     * @param {string} threadLID
      */
-    _pushStateActionManager() {
+    _pushStateActionManager(threadLID) {
         this.actionManager.do_push_state({
             action: this.action.id,
-            active_id: this.component.props.threadLID,
+            active_id: threadLID,
         });
     },
     /**
@@ -211,7 +202,7 @@ const Discuss = AbstractAction.extend(StoreMixin, {
         } else {
             let title;
             if (threadLID) {
-                const threadName = this.store.getters['thread/name']({ threadLID });
+                const threadName = this.env.store.getters['thread/name']({ threadLID });
                 const prefix = thread.channel_type === 'channel' && thread.public !== 'private' ? '#' : '';
                 title = `${prefix}${threadName}`;
             } else {
@@ -235,7 +226,7 @@ const Discuss = AbstractAction.extend(StoreMixin, {
      */
     _onClickInvite() {
         new InvitePartnerDialog(this, {
-            store: this.store,
+            store: this.env.store,
             threadLID: this.component.props.threadLID,
         }).open();
     },
@@ -243,13 +234,13 @@ const Discuss = AbstractAction.extend(StoreMixin, {
      * @private
      */
     _onClickMarkAllAsRead() {
-        this.store.dispatch('messages/mark_all_as_read', { domain: this.domain });
+        this.env.store.dispatch('messages/mark_all_as_read', { domain: this.domain });
     },
     /**
      * @private
      */
     _onClickUnstarAll() {
-        this.store.dispatch('message/unstar_all');
+        this.env.store.dispatch('message/unstar_all');
     },
     /**
      * @private

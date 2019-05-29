@@ -1,6 +1,7 @@
 odoo.define('mail.wip.widget.ChatWindowHeader', function (require) {
 "use strict";
 
+const Thread = require('mail.wip.model.Thread');
 const Icon = require('mail.wip.widget.ThreadIcon');
 
 const { Component, connect } = owl;
@@ -50,20 +51,15 @@ class ChatWindowHeader extends Component {
      * @return {Object}
      */
     get options() {
-        let options;
-        if (this.props.options) {
-            options = { ...this.props.options };
-        } else {
-            options = {};
+        let options = { ...this.props.options };
+        if (!('expand' in options)) {
+            options.expand = false;
         }
-        if (!('displayExpand' in options)) {
-            options.displayExpand = false;
+        if (!('shiftLeft' in options)) {
+            options.shiftLeft = false;
         }
-        if (!('displayLeftShift' in options)) {
-            options.displayLeftShift = false;
-        }
-        if (!('displayRightShift' in options)) {
-            options.displayRightShift = false;
+        if (!('shiftRight' in options)) {
+            options.shiftRight = false;
         }
         return options;
     }
@@ -78,7 +74,10 @@ class ChatWindowHeader extends Component {
      */
     _onClick(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('select', ev, { item: this.props.item });
+        this.trigger('clicked', {
+            item: this.props.item,
+            originalEvent: ev,
+        });
     }
 
     /**
@@ -87,7 +86,10 @@ class ChatWindowHeader extends Component {
      */
     _onClickClose(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('close', ev, { item: this.props.item });
+        this.trigger('close', {
+            item: this.props.item,
+            originalEvent: ev,
+        });
     }
 
     /**
@@ -96,7 +98,7 @@ class ChatWindowHeader extends Component {
      */
     _onClickExpand(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         if (!this.props.thread) {
             return;
         }
@@ -124,7 +126,7 @@ class ChatWindowHeader extends Component {
      */
     _onClickShiftLeft(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('shift-left', ev);
+        this.trigger('shift-left', { originalEvent: ev });
     }
 
     /**
@@ -133,9 +135,41 @@ class ChatWindowHeader extends Component {
      */
     _onClickShiftRight(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('shift-right', ev);
+        this.trigger('shift-right', { originalEvent: ev });
     }
 }
+
+ChatWindowHeader.props = {
+    item: {
+        type: String,
+    },
+    options: {
+        type: Object,
+        default: {},
+        shape: {
+            expand: {
+                type: Boolean,
+                default: false,
+            },
+            shiftLeft: {
+                type: Boolean,
+                default: false,
+            },
+            shiftRight: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    },
+    thread: {
+        type: Thread,
+        optional: true,
+    },
+    threadName: {
+        type: String,
+        optional: true,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(ChatWindowHeader);
 

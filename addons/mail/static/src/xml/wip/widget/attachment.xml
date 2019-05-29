@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.Attachment" owl="1"
+         class="o_mail_wip_attachment_preview"
+         t-attf-class="{{ options.editable ? 'o_editable' : '' }} {{ props.attachment.uploading ? 'o_uploading' : ''}} {{ props.attachment.$viewable ? 'o_viewable' : '' }} {{ options.layout === 'basic' ? 'o_basic_layout' : '' }} {{ options.layout === 'card' ? 'o_card_layout' : '' }}"
+         t-att-title="props.attachment.$name">
+        <t t-if="options.layout === 'basic'">
+            <div t-if="props.attachment.$filetype !== 'image'"
+                 class="o_image o_mail_wip_attachment_preview__image"
+                 t-att-class="props.attachment.$viewable ? 'o_viewable' : ''"
+                 t-att-data-mimetype="props.attachment.mimetype"
+                 t-att-href="attachmentUrl"
+                 t-on-click="_onClickImage"/>
+            <img t-else=""
+                 class="o_mail_wip_attachment_preview__image"
+                 t-att-class="props.attachment.$viewable ? 'o_viewable' : ''"
+                 t-attf-src="web/image/{{ props.attachment.id }}/160x160"
+                 t-on-click="_onClickImage"/>
+        </t>
+        <t t-elif="options.layout === 'card'">
+            <div class="o_image o_mail_wip_attachment_preview__image"
+                 t-att-class="props.attachment.$viewable ? 'o_viewable' : ''"
+                 t-att-style="props.attachment.$filetype === 'image' ? 'background-image:url(/web/image/' + props.attachment.id + '/38x38/?crop=true' : ''"
+                 t-att-data-mimetype="props.attachment.mimetype"
+                 t-att-href="attachmentUrl"
+                 t-on-click="_onClickImage"/>
+            <div t-if="options.layoutCardLabel"
+                 class="o_main">
+                <div class="o_filename">
+                    <t t-esc="props.attachment.$filename"/>
+                </div>
+                <div class="o_extension">
+                    <t t-esc="props.attachment.$ext"/>
+                </div>
+            </div>
+            <div class="o_aside">
+                <div t-if="props.attachment.uploading"
+                     class="o_item o_uploading"
+                     aria-label="Uploading"
+                     title="Uploading"
+                     t-key="'uploading'">
+                    <i class="fa fa-spinner fa-spin"/>
+                </div>
+                <t t-if="props.attachment.uploaded">
+                    <div class="o_item o_uploaded"
+                         aria-label="Uploaded"
+                         title="Uploaded"
+                         t-key="'uploaded'">
+                        <i class="fa fa-check"/>
+                    </div>
+                    <div class="o_item o_unlink"
+                         aria-label="Remove"
+                         title="Remove"
+                         t-key="'unlink'"
+                         t-on-click="_onClickUnlink">
+                        <i class="fa fa-times"/>
+                    </div>
+                </t>
+            </div>
+        </t>
+    </div>
+
+</templates>

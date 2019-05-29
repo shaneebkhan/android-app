@@ -2,71 +2,6 @@
     'use strict';
 
     /**
-     * We define here a simple event bus: it can
-     * - emit events
-     * - add/remove listeners.
-     *
-     * This is a useful pattern of communication in many cases.  For OWL, each
-     * components and stores are event buses.
-     */
-    //------------------------------------------------------------------------------
-    // EventBus
-    //------------------------------------------------------------------------------
-    class EventBus {
-        constructor() {
-            this.subscriptions = {};
-        }
-        /**
-         * Add a listener for the 'eventType' events.
-         *
-         * Note that the 'owner' of this event can be anything, but will more likely
-         * be a widget or a class. The idea is that the callback will be called with
-         * the proper owner bound.
-         *
-         * Also, the owner should be kind of unique. This will be used to remove the
-         * listener.
-         */
-        on(eventType, owner, callback) {
-            if (!callback) {
-                throw new Error("Missing callback");
-            }
-            if (!this.subscriptions[eventType]) {
-                this.subscriptions[eventType] = [];
-            }
-            this.subscriptions[eventType].push({
-                owner,
-                callback
-            });
-        }
-        /**
-         * Remove a listener
-         */
-        off(eventType, owner) {
-            const subs = this.subscriptions[eventType];
-            if (subs) {
-                this.subscriptions[eventType] = subs.filter(s => s.owner !== owner);
-            }
-        }
-        /**
-         * Emit an event of type 'eventType'.  Any extra arguments will be passed to
-         * the listeners callback.
-         */
-        trigger(eventType, ...args) {
-            const subs = this.subscriptions[eventType] || [];
-            for (let i = 0, iLen = subs.length; i < iLen; i++) {
-                const sub = subs[i];
-                sub.callback.call(sub.owner, ...args);
-            }
-        }
-        /**
-         * Remove all subscriptions.
-         */
-        clear() {
-            this.subscriptions = {};
-        }
-    }
-
-    /**
      * Owl Observer
      *
      * This code contains the logic that allows Owl to observe and react to state
@@ -140,6 +75,18 @@
             this.allowMutations = true;
             this.dirty = false;
         }
+        static set(target, key, value) {
+            if (!target.__owl__) {
+                throw Error("`Observer.set()` can only be called with observed Objects or Arrays");
+            }
+            target.__owl__.observer.set(target, key, value);
+        }
+        static delete(target, key) {
+            if (!target.__owl__) {
+                throw Error("`Observer.delete()` can only be called with observed Objects");
+            }
+            target.__owl__.observer.delete(target, key);
+        }
         notifyCB() { }
         notifyChange() {
             this.dirty = true;
@@ -171,20 +118,41 @@
             }
         }
         set(target, key, value) {
-            this.rev++;
-            this._addProp(target, key, value);
-            target.__owl__.rev++;
+            let alreadyDefined = key in target &&
+                Object.getOwnPropertyDescriptor(target, key).configurable === false;
+            if (alreadyDefined) {
+                target[key] = value;
+            }
+            else {
+                this._addProp(target, key, value);
+                this._updateRevNumber(target);
+            }
+            this.notifyChange();
+        }
+        delete(target, key) {
+            delete target[key];
+            this._updateRevNumber(target);
             this.notifyChange();
         }
         _observeObj(obj, parent) {
-            obj.__owl__ = { rev: this.rev, deepRev: this.rev, parent };
+            obj.__owl__ = {
+                rev: this.rev,
+                deepRev: this.rev,
+                parent,
+                observer: this
+            };
             Object.defineProperty(obj, "__owl__", { enumerable: false });
             for (let key in obj) {
                 this._addProp(obj, key, obj[key]);
             }
         }
         _observeArr(arr, parent) {
-            arr.__owl__ = { rev: this.rev, deepRev: this.rev, parent };
+            arr.__owl__ = {
+                rev: this.rev,
+                deepRev: this.rev,
+                parent,
+                observer: this
+            };
             Object.defineProperty(arr, "__owl__", { enumerable: false });
             arr.__proto__ = Object.create(ModifiedArrayProto);
             arr.__proto__.__observer__ = this;
@@ -195,28 +163,32 @@
         _addProp(obj, key, value) {
             var self = this;
             Object.defineProperty(obj, key, {
+                configurable: true,
                 enumerable: true,
                 get() {
                     return value;
                 },
                 set(newVal) {
                     if (newVal !== value) {
-                        self.rev++;
                         if (!self.allowMutations) {
                             throw new Error(`Observed state cannot be changed here! (key: "${key}", val: "${newVal}")`);
                         }
+                        self._updateRevNumber(obj);
                         value = newVal;
                         self.observe(newVal, obj);
-                        obj.__owl__.rev++;
-                        let parent = obj;
-                        do {
-                            parent.__owl__.deepRev++;
-                        } while ((parent = parent.__owl__.parent) && parent !== obj);
                         self.notifyChange();
                     }
                 }
             });
             this.observe(value, obj);
+        }
+        _updateRevNumber(target) {
+            this.rev++;
+            target.__owl__.rev++;
+            let parent = target;
+            do {
+                parent.__owl__.deepRev++;
+            } while ((parent = parent.__owl__.parent) && parent !== target);
         }
     }
 
@@ -238,14 +210,7 @@
      */
     function vnode(sel, data, children, text, elm) {
         let key = data === undefined ? undefined : data.key;
-        return {
-            sel: sel,
-            data: data,
-            children: children,
-            text: text,
-            elm: elm,
-            key: key
-        };
+        return { sel, data, children, text, elm, key };
     }
     //------------------------------------------------------------------------------
     // snabbdom.ts
@@ -869,8 +834,30 @@
     };
     const patch = init([eventListenersModule, attrsModule, propsModule]);
 
+    /**
+     * Owl QWeb Expression Parser
+     *
+     * Owl needs in various contexts to be able to understand the structure of a
+     * string representing a javascript expression.  The usual goal is to be able
+     * to rewrite some variables.  For example, if a template has
+     *
+     *  ```xml
+     *  <t t-if="computeSomething({val: state.val})">...</t>
+     * ```
+     *
+     * this needs to be translated in something like this:
+     *
+     * ```js
+     *   if (context["computeSomething"]({val: context["state"].val})) { ... }
+     * ```
+     *
+     * This file contains the implementation of an extremely naive tokenizer/parser
+     * and evaluator for javascript expressions.  The supported grammar is basically
+     * only expressive enough to understand the shape of objects, of arrays, and
+     * various operators.
+     */
     //------------------------------------------------------------------------------
-    // Const/global stuff/helpers
+    // Misc types, constants and helpers
     //------------------------------------------------------------------------------
     const RESERVED_WORDS = "true,false,NaN,null,undefined,debugger,console,window,in,instanceof,new,function,return,this,typeof,eval,void,Math,RegExp,Array,Object,Date".split(",");
     const WORD_REPLACEMENT = {
@@ -881,6 +868,194 @@
         lt: "<",
         lte: "<="
     };
+    const STATIC_TOKEN_MAP = {
+        "{": "LEFT_BRACE",
+        "}": "RIGHT_BRACE",
+        "[": "LEFT_BRACKET",
+        "]": "RIGHT_BRACKET",
+        ":": "COLON",
+        ",": "COMMA",
+        "(": "LEFT_PAREN",
+        ")": "RIGHT_PAREN"
+    };
+    const OPERATORS = ".,===,==,+,!,||,&&,>=,>,<=,<,?,-,*,/,%".split(',');
+    let tokenizeString = function (expr) {
+        let s = expr[0];
+        let start = s;
+        if (s !== "'" && s !== '"') {
+            return false;
+        }
+        let i = 1;
+        let cur;
+        while (expr[i] && expr[i] !== start) {
+            cur = expr[i];
+            s += cur;
+            if (cur === "\\") {
+                i++;
+                cur = expr[i];
+                if (!cur) {
+                    throw new Error("Invalid expression");
+                }
+                s += cur;
+            }
+            i++;
+        }
+        if (expr[i] !== start) {
+            throw new Error("Invalid expression");
+        }
+        s += start;
+        return { type: "VALUE", value: s };
+    };
+    let tokenizeNumber = function (expr) {
+        let s = expr[0];
+        if (s && s.match(/[0-9]/)) {
+            let i = 1;
+            while (expr[i] && expr[i].match(/[0-9]|\./)) {
+                s += expr[i];
+                i++;
+            }
+            return { type: "VALUE", value: s };
+        }
+        else {
+            return false;
+        }
+    };
+    let tokenizeSymbol = function (expr) {
+        let s = expr[0];
+        if (s && s.match(/[a-zA-Z_\$]/)) {
+            let i = 1;
+            while (expr[i] && expr[i].match(/\w/)) {
+                s += expr[i];
+                i++;
+            }
+            if (s in WORD_REPLACEMENT) {
+                return { type: "OPERATOR", value: WORD_REPLACEMENT[s], size: s.length };
+            }
+            return { type: "SYMBOL", value: s };
+        }
+        else {
+            return false;
+        }
+    };
+    const tokenizeStatic = function (expr) {
+        const char = expr[0];
+        if (char && char in STATIC_TOKEN_MAP) {
+            return { type: STATIC_TOKEN_MAP[char], value: char };
+        }
+        return false;
+    };
+    const tokenizeOperator = function (expr) {
+        for (let op of OPERATORS) {
+            if (expr.startsWith(op)) {
+                return { type: "OPERATOR", value: op };
+            }
+        }
+        return false;
+    };
+    const TOKENIZERS = [
+        tokenizeString,
+        tokenizeNumber,
+        tokenizeSymbol,
+        tokenizeStatic,
+        tokenizeOperator
+    ];
+    /**
+     * Convert a javascript expression (as a string) into a list of tokens. For
+     * example: `tokenize("1 + b")` will return:
+     * ```js
+     *  [
+     *   {type: "VALUE", value: "1"},
+     *   {type: "OPERATOR", value: "+"},
+     *   {type: "SYMBOL", value: "b"}
+     * ]
+     * ```
+     */
+    function tokenize(expr) {
+        const result = [];
+        let token = true;
+        while (token) {
+            expr = expr.trim();
+            if (expr) {
+                for (let tokenizer of TOKENIZERS) {
+                    token = tokenizer(expr);
+                    if (token) {
+                        result.push(token);
+                        expr = expr.slice(token.size || token.value.length);
+                        break;
+                    }
+                }
+            }
+            else {
+                token = false;
+            }
+        }
+        if (expr.length) {
+            throw new Error(`Tokenizer error: could not tokenize "${expr}"`);
+        }
+        return result;
+    }
+    //------------------------------------------------------------------------------
+    // Expression "evaluator"
+    //------------------------------------------------------------------------------
+    /**
+     * This is the main function exported by this file. This is the code that will
+     * process an expression (given as a string) and returns another expression with
+     * proper lookups in the context.
+     *
+     * Usually, this kind of code would be very simple to do if we had an AST (so,
+     * if we had a javascript parser), since then, we would only need to find the
+     * variables and replace them.  However, a parser is more complicated, and there
+     * are no standard builtin parser API.
+     *
+     * Since this method is applied to simple javasript expressions, and the work to
+     * be done is actually quite simple, we actually can get away with not using a
+     * parser, which helps with the code size.
+     *
+     * Here is the heuristic used by this method to determine if a token is a
+     * variable:
+     * - by default, all symbols are considered a variable
+     * - unless the previous token is a dot (in that case, this is a property: `a.b`)
+     * - or if the previous token is a left brace or a comma, and the next token is
+     *   a colon (in that case, this is an object key: `{a: b}`)
+     */
+    function compileExpr(expr, vars) {
+        const tokens = tokenize(expr);
+        let result = "";
+        for (let i = 0; i < tokens.length; i++) {
+            let token = tokens[i];
+            if (token.type === "SYMBOL" && !RESERVED_WORDS.includes(token.value)) {
+                // we need to find if it is a variable
+                let isVar = true;
+                let prevToken = tokens[i - 1];
+                if (prevToken) {
+                    if (prevToken.type === "OPERATOR" && prevToken.value === ".") {
+                        isVar = false;
+                    }
+                    else if (prevToken.type === "LEFT_BRACE" ||
+                        prevToken.type === "COMMA") {
+                        let nextToken = tokens[i + 1];
+                        if (nextToken && nextToken.type === "COLON") {
+                            isVar = false;
+                        }
+                    }
+                }
+                if (isVar) {
+                    if (token.value in vars && "id" in vars[token.value]) {
+                        token.value = vars[token.value].id;
+                    }
+                    else {
+                        token.value = `context['${token.value}']`;
+                    }
+                }
+            }
+            result += token.value;
+        }
+        return result;
+    }
+
+    //------------------------------------------------------------------------------
+    // Const/global stuff/helpers
+    //------------------------------------------------------------------------------
     const DISABLED_TAGS = [
         "input",
         "textarea",
@@ -913,6 +1088,14 @@
                 }
             }
             return classes.join(" ");
+        },
+        shallowEqual(p1, p2) {
+            for (let k in p1) {
+                if (p1[k] !== p2[k]) {
+                    return false;
+                }
+            }
+            return true;
         }
     };
     function parseXML(xml) {
@@ -1073,7 +1256,11 @@
                 template = new Function("context", "extra", ctx.code.join("\n"));
             }
             catch (e) {
-                throw new Error(`Invalid generated code while compiling template '${ctx.templateName.replace(/`/g, "'")}': ${e.message}`);
+                const templateName = ctx.templateName.replace(/`/g, "'");
+                console.groupCollapsed(`Invalid Code generated by ${templateName}`);
+                console.warn(ctx.code.join("\n"));
+                console.groupEnd();
+                throw new Error(`Invalid generated code while compiling template '${templateName}': ${e.message}`);
             }
             if (isDebug) {
                 console.log(`Template: ${this.templates[name].elem.outerHTML}\nCompiled code:\n` +
@@ -1247,7 +1434,8 @@
                 // dynamic attributes
                 if (name.startsWith("t-att-")) {
                     let attName = name.slice(6);
-                    let formattedValue = ctx.formatExpression(ctx.getValue(value));
+                    const v = ctx.getValue(value);
+                    let formattedValue = v.id || ctx.formatExpression(v);
                     if (formattedValue[0] === "{" &&
                         formattedValue[formattedValue.length - 1] === "}") {
                         formattedValue = `this.utils.objectToAttrString(${formattedValue})`;
@@ -1350,7 +1538,6 @@
             this.nextID = 1;
             this.code = [];
             this.variables = {};
-            this.definedVariables = {};
             this.escaping = false;
             this.parentNode = null;
             this.rootNode = null;
@@ -1409,69 +1596,14 @@
         getValue(val) {
             return val in this.variables ? this.getValue(this.variables[val]) : val;
         }
-        formatExpression(e) {
-            e = e.trim();
-            if (e[0] === "{" && e[e.length - 1] === "}") {
-                const innerExpr = e
-                    .slice(1, -1)
-                    .split(",")
-                    .map(p => {
-                    let [key, val] = p.trim().split(":");
-                    if (key === "") {
-                        return "";
-                    }
-                    if (!val) {
-                        val = key;
-                    }
-                    return `${key}: ${this.formatExpression(val)}`;
-                })
-                    .join(",");
-                return "{" + innerExpr + "}";
-            }
-            // Thanks CHM for this code...
-            const chars = e.split("");
-            let instring = "";
-            let invar = "";
-            let invarPos = 0;
-            let r = "";
-            chars.push(" ");
-            for (let i = 0, ilen = chars.length; i < ilen; i++) {
-                let c = chars[i];
-                if (instring.length) {
-                    if (c === instring && chars[i - 1] !== "\\") {
-                        instring = "";
-                    }
-                }
-                else if (c === '"' || c === "'") {
-                    instring = c;
-                }
-                else if (c.match(/[a-zA-Z_\$]/) && !invar.length) {
-                    invar = c;
-                    invarPos = i;
-                    continue;
-                }
-                else if (c.match(/\W/) && invar.length) {
-                    // TODO: Should check for possible spaces before dot
-                    if (chars[invarPos - 1] !== "." && RESERVED_WORDS.indexOf(invar) < 0) {
-                        if (!(invar in this.definedVariables)) {
-                            invar =
-                                WORD_REPLACEMENT[invar] ||
-                                    (invar in this.variables &&
-                                        this.formatExpression(this.variables[invar])) ||
-                                    "context['" + invar + "']";
-                        }
-                    }
-                    r += invar;
-                    invar = "";
-                }
-                else if (invar.length) {
-                    invar += c;
-                    continue;
-                }
-                r += c;
-            }
-            const result = r.slice(0, -1);
-            return result;
+        /**
+         * Prepare an expression for being consumed at render time.  Its main job
+         * is to
+         * - replace unknown variables by a lookup in the context
+         * - replace already defined variables by their internal name
+         */
+        formatExpression(expr) {
+            return compileExpr(expr, this.variables);
         }
         /**
          * Perform string interpolation on the given string. Note that if the whole
@@ -1486,14 +1618,7 @@
             if (matches && matches[0].length === s.length) {
                 return `(${this.formatExpression(s.slice(2, -2))})`;
             }
-            matches = s.match(/\#\{.*?\}/g);
-            if (matches && matches[0].length === s.length) {
-                return `(${this.formatExpression(s.slice(2, -1))})`;
-            }
-            let formatter = expr => "${" + this.formatExpression(expr) + "}";
-            let r = s
-                .replace(/\{\{.*?\}\}/g, s => formatter(s.slice(2, -2)))
-                .replace(/\#\{.*?\}/g, s => formatter(s.slice(2, -1)));
+            let r = s.replace(/\{\{.*?\}\}/g, s => "${" + this.formatExpression(s.slice(2, -2)) + "}");
             return "`" + r + "`";
         }
     }
@@ -1507,7 +1632,7 @@
     // Widget
     //------------------------------------------------------------------------------
     let nextId = 1;
-    class Component extends EventBus {
+    class Component {
         //--------------------------------------------------------------------------
         // Lifecycle
         //--------------------------------------------------------------------------
@@ -1531,7 +1656,6 @@
          * the t-widget directive in a template)
          */
         constructor(parent, props) {
-            super();
             this.refs = {};
             const defaultProps = this.constructor.defaultProps;
             if (defaultProps) {
@@ -1570,6 +1694,10 @@
                 mountedHandlers: {}
             };
         }
+        /**
+         * The `el` is the root element of the widget.  Note that it could be null:
+         * this is the case if the widget is not mounted yet, or is destroyed.
+         */
         get el() {
             return this.__owl__.vnode ? this.__owl__.vnode.elm : null;
         }
@@ -1646,44 +1774,22 @@
         //--------------------------------------------------------------------------
         // Public
         //--------------------------------------------------------------------------
+        /**
+         * Mount the component to a target element.
+         *
+         * This should only be done if the component was created manually. Components
+         * created declaratively in templates are managed by the Owl system.
+         */
         async mount(target) {
             const vnode = await this._prepare();
             if (this.__owl__.isDestroyed) {
-                // widget was destroyed before we get here...
+                // component was destroyed before we get here...
                 return;
             }
             this._patch(vnode);
             target.appendChild(this.el);
             if (document.body.contains(target)) {
                 this._callMounted();
-            }
-        }
-        _callMounted() {
-            const __owl__ = this.__owl__;
-            const children = __owl__.children;
-            for (let id in children) {
-                const comp = children[id];
-                if (!comp.__owl__.isMounted && this.el.contains(comp.el)) {
-                    comp._callMounted();
-                }
-            }
-            __owl__.isMounted = true;
-            const handlers = __owl__.mountedHandlers;
-            for (let key in handlers) {
-                handlers[key]();
-            }
-            this.mounted();
-        }
-        _callWillUnmount() {
-            this.willUnmount();
-            const __owl__ = this.__owl__;
-            __owl__.isMounted = false;
-            const children = __owl__.children;
-            for (let id in children) {
-                const comp = children[id];
-                if (comp.__owl__.isMounted) {
-                    comp._callWillUnmount();
-                }
             }
         }
         unmount() {
@@ -1722,6 +1828,15 @@
                 }
             }
         }
+        /**
+         * Destroy the component.  This operation is quite complex:
+         *  - it recursively destroy all children
+         *  - call the willUnmount hooks if necessary
+         *  - remove the dom node from the dom
+         *
+         * This should only be called manually if you created the widget.  Most widgets
+         * will be automatically destroyed.
+         */
         destroy() {
             const __owl__ = this.__owl__;
             if (!__owl__.isDestroyed) {
@@ -1732,26 +1847,11 @@
                 }
             }
         }
-        _destroy(parent) {
-            const __owl__ = this.__owl__;
-            const isMounted = __owl__.isMounted;
-            if (isMounted) {
-                this.willUnmount();
-                __owl__.isMounted = false;
-            }
-            const children = __owl__.children;
-            for (let key in children) {
-                children[key]._destroy(this);
-            }
-            if (parent) {
-                let id = __owl__.id;
-                delete parent.__owl__.children[id];
-                __owl__.parent = null;
-            }
-            this.clear();
-            __owl__.isDestroyed = true;
-            delete __owl__.vnode;
-        }
+        /**
+         * This method is called by the component system whenever its props are
+         * updated. If it returns true, then the component will be rendered.
+         * Otherwise, it will skip the rendering (also, its props will not be updated)
+         */
         shouldUpdate(nextProps) {
             return true;
         }
@@ -1774,12 +1874,72 @@
                 await this.render(true);
             }
         }
-        set(target, key, value) {
-            this.__owl__.observer.set(target, key, value);
+        /**
+         * Emit a custom event of type 'eventType' with the given 'payload' on the
+         * component's el, if it exists. However, note that the event will only bubble
+         * up to the parent DOM nodes. Thus, it must be called between mounted() and
+         * willUnmount().
+         */
+        trigger(eventType, payload) {
+            if (this.el) {
+                const ev = new CustomEvent(eventType, {
+                    bubbles: true,
+                    cancelable: true,
+                    detail: payload
+                });
+                this.el.dispatchEvent(ev);
+            }
         }
         //--------------------------------------------------------------------------
         // Private
         //--------------------------------------------------------------------------
+        _destroy(parent) {
+            const __owl__ = this.__owl__;
+            const isMounted = __owl__.isMounted;
+            if (isMounted) {
+                this.willUnmount();
+                __owl__.isMounted = false;
+            }
+            const children = __owl__.children;
+            for (let key in children) {
+                children[key]._destroy(this);
+            }
+            if (parent) {
+                let id = __owl__.id;
+                delete parent.__owl__.children[id];
+                __owl__.parent = null;
+            }
+            __owl__.isDestroyed = true;
+            delete __owl__.vnode;
+        }
+        _callMounted() {
+            const __owl__ = this.__owl__;
+            const children = __owl__.children;
+            for (let id in children) {
+                const comp = children[id];
+                if (!comp.__owl__.isMounted && this.el.contains(comp.el)) {
+                    comp._callMounted();
+                }
+            }
+            __owl__.isMounted = true;
+            const handlers = __owl__.mountedHandlers;
+            for (let key in handlers) {
+                handlers[key]();
+            }
+            this.mounted();
+        }
+        _callWillUnmount() {
+            this.willUnmount();
+            const __owl__ = this.__owl__;
+            __owl__.isMounted = false;
+            const children = __owl__.children;
+            for (let id in children) {
+                const comp = children[id];
+                if (comp.__owl__.isMounted) {
+                    comp._callWillUnmount();
+                }
+            }
+        }
         async _updateProps(nextProps, forceUpdate = false, patchQueue) {
             const shouldUpdate = forceUpdate || this.shouldUpdate(nextProps);
             if (shouldUpdate) {
@@ -2000,6 +2160,71 @@
     }
 
     /**
+     * We define here a simple event bus: it can
+     * - emit events
+     * - add/remove listeners.
+     *
+     * This is a useful pattern of communication in many cases.  For OWL, each
+     * components and stores are event buses.
+     */
+    //------------------------------------------------------------------------------
+    // EventBus
+    //------------------------------------------------------------------------------
+    class EventBus {
+        constructor() {
+            this.subscriptions = {};
+        }
+        /**
+         * Add a listener for the 'eventType' events.
+         *
+         * Note that the 'owner' of this event can be anything, but will more likely
+         * be a widget or a class. The idea is that the callback will be called with
+         * the proper owner bound.
+         *
+         * Also, the owner should be kind of unique. This will be used to remove the
+         * listener.
+         */
+        on(eventType, owner, callback) {
+            if (!callback) {
+                throw new Error("Missing callback");
+            }
+            if (!this.subscriptions[eventType]) {
+                this.subscriptions[eventType] = [];
+            }
+            this.subscriptions[eventType].push({
+                owner,
+                callback
+            });
+        }
+        /**
+         * Remove a listener
+         */
+        off(eventType, owner) {
+            const subs = this.subscriptions[eventType];
+            if (subs) {
+                this.subscriptions[eventType] = subs.filter(s => s.owner !== owner);
+            }
+        }
+        /**
+         * Emit an event of type 'eventType'.  Any extra arguments will be passed to
+         * the listeners callback.
+         */
+        trigger(eventType, ...args) {
+            const subs = this.subscriptions[eventType] || [];
+            for (let i = 0, iLen = subs.length; i < iLen; i++) {
+                const sub = subs[i];
+                sub.callback.call(sub.owner, ...args);
+            }
+        }
+        /**
+         * Remove all subscriptions.
+         */
+        clear() {
+            this.subscriptions = {};
+        }
+    }
+
+    /**
      * Owl QWeb Directives
      *
      * This file contains the implementation of most standard QWeb directives:
@@ -2025,41 +2250,42 @@
             qweb._compileNode(ctx.caller, ctx);
             return;
         }
-        if (typeof value === "string") {
-            let exprID = value;
-            if (!(value in ctx.definedVariables)) {
-                exprID = `_${ctx.generateID()}`;
-                ctx.addLine(`var ${exprID} = ${ctx.formatExpression(value)};`);
-            }
-            ctx.addIf(`${exprID} || ${exprID} === 0`);
-            if (!ctx.parentNode) {
-                throw new Error("Should not have a text node without a parent");
-            }
-            if (ctx.escaping) {
-                ctx.addLine(`c${ctx.parentNode}.push({text: ${exprID}});`);
-            }
-            else {
-                let fragID = ctx.generateID();
-                ctx.addLine(`var frag${fragID} = this.utils.getFragment(${exprID})`);
-                let tempNodeID = ctx.generateID();
-                ctx.addLine(`var p${tempNodeID} = {hook: {`);
-                ctx.addLine(`  insert: n => n.elm.parentNode.replaceChild(frag${fragID}, n.elm),`);
-                ctx.addLine(`}};`);
-                ctx.addLine(`var vn${tempNodeID} = h('div', p${tempNodeID})`);
-                ctx.addLine(`c${ctx.parentNode}.push(vn${tempNodeID});`);
-            }
-            if (node.childNodes.length) {
-                ctx.addElse();
-                qweb._compileChildren(node, ctx);
-            }
-            ctx.closeIf();
-            return;
-        }
-        if (value instanceof NodeList) {
-            for (let node of Array.from(value)) {
+        if (value.xml instanceof NodeList) {
+            for (let node of Array.from(value.xml)) {
                 qweb._compileNode(node, ctx);
             }
+            return;
         }
+        let exprID;
+        if (typeof value === "string") {
+            exprID = `_${ctx.generateID()}`;
+            ctx.addLine(`var ${exprID} = ${ctx.formatExpression(value)};`);
+        }
+        else {
+            exprID = value.id;
+        }
+        ctx.addIf(`${exprID} || ${exprID} === 0`);
+        if (!ctx.parentNode) {
+            throw new Error("Should not have a text node without a parent");
+        }
+        if (ctx.escaping) {
+            ctx.addLine(`c${ctx.parentNode}.push({text: ${exprID}});`);
+        }
+        else {
+            let fragID = ctx.generateID();
+            ctx.addLine(`var frag${fragID} = this.utils.getFragment(${exprID})`);
+            let tempNodeID = ctx.generateID();
+            ctx.addLine(`var p${tempNodeID} = {hook: {`);
+            ctx.addLine(`  insert: n => n.elm.parentNode.replaceChild(frag${fragID}, n.elm),`);
+            ctx.addLine(`}};`);
+            ctx.addLine(`var vn${tempNodeID} = h('div', p${tempNodeID})`);
+            ctx.addLine(`c${ctx.parentNode}.push(vn${tempNodeID});`);
+        }
+        if (node.childNodes.length) {
+            ctx.addElse();
+            qweb._compileChildren(node, ctx);
+        }
+        ctx.closeIf();
     }
     QWeb.addDirective({
         name: "esc",
@@ -2100,17 +2326,21 @@
             if (value) {
                 const formattedValue = ctx.formatExpression(value);
                 if (ctx.variables.hasOwnProperty(variable)) {
-                    ctx.addLine(`${ctx.variables[variable]} = ${formattedValue}`);
+                    ctx.addLine(`${ctx.variables[variable].id} = ${formattedValue}`);
                 }
                 else {
                     const varName = `_${ctx.generateID()}`;
                     ctx.addLine(`var ${varName} = ${formattedValue};`);
-                    ctx.definedVariables[varName] = formattedValue;
-                    ctx.variables[variable] = varName;
+                    ctx.variables[variable] = {
+                        id: varName,
+                        expr: formattedValue
+                    };
                 }
             }
             else {
-                ctx.variables[variable] = node.childNodes;
+                ctx.variables[variable] = {
+                    xml: node.childNodes
+                };
             }
             return true;
         }
@@ -2177,23 +2407,25 @@
             tempCtx.nextID = ctx.rootContext.nextID;
             qweb._compileNode(nodeCopy, tempCtx);
             const vars = Object.assign({}, ctx.variables, tempCtx.variables);
-            var definedVariables = Object.assign({}, ctx.definedVariables, tempCtx.definedVariables);
             ctx.rootContext.nextID = tempCtx.nextID;
             // open new scope, if necessary
-            const hasNewVariables = Object.keys(definedVariables).length > 0;
+            const hasNewVariables = Object.keys(tempCtx.variables).length > 0;
             if (hasNewVariables) {
                 ctx.addLine("{");
                 ctx.indent();
-            }
-            // add new variables, if any
-            for (let key in definedVariables) {
-                ctx.addLine(`let ${key} = ${definedVariables[key]}`);
+                // add new variables, if any
+                for (let key in tempCtx.variables) {
+                    const v = tempCtx.variables[key];
+                    if (v.expr) {
+                        ctx.addLine(`let ${v.id} = ${v.expr};`);
+                    }
+                    // todo: handle XML variables...
+                }
             }
             // compile sub template
             const subCtx = ctx
                 .subContext("caller", nodeCopy)
-                .subContext("variables", Object.create(vars))
-                .subContext("definedVariables", Object.create(definedVariables));
+                .subContext("variables", Object.create(vars));
             qweb._compileNode(nodeTemplate.elem, subCtx);
             // close new scope
             if (hasNewVariables) {
@@ -2218,17 +2450,18 @@
             let arrayID = ctx.generateID();
             ctx.addLine(`var _${arrayID} = ${ctx.formatExpression(elems)};`);
             ctx.addLine(`if (!_${arrayID}) { throw new Error('QWeb error: Invalid loop expression')}`);
-            ctx.addLine(`if (typeof _${arrayID} === 'number') { _${arrayID} = Array.from(Array(_${arrayID}).keys())}`);
             let keysID = ctx.generateID();
-            ctx.addLine(`var _${keysID} = _${arrayID} instanceof Array ? _${arrayID} : Object.keys(_${arrayID});`);
-            ctx.addLine(`var _length${keysID} = _${keysID}.length;`);
             let valuesID = ctx.generateID();
-            ctx.addLine(`var _${valuesID} = _${arrayID} instanceof Array ? _${arrayID} : Object.values(_${arrayID});`);
+            ctx.addLine(`var _${keysID} = _${valuesID} = _${arrayID};`);
+            ctx.addIf(`!(_${arrayID} instanceof Array)`);
+            ctx.addLine(`_${keysID} = Object.keys(_${arrayID});`);
+            ctx.addLine(`_${valuesID} = Object.values(_${arrayID});`);
+            ctx.closeIf();
+            ctx.addLine(`var _length${keysID} = _${keysID}.length;`);
             ctx.addLine(`for (let i = 0; i < _length${keysID}; i++) {`);
             ctx.indent();
             ctx.addLine(`context.${name}_first = i === 0;`);
             ctx.addLine(`context.${name}_last = i === _length${keysID} - 1;`);
-            ctx.addLine(`context.${name}_parity = i % 2 === 0 ? 'even' : 'odd';`);
             ctx.addLine(`context.${name}_index = i;`);
             ctx.addLine(`context.${name} = _${keysID}[i];`);
             ctx.addLine(`context.${name}_value = _${valuesID}[i];`);
@@ -2286,7 +2519,7 @@
      * - t-on
      * - t-ref
      * - t-transition
-     * - t-widget/t-props/t-keepalive
+     * - t-widget/t-keepalive
      * - t-mounted
      */
     //------------------------------------------------------------------------------
@@ -2431,6 +2664,9 @@
     //------------------------------------------------------------------------------
     // t-widget
     //------------------------------------------------------------------------------
+    const T_WIDGET_MODS_CODE = Object.assign({}, MODS_CODE, {
+        self: "if (e.target !== vn.elm) {return}"
+    });
     /**
      * The t-widget directive is certainly a complicated and hard to maintain piece
      * of code.  To help you, fellow developer, if you have to maintain it, I offer
@@ -2443,11 +2679,15 @@
      * ```xml
      *   <t t-widget="child"
      *      t-key="'somestring'"
-     *      t-props="{flag:state.flag}"
+     *      flag="state.flag"
      *      t-transition="fade"/>
      * ```
      *
      * ```js
+     * // we assign utils on top of the function because it will be useful for
+     * // each widgets
+     * let utils = this.utils;
+     *
      * // this is the virtual node representing the parent div
      * let c1 = [], p1 = { key: 1 };
      * var vn1 = h("div", p1, c1);
@@ -2462,7 +2702,7 @@
      * let _2_index = c1.length;
      * c1.push(null);
      *
-     * // def3 is the deferred that will contain later either the new widget
+     * // def3 is the promise that will contain later either the new widget
      * // creation, or the props update...
      * let def3;
      *
@@ -2481,30 +2721,31 @@
      * // computation, so it is certainly better to do it only once
      * let props4 = { flag: context["state"].flag };
      *
-     * // If we have a widget, currently rendering, but not ready yet, and which was
-     * // rendered with different props, we do not want to wait for it to be ready,
-     * // then update it. We simply destroy it, and start anew.
-     * if (
-     *   w4 &&
-     *   w4.__owl__.renderPromise &&
-     *   !w4.__owl__.isStarted &&
-     *   props4 !== w4.__owl__.renderProps
-     * ) {
-     *   w4.destroy();
-     *   w4 = false;
+     * // If we have a widget, currently rendering, but not ready yet, we do not want
+     * // to wait for it to be ready if we can avoid it
+     * if (w4 && w4.__owl__.renderPromise && !w4.__owl__.vnode) {
+     *   // we check if the props are the same.  In that case, we can simply reuse
+     *   // the previous rendering and skip all useless work
+     *   if (utils.shallowEqual(props4, w4.__owl__.renderProps)) {
+     *     def3 = w4.__owl__.renderPromise;
+     *   } else {
+     *     // if the props are not the same, we destroy the widget and starts anew.
+     *     // this will be faster than waiting for its rendering, then updating it
+     *     w4.destroy();
+     *     w4 = false;
+     *   }
      * }
      *
      * if (!w4) {
      *   // in this situation, we need to create a new widget.  First step is
      *   // to get a reference to the class, then create an instance with
      *   // current context as parent, and the props.
-     *   let W4 = context.widgets["child"];
+     *   let W4 = context.widgets && context.widgets[widgetKey4] || QWeb.widgets[widgetKey4];
+
      *   if (!W4) {
      *     throw new Error("Cannot find the definition of widget 'child'");
      *   }
      *   w4 = new W4(owner, props4);
-     *
-     *   let utils = this.utils;
      *
      *   // Whenever we rerender the parent widget, we need to be sure that we
      *   // are able to find the widget instance. To do that, we register it to
@@ -2562,7 +2803,9 @@
      * } else {
      *   // this is the 'update' path of the directive.
      *   // the call to _updateProps is the actual widget update
-     *   def3 = w4._updateProps(props4, extra.forceUpdate, extra.patchQueue);
+     *   // Note that we only update the props if we cannot reuse the previous
+     *   // rendering work (in the case it was rendered with the same props)
+     *   def3 = def3 || w4._updateProps(props4, extra.forceUpdate, extra.patchQueue);
      *   def3 = def3.then(() => {
      *     // if widget was destroyed in the meantime, we do nothing (so, this
      *     // means that the parent's element children list will have a null in
@@ -2593,28 +2836,42 @@
             ctx.rootContext.shouldDefineOwner = true;
             ctx.rootContext.shouldDefineQWeb = true;
             ctx.rootContext.shouldDefineUtils = true;
-            let props = node.getAttribute("t-props");
             let keepAlive = node.getAttribute("t-keepalive") ? true : false;
             // t-on- events and t-transition
             const events = [];
             let transition = "";
             const attributes = node.attributes;
+            const props = {};
             for (let i = 0; i < attributes.length; i++) {
                 const name = attributes[i].name;
+                const value = attributes[i].textContent;
                 if (name.startsWith("t-on-")) {
-                    events.push([name.slice(5), attributes[i].textContent]);
+                    const [eventName, ...mods] = name.slice(5).split(".");
+                    let extraArgs;
+                    let handlerName = value.replace(/\(.*\)/, function (args) {
+                        extraArgs = args.slice(1, -1);
+                        return "";
+                    });
+                    events.push([eventName, mods, handlerName, extraArgs]);
                 }
                 else if (name === "t-transition") {
-                    transition = attributes[i].textContent;
+                    transition = value;
+                }
+                else if (!name.startsWith("t-")) {
+                    if (name !== "class" && name !== "style") {
+                        // this is a prop!
+                        props[name] = ctx.formatExpression(value);
+                    }
                 }
             }
             let key = node.getAttribute("t-key");
             if (key) {
                 key = ctx.formatExpression(key);
             }
-            if (props) {
-                props = ctx.formatExpression(props);
-            }
+            // computing the props string representing the props object
+            let propStr = Object.keys(props)
+                .map(k => k + ":" + props[k])
+                .join(",");
             let dummyID = ctx.generateID();
             let defID = ctx.generateID();
             let widgetID = ctx.generateID();
@@ -2645,8 +2902,8 @@
                 transitionsInsertCode = `utils.transitionInsert(vn.elm, '${transition}');`;
             }
             let finalizeWidgetCode = `w${widgetID}.${keepAlive ? "unmount" : "destroy"}();`;
-            if (ref) {
-                finalizeWidgetCode += `delete context.refs[${refKey}];`; // FIXME: shouldn't we keep ref if keepAlive is true?
+            if (ref && !keepAlive) {
+                finalizeWidgetCode += `delete context.refs[${refKey}];`;
             }
             if (transition) {
                 finalizeWidgetCode = `let finalize = () => {
@@ -2665,7 +2922,7 @@
                 tattStyle = attVar;
             }
             let updateClassCode = "";
-            if (classAttr || tattClass || styleAttr || tattStyle) {
+            if (classAttr || tattClass || styleAttr || tattStyle || events.length) {
                 let classCode = "";
                 if (classAttr) {
                     classCode =
@@ -2684,15 +2941,40 @@
           }`;
                     updateClassCode = `let cl=w${widgetID}.el.classList;for (let k in ${attVar}) {if (${attVar}[k]) {cl.add(k)} else {cl.remove(k)}}`;
                 }
+                let eventsCode = events
+                    .map(function ([eventName, mods, handlerName, extraArgs]) {
+                    let params = extraArgs
+                        ? `owner, ${ctx.formatExpression(extraArgs)}`
+                        : "owner";
+                    let handler;
+                    if (mods.length > 0) {
+                        handler = `function (e) {`;
+                        handler += mods
+                            .map(function (mod) {
+                            return T_WIDGET_MODS_CODE[mod];
+                        })
+                            .join("");
+                        handler += `owner['${handlerName}'].call(${params}, e);}`;
+                    }
+                    else {
+                        handler = `owner['${handlerName}'].bind(${params})`;
+                    }
+                    return `vn.elm.addEventListener('${eventName}', ${handler});`;
+                })
+                    .join("");
                 const styleExpr = tattStyle || (styleAttr ? `'${styleAttr}'` : false);
-                const styleCode = styleExpr ? `vn.elm.style = ${styleExpr}` : "";
-                createHook = `vnode.data.hook = {create(_, vn){${classCode}${styleCode}}};`;
+                const styleCode = styleExpr ? `vn.elm.style = ${styleExpr};` : "";
+                createHook = `vnode.data.hook = {create(_, vn){${classCode}${styleCode}${eventsCode}}};`;
             }
             ctx.addLine(`let w${widgetID} = ${templateID} in context.__owl__.cmap ? context.__owl__.children[context.__owl__.cmap[${templateID}]] : false;`);
-            ctx.addLine(`let props${widgetID} = ${props || "{}"};`);
-            ctx.addIf(`w${widgetID} && w${widgetID}.__owl__.renderPromise && !w${widgetID}.__owl__.vnode && props${widgetID} !== w${widgetID}.__owl__.renderProps`);
+            ctx.addLine(`let props${widgetID} = {${propStr}};`);
+            ctx.addIf(`w${widgetID} && w${widgetID}.__owl__.renderPromise && !w${widgetID}.__owl__.vnode`);
+            ctx.addIf(`utils.shallowEqual(props${widgetID}, w${widgetID}.__owl__.renderProps)`);
+            ctx.addLine(`def${defID} = w${widgetID}.__owl__.renderPromise;`);
+            ctx.addElse();
             ctx.addLine(`w${widgetID}.destroy();`);
-            ctx.addLine(`w${widgetID} = false`);
+            ctx.addLine(`w${widgetID} = false;`);
+            ctx.closeIf();
             ctx.closeIf();
             ctx.addIf(`!w${widgetID}`);
             // new widget
@@ -2702,16 +2984,13 @@
             ctx.addLine(`if (!W${widgetID}) {throw new Error('Cannot find the definition of widget "' + widgetKey${widgetID} + '"')}`);
             ctx.addLine(`w${widgetID} = new W${widgetID}(owner, props${widgetID});`);
             ctx.addLine(`context.__owl__.cmap[${templateID}] = w${widgetID}.__owl__.id;`);
-            for (let [event, method] of events) {
-                ctx.addLine(`w${widgetID}.on('${event}', owner, owner['${method}'])`);
-            }
             ctx.addLine(`def${defID} = w${widgetID}._prepare();`);
             // hack: specify empty remove hook to prevent the node from being removed from the DOM
             // FIXME: click to re-add widget during remove transition -> leak
             ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}, hook: {insert(vn) {let nvn=w${widgetID}._mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeWidgetCode}}}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;w${widgetID}.__owl__.pvnode = pvnode;});`);
             ctx.addElse();
             // need to update widget
-            ctx.addLine(`def${defID} = w${widgetID}._updateProps(props${widgetID}, extra.forceUpdate, extra.patchQueue);`);
+            ctx.addLine(`def${defID} = def${defID} || w${widgetID}._updateProps(props${widgetID}, extra.forceUpdate, extra.patchQueue);`);
             let keepAliveCode = "";
             if (keepAlive) {
                 keepAliveCode = `pvnode.data.hook.insert = vn => {vn.elm.parentNode.replaceChild(w${widgetID}.el,vn.elm);vn.elm=w${widgetID}.el;w${widgetID}._remount();};`;
@@ -2773,7 +3052,6 @@
             if (this.debug) {
                 this.history.push({ state: this.state });
             }
-            this.set = this.observer.set.bind(this.observer);
             for (let entry of Object.entries(config.getters || {})) {
                 const name = entry[0];
                 const func = entry[1];
@@ -2809,7 +3087,6 @@
             const res = this.mutations[type].call(null, {
                 commit: this.commit.bind(this),
                 state: this.state,
-                set: this.set,
                 getters: this.getters
             }, payload);
             if (this._commitLevel === 1) {
@@ -2953,7 +3230,7 @@
      * - debounce
      */
     function whenReady(fn) {
-        if (document.readyState === "complete") {
+        if (document.readyState !== "loading") {
             fn();
         }
         else {
@@ -3073,9 +3350,9 @@
     exports.connect = connect;
     exports.utils = utils;
 
-    exports.__info__.version = '0.12.0';
-    exports.__info__.date = '2019-05-29T14:52:43.991Z';
-    exports.__info__.hash = '8889554';
+    exports.__info__.version = '0.13.0';
+    exports.__info__.date = '2019-06-11T08:47:15.470Z';
+    exports.__info__.hash = 'f187d1d';
     exports.__info__.url = 'https://github.com/odoo/owl';
 
 }(this.owl = this.owl || {}));

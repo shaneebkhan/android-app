@@ -15,14 +15,11 @@ class EditableText extends Component {
 
     mounted() {
         this.el.focus();
-        this.el.setSelectionRange(
-            0,
-            (this.el.value && this.el.value.length) || 0
-        );
+        this.el.setSelectionRange(0, (this.el.value && this.el.value.length) || 0);
     }
 
     willUnmount() {
-        this.trigger('cancel', {});
+        this.trigger('cancel');
     }
 
     //--------------------------------------------------------------------------
@@ -34,7 +31,7 @@ class EditableText extends Component {
      * @param {MouseEvent} ev
      */
     _onBlur(ev) {
-        this.trigger('cancel', ev);
+        this.trigger('cancel', { originalEvent: ev });
     }
 
     /**
@@ -42,7 +39,7 @@ class EditableText extends Component {
      * @param {MouseEvent} ev
      */
     _onClick(ev) {
-        this.trigger('click', ev);
+        this.trigger('clicked', { originalEvent: ev });
     }
 
     /**
@@ -55,7 +52,7 @@ class EditableText extends Component {
                 this._onKeydownEnter(ev);
                 break;
             case 'Escape':
-                this.trigger('cancel', ev);
+                this.trigger('cancel', { originalEvent: ev });
                 break;
         }
     }
@@ -68,12 +65,29 @@ class EditableText extends Component {
         const value = this.el.value;
         const newName = value || this.props.placeholder;
         if (this.props.value !== newName) {
-            this.trigger('validate', ev, { newName: newName });
+            this.trigger('validate', {
+                newName: newName,
+                originalEvent: ev,
+            });
         } else {
-            this.trigger('cancel', ev);
+            this.trigger('cancel', { originalEvent: ev });
         }
     }
 }
+
+/**
+ * Props validation
+ */
+EditableText.props = {
+    placeholder: {
+        type: String,
+        default: '',
+    },
+    value: {
+        type: String,
+        default: '',
+    },
+};
 
 return EditableText;
 

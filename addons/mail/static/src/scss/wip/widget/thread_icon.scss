@@ -3,7 +3,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_wip_thread_icon {
+.o_mail_wip_thread_icon {
     display: flex;
     width: 13px;
     justify-content: center;
@@ -25,7 +25,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_wip_thread_icon {
+.o_mail_wip_thread_icon {
 
     > .o_online {
         color: $o-enterprise-primary-color;
@@ -47,7 +47,7 @@
 // Animation
 // ------------------------------------------------------------------
 
-.o_wip_thread_icon > .o_typing > .o_dot {
+.o_mail_wip_thread_icon > .o_typing > .o_dot {
     animation: o_typing_dot 1.5s linear infinite;
 
     &:nth-child(2) {

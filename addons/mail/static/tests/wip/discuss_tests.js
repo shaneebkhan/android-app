@@ -41,7 +41,7 @@ QUnit.test('basic rendering', async function (assert) {
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_sidebar').length, 1, "should have a sidebar section");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content').length, 1, "should have content section");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_thread').length, 1, "should have thread section inside content");
-    assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_wip_composer').length, 0, "should have composer section inside content (due to inbox active)");
+    assert.ok(document.querySelector('.o_mail_wip_discuss > .o_content > .o_thread').classList.contains('o_mail_wip_thread'), "thread section should use thread component");
 });
 
 QUnit.test('basic rendering: sidebar', async function (assert) {
@@ -78,8 +78,8 @@ QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
     const inbox = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_mailbox > .o_item[data-thread-lid="mail.box_inbox"]');
 
     assert.strictEqual(inbox.querySelectorAll(':scope > .o_active_indicator').length, 1, "mailbox should have active indicator");
-    assert.strictEqual(inbox.querySelectorAll(':scope > .o_wip_thread_icon').length, 1, "mailbox should have an icon");
-    assert.strictEqual(inbox.querySelectorAll(':scope > .o_wip_thread_icon > .fa.fa-inbox').length, 1, "inbox should have 'inbox' icon");
+    assert.strictEqual(inbox.querySelectorAll(':scope > .o_mail_wip_thread_icon').length, 1, "mailbox should have an icon");
+    assert.strictEqual(inbox.querySelectorAll(':scope > .o_mail_wip_thread_icon > .fa.fa-inbox').length, 1, "inbox should have 'inbox' icon");
     assert.strictEqual(inbox.querySelectorAll(':scope > .o_name').length, 1, "mailbox should have a name");
     assert.strictEqual(inbox.querySelector(':scope > .o_name').textContent, "Inbox", "inbox should have name 'Inbox'");
     assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss .o_item[data-thread-lid="mail.box_inbox"] > .o_counter').length, 0, "should have no counter when equal to 0 (default value)");
@@ -155,7 +155,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
     assert.strictEqual(channel.dataset.threadLid, "mail.channel_20", "should have channel with ID 20");
     assert.strictEqual(channel.querySelectorAll(':scope > .o_active_indicator').length, 1, "should have active indicator");
     assert.strictEqual(channel.querySelectorAll(':scope > .o_active_indicator.o_active').length, 0, "should not be active by default");
-    assert.strictEqual(channel.querySelectorAll(':scope > .o_wip_thread_icon').length, 1, "should have an icon");
+    assert.strictEqual(channel.querySelectorAll(':scope > .o_mail_wip_thread_icon').length, 1, "should have an icon");
     assert.strictEqual(channel.querySelectorAll(':scope > .o_name').length, 1, "should have a name");
     assert.strictEqual(channel.querySelector(':scope > .o_name').textContent, "General", "should have name value");
     assert.strictEqual(channel.querySelectorAll(':scope > .o_commands').length, 1, "should have commands");
@@ -169,7 +169,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
     channel = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item');
 
     assert.strictEqual(channel.querySelectorAll(':scope > .o_active_indicator.o_active').length, 1, "channel should become active");
-    assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_wip_composer').length, 1, "should have composer section inside content (cam post message in channel)");
+    assert.strictEqual(document.querySelectorAll('.o_mail_wip_discuss > .o_content > .o_thread > .o_mail_wip_thread_composer').length, 1, "should have composer section inside thread content (cam post message in channel)");
 });
 
 QUnit.test('sidebar: channel rendering with needaction counter', async function (assert) {
@@ -226,8 +226,8 @@ QUnit.test('sidebar: public/private channel rendering', async function (assert) 
     const channel1 = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item[data-thread-lid="mail.channel_100"]');
     const channel2 = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_channel > .o_list > .o_item[data-thread-lid="mail.channel_101"]');
 
-    assert.strictEqual(channel1.querySelectorAll(':scope > .o_wip_thread_icon > .fa.fa-hashtag').length, 1, "channel1 (public) has hashtag icon");
-    assert.strictEqual(channel2.querySelectorAll(':scope > .o_wip_thread_icon > .fa.fa-lock').length, 1, "channel2 (private) has lock icon");
+    assert.strictEqual(channel1.querySelectorAll(':scope > .o_mail_wip_thread_icon > .fa.fa-hashtag').length, 1, "channel1 (public) has hashtag icon");
+    assert.strictEqual(channel2.querySelectorAll(':scope > .o_mail_wip_thread_icon > .fa.fa-lock').length, 1, "channel2 (private) has lock icon");
 });
 
 QUnit.test('sidebar: basic chat rendering', async function (assert) {
@@ -254,7 +254,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
 
     assert.strictEqual(chat.dataset.threadLid, "mail.channel_10", "should have chat with ID 20");
     assert.strictEqual(chat.querySelectorAll(':scope > .o_active_indicator').length, 1, "should have active indicator");
-    assert.strictEqual(chat.querySelectorAll(':scope > .o_wip_thread_icon').length, 1, "should have an icon");
+    assert.strictEqual(chat.querySelectorAll(':scope > .o_mail_wip_thread_icon').length, 1, "should have an icon");
     assert.strictEqual(chat.querySelectorAll(':scope > .o_name').length, 1, "should have a name");
     assert.strictEqual(chat.querySelector(':scope > .o_name').textContent, "Demo", "should have direct partner name as name");
     assert.strictEqual(chat.querySelectorAll(':scope > .o_commands').length, 1, "should have commands");
@@ -336,9 +336,9 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
     const chat2 = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item[data-thread-lid="mail.channel_12"]');
     const chat3 = document.querySelector('.o_mail_wip_discuss > .o_sidebar > .o_group.o_chat > .o_list > .o_item[data-thread-lid="mail.channel_13"]');
 
-    assert.strictEqual(chat1.querySelectorAll(':scope > .o_wip_thread_icon > .o_offline').length, 1, "chat1 should have offline icon");
-    assert.strictEqual(chat2.querySelectorAll(':scope > .o_wip_thread_icon > .o_online').length, 1, "chat2 should have online icon");
-    assert.strictEqual(chat3.querySelectorAll(':scope > .o_wip_thread_icon > .o_away').length, 1, "chat3 should have away icon");
+    assert.strictEqual(chat1.querySelectorAll(':scope > .o_mail_wip_thread_icon > .o_offline').length, 1, "chat1 should have offline icon");
+    assert.strictEqual(chat2.querySelectorAll(':scope > .o_mail_wip_thread_icon > .o_online').length, 1, "chat2 should have online icon");
+    assert.strictEqual(chat3.querySelectorAll(':scope > .o_mail_wip_thread_icon > .o_away').length, 1, "chat3 should have away icon");
 });
 
 QUnit.test('sidebar: chat custom name', async function (assert) {

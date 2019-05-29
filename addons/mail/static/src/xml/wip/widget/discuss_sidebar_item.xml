@@ -2,25 +2,28 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.DiscussSidebarItem" owl="1"
-         class="o_item"
+         class="o_mail_wip_discuss_sidebar_item"
          t-attf-class="{{ props.threadLID === 'mail.box_starred' ? 'o_starred_box' : '' }}"
          t-att-odoo-id="id"
          t-on-click="_onClick"
          t-att-data-thread-lid="props.threadLID">
         <div class="o_active_indicator" t-att-class="props.isActive ? 'o_active' : ''"/>
         <t t-widget="Icon"
-           t-props="{ threadLID: props.threadLID }"/>
-        <div t-if="props.thread.channel_type === 'chat' and state.renaming" class="o_editable_name">
+           threadLID="props.threadLID"/>
+        <div t-if="props.thread.channel_type === 'chat' and state.renaming"
+             class="o_name o_editable">
             <t t-widget="EditableText"
-               t-props="{ placeholder: props.directPartner.name, value: props.name }"
+               class="o_input"
+               placeholder="props.directPartner.name"
+               value="props.threadName"
                t-on-cancel="_onCancelRenaming"
-               t-on-click="_onClickEditableText"
+               t-on-clicked="_onClickedEditableText"
                t-on-validate="_onRename"/>
         </div>
         <div t-else=""
              class="o_name"
              t-att-class="props.thread.message_unread_counter > 0 ? 'o_unread' : ''">
-            <t t-esc="props.name"/>
+            <t t-esc="props.threadName"/>
         </div>
         <div class="o_autogrow"/>
         <div t-if="props.thread._model !== 'mail.box'"

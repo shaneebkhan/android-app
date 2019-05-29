@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+   <div t-name="mail.wip.widget.DialogManager" owl="1"
+        class="o_mail_wip_dialog_manager">
+      <t t-foreach="props.dialogs"
+         t-as="dialog"
+         t-widget="Dialog"
+         Component="dialog.Component"
+         id="dialog.id"
+         info="dialog.info"
+         t-key="dialog.id"
+         t-on-close="_onCloseDialog"/>
+   </div>
+
+</templates>

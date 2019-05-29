@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_wip_composer {
+.o_mail_wip_composer {
     display: flex;
     flex: 0 0 auto;
     align-items: flex-start;
@@ -22,18 +22,38 @@
         display: flex;
         align-items: flex-start;
         flex: 1 1 auto;
+        flex-flow: column;
 
-        > .o_commands {
+        > .o_footer {
             display: flex;
-            align-items: center;
-            flex: 0 0 auto;
-            margin-left: 1px;
+            flex: 1 1 auto;
+            width: 100%;
+            margin-top: 10px;
+
+            > .o_attachment_list {
+                flex: 1 1 auto;
+            }
         }
 
-        > .o_input {
+        > .o_main {
+            display: flex;
+            align-items: flex-start;
             flex: 1 1 auto;
-            align-self: stretch;
-            padding: 5px;
+            width: 100%;
+
+            > .o_commands {
+                display: flex;
+                align-items: center;
+                flex: 0 0 auto;
+                margin-left: 1px;
+            }
+
+            > .o_input {
+                flex: 1 1 auto;
+                align-self: stretch;
+                padding: 5px;
+            }
+
         }
     }
 
@@ -53,19 +73,47 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_wip_composer {
+.o_mail_wip_composer {
     background-color: gray('200');
     border: 1px solid gray('300');
 
     &.o_with_avatar {
         border: 1px solid gray('300');
+
+        > .o_core > .o_main {
+
+            > .o_input {
+                border-radius: 5px 0 0 5px;
+            }
+
+            > .o_commands > .o_command:last-child {
+                border-radius: 0 5px 5px 0;
+            }
+        }
     }
 
     &:not(.o_with_avatar) {
         border-top: 1px solid gray('300');
     }
 
-    > .o_core {
+    > .o_core > .o_main {
+
+        > .o_commands {
+
+            > .o_command {
+
+                &:focus {
+                    box-shadow: none;
+                    background-color: gray('200');
+                    border-color: gray('200');
+                }
+
+                &.o_open {
+                    background-color: gray('200');
+                    border-color: gray('200');
+                }
+            }
+        }
 
         > .o_input {
             outline: none;

@@ -2,38 +2,53 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.Composer" owl="1"
-         class="o_wip_composer"
-         t-att-class="options.displayAvatar ? 'o_with_avatar' : ''">
-        <div t-if="options.displayAvatar"
+         class="o_mail_wip_composer"
+         t-att-class="options.avatar ? 'o_with_avatar' : ''">
+        <div t-if="options.avatar"
              class="o_sidebar">
             <img alt=""
-                class="o_avatar rounded-circle"
-                t-att-src="userAvatar"/>
+                 class="o_avatar rounded-circle"
+                 t-att-src="userAvatar"/>
         </div>
-        <t t-call="mail.wip.widget.composer.Core"/>
-    </div>
-
-    <div t-name="mail.wip.widget.composer.Core" owl="1"
-         class="o_core">
-        <t t-widget="AutoresizeInput"
-           t-props="{ options: inputOptions }"
-           t-on-focus="_onFocusInput"
-           t-on-keydown="_onKeydownInput"
-           t-ref="input"/>
-        <div class="o_commands">
-            <t t-widget="EmojisButton"
-               t-on-emoji-selection="_onEmojiSelection"/>
-            <button class="o_attachment_btn o_command btn btn-secondary fa fa-paperclip"
-                    aria-label="Add attachment"
-                    title="Add attachment"
-                    type="button"
-                    t-on-click="_onClickAddAttachment"/>
-            <button t-if="options.displaySendButton"
-                    class="o_send o_command btn btn-primary"
-                    type="button"
-                    t-on-click="_onClickSend">
-                Send
-            </button>
+        <div class="o_core">
+            <div class="o_main">
+                <t t-widget="AutoresizeInput"
+                   options="inputOptions"
+                   t-on-keydown="_onKeydownInput"
+                   t-ref="input"/>
+                <div class="o_commands">
+                    <t t-widget="EmojisButton"
+                       class="o_command o_emojis"
+                       t-on-emoji-selection="_onEmojiSelection"/>
+                    <button class="o_command o_attachment_btn btn btn-secondary fa fa-paperclip"
+                            aria-label="Add attachment"
+                            title="Add attachment"
+                            type="button"
+                            t-on-click="_onClickAddAttachment"/>
+                    <button t-if="options.sendButton"
+                            class="o_command o_send btn btn-primary"
+                            type="button"
+                            t-on-click="_onClickSend">
+                        Send
+                    </button>
+                </div>
+            </div>
+            <div t-if="showFooter"
+                 class="o_footer">
+                <t t-if="state.attachmentLIDs.length > 0"
+                   t-widget="AttachmentList"
+                   class="o_attachment_list"
+                   attachmentLIDs="state.attachmentLIDs"
+                   options="attachmentOptions"
+                   t-on-unlink="_onUnlinkAttachment"
+                   t-on-view="_onViewAttachment"/>
+            </div>
+            <input class="o_file_input d-none"
+                   type="file"
+                   multiple="true"
+                   t-key="'fileInput'"
+                   t-ref="fileInput"
+                   t-on-change="_onChangeAttachment"/>
         </div>
     </div>
 

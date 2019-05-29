@@ -21,7 +21,7 @@ class AutocompleteInput extends Component {
             select: (ev, ui) => this._onAutocompleteSelect(ev, ui),
             source: (req, res) => this._onAutocompleteSource(req, res),
             focus: ev => this._onAutocompleteFocus(ev),
-            html: this.props.html || false
+            html: this.props.html,
         });
     }
 
@@ -64,8 +64,6 @@ class AutocompleteInput extends Component {
     _onAutocompleteSelect(ev, ui) {
         if (this.props.select) {
             this.props.select(ev, ui);
-        } else {
-            this.trigger("select", ev, ui);
         }
     }
 
@@ -85,8 +83,8 @@ class AutocompleteInput extends Component {
      * @param {MouseEvent} ev
      */
     _onBlur(ev) {
-        ev.stopPropagation(); // todo: replace with cleaner solution
-        this.trigger('hide');
+        // ev.stopPropagation(); // todo: replace with cleaner solution
+        this.trigger('hide', { originalEvent: ev });
     }
 
     /**
@@ -94,11 +92,37 @@ class AutocompleteInput extends Component {
      * @param {MouseEvent} ev
      */
     _onKeydown(ev) {
-        if (ev.which === $.ui.keyCode.ESCAPE) {
-            this.trigger('hide');
+        if (ev.key === 'Escape') {
+            this.trigger('hide', { originalEvent: ev });
         }
     }
 }
+
+/**
+ * Props validation
+ */
+AutocompleteInput.props = {
+    focus: {
+        type: Function,
+        optional: true,
+    },
+    focusOnMount: {
+        type: Boolean,
+        default: false,
+    },
+    html: {
+        type: Boolean,
+        default: false,
+    },
+    select: {
+        type: Function,
+        optional: true,
+    },
+    source: {
+        type: Function,
+        optional: true,
+    }
+};
 
 return AutocompleteInput;
 

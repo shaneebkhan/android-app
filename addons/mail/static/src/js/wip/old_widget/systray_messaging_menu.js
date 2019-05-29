@@ -1,20 +1,16 @@
 odoo.define('mail.wip.old_widget.SystrayMessagingMenu', function (require) {
 "use strict";
 
-const StoreMixin = require('mail.wip.old_widget.StoreMixin');
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
 const SystrayMessagingMenuOwl = require('mail.wip.widget.SystrayMessagingMenu');
 
-const core = require('web.core');
-const session = require('web.session');
 const SystrayMenu = require('web.SystrayMenu');
 const Widget = require('web.Widget');
-
-const _t = core._t;
 
 /**
  * Odoo Widget, necessary to instanciate a root Owl widget.
  */
-const SystrayMessagingMenu = Widget.extend(StoreMixin, {
+const SystrayMessagingMenu = Widget.extend(EnvMixin, {
     DEBUG: true,
     template: 'mail.wip.old_widget.SystrayMessagingMenu',
     init() {
@@ -31,7 +27,7 @@ const SystrayMessagingMenu = Widget.extend(StoreMixin, {
     willStart() {
         return Promise.all([
             this._super.apply(this, arguments),
-            this.awaitStore()
+            this.getEnv()
         ]);
     },
     /**
@@ -44,16 +40,7 @@ const SystrayMessagingMenu = Widget.extend(StoreMixin, {
         this._super.apply(this, arguments);
     },
     async on_attach_callback() {
-        const env = {
-            qweb: core.qwebOwl,
-            session,
-            store: this.store,
-            call: (...args) => this.call(...args),
-            do_action: (...args) => this.do_action(...args),
-            rpc: (...args) => this._rpc(...args),
-            _t,
-        };
-        this.component = new SystrayMessagingMenuOwl(env);
+        this.component = new SystrayMessagingMenuOwl(this.env);
         await this.component.mount(this.$el[0]);
         // unwrap
         this.el.parentNode.insertBefore(this.component.el, this.el);

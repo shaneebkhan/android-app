@@ -1,6 +1,7 @@
 odoo.define('mail.wip.widget.ChatWindowHiddenMenu', function (require) {
 "use strict";
 
+const Thread = require('mail.wip.model.Thread');
 const ChatWindowHeader = require('mail.wip.widget.ChatWindowHeader');
 
 const { Component, connect } = owl;
@@ -104,7 +105,7 @@ class HiddenMenu extends Component {
         if (ev.target === this.el) {
             return;
         }
-        if (ev.target.closest(`[data-odoo-id="${this.id}"]`)) {
+        if (ev.target.closest(`[data-id="${this.id}"]`)) {
             return;
         }
         this.state.toggleShow = false;
@@ -116,33 +117,63 @@ class HiddenMenu extends Component {
      */
     _onClickToggle(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.toggleShow = !this.state.toggleShow;
     }
 
     /**
      * @private
-     * @param {MouseEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onCloseItem(ev, { item }) {
+    _onCloseItem(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('close-item', ev, { item });
+        this.trigger('close-item', {
+            item: ev.detail.item,
+            originalEvent: ev,
+        });
     }
 
     /**
      * @private
-     * @param {MouseEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onSelectItem(ev, { item }) {
+    _onClickedItem(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('select-item', ev, { item });
+        this.trigger('select-item', {
+            item: ev.detail.item,
+            originalEvent: ev,
+        });
         this.state.toggleShow = false;
     }
 }
+
+/**
+ * Props validation
+ */
+HiddenMenu.props = {
+    GLOBAL_HEIGHT: {
+        type: Number,
+    },
+    direction: {
+        type: String,
+        default: 'rtl',
+    },
+    items: {
+        type: Array,
+        element: String,
+    },
+    offset: {
+        type: Number,
+    },
+    threads: {
+        type: Array,
+        element: Thread,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(HiddenMenu);
 

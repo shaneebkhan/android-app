@@ -13,13 +13,7 @@ class EmojisPopover extends Component {
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.EmojisPopover';
-    }
-
-    /**
-     * @return {Object[]}
-     */
-    get emojis() {
-        return emojis;
+        this.emojis = emojis;
     }
 
     //--------------------------------------------------------------------------
@@ -32,8 +26,9 @@ class EmojisPopover extends Component {
      */
     _onClickEmoji(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('selection', ev, {
-            source: ev.currentTarget.dataset.source
+        this.trigger('selection', {
+            source: ev.currentTarget.dataset.source,
+            originalEvent: ev,
         });
     }
 }

@@ -2,66 +2,72 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.Message" owl="1"
-         class="o_message"
-         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ isStarred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }} {{ props.message.message_type === 'notification' ? 'o_notification' : '' }}"
+         class="o_mail_wip_message"
+         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ starred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }} {{ props.message.message_type === 'notification' ? 'o_notification' : '' }}"
          t-on-click="_onClick"
          t-att-data-message-lid="props.messageLID">
-        <t t-if="options.squashed">
-            <div class="o_sidebar o_squashed">
-                <div class="o_date">
+        <div class="o_sidebar"
+             t-attf-class="{{ options.squashed ? 'o_squashed' : ''}}">
+            <img t-if="!options.squashed"
+                 alt=""
+                 class="o_item o_avatar rounded-circle"
+                 t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
+                 t-att-src="avatar"
+                 t-on-click="_onClickAuthor"/>
+            <t t-else="">
+                <div class="o_item o_date o_mail_wip_message__sidebar_item o_mail_wip_message__date">
                     <t t-esc="shortTime"/>
                 </div>
-                <div class="o_commands">
+                <div class="o_item o_commands o_mail_wip_message__sidebar_item o_mail_wip_message__commands">
                     <div t-if="props.message.message_type !== 'notification'"
                          class="o_star o_command"
-                         t-att-class="isStarred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
+                         t-att-class="starred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
+                         t-on-click="_onClickStar"/>
+                </div>
+            </t>
+        </div>
+        <div class="o_core">
+            <div t-if="!options.squashed"
+                 class="o_header">
+                <div class="o_author_name"
+                     t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
+                     t-on-click="_onClickAuthor">
+                    <t t-esc="displayedAuthorName"/>
+                </div>
+                <div class="o_date o_mail_wip_message__date"
+                     t-att-title="datetime">
+                    - <t t-esc="timeElapsed"/>
+                </div>
+                <div t-if="hasDifferentOrigin"
+                     class="o_origin">
+                    <t t-if="props.origin._model === 'mail.channel'">
+                        (from <a href="#"
+                                 t-on-click="_onClickOrigin">#<t t-esc="props.origin.name"/></a>)
+                    </t>
+                    <t t-else="">
+                        on <a href="#"
+                              t-on-click="_onClickOrigin"><t t-esc="props.origin.name"/></a>
+                    </t>
+                </div>
+                <div class="o_commands o_mail_wip_message__commands">
+                    <div t-if="props.message.message_type !== 'notification'"
+                         class="o_star o_command"
+                         t-att-class="starred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
                          t-on-click="_onClickStar"/>
                 </div>
             </div>
-            <div class="o_core">
-                <div class="o_content">
-                    <t t-raw="props.message.$body"/>
-                </div>
+            <div class="o_content">
+                <t t-raw="props.message.$body"/>
             </div>
-        </t>
-        <t t-else="">
-            <div class="o_sidebar">
-                <img alt=""
-                     class="rounded-circle"
-                     t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
-                     t-att-src="avatar"
-                     t-on-click="_onClickAuthor"/>
+            <div t-if="props.attachmentLIDs and props.attachmentLIDs.length > 0"
+                 class="o_footer">
+                <t t-widget="AttachmentList"
+                   t-on-view="_onViewAttachment"
+                   attachmentLIDs="props.message.attachmentLIDs"
+                   class="o_attachment_preview_list"
+                   options="attachmentOptions"/>
             </div>
-            <div class="o_core">
-                <div class="o_header">
-                    <div class="o_author_name"
-                         t-attf-class="{{ redirectAuthor ? 'o_redirect' : '' }}"
-                         t-on-click="_onClickAuthor">
-                        <t t-esc="displayedAuthorName"/>
-                    </div>
-                    <div class="o_date" t-att-title="datetime">
-                        - <t t-esc="timeElapsed"/>
-                    </div>
-                    <div t-if="hasDifferentOrigin" class="o_origin">
-                        <t t-if="props.origin._model === 'mail.channel'">
-                            (from <a href="#" t-on-click="_onClickOrigin">#<t t-esc="props.origin.name"/></a>)
-                        </t>
-                        <t t-else="">
-                            on <a href="#" t-on-click="_onClickOrigin"><t t-esc="props.origin.name"/></a>
-                        </t>
-                    </div>
-                    <div class="o_commands">
-                        <div t-if="props.message.message_type !== 'notification'"
-                             class="o_star o_command"
-                             t-att-class="isStarred ? 'o_starred fa fa-star' : 'fa fa-star-o'"
-                             t-on-click="_onClickStar"/>
-                    </div>
-                </div>
-                <div class="o_content">
-                    <t t-raw="props.message.$body"/>
-                </div>
-            </div>
-        </t>
+        </div>
     </div>
 
 </templates>

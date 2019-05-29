@@ -2,12 +2,14 @@
 <templates xml:space="preserve">
 
    <div t-name="mail.wip.widget.ChatWindowManager" owl="1"
-        class="o_wip_chat_window_manager">
+        class="o_mail_wip_chat_window_manager">
       <!-- Note: DOM elements are ordered from left to right -->
       <t t-if="props.computed.hidden.showMenu"
          t-widget="HiddenMenu"
-         t-props="{ items: props.computed.hidden.items, direction, offset: props.computed.hidden.offset }"
          t-ref="hidden_menu"
+         direction="direction"
+         items="props.computed.hidden.items"
+         offset="props.computed.hidden.offset"
          t-key="'hidden_menu'"
          t-on-close-item="_onCloseChatWindow"
          t-on-select-item="_onSelectChatWindow"/>
@@ -15,9 +17,12 @@
       <t t-foreach="reverseVisible"
          t-as="data">
          <t t-widget="ChatWindow"
-            t-props="{ item: data.item, direction, offset: data.offset, options: chatWindowOptions(visibleAmount - data_index - 1) }"
-            t-key="data.item"
             t-ref="{{ data.item }}"
+            direction="direction"
+            item="data.item"
+            offset="data.offset"
+            options="chatWindowOptions(visibleAmount - data_index - 1)"
+            t-key="data.item"
             t-on-close="_onCloseChatWindow"
             t-on-select-thread="_onSelectThreadChatWindow"
             t-on-shift-left="_onShiftLeftChatWindow"

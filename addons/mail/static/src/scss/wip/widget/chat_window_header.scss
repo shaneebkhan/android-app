@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_header {
+.o_mail_wip_chat_window_header {
     display: flex;
     align-items: center;
     height: $o-mail-chat-window-header-height;
@@ -12,7 +12,7 @@
         height: 100%;
         align-items:center;
 
-        > div {
+        > .o_command {
             padding: 0 8px;
             display: flex;
             height: 100%;
@@ -24,21 +24,14 @@
         }
     }
 
-    > .o_name {
-        max-height: 100%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    > div {
+    > .o_item {
         margin: 0 3px;
 
-        &:first-of-type {
+        &:first-child {
             margin-left: 10px;
         }
 
-        &:last-of-type {
+        &:last-child {
             margin-right: 10px;
 
             &.o_commands {
@@ -46,13 +39,20 @@
             }
         }
     }
+
+    > .o_name {
+        max-height: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_header {
+.o_mail_wip_chat_window_header {
     background-color: $o-brand-odoo;
     color: white;
     cursor: pointer;
@@ -64,7 +64,7 @@
             opacity: 1;
         }
 
-        > div {
+        > .o_command {
             opacity: 0.5;
 
             &:hover {

@@ -2,6 +2,10 @@ odoo.define('mail.wip.widget.Message', function (require) {
 'use strict';
 
 const mailUtils = require('mail.utils');
+const Message = require('mail.wip.model.Message');
+const Partner = require('mail.wip.model.Partner');
+const Thread = require('mail.wip.model.Thread');
+const AttachmentList = require('mail.wip.widget.AttachmentList');
 
 const time = require('web.time');
 
@@ -12,19 +16,33 @@ const { Component, connect } = owl;
  * @param {Object} ownProps
  * @param {string} ownProps.messageLID
  * @param {string} ownProps.threadLID
+ * @return {Object}
  */
 function mapStateToProps(state, ownProps) {
     const message = state.messages[ownProps.messageLID];
-    return {
-        author: state.partners[message.authorLID],
+    const attachmentLIDs = message.attachmentLIDs;
+    const author = state.partners[message.authorLID];
+    const odoobot = state.partners.odoobot;
+    const origin = state.threads[message.originLID];
+    const thread = state.threads[ownProps.threadLID];
+    let res = {
         message,
-        odoobot: state.partners.odoobot,
-        origin: state.threads[message.originLID],
-        thread: state.threads[ownProps.threadLID],
+        odoobot,
+        thread,
     };
+    if (attachmentLIDs) {
+        Object.assign(res, { attachmentLIDs });
+    }
+    if (author) {
+        Object.assign(res, { author });
+    }
+    if (origin) {
+        Object.assign(res, { origin });
+    }
+    return res;
 }
 
-class Message extends Component {
+class MessageWidget extends Component {
 
     /**
      * @param {...any} args
@@ -32,11 +50,12 @@ class Message extends Component {
     constructor(...args) {
         super(...args);
         this.id = `message_${this.props.messageLID}`;
-        this.template = 'mail.wip.widget.Message';
         this.state = {
             timeElapsed: mailUtils.timeFromNow(this.props.message.$date),
             toggledClick: false
         };
+        this.template = 'mail.wip.widget.Message';
+        this.widgets = { AttachmentList };
         this._intervalID = undefined;
     }
 
@@ -47,6 +66,18 @@ class Message extends Component {
     //--------------------------------------------------------------------------
     // Getters / Setters
     //--------------------------------------------------------------------------
+
+    /**
+     * @return {Object}
+     */
+    get attachmentOptions() {
+        return {
+            downloadable: true,
+            editable: false, // only if self-authored message?
+            layout: 'card',
+            layoutBasicImageSize: 'medium',
+        };
+    }
 
     /**
      * @return {string}
@@ -103,18 +134,17 @@ class Message extends Component {
     }
 
     /**
-     * @return {boolean}
-     */
-    get isStarred() {
-        return this.props.message.starred_partner_ids &&
-            this.props.message.starred_partner_ids.includes(this.env.session.partner_id);
-    }
-
-    /**
      * @return {Object}
      */
     get options() {
-        return this.props.options || {};
+        let options = { ...this.props.options };
+        if (!('redirectAuthor' in options)) {
+            options.redirectAuthor = false;
+        }
+        if (!('squashed' in options)) {
+            options.squashed = false;
+        }
+        return options;
     }
 
     /**
@@ -154,6 +184,14 @@ class Message extends Component {
      */
     get shortTime() {
         return this.props.message.$date.format('hh:mm');
+    }
+
+    /**
+     * @return {boolean}
+     */
+    get starred() {
+        return this.props.message.starred_partner_ids &&
+            this.props.message.starred_partner_ids.includes(this.env.session.partner_id);
     }
 
     /**
@@ -199,7 +237,7 @@ class Message extends Component {
      */
     _onClick(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.toggledClick = !this.state.toggledClick;
     }
 
@@ -215,9 +253,10 @@ class Message extends Component {
         if (!this.props.author) {
             return;
         }
-        this.trigger('redirect', ev, {
+        this.trigger('redirect', {
             id: this.props.author.id,
             model: this.props.author._model,
+            originalEvent: ev,
         });
     }
 
@@ -227,9 +266,10 @@ class Message extends Component {
      */
     _onClickOrigin(ev) {
         if (ev.odooPrevented) { return; }
-        this.trigger('redirect', ev, {
+        this.trigger('redirect', {
             id: this.props.origin.id,
             model: this.props.origin._model,
+            originalEvent: ev,
         });
     }
 
@@ -239,13 +279,71 @@ class Message extends Component {
      */
     _onClickStar(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         return this.env.store.dispatch('message/toggle_star', {
             messageLID: this.props.messageLID,
         });
     }
+
+    /**
+     * @private
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.attachmentLID
+     */
+    _onViewAttachment(ev) {
+        if (ev.odooPrevented) { return; }
+        ev.preventOdoo();
+        this.env.store.commit('attachments/view', {
+            attachmentLID: ev.detail.attachmentLID,
+            attachmentLIDs: this.props.attachmentLIDs.filter(attachmentLID => {
+                const attachment = this.env.store.state.attachments[attachmentLID];
+                return attachment.$viewable;
+            }),
+        });
+    }
 }
 
-return connect(mapStateToProps, { deep: false })(Message);
+/**
+ * Props validation
+ */
+MessageWidget.props = {
+    author: {
+        type: Partner,
+        optional: true,
+    },
+    message: {
+        type: Message,
+    },
+    messageLID: {
+        type: String,
+    },
+    options: {
+        type: Object,
+        default: {},
+        shape: {
+            redirectAuthor: {
+                type: Boolean,
+                default: false,
+            },
+            squashed: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    },
+    origin: {
+        type: Thread,
+        optional: true,
+    },
+    thread: {
+        type: Thread,
+    },
+    threadLID: {
+        type: String,
+    },
+};
+
+return connect(mapStateToProps, { deep: false })(MessageWidget);
 
 });

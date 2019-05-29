@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div t-name="mail.wip.widget.Thread" owl="1"
-         class="o_thread"
+         class="o_mail_wip_thread"
          t-att-data-thread-lid="props.threadLID">
         <div t-if="loading" class="o_thread_loading">
             <span><i aria-label="Loading..." class="o_icon fa fa-spinner fa-spin" role="img" title="Loading..."/>Loading messages...</span>
@@ -12,9 +12,16 @@
         </div>
         <t t-else=""
            t-widget="MessageList"
-           t-props="{ threadCacheLID: props.threadCacheLID, threadLID: props.threadLID, options }"
            t-ref="messageList"
-           t-on-redirect="_onRedirect"/>
+           class="o_message_list"
+           options="options"
+           threadCacheLID="props.threadCacheLID"
+           threadLID="props.threadLID"/>
+        <t t-if="options.showComposer"
+           t-widget="Composer"
+           class="o_mail_wip_thread_composer"
+           options="composerOptions"
+           threadLID="props.threadLID"/>
     </div>
 
 </templates>

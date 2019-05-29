@@ -14,15 +14,13 @@
                 <i class="fa fa-clock-o" role="img" aria-label="Dates" title="Dates"/> <t t-if="isMobile">Activity</t><t t-else="">Schedule activity</t>
             </button>
         </div>
-
         <t t-widget="Composer"
            t-key="state.composerMode"
-           t-props="{ threadLID: props.threadLID, mode: state.composerMode }"/>
-
+           mode="state.composerMode"
+           threadLID="props.threadLID"/>
         <t t-widget="Thread"
            t-if="props.thread"
-           t-props="{ threadLID: props.threadLID }"/>
-
+           threadLID="props.threadLID"/>
     </aside>
 
 </templates>

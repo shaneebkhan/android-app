@@ -1,6 +1,8 @@
 odoo.define('mail.wip.widget.DiscussMobileMailboxSelection', function (require) {
 'use strict';
 
+const Thread = require('mail.wip.model.Thread');
+
 const { Component, connect } = owl;
 
 /**
@@ -51,6 +53,20 @@ class MobileMailboxSelection extends Component {
         });
     }
 }
+
+/**
+ * Props validation
+ */
+MobileMailboxSelection.props = {
+    mailboxes: {
+        type: Array,
+        element: Thread,
+    },
+    threadLID: {
+        type: String,
+        optional: true,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(MobileMailboxSelection);
 

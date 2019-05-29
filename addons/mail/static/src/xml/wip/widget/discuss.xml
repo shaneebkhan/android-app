@@ -10,54 +10,56 @@
                 <!-- no thread or mailbox selection -->
                 <t t-if="state.mobileNavbarTab === 'mailbox'"
                    t-widget="MobileMailboxSelection"
-                   t-props="{ threadLID: props.threadLID }"
+                   threadLID="props.threadLID"
                    t-on-select-thread="_onSelectThread"/>
                 <t t-if="state.mobileNavbarTab === 'mailbox'">
                     <t t-if="props.threadLID"
                        t-widget="Thread"
-                       t-props="{ options: threadOptions, threadLID: props.threadLID }"
+                       class="o_thread"
+                       options="threadOptions"
+                       threadLID="props.threadLID"
                        t-ref="thread"
                        t-on-redirect="_onRedirect"/>
                     <div t-else="" class="o_empty">No conversation.</div>
                 </t>
                 <t t-elif="!props.threadLID">
                    <t t-widget="ThreadPreviewList"
-                      t-props="{ options: threadPreviewListOptions }"
+                      class="o_thread_preview_list"
+                      options="threadPreviewListOptions"
                       t-on-select-thread="_onSelectThread"/>
                 </t>
                 <t t-widget="MobileNavbar"
-                   t-props="{ active: state.mobileNavbarTab }"
+                   active="state.mobileNavbarTab"
                    t-on-select="_onSelectMobileNavbarTab"/>
             </t>
             <div t-else=""
                  class="o_content">
                 <!-- chat/channel selection (mobile) -->
                 <t t-widget="Thread"
-                   t-props="{ options: threadOptions, threadLID: props.threadLID }"
+                   class="o_thread"
+                   options="threadOptions"
+                   threadLID="props.threadLID"
                    t-ref="thread"
                    t-on-redirect="_onRedirect"
                    t-on-rendered="_onThreadRendered"/>
-                <t t-if="showComposer"
-                   t-widget="Composer"
-                   t-props="{ threadLID: props.threadLID }"/>
             </div>
         </t>
         <t t-else="">
             <!-- desktop layout -->
             <t t-widget="Sidebar"
-               t-props="{ threadLID: props.threadLID }"
+               class="o_sidebar"
+               threadLID="props.threadLID"
                t-on-select-thread="_onSelectThread"/>
             <div class="o_content">
                 <t t-if="props.threadLID">
                     <t t-widget="Thread"
-                       t-props="{ options: threadOptions, threadLID: props.threadLID }"
+                       class="o_thread"
+                       options="threadOptions"
+                       threadLID="props.threadLID"
                        t-ref="thread"
                        t-key="props.threadLID"
                        t-on-redirect="_onRedirect"
                        t-on-rendered="_onThreadRendered"/>
-                    <t t-if="showComposer"
-                       t-widget="Composer"
-                       t-props="{ options: composerOptions, threadLID: props.threadLID }"/>
                 </t>
             </div>
         </t>

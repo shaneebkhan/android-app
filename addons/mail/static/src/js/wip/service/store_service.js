@@ -1,6 +1,7 @@
 odoo.define('mail.wip.service.Store', function (require) {
 "use strict";
 
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
 const actions = require('mail.wip.store.actions');
 const getters = require('mail.wip.store.getters');
 const mutations = require('mail.wip.store.mutations');
@@ -13,26 +14,19 @@ const core = require('web.core');
 const { Store } = owl;
 
 const DEBUG = true;
-const _t = core._t;
 
-const StoreService = AbstractService.extend({
+const StoreService = AbstractService.extend(EnvMixin, {
     TEST: {
         active: false,
         initStateAlteration: {},
     },
-    dependencies: ['ajax', 'bus_service', 'local_storage'],
+    dependencies: ['ajax', 'bus_service', 'env', 'local_storage'],
     /**
      * @override {web.AbstractService}
      */
-    init() {
-        this._super.apply(this, arguments);
+    async start() {
         let state = initState(this.TEST.active ? this.TEST.initStateAlteration : undefined);
-        let env = {
-            _t,
-            call: (...args) => this.call(...args),
-            do_notify: (...args) => this.do_notify(...args),
-            rpc: (...args) => this._rpc(...args),
-        };
+        const env = await this.getEnv({ withStore: false });
         this.store = new Store({
             actions,
             env,
@@ -43,11 +37,7 @@ const StoreService = AbstractService.extend({
         if (DEBUG) {
             window.store = this.store;
         }
-    },
-    /**
-     * @override {web.AbstractService}
-     */
-    start() {
+
         this.ready = new Promise(resolve =>
             this.store.dispatch('init', {
                 ready: () => {

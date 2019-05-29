@@ -27,12 +27,7 @@ class AutoresizeInput extends Component {
      * @return {Object}
      */
     get options() {
-        let options;
-        if (this.props.options) {
-            options = { ...this.props.options };
-        } else {
-            options = {};
-        }
+        let options = { ...this.props.options };
         if (!('rows' in options)) {
             options.rows = 1;
         }
@@ -128,28 +123,31 @@ class AutoresizeInput extends Component {
 
     /**
      * @private
-     * @param {FocusEvent} ev
      */
-    _onFocus(ev) {
-        this.trigger('focus', ev);
-    }
-
-    /**
-     * @private
-     * @param {InputEvent} ev
-     */
-    _onInput(ev) {
+    _onInput() {
         this._compute();
-        this.trigger('input', ev);
-    }
-    /**
-     * @private
-     * @param {KeyboardEvent} ev
-     */
-    _onKeydown(ev) {
-        this.trigger('keydown', ev);
     }
 }
+
+/**
+ * Props validation
+ */
+AutoresizeInput.props = {
+    options: {
+        type: Object,
+        default: {},
+        shape: {
+            maxHeight: {
+                type: Number,
+                default: 200,
+            },
+            rows: {
+                type: Number,
+                default: 1,
+            }
+        },
+    }
+};
 
 return AutoresizeInput;
 

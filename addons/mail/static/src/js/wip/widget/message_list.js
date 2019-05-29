@@ -1,10 +1,20 @@
 odoo.define('mail.wip.widget.MessageList', function (require) {
 'use strict';
 
-const Message = require('mail.wip.widget.Message');
+const Message = require('mail.wip.model.Message');
+const Thread = require('mail.wip.model.Thread');
+const ThreadCache = require('mail.wip.model.ThreadCache');
+const MessageWidget = require('mail.wip.widget.Message');
 
 const { Component, connect } = owl;
 
+/**
+ * @param {Object} state
+ * @param {Object} ownProps
+ * @param {string} ownProps.threadCacheLID
+ * @param {string} ownProps.threadLID
+ * @return {Object}
+ */
 function mapStateToProps(state, ownProps) {
     const threadCache = state.threadCaches[ownProps.threadCacheLID];
     return {
@@ -19,7 +29,9 @@ class MessageList extends Component {
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.MessageList';
-        this.widgets = { Message };
+        this.widgets = {
+            Message: MessageWidget,
+        };
         this._autoLoadOnScroll = true;
         this._onScroll = _.throttle(this._onScroll.bind(this), 100);
         this._renderedThreadCacheLID = null;
@@ -109,10 +121,7 @@ class MessageList extends Component {
      * @return {boolean}
      */
     get loadingMore() {
-        return (
-            this.props.threadCache &&
-            this.props.threadCache.loadingMore
-        ) || false;
+        return this.props.threadCache.loadingMore || false;
     }
 
     /**
@@ -172,6 +181,13 @@ class MessageList extends Component {
     }
 
     /**
+     * @return {integer}
+     */
+    getScrollTop() {
+        return this.el.scrollTop;
+    }
+
+    /**
      * @param {boolean} squashed
      * @return {Object}
      */
@@ -193,6 +209,13 @@ class MessageList extends Component {
         return this.lastMessageRef.scrollToVisibleBottom().then(() => {
             this._autoLoadOnScroll = true;
         });
+    }
+
+    /**
+     * @param {integer} value
+     */
+    setScrollTop(value) {
+        this.el.scrollTop = value;
     }
 
     /**
@@ -273,18 +296,6 @@ class MessageList extends Component {
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {integer} param1.id
-     * @param {string} param1.model
-     */
-    _onRedirect(ev, { id, model }) {
-        if (ev.odooPrevented) { return; }
-        this.trigger('redirect', ev, { id, model });
-    }
-
-    /**
-     * @private
      * @param {ScrollEvent} ev
      */
     _onScroll(ev) {
@@ -308,6 +319,54 @@ class MessageList extends Component {
         }
     }
 }
+
+/**
+ * Props validationn
+ */
+MessageList.props = {
+    options: {
+        type: Object,
+        default: {},
+        shape: {
+            domain: {
+                type: Array,
+                default: [],
+            },
+            redirectAuthor: {
+                type: Boolean,
+                default: false,
+            },
+            scrollTop: {
+                type: Number,
+                optional: true,
+            },
+            squashCloseMessages: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    },
+    messageLIDs: {
+        type: Array,
+        element: String,
+    },
+    messages: {
+        type: Array,
+        element: Message,
+    },
+    thread: {
+        type: Thread,
+    },
+    threadCache: {
+        type: ThreadCache,
+    },
+    threadCacheLID: {
+        type: String,
+    },
+    threadLID: {
+        type: String,
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(MessageList);
 

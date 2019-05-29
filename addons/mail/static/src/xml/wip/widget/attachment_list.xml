@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.AttachmentList" owl="1"
+         class="o_mail_wip_attachment_preview_list">
+        <t t-foreach="props.attachmentLIDs"
+           t-as="attachmentLID"
+           class="o_item"
+           t-key="attachmentLID"
+           t-widget="Attachment"
+           attachmentLID="attachmentLID"
+           options="props.options"/>
+    </div>
+
+</templates>

@@ -130,9 +130,9 @@ QUnit.test('new message', async function (assert) {
     document.querySelector('.o_mail_wip_systray_messaging_menu > .dropdown-menu > .o_header > .o_new_message').click();
     await testUtils.nextTick(); // re-render
 
-    assert.strictEqual(document.querySelectorAll('.o_wip_chat_window_manager > .o_chat_window').length, 1, "should have open a chat window");
-    assert.ok(document.querySelector('.o_wip_chat_window_manager > .o_chat_window').classList.contains('o_new_message'), "chat window should be for new message");
-    assert.ok(document.querySelector('.o_wip_chat_window_manager > .o_chat_window').classList.contains('o_focused'), "chat window should be focused");
+    assert.strictEqual(document.querySelectorAll('.o_mail_wip_chat_window_manager > .o_chat_window').length, 1, "should have open a chat window");
+    assert.ok(document.querySelector('.o_mail_wip_chat_window_manager > .o_chat_window').classList.contains('o_new_message'), "chat window should be for new message");
+    assert.ok(document.querySelector('.o_mail_wip_chat_window_manager > .o_chat_window').classList.contains('o_focused'), "chat window should be focused");
 });
 
 QUnit.test('no new message when discuss is open', async function (assert) {
@@ -320,7 +320,7 @@ QUnit.test('open chat window from preview', async function (assert) {
     document.querySelector('.o_mail_wip_systray_messaging_menu > .dropdown-menu > .o_mail_wip_thread_preview_list > .o_preview').click();
     await testUtils.nextTick(); // re-render
 
-    assert.strictEqual(document.querySelectorAll('.o_wip_chat_window_manager > .o_chat_window').length, 1, "should have open a chat window");
+    assert.strictEqual(document.querySelectorAll('.o_mail_wip_chat_window_manager > .o_chat_window').length, 1, "should have open a chat window");
 });
 
 });

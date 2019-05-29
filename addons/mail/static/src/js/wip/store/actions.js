@@ -31,12 +31,12 @@ function filterNotificationsOnUnsubscribe(notifications) {
  * @return {string}
  */
 function generateEmojisOnHtml(htmlString) {
-    for (let emoji of emojis) {
-        for (let source of emoji.sources) {
-            let escapedSource = String(source).replace(
+    for (const emoji of emojis) {
+        for (const source of emoji.sources) {
+            const escapedSource = String(source).replace(
                 /([.*+?=^!:${}()|[\]/\\])/g,
                 '\\$1');
-            let regexp = new RegExp(
+            const regexp = new RegExp(
                 '(\\s|^)(' + escapedSource + ')(?=\\s|$)',
                 'g');
             htmlString = htmlString.replace(regexp, '$1' + emoji.unicode);
@@ -66,6 +66,23 @@ function getThreadFetchMessagesKwargs({ state }, { threadLID }) {
 }
 
 const actions = {
+    /**
+     * @param {Object} param0
+     * @param {function} param0.commit
+     * @param {Object} param0.env
+     * @param {Object} param0.state
+     * @param {Object} param1
+     * @param {string} param1.attachmentLID
+     */
+    async 'attachment/unlink'({ commit, env, state }, { attachmentLID }) {
+        const attachment = state.attachments[attachmentLID];
+        await env.rpc({
+            model: 'ir.attachment',
+            method: 'unlink',
+            args: [attachment.id],
+        }, { shadow: true });
+        commit('attachment/delete', { attachmentLID });
+    },
     /**
      * @param {Object} param0
      * @param {function} param0.commit
@@ -126,7 +143,7 @@ const actions = {
         { commit, env, state },
         { autoselect=false, channelID, chatWindowOpenMode }
     ) {
-        let channel = state.threads[`mail.channel_${channelID}`];
+        const channel = state.threads[`mail.channel_${channelID}`];
         if (channel) {
             return;
         }
@@ -277,7 +294,7 @@ const actions = {
     ) {
         const ids = messageLIDs
             .filter(messageLID => {
-                let message = state.messages[messageLID];
+                const message = state.messages[messageLID];
                 // If too many messages, not all are fetched,
                 // and some might not be found
                 return !message || message.needaction_partner_ids.includes(session.partner_id);
@@ -346,7 +363,7 @@ const actions = {
     ) {
         notifs = filterNotificationsOnUnsubscribe(notifs);
         const proms = notifs.map(notif => {
-            let model = notif[0][1];
+            const model = notif[0][1];
             switch (model) {
                 case 'ir.needaction':
                     return commit('notification/needaction', { ...notif[1] });
@@ -540,7 +557,7 @@ const actions = {
         { commit },
         { elements }
     ) {
-        for (let data of elements) {
+        for (const data of elements) {
             // todo
         }
     },
@@ -604,7 +621,7 @@ const actions = {
             _.str.escapeRegExp(utils.unaccent(value)),
             'i'
         );
-        for (let partner of Object.values(state.partners)) {
+        for (const partner of Object.values(state.partners)) {
             if (partners.length < limit) {
                 if (
                     partner.id !== session.partner_id &&
@@ -627,8 +644,8 @@ const actions = {
         const suggestions = partners.map(partner => {
             return {
                 id: partner.id,
-                value: partner.name,
-                label: partner.name
+                value: partner.$name,
+                label: partner.$name
             };
         });
         await callback(_.sortBy(suggestions, 'label'));
@@ -659,7 +676,7 @@ const actions = {
                 threadLID,
             });
         }
-        let threadCache = state.threadCaches[threadCacheLID];
+        const threadCache = state.threadCaches[threadCacheLID];
         if (threadCache.loaded && threadCache.loading) {
             return;
         }
@@ -802,7 +819,7 @@ const actions = {
      * @param {Object} param0.state
      * @param {Object} param1
      * @param {Object} param1.data
-     * @param {*[]} param1.data.attachment_ids
+     * @param {string[]} param1.data.attachmentLIDs
      * @param {*[]} param1.data.canned_response_ids
      * @param {integer[]} param1.data.channel_ids
      * @param {*} param1.data.command
@@ -822,7 +839,7 @@ const actions = {
         { commit, dispatch, env, state },
         {
             data: {
-                attachment_ids,
+                attachmentLIDs,
                 canned_response_ids,
                 channel_ids=[],
                 command,
@@ -843,7 +860,7 @@ const actions = {
         if (thread._model === 'mail.box') {
             return dispatch('thread/post_message', {
                 data: {
-                    attachment_ids,
+                    attachmentLIDs,
                     canned_response_ids,
                     channel_ids,
                     command,
@@ -870,13 +887,15 @@ const actions = {
             mailUtils.addLink
         );
         body = generateEmojisOnHtml(body);
-        let postData;
+        let postData = {
+            attachment_ids: attachmentLIDs.map(lid => state.attachments[lid].id),
+            body,
+        };
         if (thread._model === 'mail.channel') {
-            postData = {
-                body,
+            Object.assign(postData, {
                 message_type: 'comment',
                 subtype: 'mail.mt_comment'
-            };
+            });
             await env.rpc({
                 model: 'mail.channel',
                 method: command ? 'execute_command' : 'message_post',
@@ -884,30 +903,27 @@ const actions = {
                 kwargs: postData
             });
         } else {
-            postData = {
+            Object.assign(postData, {
                 partner_ids,
                 channel_ids: channel_ids.map(id => [4, id, false]),
-                body,
-                attachment_ids,
                 canned_response_ids
-            };
+            });
             if (subject) {
                 postData.subject = subject;
             }
-            postData = {
-                ...postData,
+            Object.assign(postData, {
                 context,
                 message_type,
                 subtype,
                 subtype_id
-            };
+            });
             const id = await env.rpc({
                 model: thread._model,
                 method: 'message_post',
                 args: [thread.id],
                 kwargs: postData
             });
-            let [msgData] = await env.rpc({
+            const [msgData] = await env.rpc({
                 model: 'mail.message',
                 method: 'message_format',
                 args: [[id]]

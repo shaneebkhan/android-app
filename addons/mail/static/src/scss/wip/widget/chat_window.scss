@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_manager > .o_chat_window {
+.o_mail_wip_chat_window_manager > .o_chat_window {
     position: fixed;
     bottom: 0;
     display: flex;
@@ -34,7 +34,7 @@
         height: 400px;
     }
 
-    > .o_wip_chat_window_header {
+    > .o_mail_wip_chat_window_header {
         flex: 0 0 auto;
     }
 
@@ -47,7 +47,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_manager > .o_chat_window {
+.o_mail_wip_chat_window_manager > .o_chat_window {
     background-color: $o-mail-thread-window-bg;
     border-radius: 6px 6px 0 0;
     box-shadow: -5px -5px 10px rgba(black, 0.18);
@@ -68,7 +68,7 @@
         box-shadow: -5px -5px 10px rgba(black, 0.36);
     }
 
-    > .o_wip_chat_window_header {
+    > .o_mail_wip_chat_window_header {
         border-radius: 3px 3px 0 0;
     }
 }
@@ -77,6 +77,6 @@
 // Animation
 // ------------------------------------------------------------------
 
-.o_wip_chat_window_manager > .o_chat_window {
+.o_mail_wip_chat_window_manager > .o_chat_window {
     transition: height 0.3s;
 }

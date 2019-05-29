@@ -83,9 +83,9 @@ class ChatWindowManager extends Component {
      */
     chatWindowOptions(index) {
         return {
-            displayExpand: true,
-            displayLeftShift: index < this.props.computed.visible.length - 1,
-            displayRightShift: index !== 0,
+            expand: true,
+            shiftLeft: index < this.props.computed.visible.length - 1,
+            shiftRight: index !== 0,
         };
     }
 
@@ -147,27 +147,30 @@ class ChatWindowManager extends Component {
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onCloseChatWindow(ev, { item }) {
+    _onCloseChatWindow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
-        this.env.store.commit('chat_window_manager/close', { item });
+        ev.preventOdoo();
+        this.env.store.commit('chat_window_manager/close', {
+            item: ev.detail.item,
+        });
     }
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {integer} param1.id
-     * @param {string} param1.model
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {integer} ev.detail.id
+     * @param {string} ev.detail.model
      */
-    _onRedirect(ev, { id, model }) {
+    _onRedirect(ev) {
         if (ev.odooPrevented) { return; }
+        const { id, model } = ev.detail;
         if (model === 'mail.channel') {
-            ev.odooPrevented = true;
+            ev.preventOdoo();
             const threadLID = `${model}_${id}`;
             const channel = this.env.store.state.threads[threadLID];
             if (!channel) {
@@ -180,7 +183,7 @@ class ChatWindowManager extends Component {
                 this.env.store.commit('chat_window_manager/open', { item: threadLID });
             }
         } else if (model === 'res.partner') {
-            ev.odooPrevented = true;
+            ev.preventOdoo();
             const dm = Object.values(this.props.threads).find(thread =>
                 thread.directPartnerLID === `res.partner_${id}`);
             if (!dm) {
@@ -198,26 +201,29 @@ class ChatWindowManager extends Component {
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onSelectChatWindow(ev, { item }) {
+    _onSelectChatWindow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
-        this.env.store.commit('chat_window_manager/make_visible', { item });
+        ev.preventOdoo();
+        this.env.store.commit('chat_window_manager/make_visible', {
+            item: ev.detail.item,
+        });
     }
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.item
-     * @param {string} param1.threadLID
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
+     * @param {string} ev.detail.threadLID
      */
-    _onSelectThreadChatWindow(ev, { item, threadLID }) {
+    _onSelectThreadChatWindow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
+        const { item, threadLID } = ev.detail;
         this.env.store.commit('chat_window_manager/replace', {
             oldItem: item,
             newItem: threadLID,
@@ -226,28 +232,81 @@ class ChatWindowManager extends Component {
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onShiftLeftChatWindow(ev, { item }) {
+    _onShiftLeftChatWindow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
-        this.env.store.commit('chat_window_manager/shift_left', { item });
+        ev.preventOdoo();
+        this.env.store.commit('chat_window_manager/shift_left', {
+            item: ev.detail.item,
+        });
     }
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.item
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.item
      */
-    _onShiftRightChatWindow(ev, { item }) {
+    _onShiftRightChatWindow(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
-        this.env.store.commit('chat_window_manager/shift_right', { item });
+        ev.preventOdoo();
+        this.env.store.commit('chat_window_manager/shift_right', {
+            item: ev.detail.item,
+        });
     }
 }
+
+/**
+ * Props validation
+ */
+ChatWindowManager.props = {
+    autofocusCounter: {
+        type: Number,
+    },
+    autofocusItem: {
+        type: String,
+    },
+    computed: {
+        type: Object,
+        shape: {
+            availableVisibleSlots: {
+                type: Number,
+            },
+            hidden: {
+                type: Object,
+                shape: {
+                    items: {
+                        type: Array,
+                        element: String,
+                    },
+                    offset: {
+                        type: Number,
+                    },
+                    showMenu: {
+                        type: Boolean,
+                    },
+                },
+            },
+            visible: {
+                type: Array,
+                element: {
+                    type: Object,
+                    shape: {
+                        item: {
+                            type: String,
+                        },
+                        offset: {
+                            type: Number,
+                        }
+                    },
+                },
+            },
+        },
+    },
+};
 
 return connect(mapStateToProps, { deep: false })(ChatWindowManager);
 

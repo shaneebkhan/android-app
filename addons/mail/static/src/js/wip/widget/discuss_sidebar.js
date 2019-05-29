@@ -1,6 +1,7 @@
 odoo.define('mail.wip.widget.DiscussSidebar', function (require) {
 'use strict';
 
+const Thread = require('mail.wip.model.Thread');
 const AutocompleteInput = require('mail.wip.widget.AutocompleteInput');
 const SidebarItem = require('mail.wip.widget.DiscussSidebarItem');
 
@@ -21,8 +22,10 @@ function mapStateToProps(state, ownProps, getters) {
     };
 }
 
-class Sidebar extends Component {
-
+class DiscussSidebar extends Component {
+    /**
+     * @param {...any} args
+     */
     constructor(...args) {
         super(...args);
         this.template = 'mail.wip.widget.DiscussSidebar';
@@ -38,7 +41,9 @@ class Sidebar extends Component {
         this._channelAutocompleteLastSearchVal = undefined;
 
         // bind since passed as props
+        this._onChannelAutocompleteSelect = this._onChannelAutocompleteSelect.bind(this);
         this._onChannelAutocompleteSource = this._onChannelAutocompleteSource.bind(this);
+        this._onChatAutocompleteSelect = this._onChatAutocompleteSelect.bind(this);
         this._onChatAutocompleteSource = this._onChatAutocompleteSource.bind(this);
     }
 
@@ -163,9 +168,12 @@ class Sidebar extends Component {
             partnerLID: `res.partner_${partnerID}`,
         });
         if (chat) {
-            this.trigger('select-thread', ev, { threadLID: chat.lid });
+            this.trigger('select-thread', {
+                threadLID: chat.lid,
+                originalEvent: ev,
+            });
         } else {
-            ev.odooPrevented = true;
+            ev.preventOdoo();
             this.env.store.dispatch('channel/create', {
                 autoselect: true,
                 partnerID,
@@ -195,7 +203,7 @@ class Sidebar extends Component {
      */
     _onClickChannelAdd(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.isAddingChannel = true;
     }
 
@@ -205,7 +213,7 @@ class Sidebar extends Component {
      */
     _onClickChannelTitle(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         return this.env.do_action({
             name: this.env._t("Public Channels"),
             type: 'ir.actions.act_window',
@@ -221,38 +229,41 @@ class Sidebar extends Component {
      */
     _onClickChatAdd(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.isAddingChat = true;
     }
 
     /**
      * @private
-     * @param {MouseEvent} ev
-     * @param {Object} param1
-     * @param {string} param1.threadLID
+     * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.threadLID
      */
-    _onClickItem(ev, { threadLID }) {
+    _onClickedItem(ev) {
         if (ev.odooPrevented) { return; }
-        return this.trigger('select-thread', ev, { threadLID });
+        return this.trigger('select-thread', {
+            threadLID: ev.detail.threadLID,
+            originalEvent: ev,
+        });
     }
 
     /**
      * @private
-     * @param {Event} ev
+     * @param {CustomEvent} ev
      */
     _onHideAddChannel(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.isAddingChannel = false;
     }
 
     /**
      * @private
-     * @param {Event} ev
+     * @param {CustomEvent} ev
      */
     _onHideAddChat(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.isAddingDm = false;
     }
 
@@ -262,11 +273,35 @@ class Sidebar extends Component {
      */
     _onInputQuickSearch(ev) {
         if (ev.odooPrevented) { return; }
-        ev.odooPrevented = true;
+        ev.preventOdoo();
         this.state.quickSearchValue = this.refs.quickSearch.value;
     }
 }
 
-return connect(mapStateToProps, { deep: false })(Sidebar);
+/**
+ * Props validation
+ */
+DiscussSidebar.props = {
+    channels: {
+        type: Array,
+        element: Thread,
+    },
+    chats: {
+        type: Array,
+        element: Thread,
+    },
+    mailboxes: {
+        type: Array,
+        element: Thread,
+    },
+    mailChannelAmount: {
+        type: Number,
+    },
+    threadLID: {
+        type: String,
+    },
+};
+
+return connect(mapStateToProps, { deep: false })(DiscussSidebar);
 
 });

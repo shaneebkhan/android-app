@@ -12,6 +12,7 @@ class EmojisButton extends Component {
      */
     constructor(...args) {
         super(...args);
+        this.state = { open: false };
         this.template = 'mail.wip.widget.EmojisButton';
         this._$popover = undefined;
         this._globalCaptureEventListener = ev => this._onClickCaptureGlobal(ev);
@@ -19,9 +20,9 @@ class EmojisButton extends Component {
         this._popoverID = undefined;
     }
 
-    mounted() {
+    async mounted() {
         this._popover = new Popover(this.env);
-        this._popover.mount(document.createElement('div')).then(() => {
+        await this._popover.mount(document.createElement('div')).then(() => {
             const self = this;
             this._popover.el.outerHTML = this._popover.el;
             this._$popover = $(this.el).popover({
@@ -37,7 +38,7 @@ class EmojisButton extends Component {
                 }
             });
         });
-        this._popover.on('selection', this, (ev, { source }) => this._onEmojiSelection(ev, { source }));
+        this._popover.el.addEventListener('selection', ev => this._onEmojiSelection(ev));
         document.addEventListener('click', this._globalCaptureEventListener, true);
     }
 
@@ -57,6 +58,7 @@ class EmojisButton extends Component {
     _hidePopover() {
         this._$popover.popover('hide');
         this._popoverID = undefined;
+        this.state.open = false;
     }
 
     //--------------------------------------------------------------------------
@@ -70,27 +72,26 @@ class EmojisButton extends Component {
     _onClickCaptureGlobal(ev) {
         if (ev.odooPrevented) { return; }
         if (ev.target === this.el) {
+            this.state.open = true;
             return;
         }
         if (!this._popoverID) {
             return;
         }
         if (ev.target.closest(`#${this._popoverID}`)) {
+            this.state.open = true;
             return;
         }
-        this._$popover.popover('hide');
+        this._hidePopover();
     }
 
     /**
      * @private
-     * @param {Event} ev
-     * @param {Object} param1
-     * @param {string} param1.source
+     * @param {CustomEvent} ev
      */
-    _onEmojiSelection(ev, { source }) {
+    _onEmojiSelection(ev) {
         if (ev.odooPrevented) { return; }
         this._hidePopover();
-        this.trigger('emoji-selection', ev, { source });
     }
 }
 

@@ -1,22 +1,19 @@
 odoo.define('mail.wip.service.ChatWindowService', function (require) {
 "use strict";
 
-const StoreMixin = require('mail.wip.old_widget.StoreMixin');
+const EnvMixin = require('mail.wip.old_widget.EnvMixin');
 const ChatWindowManager = require('mail.wip.widget.ChatWindowManager');
 
 const AbstractService = require('web.AbstractService');
 const core = require('web.core');
-const session = require('web.session');
 
-const _t = core._t;
-
-const ChatWindowService =  AbstractService.extend(StoreMixin, {
+const ChatWindowService =  AbstractService.extend(EnvMixin, {
     DEBUG: true,
     TEST: {
         active: false,
         container: 'body',
     },
-    dependencies: ['store'],
+    dependencies: ['env', 'store'],
     init() {
         this._super.apply(this, arguments);
         this._webClientReady = false;
@@ -57,28 +54,19 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
      * @private
      */
     async _mount() {
-        await this.awaitStore();
+        await this.getEnv();
         if (this.component) {
             this.component.destroy();
             this.component = undefined;
         }
-        const env = {
-            _t,
-            qweb: core.qwebOwl,
-            session,
-            store: this.store,
-            call: (...args) => this.call(...args),
-            do_action: (...args) => this.do_action(...args),
-            rpc: (...args) => this._rpc(...args),
-        };
-        this.component = new ChatWindowManager(env);
+        this.component = new ChatWindowManager(this.env);
         let parentNode;
         if (this.TEST.active) {
             parentNode = document.querySelector(this.TEST.container);
         } else {
             parentNode = document.querySelector('body');
         }
-        this.component.mount(parentNode);
+        await this.component.mount(parentNode);
     },
 
     //--------------------------------------------------------------------------
@@ -92,7 +80,7 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_wip_chat_window_manager')) {
+        if (document.querySelector('.o_mail_wip_chat_window_manager')) {
             return;
         }
         await this._mount();
@@ -101,7 +89,7 @@ const ChatWindowService =  AbstractService.extend(StoreMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_wip_chat_window_manager')) {
+        if (document.querySelector('.o_mail_wip_chat_window_manager')) {
             return;
         }
         await this._mount();

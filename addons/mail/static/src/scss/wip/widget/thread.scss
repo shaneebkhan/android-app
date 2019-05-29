@@ -2,21 +2,10 @@
 // Layout
 // ------------------------------------------------------------------
 
- .o_thread {
+ .o_mail_wip_thread {
     display: flex;
     flex-flow: column;
     overflow: auto;
-
-    > .o_thread_loading {
-        display: flex;
-        align-self: center;
-        flex: 1 1 auto;
-        align-items: center;
-    }
-
-    > .o_message_list {
-        flex: 1 1 auto;
-    }
 
     > .o_empty {
         flex: 1 1 auto;
@@ -26,13 +15,28 @@
         flex-flow: column;
         justify-content: center;
     }
+
+    > .o_message_list {
+        flex: 1 1 auto;
+    }
+
+    > .o_thread_composer {
+        flex: 0 0 auto;
+    }
+
+    > .o_thread_loading {
+        display: flex;
+        align-self: center;
+        flex: 1 1 auto;
+        align-items: center;
+    }
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_thread {
+.o_mail_wip_thread {
     background-color: gray('100');
 
     > .o_thread_loading .o_icon {

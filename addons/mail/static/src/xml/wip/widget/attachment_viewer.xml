@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.AttachmentViewer" owl="1"
+         class="o_mail_wip_attachment_viewer"
+         t-att-data-dialog-id="props.dialogID"
+         tabindex="0"
+         t-on-click="_onClick"
+         t-on-keydown="_onKeydown">
+        <div class="o_header"
+             t-on-click="_onClickHeader">
+            <div t-if="props.attachment.$filetype"
+                 class="o_item o_icon"
+                 t-key="'icon'">
+                <i t-if="props.attachment.$filetype === 'image'"
+                   class="fa fa-picture-o"
+                   role="img"
+                   aria-label="Image"
+                   title="Image"/>
+                <i t-if="props.attachment.$filetype === 'application/pdf'"
+                   class="fa fa-file-text"
+                   role="img"
+                   aria-label="PDF file"
+                   title="PDF file"/>
+                <i t-if="props.attachment.$isTextFile"
+                   class="fa fa-file-text"
+                   role="img"
+                   aria-label="Text file"
+                   title="Text file"/>
+                <i t-if="props.attachment.$filetype === 'video'"
+                   class="fa fa-video-camera"
+                   role="img"
+                   aria-label="Video"
+                   title="Video"/>
+            </div>
+            <div class="o_item o_name">
+                <t t-esc="props.attachment.$name"/>
+            </div>
+            <div class="o_item o_download"
+                 role="button"
+                 title="Download"
+                 t-on-click="_onClickDownload">
+                <i class="fa fa-fw fa-download"
+                   role="img"
+                   aria-label="Download"/>
+            </div>
+            <div class="o_autogrow"/>
+            <div class="o_item o_close"
+                 role="button"
+                 aria-label="Close"
+                 title="Close (Esc)"
+                 t-on-click="_onClickClose">
+                <i class="fa fa-fw fa-times"
+                   role="img"
+                   aria-label="Close"/>
+            </div>
+        </div>
+        <div class="o_viewer"
+             t-attf-class="{{ props.attachment.$filetype === 'image' ? 'o_with_img' : '' }}"
+             t-on-mousemove="_onMousemoveView">
+            <div t-if="props.attachment.$filetype === 'image'"
+                 t-ref="zoomer"
+                 class="o_zoomer">
+                <div t-if="state.imageLoading"
+                     class="o_wip_loading">
+                    <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"
+                       role="img"
+                       aria-label="Loading"
+                       title="Loading"/>
+                </div>
+                <img t-ref="image"
+                     class="o_img"
+                     t-att-src="props.attachment.$src"
+                     alt="Viewer"
+                     draggable="false"
+                     t-key="props.info.attachmentLID"
+                     t-att-style="imageStyle"
+                     t-on-click="_onClickImage"
+                     t-on-mousedown="_onMousedownImage"
+                     t-on-wheel="_onWheelImage"/>
+            </div>
+            <iframe t-if="props.attachment.$filetype === 'application/pdf'"
+                    class="o_pdf"
+                    t-att-src="props.attachment.$src"
+                    t-key="props.info.attachmentLID"/>
+            <iframe t-if="props.attachment.$isTextFile"
+                    class="o_text"
+                    t-att-src="props.attachment.$src"
+                    t-key="props.info.attachmentLID"/>
+            <iframe t-if="props.attachment.$filetype === 'youtu'"
+                    class="o_youtube"
+                    allow="autoplay; encrypted-media"
+                    width="560"
+                    height="315"
+                    t-att-src="props.attachment.$src"
+                    t-key="props.info.attachmentLID"/>
+            <video t-if="props.attachment.$filetype === 'video'"
+                   class="o_video"
+                   controls="controls"
+                   t-on-click="_onClickVideo"
+                   t-key="props.info.attachmentLID">
+                <source t-att-src="props.attachment.$src"
+                        t-att-data-type="props.attachment.mimetype"/>
+            </video>
+        </div>
+        <div t-if="props.attachment.$filetype === 'image'"
+             class="o_toolbar"
+             role="toolbar"
+             t-key="'toolbar'">
+            <div class="o_item o_zoom_in"
+                 role="button"
+                 title="Zoom In (+)"
+                 t-on-click="_onClickZoomIn">
+                <i class="fa fa-fw fa-plus"
+                   role="img"
+                   aria-label="Zoom In"/>
+            </div>
+            <div class="o_item o_zoom_reset"
+                 t-attf-class="{{ state.scale === 1 ? 'o_disabled' : '' }}"
+                 role="button"
+                 title="Reset Zoom (0)"
+                 t-on-click="_onClickZoomReset">
+                <i class="fa fa-fw fa-search"
+                   role="img"
+                   aria-label="Reset Zoom"/>
+            </div>
+            <div class="o_item o_zoom_out"
+                 t-attf-class="{{ state.scale === MIN_SCALE ? 'o_disabled' : '' }}"
+                 role="button"
+                 title="Zoom Out (-)"
+                 t-on-click="_onClickZoomOut">
+                <i class="fa fa-fw fa-minus"
+                   role="img"
+                   aria-label="Zoom Out"/>
+            </div>
+            <div class="o_item o_rotate"
+                 role="button"
+                 title="Rotate (r)"
+                 t-on-click="_onClickRotate">
+                <i class="fa fa-fw fa-repeat"
+                   role="img"
+                   aria-label="Rotate"/>
+            </div>
+            <div class="o_item o_print"
+                 role="button"
+                 title="Print"
+                 t-on-click="_onClickPrint">
+               <i class="fa fa-fw fa-print"
+                  role="img"
+                  aria-label="Print"/>
+            </div>
+            <div class="o_item o_download"
+                 role="button"
+                 title="Download"
+                 t-on-click="_onClickDownload">
+               <i class="fa fa-fw fa-download"
+                  role="img"
+                  aria-label="Download"/>
+            </div>
+        </div>
+        <t t-if="props.info.attachmentLIDs.length > 1">
+            <div class="o_previous"
+                 role="button"
+                 title="Previous (Left-Arrow)"
+                 t-key="'previous'"
+                 t-on-click="_onClickPrevious">
+                <span class="fa fa-chevron-left"
+                      role="img"
+                      aria-label="Previous"/>
+            </div>
+            <div class="o_next"
+                 t-key="'next'"
+                 title="Next (Right-Arrow)"
+                 role="button"
+                 t-on-click="_onClickNext">
+                <span class="fa fa-chevron-right"
+                      role="img"
+                      aria-label="Next"/>
+            </div>
+        </t>
+    </div>
+
+</templates>
