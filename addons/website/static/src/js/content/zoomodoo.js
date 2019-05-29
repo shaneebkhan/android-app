@@ -140,6 +140,17 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
     if (e) {
         this._move(e);
     }
+
+    if(!dh)
+        this.$flyout.css('height', this.$zoom.height() + 'px');
+    if(!dw)
+        this.$flyout.css('width', this.$zoom.width() + 'px');
+
+    var offset = this.$target.offset();
+    var left = offset.left - this.$flyout.width();
+    var top = offset.top;
+    
+    this.$flyout.css('transform', 'translate3d(' + left + 'px, ' + top + 'px, 0px)');
 };
 
 /**
