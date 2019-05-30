@@ -759,6 +759,8 @@ class PosOrder(models.Model):
         existing_references = set([o['pos_reference'] for o in existing_orders])
         orders_to_save = [o for o in orders if o['data']['name'] not in existing_references]
         order_ids = []
+        wrong_stock_pickings = self.env['stock.picking']
+        session = self.env['pos.session'].browse(orders[0]['data']['pos_session_id'])
 
         for tmp_order in orders_to_save:
             to_invoice = tmp_order['to_invoice']
@@ -769,7 +771,7 @@ class PosOrder(models.Model):
             order_ids.append(pos_order.id)
 
             try:
-                pos_order.action_pos_order_paid()
+                wrong_stock_pickings += pos_order.action_pos_order_paid()
             except psycopg2.DatabaseError:
                 # do not hide transactional errors, the order(s) won't be saved!
                 raise
@@ -780,6 +782,16 @@ class PosOrder(models.Model):
                 pos_order.action_pos_order_invoice()
                 pos_order.invoice_id.sudo().with_context(force_company=self.env.user.company_id.id).action_invoice_open()
                 pos_order.account_move = pos_order.invoice_id.move_id
+
+        if wrong_stock_pickings:
+            """
+            Next activities
+            """
+            session.activity_schedule_with_view('mail.mail_activity_data_warning',
+                user_id=session.user_id.id,
+                views_or_xmlid='point_of_sale.exception_stock_moves_confirmation',
+                render_context={'stock_pickings': wrong_stock_pickings}
+            )
         return order_ids
 
     def test_paid(self):
@@ -795,7 +807,7 @@ class PosOrder(models.Model):
 
     def create_picking(self):
         """Create a picking for each order and validate it."""
-        Picking = self.env['stock.picking']
+        Picking = wrong_stock_pickings = self.env['stock.picking']
         Move = self.env['stock.move']
         StockWarehouse = self.env['stock.warehouse']
         for order in self:
@@ -863,24 +875,27 @@ class PosOrder(models.Model):
             order.write({'picking_id': order_picking.id or return_picking.id})
 
             if return_picking:
-                order._force_picking_done(return_picking)
+                wrong_stock_pickings += order._force_picking_done(return_picking)
             if order_picking:
-                order._force_picking_done(order_picking)
+                wrong_stock_pickings += order._force_picking_done(order_picking)
 
             # when the pos.config has no picking_type_id set only the moves will be created
             if moves and not return_picking and not order_picking:
                 moves._action_assign()
                 moves.filtered(lambda m: m.product_id.tracking == 'none')._action_done()
 
-        return True
+        return wrong_stock_pickings
 
     def _force_picking_done(self, picking):
         """Force picking in order to be set as done."""
         self.ensure_one()
         picking.action_assign()
         wrong_lots = self.set_pack_operation_lot(picking)
-        if not wrong_lots:
+        if wrong_lots:
+            return picking
+        else:
             picking.action_done()
+            return self.env['stock.picking']
 
     def set_pack_operation_lot(self, picking=None):
         """Set Serial/Lot number in pack operations to mark the pack operation done."""
@@ -901,7 +916,8 @@ class PosOrder(models.Model):
                 if pos_pack_lots and lots_necessary:
                     for pos_pack_lot in pos_pack_lots:
                         stock_production_lot = StockProductionLot.search([('name', '=', pos_pack_lot.lot_name), ('product_id', '=', move.product_id.id)])
-                        if stock_production_lot:
+                        virtual_available = move.product_id.with_context(lot_id=stock_production_lot.id, location=move.location_id.id).virtual_available
+                        if virtual_available > 0:
                             # a serialnumber always has a quantity of 1 product, a lot number takes the full quantity of the order line
                             qty = 1.0
                             if stock_production_lot.product_id.tracking == 'lot':
