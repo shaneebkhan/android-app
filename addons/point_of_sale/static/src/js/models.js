@@ -2762,6 +2762,25 @@ exports.Order = Backbone.Model.extend({
     get_screen_data: function(key){
         return this.screen_data[key];
     },
+    // get lots and serial information
+    get_existing_lots: function () {
+        var active_line = this.selected_orderline;
+        var product_id = active_line.product.id;
+        var lots = {};
+        this.orderlines.each(function(line) {
+            if (line.product.id === product_id && line.cid != active_line.cid ) {
+                line.pack_lot_lines.each(function (lot) {
+                    var lot_name = lot.get('lot_name');
+                    if (lot_name in lots) {
+                        lots[lot_name] += active_line.quantity;
+                    } else {
+                        lots[lot_name] = active_line.quantity;
+                    }
+                });
+            }
+        });
+        return lots;
+    },
 });
 
 var OrderCollection = Backbone.Collection.extend({
