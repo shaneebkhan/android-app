@@ -986,7 +986,7 @@ class IrModelConstraint(models.Model):
         """
         Delete PostgreSQL foreign keys and constraints tracked by this model.
         """
-        if not (self._uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')):
+        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         ids_set = set(self.ids)
@@ -1099,7 +1099,7 @@ class IrModelRelation(models.Model):
         """
         Delete PostgreSQL many2many relations tracked by this model.
         """
-        if not (self._uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')):
+        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         ids_set = set(self.ids)
@@ -1214,9 +1214,9 @@ class IrModelAccess(models.Model):
     # not be really necessary as a cache key, unless the `ormcache_context`
     # decorator catches the exception (it does not at the moment.)
     @api.model
-    @tools.ormcache_context('self._uid', 'model', 'mode', 'raise_exception', keys=('lang',))
+    @tools.ormcache_context('self._uid', 'self.env.sumode', 'model', 'mode', 'raise_exception', keys=('lang',))
     def check(self, model, mode='read', raise_exception=True):
-        if self._uid == SUPERUSER_ID:
+        if self.env.sumode:
             # User root have all accesses
             return True
 
@@ -1563,7 +1563,7 @@ class IrModelData(models.Model):
         the chance of gracefully deleting all records.
         This step is performed as part of the full uninstallation of a module.
         """ 
-        if not (self._uid == SUPERUSER_ID or self.env.user.has_group('base.group_system')):
+        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         # enable model/field deletion
