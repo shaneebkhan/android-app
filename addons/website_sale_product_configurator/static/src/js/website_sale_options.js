@@ -67,7 +67,7 @@ publicWidget.registry.WebsiteSale.include({
      * @private
      * @param {Boolean} goToShop Triggers a page refresh to the url "shop/cart"
      */
-    _onModalSubmit: function (goToShop){
+    _onModalSubmit: function (goToShop) {
         var customValues = JSON.stringify(
             this.optionalProductsModal.getSelectedProducts()
         );
