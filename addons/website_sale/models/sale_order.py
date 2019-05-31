@@ -252,6 +252,10 @@ class SaleOrder(models.Model):
 
         # Remove zero of negative lines
         if quantity <= 0:
+            if(order_line.linked_line_id):
+                name = order_line.linked_line_id.name
+                name = name.replace("\n" + _("Option:") + ' ' + order_line.product_id.display_name, '')
+                order_line.linked_line_id.write({"name": name})
             order_line.unlink()
         else:
             # update line
@@ -285,8 +289,6 @@ class SaleOrder(models.Model):
                 linked_line.write({"name": linked_line.name + "\n" + _("Option:") + ' ' + order_line.product_id.display_name})
 
         option_lines = self.order_line.filtered(lambda l: l.linked_line_id.id == order_line.id)
-        for option_line_id in option_lines:
-            self._cart_update(option_line_id.product_id.id, option_line_id.id, add_qty, set_qty, **kwargs)
 
         return {'line_id': order_line.id, 'quantity': quantity, 'option_ids': list(set(option_lines.ids))}
 

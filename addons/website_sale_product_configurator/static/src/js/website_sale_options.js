@@ -72,9 +72,12 @@ publicWidget.registry.WebsiteSale.include({
             this.optionalProductsModal.getSelectedProducts()
         );
 
-        this.$form.ajaxSubmit({
-            url:  '/shop/cart/update_option',
+        $.ajax({
+            url: '/shop/cart/update_option',
+            type: "POST",
+            enctype: 'multipart/form-data',
             data: {
+                csrf_token: this.$form.find('input[name="csrf_token"]').val(),
                 lang: this._getContext().lang,
                 custom_values: customValues
             },

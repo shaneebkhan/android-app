@@ -25,6 +25,7 @@ class WebsiteSaleProductConfiguratorController(ProductConfiguratorController):
         return self.optional_product_items(product_id, request.website.get_current_pricelist(), **kw)
 
 
+
 class WebsiteSale(WebsiteSale):
     def _prepare_product_values(self, product, category, search, **kwargs):
         values = super(WebsiteSale, self)._prepare_product_values(product, category, search, **kwargs)
@@ -33,7 +34,7 @@ class WebsiteSale(WebsiteSale):
         return values
 
     @http.route(['/shop/cart/update_option'], type='http', auth="public", methods=['POST'], website=True, multilang=False)
-    def cart_options_update_json(self, product_id, add_qty=1, set_qty=0, goto_shop=None, lang=None, **kw):
+    def cart_options_update_json(self, custom_values, goto_shop=None, lang=None, **kwargs):
         """This route is called when submitting the optional product modal."""
         if lang:
             request.website = request.website.with_context(lang=lang)
@@ -42,58 +43,36 @@ class WebsiteSale(WebsiteSale):
         if order.state != 'draft':
             request.session['sale_order_id'] = None
             order = request.website.sale_get_order(force_create=True)
-        optional_product_ids = []
-        for k, v in kw.items():
-            if "optional-product-" in k and int(kw.get(k.replace("product", "add"))):
-                optional_product_ids.append(int(v))
 
-        custom_values = []
-        if kw.get('custom_values'):
-            custom_values = json.loads(kw.get('custom_values'))
+        custom_values = json.loads(custom_values)
+        if len(custom_values) == 0:
+            return str(order.cart_quantity)
 
-        value = {}
-        if add_qty or set_qty:
-            value = order._cart_update(
-                product_id=int(product_id),
-                add_qty=add_qty,
-                set_qty=set_qty,
-                optional_product_ids=optional_product_ids,
-                product_custom_attribute_values=self._get_product_custom_value(
-                    int(product_id),
-                    custom_values,
-                    'product_custom_attribute_values'
-                ),
-                no_variant_attribute_values=self._get_product_custom_value(
-                    int(product_id),
-                    custom_values,
-                    'no_variant_attribute_values'
-                )
+        # main product is first optional products the rest
+        main_product = custom_values[0]
+        optional_products = custom_values[1:]
+        optional_product_ids = [p['product_id'] for p in optional_products]
+
+        value = order._cart_update(
+            product_id=main_product['product_id'],
+            add_qty=main_product['quantity'],
+            optional_product_ids=optional_product_ids,
+            product_custom_attribute_values=main_product['product_custom_attribute_values'],
+            no_variant_attribute_values=main_product['no_variant_attribute_values'],
+        )
+
+        # link option with its parent.
+        # Parents should always be listed before there options.
+        option_parent = {main_product['unique_id']: value['line_id']}
+        for option in optional_products:
+            parent_unique_id = option['parent_unique_id']
+            option_value = order._cart_update(
+                product_id=option['product_id'],
+                set_qty=option['quantity'],
+                linked_line_id=option_parent[parent_unique_id],
+                product_custom_attribute_values=option['product_custom_attribute_values'],
+                no_variant_attribute_values=option['no_variant_attribute_values'],
             )
-
-        # options have all time the same quantity
-        for option_id in optional_product_ids:
-            order._cart_update(
-                product_id=option_id,
-                set_qty=value.get('quantity'),
-                linked_line_id=value.get('line_id'),
-                product_custom_attribute_values=self._get_product_custom_value(
-                    option_id,
-                    custom_values,
-                    'product_custom_attribute_values'
-                ),
-                no_variant_attribute_values=self._get_product_custom_value(
-                    option_id,
-                    custom_values,
-                    'no_variant_attribute_values'
-                )
-            )
+            option_parent[option['unique_id']] = option_value['line_id']
 
         return str(order.cart_quantity)
-
-    def _get_product_custom_value(self, product_id, custom_values, field):
-        if custom_values:
-            for custom_value in custom_values:
-                if custom_value['product_id'] == product_id:
-                    return custom_value[field]
-
-        return None

@@ -6,13 +6,11 @@ var Dialog = require('web.Dialog');
 var ServicesMixin = require('web.ServicesMixin');
 var VariantMixin = require('sale.VariantMixin');
 
-var optionalProductsMap = {};
-
 var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
     events:  _.extend({}, Dialog.prototype.events, VariantMixin.events, {
         'click a.js_add, a.js_remove': '_onAddOrRemoveOption',
         'click button.js_add_cart_json': 'onClickAddCartJSON',
-        'change .in_cart.main_product input.js_quantity': '_onChangeQuantity',
+        'change .in_cart input.js_quantity': '_onChangeQuantity',
         'change .js_raw_price': '_computePriceTotal'
     }),
     /**
@@ -61,8 +59,6 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
         this.previousModalHeight = params.previousModalHeight;
         this.dialogClass = 'oe_optional_products_modal';
         this._productImageField = 'image_medium';
-        // reset any previously populated properties maps
-        optionalProductsMap = {};
 
         this._opened.then(function () {
             if (self.previousModalHeight) {
@@ -141,6 +137,21 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
 
         this.$el.find('input[name="add_qty"]').val(this.rootProduct.quantity);
 
+        // set a unique id to each row for options hierarchy
+        var $products = this.$el.find('tr.js_product');
+        $products.each(function () {
+            var $el = $(this);
+            var uniqueId = self._getUniqueId($el);
+            $el.find('input.unique_id').val(uniqueId);
+
+            var productId = parseInt($el.find('input.product_id').val());
+            if (productId === self.rootProduct.product_id) {
+                self.rootProduct.unique_id = uniqueId;
+            } else {
+                $el.find('input.parent_unique_id').val(self.rootProduct.unique_id);
+            }
+        });
+
         return def.then(function () {
             // This has to be triggered to compute the "out of stock" feature
             self._opened.then(function () {
@@ -167,26 +178,19 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
     getSelectedProducts: function () {
         var self = this;
         var products = [this.rootProduct];
-        this.$modal.find('.js_product.in_cart:not(.main_product)').each(function (){
-            var quantity = 0;
+        this.$modal.find('.js_product.in_cart:not(.main_product)').each(function () {
             var $item = $(this);
-            if ($item.find('input[name="add_qty"]').length){
-                quantity = $item.find('input[name="add_qty"]').val();
-            } else {
-                quantity = parseInt(
-                    $item
-                        .find('.optional_product_quantity span.add_qty')
-                        .html()
-                        .trim()
-                );
-            }
-
+            var quantity = parseInt($item.find('input[name="add_qty"]').val());
+            var parentUniqueId = parseInt($item.find('input.parent_unique_id').val());
+            var uniqueId = parseInt($item.find('input.unique_id').val());
             var productCustomVariantValues = self.getCustomVariantValues($(this));
             var noVariantAttributeValues = self.getNoVariantAttributeValues($(this));
             products.push({
                 product_id: parseInt($item.find('input.product_id').val()),
                 product_template_id: parseInt($item.find('input.product_template_id').val()),
                 quantity: quantity,
+                parent_unique_id: parentUniqueId,
+                unique_id: uniqueId,
                 product_custom_attribute_values: productCustomVariantValues,
                 no_variant_attribute_values: noVariantAttributeValues
             });
@@ -271,14 +275,13 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
         var $modal = $target.parents('.oe_optional_products_modal');
         var $parent = $target.parents('.js_product:first');
         $parent.find("a.js_add, span.js_remove").toggleClass('d-none');
-        $parent.find("input.js_optional_same_quantity").val($target.hasClass("js_add") ? 1 : 0 );
         $parent.find(".js_remove");
 
         var productTemplateId = $parent.find(".product_template_id").val();
         if ($target.hasClass('js_add')) {
             self._onAddOption($modal, $parent, productTemplateId);
         } else {
-            self._onRemoveOption($modal, $parent ,productTemplateId);
+            self._onRemoveOption($modal, $parent);
         }
 
         self._computePriceTotal();
@@ -296,10 +299,10 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
         var $main_product = $modal.find('.js_product:first');
         var $selectOptionsText = $modal.find('.o_select_options');
 
-        // remove attribute values selection and move quantity to the correct table spot (".td-qty"))
+        // remove attribute values selection and show quantity input
         $parent.addClass('in_cart');
-        $parent.find('.td-qty').addClass('text-center');
-        $parent.find('.td-qty').append($parent.find('.optional_product_quantity'));
+        $parent.find('.td-product_name').removeAttr("colspan");
+        $parent.find('.td-qty').removeClass('d-none');
 
         var productCustomVariantValues = self.getCustomVariantValues($parent);
         var noVariantAttributeValues = self.getNoVariantAttributeValues($parent);
@@ -327,19 +330,11 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
         }
 
         // if it's an optional product of an optional product, place it after it's parent
-        var parentProductId = null;
-        for (var productIdKey in optionalProductsMap) {
-            if (optionalProductsMap[productIdKey].indexOf(productTemplateId) !== -1) {
-                parentProductId = productIdKey;
-                break;
-            }
+        var parentUniqueId = $parent.find('input.parent_unique_id').val();
 
-            $('tr:last').after($parent);
-        }
-
-        if (parentProductId) {
-            $modal.find('.product_template_id').filter(function () {
-                return parentProductId === $(this).val();
+        if (parentUniqueId) {
+            $modal.find('input.unique_id').filter(function () {
+                return parentUniqueId === $(this).val();
             }).parents('.js_product:first').after($parent);
         } else {
             // else, place it after the main product
@@ -364,17 +359,16 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
                 self.$el.find('input[name="add_qty"]').trigger('change');
                 self.triggerVariantChange($addedItem);
 
-                if ($addedItem.find(".product_template_id").length > 0) {
-                    // we need to map this product with it's optional products to be able to:
-                    // - remove them from the cart if the parent product is removed
-                    // - place the optional products under their parent in
-                    //   the interface when they're added to the cart
-                    optionalProductsMap[productTemplateId] = $addedItem
-                        .find(".product_template_id")
-                        .map(function () {
-                            return $(this).val();
-                    }).get();
-                }
+                // add a unique id to the new products
+                var parentUniqueId = $parent.find('input.unique_id').val();
+                var parentQty = $parent.find('input[name="add_qty"]').val();
+                $addedItem.filter(".js_product").each(function () {
+                    var $el = $(this);
+                    var uniqueId = self._getUniqueId($el);
+                    $el.find('input.unique_id').val(uniqueId);
+                    $el.find('input.parent_unique_id').val(parentUniqueId);
+                    $el.find('input[name="add_qty"]').val(parentQty);
+                });
 
                 if ($selectOptionsText.nextAll('.js_product').length === 0) {
                     // no more optional products to select -> hide the header
@@ -389,19 +383,22 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
      * @see _onAddOrRemoveOption
      * @param {$.Element} $modal
      * @param {$.Element} $parent
-     * @param {integer} productTemplateId
      */
-    _onRemoveOption: function ($modal, $parent, productTemplateId){
+    _onRemoveOption: function ($modal, $parent) {
         // restore attribute values selection
+        var uniqueId = $parent.find('input.parent_unique_id').val();
+        var qty = $modal.find('tr.js_product.in_cart:has(input.unique_id[value="' + uniqueId + '"]) input[name="add_qty"]').val();
         $parent.removeClass('in_cart');
-        $parent.find('.td-qty').removeClass('text-center');
-        $parent.find('.js_remove.d-none').prepend($parent.find('.optional_product_quantity'));
+        $parent.find('.td-product_name').attr("colspan", 2);
+        $parent.find('.td-qty').addClass('d-none');
+        $parent.find('input[name="add_qty"]').val(qty);
         $parent.find('.custom_attribute_values_description').remove();
 
         var $select_options_text = $modal.find('.o_select_options');
         $select_options_text.show();
 
-        this._removeOptionOption($modal, productTemplateId);
+        var productUniqueId = $parent.find('input.unique_id').val();
+        this._removeOptionOption($modal, productUniqueId);
 
         $modal.find('tr:last').after($parent);
     },
@@ -411,21 +408,18 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
      *
      * @private
      * @param {$.Element} $modal
-     * @param {integer} optionId The removed optional product id
+     * @param {integer} optionUniqueId The removed optional product id
      */
-    _removeOptionOption: function ($modal, optionId) {
+    _removeOptionOption: function ($modal, optionUniqueId) {
         var self = this;
-        if (optionalProductsMap[optionId]) {
-            optionalProductsMap[optionId].forEach(function (productId) {
-                $modal.find('.product_template_id').filter(function () {
-                    return productId === $(this).val();
-                }).parents('.js_product:first').remove();
-
-                self._removeOptionOption($modal, productId);
-            });
-
-            delete optionalProductsMap[optionId];
-        }
+        $modal.find('input.parent_unique_id').filter(function () {
+            return optionUniqueId === $(this).val();
+        }).each(function () {
+            var $el = $(this);
+            var uniqueId = $el.find('input.unique_id').val();
+            $el.parents('.js_product:first').remove();
+            self._removeOptionOption($modal, uniqueId);
+        });
     },
     /**
      * @override
@@ -441,31 +435,30 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
         this._computePriceTotal();
     },
     /**
-     * When the quantity of the root product is updated, we need to update
-     * the quantity of all the selected optional products.
+     * When the quantity of a product is updated, we need to update
+     * the quantity of all the related optional products wich are not in the cart.
      *
      * @private
      * @param {MouseEvent} ev
      */
-    _onChangeQuantity: function (ev){
+    _onChangeQuantity: function (ev) {
+        var $product = $(ev.target.closest('tr'));
         var $quantity = $(ev.currentTarget);
         var qty = parseFloat($quantity.val());
-        var $modal = $quantity.parents('.oe_optional_products_modal');
-        if (qty === 1) {
-            $modal.find(".js_items").addClass('d-none').removeClass('add_qty');
-            $modal.find(".js_item").removeClass('d-none').addClass('add_qty');
-        } else {
-            $modal.find(".js_items").removeClass('d-none').addClass('add_qty').text(qty);
-            $modal.find(".js_item").addClass('d-none').removeClass('add_qty');
-        }
+        var uniqueId = $product.find('input.unique_id').val();
+        var relatedOptions = this.$el.find('tr.js_product:not(.in_cart):has(input.parent_unique_id[value="' + uniqueId + '"]) input[name="add_qty"]');
 
-        this.rootProduct.quantity = qty;
+        relatedOptions.each(function () {
+            $(this).val(qty);
+        });
 
-        if (this._triggerPriceUpdateOnChangeQuantity()){
+        if (this._triggerPriceUpdateOnChangeQuantity()) {
             this.onChangeAddQuantity(ev);
         }
-
-        this.trigger('update_quantity', qty);
+        if ($product.hasClass('main_product')) {
+            this.rootProduct.quantity = qty;
+            this.trigger('update_quantity', qty);
+        }
     },
 
     /**
@@ -475,8 +468,8 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
     _computePriceTotal: function () {
         if (this.$modal.find('.js_price_total').length) {
             var price = 0;
-            var quantity = parseInt(this.$modal.find('input[name="add_qty"]').first().val());
-            this.$modal.find('.js_product.in_cart').each(function (){
+            this.$modal.find('.js_product.in_cart').each(function () {
+                var quantity = parseInt($(this).find('input[name="add_qty"]').first().val());
                 price += parseFloat($(this).find('.js_raw_price').html()) * quantity;
             });
 
@@ -493,7 +486,21 @@ var OptionalProductsModal = Dialog.extend(ServicesMixin, VariantMixin, {
      */
     _triggerPriceUpdateOnChangeQuantity: function () {
         return true;
-    }
+    },
+
+        /**
+     * Returns a unique id for `$el`.
+     *
+     * @private
+     * @param {$.Element} $el
+     * @returns {string}
+     */
+    _getUniqueId: function ($el) {
+        if (!$el.data('uniqueId')) {
+            $el.data('uniqueId', _.uniqueId());
+        }
+        return parseInt($el.data('uniqueId'));
+    },
 });
 
 return OptionalProductsModal;
