@@ -1,4 +1,4 @@
-odoo.define('hr.fields', function (require) {
+odoo.define('web.ImageZoom', function (require) {
     "use strict";
 
     var Widget = require('web.Widget');
@@ -8,10 +8,18 @@ odoo.define('hr.fields', function (require) {
     var session = require('web.session');
     var field_utils = require('web.field_utils');
 
-    require("website.content.zoomodoo");
+    require("web.zoomodoo");
 
     var qweb = core.qweb;
     var _lt = core._lt;
+
+    function getImageUrl(model, res_id, field) {
+        return session.url('/web/image', {
+            model: model,
+            id: JSON.stringify(res_id),
+            field: field,
+        });
+    }
 
     var FieldImageWithZoom = basic_fields.FieldBinaryImage.extend({
         description: _lt("Image with zoom"),
@@ -20,66 +28,49 @@ odoo.define('hr.fields', function (require) {
             this._super();
 
             if (this.mode === 'readonly') {
-                var url = session.url('/web/image', {
-                    model: this.model,
-                    id: JSON.stringify(this.res_id),
-                    field: 'image',
-                    unique: field_utils.format.datetime(this.recordData.__last_update).replace(/[^0-9]/g, ''),
-                });
+                var url = getImageUrl(this.model, this.res_id, 'image');
 
                 var $img = this.$el.find('img');
-
                 $img.attr('data-zoom', 1);
                 $img.attr('data-zoom-image', url);
 
-                $img.zoomOdoo({ event: 'mouseenter', attach: '.o_action_manager' });
+                $img.zoomOdoo({ event: 'mouseenter', attach: '.o_content', attachToTarget: true});
             }
         }
     });
 
     var BackgroundImage = Widget.extend({
-        tagName: 'span',
+        tagName: 'div',
 
         init: function (parent, name, record, options) {
             this._super.apply(this, arguments);
-
             this.record = record;
             this.options = options || {};
+            this.attrs = this.options.attrs || {};
 
-            if('tag' in options.attrs)
-                this.tagName = options.attrs['tag'];
-
-            console.log('init');
+            if('tag' in this.attrs.options)
+                this.tagName = this.attrs.options['tag'];
         },
         start: function () {
-            console.log('start');
             this._render();
         },
         _render: function() {
-            if(this.options && 'class' in this.options.attrs)
-                this.$el.addClass(this.options.attrs['class']);
+            if('class' in this.attrs.options)
+                this.$el.addClass(this.attrs.options['class']);
 
-            var url = session.url('/web/image', {
-                model: this.record.model,
-                id: JSON.stringify(this.record.res_id),
-                field: 'image',
-            });
-            var url_thumb = session.url('/web/image', {
-                model: this.record.model,
-                id: JSON.stringify(this.record.res_id),
-                field: 'image_medium',
-            });
+            var url = getImageUrl(this.record.model, this.record.res_id, 'image');
+            var url_thumb = getImageUrl(this.record.model, this.record.res_id, 'image_medium');
 
             this.$el.css('backgroundImage', 'url(' + url_thumb + ')');
             this.$el.attr('data-zoom', 1);
             this.$el.attr('data-zoom-image', url);
-
-            this.$el.zoomOdoo({ event: 'mouseenter', attach: '.o_action_manager' });
+            
+            this.$el.zoomOdoo({ event: 'mouseenter', attach: '.o_content', preventClicks: this.attrs.options.preventClicks, attachToTarget: true });
         }
     });
 
     registry.add('image_zoom', FieldImageWithZoom);
-    registry.add('bgimage', BackgroundImage);
+    registry.add('image_zoom_bg', BackgroundImage);
 
     return {
         FieldImageWithZoom: FieldImageWithZoom,

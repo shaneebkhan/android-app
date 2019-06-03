@@ -7,12 +7,4 @@
             <script type="text/javascript" src="/hr/static/src/js/chat.js"></script>
         </xpath>
     </template>
-
-    <template id="assets_common" inherit_id="web.assets_common" name="Image Widget With Zoom">
-        <xpath expr="." position="inside">
-            <script type="text/javascript" src="/website/static/src/js/content/zoomodoo.js"></script>
-            <script type="text/javascript" src="/hr/static/src/js/image_field.js"></script>
-            <link rel="stylesheet" type="text/css" href="/website/static/src/scss/website.zoomodoo.scss"/>
-        </xpath>
-    </template>
 </odoo>
