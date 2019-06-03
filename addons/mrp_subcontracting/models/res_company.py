@@ -17,7 +17,7 @@ class ResCompany(models.Model):
         for company in self:
             parent_location = self.env.ref('stock.stock_location_locations_partner', raise_if_not_found=False)
             subcontracting_location = self.env['stock.location'].create({
-                'name': _('%s: Subcontracting Location') % company.name,
+                'name': 'Subcontracting Location',
                 'usage': 'internal',
                 'location_id': parent_location.id,
                 'company_id': company.id,
