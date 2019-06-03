@@ -2,3 +2,4 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from . import stock_rules_report
+from . import storable_product_qty_wizard
