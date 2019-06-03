@@ -268,7 +268,7 @@ class StockRule(models.Model):
             'propagate_cancel': self.propagate_cancel,
             'propagate_date': self.propagate_date,
             'propagate_date_minimum_delta': self.propagate_date_minimum_delta,
-            'description_picking': product_id._get_description(self.picking_type_id),
+            'description_picking': values.get('description') or product_id._get_description(self.picking_type_id),
             'priority': values.get('priority', "1"),
         }
         for field in self._get_custom_move_fields():

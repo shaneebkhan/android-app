@@ -788,6 +788,7 @@ class StockMove(models.Model):
             elif self.rule_id.group_propagation_option == 'none':
                 group_id = False
         return {
+            'description': self.description_picking,
             'date_planned': self.date_expected,
             'move_dest_ids': self,
             'group_id': group_id,

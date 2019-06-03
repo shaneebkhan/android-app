@@ -203,6 +203,7 @@ class MrpProduction(models.Model):
     production_location_id = fields.Many2one('stock.location', "Production Location", related='product_id.property_stock_production', readonly=False)
     picking_ids = fields.Many2many('stock.picking', compute='_compute_picking_ids', string='Picking associated to this manufacturing order')
     delivery_count = fields.Integer(string='Delivery Orders', compute='_compute_picking_ids')
+    description = fields.Char()
 
     @api.depends('procurement_group_id')
     def _compute_picking_ids(self):

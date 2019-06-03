@@ -346,6 +346,7 @@ class SaleOrderLine(models.Model):
         date_planned = self.order_id.confirmation_date\
             + timedelta(days=self.customer_lead or 0.0) - timedelta(days=self.order_id.company_id.security_lead)
         values.update({
+            'description': self.name,
             'group_id': group_id,
             'sale_line_id': self.id,
             'date_planned': date_planned,
