@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="pos_payment_method_view_form" model="ir.ui.view">
+        <field name="name">pos.payment.method.form</field>
+        <field name="model">pos.payment.method</field>
+        <field name="arch" type="xml">
+            <form string="Pos Payment Methods">
+                <sheet>
+                    <group col="4" colspan="4" name="Payment methods">
+                        <field name="name" />
+                        <field name="receivable_account_id" />
+                        <field name="is_cash_count" />
+                        <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)]}"/>
+                        <field name="is_identify_customer" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="pos_payment_method_view_tree" model="ir.ui.view">
+        <field name="name">pos.payment.method.tree</field>
+        <field name="model">pos.payment.method</field>
+        <field name="arch" type="xml">
+            <tree string="POS Payment Methods">
+                <field name="name" />
+                <field name="receivable_account_id" />
+                <field name="cash_journal_id" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="pos_payment_method_view_search" model="ir.ui.view">
+        <field name="name">pos.payment.search.view</field>
+        <field name="model">pos.payment.method</field>
+        <field name="arch" type="xml">
+            <search string="Pos Payment Methods">
+                <field name="name"/>
+                <field name="receivable_account_id"/>
+                <group expand="1" string="Group By">
+                    <filter name="group_by_receivable_account" string="Account" domain="[]"  context="{'group_by':'receivable_account_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_payment_method_form" model="ir.actions.act_window">
+        <field name="name">Pos Payment Methods</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">pos.payment.method</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" eval="False"/>
+        <field name="domain">[]</field>
+        <field name="context">{'search_default_group_by_account': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_empty_folder">
+                No orders found
+            </p><p>
+                To record new orders, start a new session.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_pos_payment_method" parent="menu_point_of_sale" action="action_pos_payment_method_form" sequence="1" groups="group_pos_manager,group_pos_user"/>
+
+    <record id="action_payment_methods_tree" model="ir.actions.act_window">
+        <field name="context">{}</field>
+        <field name="name">Pos Payments Methods</field>
+        <field name="res_model">pos.payment.method</field>
+        <field name="view_id" ref="pos_payment_method_view_tree"/>
+        <field name="view_mode">tree,form,kanban</field>
+    </record>
+</odoo>

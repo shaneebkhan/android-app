@@ -1966,14 +1966,8 @@ var PaymentScreenWidget = ScreenWidget.extend({
         lines.appendTo(this.$('.paymentlines-container'));
     },
     click_paymentmethods: function(id) {
-        var cashregister = null;
-        for ( var i = 0; i < this.pos.cashregisters.length; i++ ) {
-            if ( this.pos.cashregisters[i].journal_id[0] === id ){
-                cashregister = this.pos.cashregisters[i];
-                break;
-            }
-        }
-        this.pos.get_order().add_paymentline( cashregister );
+        var payment_method = this.pos.payment_methods_by_id[id]
+        this.pos.get_order().add_paymentline(payment_method);
         this.reset_input();
         this.render_paymentlines();
     },
@@ -2184,6 +2178,22 @@ var PaymentScreenWidget = ScreenWidget.extend({
                 self.invoicing = false;
                 self.gui.show_screen('receipt');
             });
+        } else if (order.is_to_identify_customer() && !order.get_client()) {
+            var payment_method_names = Array.from(new Set(order.paymentlines.map(function(pl) {
+                return pl.payment_method
+            }).filter(function(pm) {
+                return pm.is_identify_customer;
+            }).map(function(pm) {
+                return pm.name
+            })));
+            order.finalized = false;
+            this.gui.show_popup('confirm',{
+                'title': _t('Please select the Customer'),
+                'body': _t(`You need to select the customer before you use the following payment methods: \n[${payment_method_names.join(', ')}].`),
+                confirm: function(){
+                    self.gui.show_screen('clientlist', null, false);
+                },
+            }); 
         } else {
             this.pos.push_order(order);
             this.gui.show_screen('receipt');

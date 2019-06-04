@@ -655,6 +655,13 @@
             </t>
         </div>
 
+        <div class='paymentmethods'>
+            <t t-foreach="widget.pos.payment_methods" t-as="payment_method">
+                <div class="button paymentmethod" t-att-data-id="payment_method.id">
+                    <t t-esc="payment_method.name" />
+                </div>
+            </t>
+        </div>
     </t>
 
     <t t-name="PaymentScreenWidget">

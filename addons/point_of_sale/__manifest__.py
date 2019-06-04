@@ -26,6 +26,7 @@
         'views/pos_category_view.xml',
         'views/product_view.xml',
         'views/account_journal_view.xml',
+        'views/pos_payment_method_views.xml',
         'views/pos_config_view.xml',
         'views/pos_session_view.xml',
         'views/point_of_sale_sequence.xml',
@@ -41,6 +42,7 @@
         'views/report_userlabel.xml',
         'views/report_saledetails.xml',
         'views/point_of_sale_dashboard.xml',
+        'views/pos_payment_views.xml',
     ],
     'demo': [
         'data/point_of_sale_demo.xml',

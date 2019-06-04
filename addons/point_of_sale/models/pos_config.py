@@ -167,6 +167,8 @@ class PosConfig(models.Model):
     is_posbox = fields.Boolean("PosBox")
     is_header_or_footer = fields.Boolean("Header & Footer")
     module_pos_hr = fields.Boolean(help="Show employee login screen")
+    receivable_account_id = fields.Many2one(comodel_name='account.account', string='Receivable Account')
+    payment_method_ids = fields.Many2many(comodel_name='pos.payment.method', string='Payment Methods')
 
     def _compute_is_installed_account_accountant(self):
         account_accountant = self.env['ir.module.module'].sudo().search([('name', '=', 'account_accountant'), ('state', '=', 'installed')])
@@ -436,6 +438,9 @@ class PosConfig(models.Model):
             self._check_company_invoice_journal()
             self._check_company_payment()
             self._check_currencies()
+            # during the creation of the pos.session, account.bank.statement is created
+            # and set as the statement_id field of the pos.session.
+            # The statement_id is used in the creation of pos.order record.
             self.current_session_id = self.env['pos.session'].create({
                 'user_id': self.env.uid,
                 'config_id': self.id

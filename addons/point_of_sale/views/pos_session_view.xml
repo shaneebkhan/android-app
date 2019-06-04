@@ -31,6 +31,22 @@
 
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button 
+                            name="show_payments_list" 
+                            type="object" 
+                            class="oe_stat_button" 
+                            icon="fa-bars" 
+                            string="Pos Payments">
+                        </button>
+                        <button 
+                            name="show_journal_entries" 
+                            type="object" 
+                            class="oe_stat_button" 
+                            icon="fa-pencil-square" 
+                            string="Journal Entries">
+                        </button>
+                    </div>
                     <field name="cash_register_id" invisible="1"/>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" name="%(action_pos_box_in)d"
@@ -119,17 +135,14 @@
                             </group>
                         </div>
                     </group>
-                    <separator string="Summary by Payment Methods" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>
-                    <field name="statement_ids" attrs="{'invisible' : [('state', '=', 'opening_control')]}">
+                    <separator string="Summary of Orders" attrs="{'invisible' : [('order_ids', '=', False)]}"/>
+                    <field name="order_ids">
                         <tree string="Statements">
                             <field name="name" />
-                            <field name="journal_id" />
-                            <field name="balance_start" />
-                            <field name="total_entry_encoding" />
-                            <field name="balance_end_real" />
-                            <field name="difference" />
-                            <field name="currency_id" groups="base.group_multi_currency" />
-                            <field name="state" />
+                            <field name="date_order" />
+                            <field name="partner_id" />
+                            <field name="amount_tax" />
+                            <field name="amount_total" />
                         </tree>
                     </field>
                 </sheet>
