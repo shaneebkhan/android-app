@@ -45,7 +45,6 @@ odoo.define('web.GraphRenderer', function (require) {
         },
     };
 
-
     var NO_DATA = [_t('No data')];
     NO_DATA.isNoData = true;
 
@@ -75,17 +74,12 @@ odoo.define('web.GraphRenderer', function (require) {
          * @override
          */
         updateState: function () {
-
             return this._super.apply(this, arguments);
         },
         /**
-         * The graph view uses the Chart.js lib to render the graph. This lib requires
-         * that the rendering is done directly into the DOM (so that it can correctly
-         * compute positions). However, the views are always rendered in fragments,
-         * and appended to the DOM once ready (to prevent them from flickering). We
-         * here use the on_attach_callback hook, called when the widget is attached
-         * to the DOM, to perform the rendering. This ensures that the rendering is
-         * always done in the DOM.
+         * TO DO: apparently, a canevas used by Chart.js to draw a chart does
+         * not need to be in the dom. We could avoid the use of on_attach_callback
+         * and on_detach_callback.
          *
          * @override
          */
@@ -101,7 +95,6 @@ odoo.define('web.GraphRenderer', function (require) {
             this._super.apply(this, arguments);
             this.isInDOM = false;
         },
-
 
         //--------------------------------------------------------------------------
         // Private
@@ -180,7 +173,6 @@ odoo.define('web.GraphRenderer', function (require) {
         _getColor: function (index) {
             return COLORS[index % COLOR_NB];
         },
-
         /**
          * Determines the initial section of the labels array
          * over a dataset has to be completed. The section only depends
@@ -217,7 +209,6 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return this.state.origins[dataPt.originIndex];
         },
-
         /**
          * Returns a DateClasses instance used to manage equivalence of dates.
          *
@@ -238,7 +229,6 @@ odoo.define('web.GraphRenderer', function (require) {
             });
             return new DateClasses(dateSets);
         },
-
         /**
          * Determines over which label is the data point
          *
@@ -264,27 +254,23 @@ odoo.define('web.GraphRenderer', function (require) {
                 return dataPt.labels;
             }
         },
-
         /**
          * @private
-         * Leaving legend element handler. 
-         * If there's a tooltip in the DOM it'll be removed 
+         * Leaving legend element handler.
+         * If there's a tooltip in the DOM it'll be removed
          */
-
         _LeaveLegendTootip: function () {
             var tooltipEl = document.getElementById('chartjs-tooltip-legend');
             if (tooltipEl) {
                 tooltipEl.remove();
             }
         },
-
         /**
          * If the name has been shortened this function will create a a tooltip that displays the full text.
          * @private
-         * @param {MouseEvent} e 
+         * @param {MouseEvent} e
          * @param {Object} legendItem see chartjs documentation: https://www.chartjs.org/docs/latest/configuration/legend.html
          */
-
         _CreateLegendTooltip: function (e, legendItem) {
             var tooltipEl = document.getElementById('chartjs-tooltip-legend');
             if (legendItem.text === legendItem.textFull) {
@@ -304,7 +290,6 @@ odoo.define('web.GraphRenderer', function (require) {
                 tooltipEl.style.left = chartAreaRight - tooltipEl.clientWidth + 'px';
             }
         },
-
         /**
          * Returns the options used to generate the chart legend.
          *
@@ -378,7 +363,6 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return legendOptions;
         },
-
         /**
          * Returns the options used to generate the chart axes.
          *
@@ -421,12 +405,11 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return {};
         },
-
         /**
          * build the tooltip label
          * @param {Object} dataset are the datasets to be displayed
          * @param {Array} label
-         * @return {string} returns builded label 
+         * @return {string} returns builded label
          */
         _buildLabel: function (dataset, label) {
             label = this._relabelling(label, dataset.originIndex);
@@ -435,15 +418,14 @@ odoo.define('web.GraphRenderer', function (require) {
             }
             return label;
         },
-
         /**
          * This function extracts the informations that are going to be displayed for each dataset
          * @param {Object} datasets are the datasets to be displayed
-         * @param {number} yLabel is the abscisse of the tolltil 
+         * @param {number} yLabel is the abscisse of the tolltil
          * @param {Object} tooltipModel see chartjs documentation
-         * @param {Array} label 
+         * @param {Array} label
          * @return {Object[]} contains in order by count the informations necessary to display the tooltip
-         * 
+         *
          */
         _GetDisplayTooltipValues: function (datasets, yLabel, tooltipModel, label) {
             var self = this;
@@ -463,7 +445,6 @@ odoo.define('web.GraphRenderer', function (require) {
             });
             return datasetsDisplayValues;
         },
-
         /**
          * This function aims to compute the number of lines that have to be slice of the tooltip for it being able to fit on the chart canvas
          * It then proceed to slicing the unwanted lines.
@@ -473,7 +454,6 @@ odoo.define('web.GraphRenderer', function (require) {
          * @param {DOM elemnts[]} trArray contains the lines of the tooltip
          * @param {DOM element} tbody contains the table tbody of tooltip
          */
-
         _AdjustTooltipHeight: function (tooltipEl, maxTooltipHeight, trArray, tbody) {
             var sizeOneLine = tooltipEl.clientHeight / this.chart.config.data.datasets.length;
             var numberOfLinesToRemoved = Math.round((tooltipEl.clientHeight - maxTooltipHeight) / sizeOneLine);
@@ -488,17 +468,15 @@ odoo.define('web.GraphRenderer', function (require) {
             tr.appendChild(td);
             tbody.appendChild(tr);
         },
-
         /**
          * This function compute the left position of the tooltip to avoid the tooltip to be positionned over the chart's limit
          * @param {DOM Element} tooltipEl this element contains the tooltip div
-         * @param {Object} position position of the tooltip 
+         * @param {Object} position position of the tooltip
          * @param {Object} tooltipModel see chartjs documentation
          * @param {Number} chartAreaLeft left border of the chart
          * @param {Number} chartAreaRight right border of the chart
          * @return {Number} leftPosition the left position of the tooltip after potential corrections
          */
-
         _AdjustTooltipLeftPosition: function (tooltipEl, position, tooltipModel, chartAreaLeft, chartAreaRight) {
             var tooltilWidth = tooltipEl.clientWidth;
             var leftPosition = position.left + window.pageXOffset + tooltipModel.caretX - tooltilWidth / 2;
@@ -512,7 +490,7 @@ odoo.define('web.GraphRenderer', function (require) {
         /**
          * This function compute the top position of the tooltip to avoid the tooltip to be positionned over the chart's limit
          * @param {DOM Element} tooltipEl this element contains the tooltip div
-         * @param {Object} position position of the tooltip 
+         * @param {Object} position position of the tooltip
          * @param {Object} tooltipModel see chartjs documentation
          * @param {Number} chartAreaBottom bottom border of the chart
          * @param {Number} chartAreaTop top border of the chart
@@ -533,7 +511,6 @@ odoo.define('web.GraphRenderer', function (require) {
                 tooltipEl.style.top = topPosition + 'px';
             }
         },
-
         /**
          * This function creates a custom HTML tooltip.
          * @param {Object} tooltipModel see chartjs documentation for more info https://www.chartjs.org/docs/latest/configuration/tooltip.html
@@ -615,7 +592,6 @@ odoo.define('web.GraphRenderer', function (require) {
             tooltipEl.style.left = this._AdjustTooltipLeftPosition(tooltipEl, position, tooltipModel, chartAreaLeft, chartAreaRight);
             tooltipEl.style.top = this._AdjustTooltipTopPosition(tooltipEl, position, tooltipModel, chartAreaBottom, chartAreaTop);
         },
-
         /**
          * Returns the options used to generate chart tooltips.
          *
@@ -813,7 +789,6 @@ odoo.define('web.GraphRenderer', function (require) {
          * Determine how to relabel a label according to a given origin.
          * The idea is that the getLabel function is in general not invertible but
          * it is when restricted to the set of dataPoints comming from a same origin.
-    
          * @private
          * @param {Array} label
          * @param {Array} originIndex
