@@ -32,6 +32,7 @@
             <script type="text/javascript" src="/website_sale/static/src/js/website_sale_payment.js"></script>
             <script type="text/javascript" src="/website_sale/static/src/js/website_sale_validate.js"></script>
             <script type="text/javascript" src="/website_sale/static/src/js/website_sale_tracking.js"></script>
+            <script type="text/javascript" src="/website_sale/static/src/js/widget_multirange_price_selector.js"></script>
         </xpath>
     </template>
 
@@ -440,6 +441,17 @@
                         </t>
                     </ul>
                 </form>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="products_price" inherit_id="website_sale.products" active="False" customize_show="True" name="eCommerce Product Prices">
+        <xpath expr="//div[@id='products_grid_before']" position="before">
+            <t t-set="enable_left_column" t-value="True"/>
+        </xpath>
+        <xpath expr="//div[@id='products_grid_before']" position="inside">
+            <div id="o_shop_price_range">
+                <input type="range" multiple="multiple" class="custom-range" t-att-data-currency="pricelist.currency_id.symbol" t-att-data-currency-position="pricelist.currency_id.position" t-att-step="pricelist.currency_id.rounding" t-attf-min="#{'%f' % (available_min_price)}" t-attf-max="#{'%f' % (available_max_price)}" t-attf-value="#{'%f,%f' % (min_price, max_price)}"/>
             </div>
         </xpath>
     </template>

@@ -3,6 +3,7 @@
 import json
 import logging
 from werkzeug.exceptions import Forbidden, NotFound
+from werkzeug.urls import url_parse, url_decode, url_encode
 
 from odoo import fields, http, tools, _
 from odoo.http import request
@@ -137,7 +138,7 @@ class WebsiteSale(http.Controller):
 
     def _get_compute_currency_and_context(self, product=None):
         pricelist_context, pricelist = self._get_pricelist_context()
-        compute_currency = self._get_compute_currency(pricelist, product)
+        compute_currency = self._get_compute_currency_product_to_pricelist(pricelist, product)
         return compute_currency, pricelist_context, pricelist
 
     def _get_pricelist_context(self):
@@ -151,11 +152,19 @@ class WebsiteSale(http.Controller):
 
         return pricelist_context, pricelist
 
-    def _get_compute_currency(self, pricelist, product=None):
-        company = product and product._get_current_company(pricelist=pricelist, website=request.website) or pricelist.company_id or request.website.company_id
-        from_currency = (product or request.env['res.company']._get_main_company()).currency_id
-        to_currency = pricelist.currency_id
+    def _get_compute_currency_pricelist_to_pricelist(self, pricelistFrom, pricelistTo, product=None):
+        company = product and product._get_current_company(pricelist=pricelistTo, website=request.website) or pricelistTo.company_id or request.website.company_id
+        from_currency = pricelistFrom.currency_id
+        to_currency = pricelistTo.currency_id
         return lambda price: from_currency._convert(price, to_currency, company, fields.Date.today())
+
+    def _get_compute_currency_product_to_pricelist(self, pricelist, product):
+        pricelistFrom = (product or request.env['res.company']._get_main_company())
+        return self._get_compute_currency_pricelist_to_pricelist(pricelistFrom, pricelist, product)
+
+    def _get_compute_currency_pricelist_to_product(self, pricelist, product):
+        pricelistTo = (product or request.env['res.company']._get_main_company())
+        return self._get_compute_currency_pricelist_to_pricelist(pricelist, pricelistTo, product)
 
     def _get_search_order(self, post):
         # OrderBy will be parsed in orm and so no direct sql injection
@@ -203,7 +212,7 @@ class WebsiteSale(http.Controller):
         '''/shop/category/<model("product.public.category", "[('website_id', 'in', (False, current_website_id))]"):category>''',
         '''/shop/category/<model("product.public.category", "[('website_id', 'in', (False, current_website_id))]"):category>/page/<int:page>'''
     ], type='http', auth="public", website=True)
-    def shop(self, page=0, category=None, search='', ppg=False, **post):
+    def shop(self, page=0, category=None, search='', min_price=0, max_price=0, ppg=False, **post):
         add_qty = int(post.get('add_qty', 1))
         if category:
             category = request.env['product.public.category'].search([('id', '=', int(category))], limit=1)
@@ -228,7 +237,7 @@ class WebsiteSale(http.Controller):
 
         domain = self._get_search_domain(search, category, attrib_values)
 
-        keep = QueryURL('/shop', category=category and int(category), search=search, attrib=attrib_list, order=post.get('order'))
+        keep = QueryURL('/shop', category=category and int(category), search=search, attrib=attrib_list, min_price=min_price, max_price=max_price, order=post.get('order'))
 
         pricelist_context, pricelist = self._get_pricelist_context()
 
@@ -261,7 +270,37 @@ class WebsiteSale(http.Controller):
                 parent_category_ids.append(current_category.parent_id.id)
                 current_category = current_category.parent_id
 
-        product_count = len(search_product)
+        compute_currency = False
+        if search_product:
+            compute_currency = self._get_compute_currency_product_to_pricelist(pricelist, search_product[:1])
+
+            where, args = expression.expression(domain, Product).to_sql()
+            query = 'SELECT MIN("list_price") as min_list_price, MAX("list_price") as max_list_price FROM "product_template" WHERE %s'
+            request.env.cr.execute(query % where, args)
+            result = request.env.cr.dictfetchall()[0]
+            available_min_price = compute_currency(result.get('min_list_price'))
+            available_max_price = compute_currency(result.get('max_list_price'))
+
+            if min_price or max_price:
+                compute_inverse_currency = self._get_compute_currency_pricelist_to_product(pricelist, search_product[:1])
+                if min_price:
+                    try:
+                        min_price = float(min_price)
+                        post['min_price'] = min_price
+                        domain = expression.AND([domain, [('list_price', '>=', compute_inverse_currency(min_price) - pricelist.currency_id.rounding)]])
+                    except ValueError:
+                        min_price = 0
+                if max_price:
+                    try:
+                        max_price = float(max_price)
+                        post['max_price'] = max_price
+                        domain = expression.AND([domain, [('list_price', '<=', compute_inverse_currency(max_price) + pricelist.currency_id.rounding)]])
+                    except ValueError:
+                        max_price = 0
+        else:
+            available_max_price = available_min_price = 0
+
+        product_count = search_product.search_count(domain)
         pager = request.website.pager(url=url, total=product_count, page=page, step=ppg, scope=7, url_args=post)
         products = Product.search(domain, limit=ppg, offset=pager['offset'], order=self._get_search_order(post))
 
@@ -271,8 +310,6 @@ class WebsiteSale(http.Controller):
             attributes = ProductAttribute.search([('attribute_line_ids.value_ids', '!=', False), ('attribute_line_ids.product_tmpl_id', 'in', search_product.ids)])
         else:
             attributes = ProductAttribute.browse(attributes_ids)
-
-        compute_currency = self._get_compute_currency(pricelist, products[:1])
 
         layout_mode = request.session.get('website_sale_shop_layout_mode')
         if not layout_mode:
@@ -301,6 +338,10 @@ class WebsiteSale(http.Controller):
             'parent_category_ids': parent_category_ids,
             'search_categories_ids': search_categories and search_categories.ids,
             'layout_mode': layout_mode,
+            'min_price': min_price if min_price else available_min_price,
+            'max_price': max_price if max_price else available_max_price,
+            'available_min_price': available_min_price,
+            'available_max_price': available_max_price,
         }
         if category:
             values['main_object'] = category
@@ -358,9 +399,29 @@ class WebsiteSale(http.Controller):
     def pricelist_change(self, pl_id, **post):
         if (pl_id.selectable or pl_id == request.env.user.partner_id.property_product_pricelist) \
                 and request.website.is_pricelist_available(pl_id.id):
+
+            redirect_url = request.httprequest.referrer
+            if redirect_url:
+                decoded_url = url_parse(redirect_url)
+                args = url_decode(decoded_url.query)
+                try:
+                    min_price = float(args.get('min_price') or 0)
+                except ValueError:
+                    min_price = 0
+                try:
+                    max_price = float(args.get('max_price') or 0)
+                except ValueError:
+                    max_price = 0
+                if min_price or max_price:
+                    previous_price_list = request.website.get_current_pricelist()
+                    previous_compute_currency = self._get_compute_currency_pricelist_to_pricelist(previous_price_list, pl_id)
+                    args['min_price'] = str(previous_compute_currency(min_price))
+                    args['max_price'] = str(previous_compute_currency(max_price))
+                    redirect_url = decoded_url.replace(query=url_encode(args)).to_url()
+
             request.session['website_sale_current_pl'] = pl_id.id
             request.website.sale_get_order(force_pricelist=pl_id.id)
-        return request.redirect(request.httprequest.referrer or '/shop')
+        return request.redirect(redirect_url or '/shop')
 
     @http.route(['/shop/pricelist'], type='http', auth="public", website=True, sitemap=False)
     def pricelist(self, promo, **post):
