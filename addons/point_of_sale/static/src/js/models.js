@@ -2553,6 +2553,9 @@ exports.Order = Backbone.Model.extend({
     add_paymentline: function(payment_method) {
         this.assert_editable();
         var newPaymentline = new exports.Paymentline({},{order: this, payment_method:payment_method, pos: this.pos});
+        if(!payment_method.is_cash_count || this.pos.config.iface_precompute_cash){
+            newPaymentline.set_amount( this.get_due() );
+        };
         this.paymentlines.add(newPaymentline);
         this.select_paymentline(newPaymentline);
 

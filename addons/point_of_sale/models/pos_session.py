@@ -343,6 +343,9 @@ class PosSession(models.Model):
     @api.model
     @timeit
     def create_account_move(self, session, invoiced_orders, not_invoiced_orders):
+        """ Creates account move and move lines for the session.
+            Calculation based on orders (`invoiced_orders` and `not_invoiced_orders`).
+        """
         journal = session.config_id.journal_id
         account_move = self.env['account.move'].create({
             'journal_id': journal.id,
@@ -449,6 +452,8 @@ class PosSession(models.Model):
         account_amount_dict = defaultdict(lambda: 0.0)
         for order in invoiced_orders:
             account_id = order.invoice_id.account_id.id
+            # Use `amount_total` (w/c includes tax) field since this will be
+            # reconciled with receivable item in an invoice move which counts taxes.
             account_amount_dict[account_id] += order.amount_total
 
         return [generate_line_args(account_id, amount) for account_id, amount in account_amount_dict.items()]
@@ -502,7 +507,7 @@ class PosSession(models.Model):
             return self._credit_amount(partial_args, amount)
         
         def compute_tax(order_line):
-            currency = None  # TODO should this be computed here?
+            currency = None  # TODO jcb: should this be computed here?
             return order_line\
                     .tax_ids_after_fiscal_position\
                     .compute_all(price_unit=order_line.price_unit, quantity=order_line.qty, currency=currency)\
@@ -553,8 +558,8 @@ class PosSession(models.Model):
             abs(`amount`) assign to the correct field.  
         """
         if amount > 0:
-            return {**partial_move_line_args, **{'credit': amount, 'debit': 0.0}}
-        return {**partial_move_line_args, **{'credit': 0.0, 'debit': abs(amount)}}
+            return dict(credit=amount, debit=0.0, **partial_move_line_args)
+        return dict(credit=0.0, debit=abs(amount), **partial_move_line_args)
 
     @api.model
     def _debit_amount(self, partial_move_line_args, amount):
@@ -562,8 +567,8 @@ class PosSession(models.Model):
             abs(`amount`) assign to the correct field.  
         """
         if amount > 0:
-            return {**partial_move_line_args, **{'credit': 0.0, 'debit': amount}}
-        return {**partial_move_line_args, **{'credit': abs(amount), 'debit': 0.0}}
+            return dict(credit=0.0, debit=amount, **partial_move_line_args)
+        return dict(credit=abs(amount), debit=0.0, **partial_move_line_args)
 
     @api.multi
     def show_journal_entries(self):

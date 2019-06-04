@@ -6,11 +6,14 @@
         <field name="arch" type="xml">
             <form string="Pos Payment Methods">
                 <sheet>
-                    <group col="4" colspan="4" name="Payment methods">
-                        <field name="name" />
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" class="oe_inline"/></h1>
+                    </div>
+                    <group name="Payment methods">
                         <field name="receivable_account_id" />
                         <field name="is_cash_count" />
-                        <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)]}"/>
+                        <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)], 'required': [('is_cash_count', '=', True)]}" />
                         <field name="is_identify_customer" />
                     </group>
                 </sheet>
@@ -25,7 +28,8 @@
             <tree string="POS Payment Methods">
                 <field name="name" />
                 <field name="receivable_account_id" />
-                <field name="cash_journal_id" />
+                <field name="is_cash_count" />
+                <field name="is_identify_customer" />
             </tree>
         </field>
     </record>

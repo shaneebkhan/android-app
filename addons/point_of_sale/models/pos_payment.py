@@ -14,9 +14,7 @@ class PosPayment(models.Model):
 
     name = fields.Char(readonly=True, copy=False)
     pos_order_id = fields.Many2one(comodel_name='pos.order', string='Pos Order')
-    amount = fields.Monetary(string='Payment Amount', required=True, readonly=True, help="Total amount of the payment (base_amount + tax_amount).")
-    # base_amount = fields.Monetary(string='Base Amount', required=True, readonly=True, help="This is the untaxed amount of the payment.")
-    # tax_amount = fields.Monetary(string='Tax Amount', required=True, readonly=True, help="This is the tax amount of the payment.")
+    amount = fields.Monetary(string='Payment Amount', required=True, readonly=True, help="Total amount of the payment.")
     currency_id = fields.Many2one('res.currency', string='Currency', required=True, readonly=True, default=lambda self: self.env.company.currency_id)
     payment_date = fields.Date(string='Payment Date', default=fields.Date.context_today, required=True, readonly=True, copy=False, tracking=True)
     partner_id = fields.Many2one('res.partner', related='pos_order_id.partner_id', string='Customer', tracking=True, readonly=True)

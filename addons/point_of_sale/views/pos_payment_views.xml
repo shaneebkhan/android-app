@@ -22,9 +22,9 @@
         <field name="model">pos.payment</field>
         <field name="arch" type="xml">
             <tree string="POS Payments" create="0">
+                <field name="payment_date" />
                 <field name="pos_order_id" />
                 <field name="amount" />
-                <field name="payment_date" />
             </tree>
         </field>
     </record>
