@@ -153,7 +153,10 @@ class PosOrder(models.Model):
             pos_session.refresh()
 
         if not float_is_zero(pos_order['amount_return'], prec_acc):
-            cash_payment_methods = pos_session.payment_method_ids.filtered(lambda pm: pm.is_cash_count)
+            cash_payment_methods = pos_session\
+                                    .payment_method_ids\
+                                    .filtered(lambda pm: pm.is_cash_count)\
+                                    .sorted(key=lambda pm: pm.id)
             payment_method = None
             if cash_payment_methods:
                 payment_method = cash_payment_methods[0]
@@ -1022,8 +1025,8 @@ class PosOrder(models.Model):
     def add_payment(self, data):
         """Create a new payment for the order
 
-        [jcb] it says create payment but actually bank statement line is being created?
-        [jcb] TODO do not create bank statement line
+        it says create payment but actually bank statement line is being created?
+        TODO jcb: do not create bank statement line
         This function, I think, can be deleted.
         """
         journal_id = data.get('journal', False)

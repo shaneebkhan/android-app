@@ -421,10 +421,19 @@ exports.PosModel = Backbone.Model.extend({
             return [['id', 'in', tmp.payment_method_ids]];
         },
         loaded: function(self, payment_methods) {
-            self.payment_methods = payment_methods;
+            self.payment_methods = payment_methods.sort(function(a,b){
+                // prefer cash payment_method to be first in the list
+                if (a.is_cash_count && !b.is_cash_count) {
+                    return -1;
+                } else if (!a.is_cash_count && b.is_cash_count) {
+                    return 1;
+                } else {
+                    return a.id - b.id;
+                }
+            });
             self.payment_methods_by_id = Object.fromEntries(payment_methods.map(
                 paymentMethod => [paymentMethod.id, paymentMethod]
-            ))
+            ));
         }
     },{
         model:  'account.fiscal.position',

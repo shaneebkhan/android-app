@@ -20,8 +20,7 @@ class PosPaymentMethod(models.Model):
         if active_sessions:
             raise UserError('Modifying payment methods used in an open session is not allowed.\n'
                             'Open sessions: %s' % (' '.join(active_sessions.mapped('name')),))
-        # remove cash_journal_id if is_cash_count
-        # TODO jcb: this doesn't work. Find another way.
-        if vals.get('is_cash_count') and vals.get('cash_journal_id'):
-            del vals['cash_journal_id']
+        # set cash_journal_id to False if is_cash_count is changed to False
+        if not vals.get('is_cash_count', True):
+            vals['cash_journal_id'] = False
         return super(PosPaymentMethod, self).write(vals)

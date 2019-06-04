@@ -1896,7 +1896,7 @@ var PaymentScreenWidget = ScreenWidget.extend({
 	}
 
 	if (! open_paymentline) {
-            this.pos.get_order().add_paymentline( this.pos.cashregisters[0]);
+            this.pos.get_order().add_paymentline( this.pos.payment_methods[0]);
             this.render_paymentlines();
         }
 

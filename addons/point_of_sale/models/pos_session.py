@@ -390,7 +390,7 @@ class PosSession(models.Model):
     @timeit
     def reconcile_stock_output_lines(self, session, account_move, invoiced_orders):
         invoice_account_moves = invoiced_orders.mapped('invoice_id').mapped('move_id')
-        # TODO Maybe a need of optimization 
+        # TODO jcb: Maybe a need of optimization 
         # There is a significant amount of time in performing this function even though
         # there are no involved anglo-saxon products.
         # Perhaps it is because of the pos_order_id put in each stock move.
@@ -542,7 +542,7 @@ class PosSession(models.Model):
         for move in moves.filtered(lambda m: m.product_id.categ_id.property_valuation == 'real_time'):
             exp_account = move.product_id.property_account_expense_id or move.product_id.categ_id.property_account_expense_categ_id
             out_account = move.product_id.categ_id.property_stock_account_output_categ_id
-            # TODO abs(move.product_uom_qty * move.price_unit) is used temporarily.
+            # TODO jcb: abs(move.product_uom_qty * move.price_unit) is used temporarily.
             # Check whether this is also applicable for returns.
             amount = abs(move.product_uom_qty * move.price_unit)
             debit_amounts[exp_account] = debit_amounts.get(exp_account, 0.0) + amount
