@@ -1230,8 +1230,8 @@ class StockMove(models.Model):
                 else:
                     move.state = 'confirmed'
 
-    def _get_upstream_documents_and_responsibles(self, visited):
-        if self.move_orig_ids and any(m.state not in ('done', 'cancel') for m in self.move_orig_ids):
+    def _get_upstream_documents_and_responsibles(self, visited, lazy=False):
+        if self.move_orig_ids and any(m.state not in ('done', 'cancel') for m in self.move_orig_ids) and lazy is False:
             result = set()
             visited |= self
             for move in self.move_orig_ids:

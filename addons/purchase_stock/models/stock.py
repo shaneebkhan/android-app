@@ -87,11 +87,11 @@ class StockMove(models.Model):
         super(StockMove, self)._clean_merged()
         self.write({'created_purchase_line_id': False})
 
-    def _get_upstream_documents_and_responsibles(self, visited):
+    def _get_upstream_documents_and_responsibles(self, visited, lazy=False):
         if self.created_purchase_line_id and self.created_purchase_line_id.state not in ('done', 'cancel'):
             return [(self.created_purchase_line_id.order_id, self.created_purchase_line_id.order_id.user_id, visited)]
         else:
-            return super(StockMove, self)._get_upstream_documents_and_responsibles(visited)
+            return super(StockMove, self)._get_upstream_documents_and_responsibles(visited, lazy=lazy)
 
     def _get_related_invoices(self):
         """ Overridden to return the vendor bills related to this stock move.
