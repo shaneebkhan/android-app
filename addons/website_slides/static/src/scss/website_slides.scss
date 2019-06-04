@@ -73,6 +73,23 @@ $o-wslides-fs-side-width: 300px;
 
         &.completed-disabled{
             pointer-events: none;
+
+            .o_wslides_js_quiz_edit_question, .o_wslides_js_quiz_delete_question {
+                pointer-events: auto;
+            }
+        }
+
+        .list-group .completed-disabled {
+            pointer-events: none;
+        }
+    }
+
+    a.o_wslides_js_quiz_is_correct {
+
+        color: black !important;
+
+        input:checked + i.fa-check-circle-o {
+            color: $primary !important;
         }
     }
 
