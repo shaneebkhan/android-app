@@ -126,6 +126,8 @@ class HrEmployeePrivate(models.Model):
     ], string="Departure Reason", groups="hr.group_hr_user", copy=False, tracking=True)
     departure_description = fields.Text(string="Additional Information", groups="hr.group_hr_user", copy=False, tracking=True)
     message_main_attachment_id = fields.Many2one(groups="hr.group_hr_user")
+    activity_exception_decoration = fields.Selection(groups="hr.group_hr_user")
+    activity_exception_icon = fields.Char(groups="hr.group_hr_user")
 
     _sql_constraints = [
         ('barcode_uniq', 'unique (barcode)', "The Badge ID must be unique, this one is already assigned to another employee."),
