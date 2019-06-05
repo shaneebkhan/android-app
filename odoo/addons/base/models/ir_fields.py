@@ -315,7 +315,6 @@ class IrFieldsConverter(models.AbstractModel):
             action['res_model'] = 'ir.model.data'
             action['domain'] = [('model', '=', field.comodel_name)]
 
-        model_name = self.env['ir.model'].search([('model', '=', field.comodel_name)]).name
         RelatedModel = self.env[field.comodel_name]
         if subfield == '.id':
             field_type = _(u"database id")
@@ -347,7 +346,7 @@ class IrFieldsConverter(models.AbstractModel):
                 if len(ids) > 1:
                     warnings.append(ImportWarning(
                         _(u"Found multiple matches for field '%%(field)s/%s' (%d matches)")
-                        % (model_name, len(ids))))
+                        %(field.string, len(ids))))
                 id, _name = ids[0]
             else:
                 name_create_enabled_fields = self.env.context.get('name_create_enabled_fields') or {}
@@ -365,13 +364,13 @@ class IrFieldsConverter(models.AbstractModel):
 
         if id is None:
             if error_msg:
-                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(model_name)s' and the following error was encountered when we attempted to create one: %(error_message)s")
+                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(field_string)s' and the following error was encountered when we attempted to create one: %(error_message)s")
             else:
-                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(model_name)s'")
+                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(field_string)s'")
             raise self._format_import_error(
                 ValueError,
                 message,
-                {'field_type': field_type, 'value': value, 'error_message': error_msg, 'model_name': model_name},
+                {'field_type': field_type, 'value': value, 'error_message': error_msg, 'field_string': field.string},
                 {'moreinfo': action})
         return id, field_type, warnings
 
