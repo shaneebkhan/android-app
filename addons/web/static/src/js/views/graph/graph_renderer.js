@@ -45,7 +45,6 @@ var FORMAT_OPTIONS = {
     },
 };
 
-
 var NO_DATA = [_t('No data')];
 NO_DATA.isNoData = true;
 
@@ -441,7 +440,7 @@ return AbstractRenderer.extend({
                         display: !this.isEmbedded,
                         labelString: this.fields[this.state.measure].string,
                     },
-                    stacked: this.state.mode === 'bar' && this.state.stacked,
+                    // stacked: this.state.mode === 'bar' && this.state.stacked,
                     ticks: {
                         callback: this._formatValue.bind(this),
                         suggestedMin: 0,
@@ -772,9 +771,24 @@ return AbstractRenderer.extend({
 
         // prepare data
         var data = this._prepareData(dataPoints);
+
+        // this.isStackable will be true if at least one origin has
+        // at least two datasets.
+        var originDatasetCounts = {};
+        this.isStackable = false;
+        for (var i = 0; i < data.datasets.length; i++) {
+            var dataset = data.datasets[i];
+            var originIndex = dataset.originIndex;
+            if (originIndex in originDatasetCounts) {
+                this.isStackable = true;
+                break;
+            } else {
+                originDatasetCounts[originIndex] = 1;
+            }
+        }
         data.datasets.forEach(function (dataset, index) {
             // used when stacked
-            dataset.stack = self.state.stacked ? self.state.origins[dataset.originIndex] : undefined;
+            dataset.stack = self.isStackable && self.state.stacked ? self.state.origins[dataset.originIndex] : undefined;
             // set dataset color
             var color = self._getColor(index);
             dataset.backgroundColor = color;
