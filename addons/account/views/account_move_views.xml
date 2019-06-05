@@ -134,23 +134,23 @@
             <field eval="100" name="priority"/>
             <field name="arch" type="xml">
                 <tree string="Journal Items" create="false" editable="bottom">
-                    <field name="date"/>
+                    <field name="date" optional="show"/>
                     <field name="journal_id" options='{"no_open":True}'/>
-                    <field name="name"/>
-                    <field name="ref"/>
+                    <field name="name" optional="show"/>
+                    <field name="ref" optional="show"/>
                     <field name="statement_id" invisible="1"/>
-                    <field name="partner_id"/>
+                    <field name="partner_id" optional="show"/>
                     <field name="account_id" options="{'no_open': True, 'no_create': True}" domain="[('company_id', '=', company_id)]" groups="account.group_account_user" attrs="{'readonly':[('parent_state','=','posted')]}"/>
-                    <field name="analytic_account_id" groups="account.group_account_user"/>
+                    <field name="analytic_account_id" groups="account.group_account_user" optional="show"/>
                     <field name="analytic_tag_ids" widget="many2many_tags" groups="analytic.group_analytic_tags"/>
                     <field name="reconciled" invisible="1"/>
-                    <field name="full_reconcile_id"/>
+                    <field name="full_reconcile_id" optional="show"/>
                     <field name="reconcile_model_id" invisible="1"/>
                     <field name="debit" sum="Total Debit"/>
                     <field name="credit" sum="Total Credit"/>
                     <field name="amount_currency" readonly="True" groups="base.group_multi_currency"/>
                     <field name="currency_id" readonly="True" invisible="1" />
-                    <field name="date_maturity"/>
+                    <field name="date_maturity" optional="hide"/>
                     <field name="company_currency_id" invisible="1"/>
                     <field name="company_id" invisible="1"/>
                     <field name="parent_state" invisible="1"/>
@@ -340,9 +340,10 @@
                 <tree decoration-info="state == 'draft'" string="Journal Entries">
                     <field name="date"/>
                     <field name="name"/>
-                    <field name="partner_id"/>
-                    <field name="ref"/>
+                    <field name="partner_id" optional="show"/>
+                    <field name="ref" optional="show"/>
                     <field name="journal_id"/>
+                    <field name="company_id" groups="base.group_multi_company" optional="show"/>
                     <field name="amount" sum="Total Amount"/>
                     <field name="state"/>
                     <field name="currency_id" invisible="1"/>

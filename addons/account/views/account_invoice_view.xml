@@ -172,24 +172,24 @@
             <field name="model">account.invoice</field>
             <field name="arch" type="xml">
                 <tree decoration-info="state == 'draft'" decoration-muted="state == 'cancel'" string="Invoice" js_class="account_tree">
-                    <field name="partner_id" groups="base.group_user" string="Customer"/>
-                    <field name="date_invoice"/>
                     <field name="number"/>
+                    <field name="partner_id" groups="base.group_user" string="Customer"/>
+                    <field name="date_invoice" optional="show"/>
                     <field name="commercial_partner_id" invisible="1"/>
                     <field name="reference" invisible="1"/>
                     <field name="name" invisible="1"/>
                     <field name="journal_id" invisible="1"/>
-                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                    <field name="user_id"/>
-                    <field name="date_due"/>
-                    <field name="origin"/>
-                    <field name="amount_untaxed_invoice_signed" string="Tax Excluded" sum="Total"/>
-                    <field name="amount_tax_signed" string="Tax" sum="Total"/>
-                    <field name="amount_total_signed" string="Total" sum="Total"/>
-                    <field name="residual_signed" string="Amount Due" sum="Amount Due"/>
+                    <field name="user_id" optional="show"/>
+                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" optional="show"/>
+                    <field name="date_due" optional="show"/>
+                    <field name="origin" optional="show"/>
+                    <field name="amount_untaxed_invoice_signed" string="Tax Excluded" sum="Total" optional="hide"/>
+                    <field name="amount_tax_signed" string="Tax" sum="Total" optional="hide"/>
+                    <field name="amount_total_signed" string="Total" sum="Total" optional="show"/>
+                    <field name="residual_signed" string="Amount Due" sum="Amount Due" optional="show"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="company_currency_id" invisible="1"/>
-                    <field name="state"/>
+                    <field name="state" optional="show"/>
                     <field name="type" invisible="context.get('type',True)"/>
                 </tree>
             </field>
@@ -256,22 +256,22 @@
                     <field name="source_email" invisible="1"/>
                     <field name="invoice_icon" string=" "/>
                     <field name="vendor_display_name" groups="base.group_user" string="Vendor"/>
-                    <field name="date_invoice" string="Bill Date"/>
+                    <field name="date_invoice" string="Bill Date" optional="show"/>
                     <field name="number"/>
-                    <field name="reference"/>
+                    <field name="reference" optional="show"/>
                     <field name="commercial_partner_id" invisible="1"/>
                     <field name="name" invisible="1"/>
                     <field name="journal_id" invisible="1"/>
-                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
-                    <field name="date_due"/>
-                    <field name="origin"/>
-                    <field name="amount_untaxed" string="Tax Excluded" sum="Total"/>
-                    <field name="amount_tax" sum="Total"/>
-                    <field name="amount_total_signed" string="Total" sum="Total"/>
-                    <field name="residual_signed" string="To Pay" sum="To pay"/>
+                    <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}" optional="show"/>
+                    <field name="date_due" optional="show"/>
+                    <field name="origin" optional="show"/>
+                    <field name="amount_untaxed" string="Tax Excluded" sum="Total" optional="hide"/>
+                    <field name="amount_tax" sum="Total" optional="hide"/>
+                    <field name="amount_total_signed" string="Total" sum="Total" optional="show"/>
+                    <field name="residual_signed" string="To Pay" sum="To pay" optional="show"/>
                     <field name="currency_id" invisible="1"/>
                     <field name="company_currency_id" invisible="1"/>
-                    <field name="state"/>
+                    <field name="state" optional="show"/>
                     <field name="type" invisible="context.get('type',True)"/>
                 </tree>
             </field>
