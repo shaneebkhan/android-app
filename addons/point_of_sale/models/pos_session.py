@@ -359,13 +359,13 @@ class PosSession(models.Model):
     @api.model
     @timeit
     def reconcile_invoiced_receivable_lines(self, move_lines, invoiced_orders):
-        # this can contain Receivable POS, not l.name is the criterion that the line is not pos receivable.
+        # this can contain Receivable POS, `not l.name` is the criterion that the line is not pos receivable.
         # Maybe it is necessary to create a field in an account.move.line that will qualify if it is a pos receivable line.
         receivable_lines = move_lines.filtered(lambda l: l.account_id.internal_type in ('payable', 'receivable') and not l.name)
         invoice_receivable_lines = invoiced_orders.mapped('invoice_id.move_id.line_ids').filtered(lambda l: l.account_id.internal_type in ('payable', 'receivable'))
         all_receivable_lines = invoice_receivable_lines | receivable_lines
         invoice_account_ids = invoice_receivable_lines.mapped('account_id').ids
-        # Receivable POS records are filtered here as only the invoice_receivable_accounts are considered
+        # Receivable POS records are filtered here because only the invoice_receivable_accounts are considered
         lines_by_account_id = [all_receivable_lines.filtered(lambda l: l.account_id.id == account_id) for account_id in invoice_account_ids]
         for lines in lines_by_account_id:
             lines.reconcile()
@@ -507,11 +507,15 @@ class PosSession(models.Model):
             return self._credit_amount(partial_args, amount)
         
         def compute_tax(order_line):
-            currency = None  # TODO jcb: should this be computed here?
-            return order_line\
-                    .tax_ids_after_fiscal_position\
-                    .compute_all(price_unit=order_line.price_unit, quantity=order_line.qty, currency=currency)\
-                    .get('taxes', []) 
+            currency = order_line.order_id.pricelist_id.currency_id
+            # TODO jcb: not so sure if it is necessary to filter the
+            # taxes because of the new implementation of multicompany
+            tax_ids = order_line.tax_ids_after_fiscal_position\
+                        .filtered(lambda t: t.company_id.id == order_line.order_id.company_id.id)
+            price = order_line.price_unit * (1 - (order_line.discount or 0.0) / 100.0)
+            return tax_ids\
+                    .compute_all(price_unit=price, quantity=order_line.qty, currency=currency)\
+                    .get('taxes', [])
 
         line_taxes = [compute_tax(line) for line in all_order_lines]
 
@@ -521,32 +525,38 @@ class PosSession(models.Model):
         flat_line_taxes = itertools.chain.from_iterable(line_taxes)
         
         # group the taxes by account_id and tax id
-        lines_args_dict = defaultdict(lambda: 0.0)
+        args_group_dict = defaultdict(lambda: 0.0)
         for tax in flat_line_taxes:
-            lines_args_dict[(tax['account_id'], tax['id'])] += tax['amount']
+            args_group_dict[(tax['account_id'], tax['id'])] += tax['amount']
 
-        return [generate_line_args(account_id, tax_id, amount) for (account_id, tax_id), amount in lines_args_dict.items()]
+        return [generate_line_args(account_id, tax_id, amount) for (account_id, tax_id), amount in args_group_dict.items()]
 
     @api.model
     def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders):
-        """
-        groups will only be based on product categories.
+        """ Anglo saxon journal items were already created in the invoiced orders
+            via the creation of account.invoice record.
+            
+            This method generates args for creating anglo-saxon journal items
+            that are grouped by account.
+
+            Calculation is based on the created stock moves when creating the
+            picking for each order.
         """
         StockMove = self.env['stock.move']
         moves = StockMove\
-            .search([('pos_order_id', 'in', not_invoiced_orders\
-            .filtered(lambda m: m.company_id.anglo_saxon_accounting).ids)])
+            .search([('pos_order_id', 'in', not_invoiced_orders.ids)])\
+            .filtered(lambda m: m.company_id.anglo_saxon_accounting)
         # group amounts by expense and output accounts
-        credit_amounts = {}
-        debit_amounts = {}
+        credit_amounts = defaultdict(lambda: 0.0)
+        debit_amounts = defaultdict(lambda: 0.0)
         for move in moves.filtered(lambda m: m.product_id.categ_id.property_valuation == 'real_time'):
             exp_account = move.product_id.property_account_expense_id or move.product_id.categ_id.property_account_expense_categ_id
             out_account = move.product_id.categ_id.property_stock_account_output_categ_id
             # TODO jcb: abs(move.product_uom_qty * move.price_unit) is used temporarily.
             # Check whether this is also applicable for returns.
             amount = abs(move.product_uom_qty * move.price_unit)
-            debit_amounts[exp_account] = debit_amounts.get(exp_account, 0.0) + amount
-            credit_amounts[out_account] = credit_amounts.get(out_account, 0.0) + amount
+            debit_amounts[exp_account] += amount
+            credit_amounts[out_account] += amount
 
         credit_lines = [self._credit_amount({'account_id': account.id, 'move_id': account_move.id}, amount) for account, amount in credit_amounts.items()]
         debit_lines = [self._debit_amount({'account_id': account.id, 'move_id': account_move.id}, amount) for account, amount in debit_amounts.items()]
@@ -556,6 +566,9 @@ class PosSession(models.Model):
     def _credit_amount(self, partial_move_line_args, amount):
         """ complete the `partial_move_line_args` by adding 'credit' and 'debit' fields with
             abs(`amount`) assign to the correct field.  
+        
+            TODO jcb: The following is a note about the required parameter of currency._convert method
+            required parameters: from_amount, to_currency, company, date
         """
         if amount > 0:
             return dict(credit=amount, debit=0.0, **partial_move_line_args)

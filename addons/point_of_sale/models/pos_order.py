@@ -619,8 +619,8 @@ class PosOrder(models.Model):
         states={'draft': [('readonly', False)]},
     )
     pos_payment_ids = fields.One2many(comodel_name='pos.payment', inverse_name='pos_order_id', string='Pos Payments', readonly=True)
-    session_state = fields.Selection(related='session_id.state', readonly=True, store=True)
-    session_move_id = fields.Many2one('account.move', string='Session Journal Entry', related='session_id.move_id', readonly=True, store=True, copy=False)
+    session_state = fields.Selection(related='session_id.state', readonly=True)
+    session_move_id = fields.Many2one('account.move', string='Session Journal Entry', related='session_id.move_id', readonly=True, copy=False)
 
     @api.depends('date_order', 'company_id', 'currency_id', 'company_id.currency_id')
     def _compute_currency_rate(self):
@@ -1026,7 +1026,7 @@ class PosOrder(models.Model):
         """Create a new payment for the order
 
         it says create payment but actually bank statement line is being created?
-        TODO jcb: do not create bank statement line
+        TODO jcb - DONE: do not create bank statement line
         This function, I think, can be deleted.
         """
         journal_id = data.get('journal', False)

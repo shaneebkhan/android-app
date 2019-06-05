@@ -89,9 +89,7 @@
                         <group >
                             <field name="session_state" invisible="1"/>
                             <group string="Inventory">
-                                <field name="company_id" groups="base.group_multi_company"/>
                                 <field name="location_id" widget="selection" groups="stock.group_stock_multi_locations"/>
-                                <field name="pricelist_id" groups="product.group_sale_pricelist"/>
                                 <field name="picking_id" readonly="1"/>
                             </group>
                             <group
@@ -103,6 +101,8 @@
                             </group>
                             <group string="Other Information">
                                 <field name="pos_reference"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="pricelist_id" groups="product.group_sale_pricelist"/>
                             </group>
                         </group>
                     </page>
