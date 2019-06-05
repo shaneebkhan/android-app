@@ -48,7 +48,7 @@
             <field name="inherit_id" ref="sale.view_quotation_tree"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='team_id']" position="after">
-                    <field name="warehouse_id" optional="hide"/>
+                    <field name="warehouse_id" options="{'no_create': True}" groups="stock.group_stock_multi_warehouses" optional="hide" />
                 </xpath>
             </field>
         </record>
@@ -59,7 +59,7 @@
             <field name="inherit_id" ref="sale.view_order_tree"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='team_id']" position="after">
-                    <field name="warehouse_id" optional="hide"/>
+                    <field name="warehouse_id" options="{'no_create': True}" groups="stock.group_stock_multi_warehouses" optional="hide"/>
                 </xpath>
             </field>
         </record>
