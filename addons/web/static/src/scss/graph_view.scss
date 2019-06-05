@@ -13,4 +13,54 @@
             }
         }
     }
+
+    div.o_graph_custom_tooltip {
+        border-radius: 15px;
+        background-color: white;
+        border: black solid 0.5px;
+        position: absolute;
+        z-index: 1;
+        padding: 10px;
+        pointer-events: none;
+
+        table {
+            font-size: 12px;
+            overflow: hidden;
+            display: block;
+            border-collapse: collapse;
+        }
+
+        th.o_measure {
+            font-weight: bold;
+            vertical-align: baseline;
+            padding-bottom: 1px;
+        }
+
+        td {
+
+            span.o_square {
+                height: 12px;
+                width: 12px;
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            span.o_label {
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+                color: black;
+                display: inline-block;
+                vertical-align: middle;
+            }
+            &.o_value {
+                padding-left: 5px;
+                text-align: right;
+            }
+        }
+
+        tr.o_show_more {
+            text-align: center;
+        }
+    }
 }
