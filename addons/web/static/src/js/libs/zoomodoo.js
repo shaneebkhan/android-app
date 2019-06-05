@@ -121,7 +121,45 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
 
     // Prevents having multiple zoom flyouts
     $attach.parent().find('.zoomodoo-flyout').remove();
+    this.$flyout.removeAttr('style');
     $attach.parent().append(this.$flyout);
+
+    if (this.opts.attachToTarget)
+    {
+        if(this.$zoom.height() < $(document).height())
+             this.$flyout.css('height', this.$zoom.height() + 'px');
+        if(this.$zoom.width() < $(document).width())
+             this.$flyout.css('width', this.$zoom.width() + 'px');
+
+        var offset = this.$target.offset();
+        var left = offset.left - this.$flyout.width();
+        var top = offset.top;
+
+        // Position the zoom on the right side of the target
+        // if there's not enough room on the left
+        if(left < 0) {
+            if(offset.left < ($(document).width() / 2))
+                left = offset.left + this.$target.width();
+            else
+                left = 0;
+        }
+
+        // Prevents the flyout to overflow 
+        if(left + this.$flyout.width() > $(document).width()) {
+            this.$flyout.css('width',  $(document).width() - left + 'px');
+        }
+        else if(left == 0) // Limit the max width if displayed on the left
+        {
+            this.$flyout.css('width', offset.left + 'px');
+        }
+
+        // Prevents the zoom to be displayed outside the current viewport
+        if((top + this.$flyout.height()) > $(document).height()) {
+            top = $(document).height() - this.$flyout.height();
+        }
+
+        this.$flyout.css('transform', 'translate3d(' + left + 'px, ' + top + 'px, 0px)');
+    }
 
     w1 = this.$target.width();
     h1 = this.$target.height();
@@ -139,30 +177,6 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
 
     rw = dw / w1;
     rh = dh / h1;
-
-    if (this.opts.attachToTarget)
-    {
-        if(!dh)
-            this.$flyout.css('height', this.$zoom.height() + 'px');
-        if(!dw)
-            this.$flyout.css('width', this.$zoom.width() + 'px');
-
-        var offset = this.$target.offset();
-        var left = offset.left - this.$flyout.width();
-        var top = offset.top;
-
-        // Displays zoom on the right if not enough room on the left
-        if(left < 0)
-            left = offset.left + this.$target.width();
-
-        // Prevents the zoom to be displayed outside the current viewport
-        if((top + this.$flyout.height()) > $(document).height())
-        {
-            top = $(window).height() - this.$flyout.height();
-        }
-
-        this.$flyout.css('transform', 'translate3d(' + left + 'px, ' + top + 'px, 0px)');
-    }
 
     this.isOpen = true;
 

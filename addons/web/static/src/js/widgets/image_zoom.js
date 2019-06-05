@@ -13,11 +13,12 @@ odoo.define('web.ImageZoom', function (require) {
     var qweb = core.qweb;
     var _lt = core._lt;
 
-    function getImageUrl(model, res_id, field) {
+    function getImageUrl(model, res_id, field, unique) {
         return session.url('/web/image', {
             model: model,
             id: JSON.stringify(res_id),
             field: field,
+            unique: field_utils.format.datetime(unique).replace(/[^0-9]/g, ''),
         });
     }
 
@@ -25,10 +26,10 @@ odoo.define('web.ImageZoom', function (require) {
         description: _lt("Image with zoom"),
 
         _render: function () {
-            this._super();
+            this._super.apply(this, arguments);
 
             if (this.mode === 'readonly') {
-                var url = getImageUrl(this.model, this.res_id, 'image');
+                var url = getImageUrl(this.model, this.res_id, 'image', this.recordData.__last_update);
 
                 var $img = this.$el.find('img');
                 $img.attr('data-zoom', 1);
@@ -41,6 +42,9 @@ odoo.define('web.ImageZoom', function (require) {
 
     var BackgroundImage = Widget.extend({
         tagName: 'div',
+        fieldDependencies: _.extend({}, Widget.prototype.fieldDependencies, {
+            __last_update: {type: 'datetime'},
+        }),
 
         init: function (parent, name, record, options) {
             this._super.apply(this, arguments);
@@ -58,8 +62,8 @@ odoo.define('web.ImageZoom', function (require) {
             if('class' in this.attrs.options)
                 this.$el.addClass(this.attrs.options['class']);
 
-            var url = getImageUrl(this.record.model, this.record.res_id, 'image');
-            var url_thumb = getImageUrl(this.record.model, this.record.res_id, 'image_medium');
+            var url = getImageUrl(this.record.model, this.record.res_id, 'image', this.record.data.__last_update);
+            var url_thumb = getImageUrl(this.record.model, this.record.res_id, 'image_medium', this.record.data.__last_update);
 
             this.$el.css('backgroundImage', 'url(' + url_thumb + ')');
             this.$el.attr('data-zoom', 1);
