@@ -33,6 +33,7 @@ class MailTracking(models.Model):
     new_value_datetime = fields.Datetime('New Value Datetime', readonly=1)
 
     mail_message_id = fields.Many2one('mail.message', 'Message ID', required=True, index=True, ondelete='cascade')
+
     tracking_sequence = fields.Integer('Tracking field sequence', readonly=1, default=100, oldname='track_sequence')
     company_id = fields.Many2one('res.company', 'Company')
 

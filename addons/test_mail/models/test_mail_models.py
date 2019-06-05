@@ -40,7 +40,7 @@ class MailTestStandard(models.Model):
     user_id = fields.Many2one('res.users', 'Responsible', tracking=True)
     umbrella_id = fields.Many2one('mail.test', tracking=True)
     company_id = fields.Many2one('res.company')
-
+    tracking_true = fields.Char(company_dependent=True, tracking=True)
 
 class MailTestActivity(models.Model):
     """ This model can be used to test activities in addition to simple chatter
@@ -158,12 +158,3 @@ class MailMultiCompany(models.Model):
 
     name = fields.Char()
     company_id = fields.Many2one('res.company')
-
-
-class test_message_tracking_property(models.Model):
-    _name = 'test.message.tracking'
-    _description = 'Test Message Tracking'
-
-    name = fields.Char()
-    property_foo = fields.Integer(string='Foo', company_dependent=True, tracking=True)
-
