@@ -69,6 +69,7 @@ odoo.define('web.GraphRenderer', function (require) {
             this.fields = params.fields || {};
             this.chart = null;
             this.chartId = _.uniqueId('chart');
+            this.isStackable = null;
         },
         /**
          * @override
@@ -884,16 +885,28 @@ odoo.define('web.GraphRenderer', function (require) {
 
             // prepare data
             var data = this._prepareData(dataPoints);
+
+            // this.isStackable will be true if at least one origin has
+            // at least two datasets.
+            var originDatasetCounts = {};
+            this.isStackable = false;
+            for (let dataset of data.datasets) {
+                var originIndex = dataset.originIndex;
+                if (originIndex in originDatasetCounts) {
+                    this.isStackable = true;
+                    break;
+                } else {
+                    originDatasetCounts[originIndex] = 1;
+                }
+            }
+
             data.datasets.forEach(function (dataset, index) {
                 // used when stacked
-                dataset.stack = self.state.stacked ? self.state.origins[dataset.originIndex] : undefined;
+                dataset.stack = self.isStackable && self.state.stacked ? self.state.origins[dataset.originIndex] : undefined;
                 // set dataset color
                 var color = self._getColor(index);
                 dataset.backgroundColor = color;
             });
-
-            //used to determine if the datasets are stackables
-            this.isStackable = (data.datasets.length > 1);
 
             // prepare options
             var options = this._prepareOptions(data.datasets.length);
