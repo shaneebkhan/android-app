@@ -371,7 +371,7 @@ exports.PosModel = Backbone.Model.extend({
         domain: function(self){ return [['state', '=', 'open'],['pos_session_id', '=', self.pos_session.id]]; },
         loaded: function(self, cashregisters, tmp){
             self.cashregisters = cashregisters;
-
+            
             tmp.journals = [];
             _.each(cashregisters,function(statement){
                 tmp.journals.push(statement.journal_id[0]);
