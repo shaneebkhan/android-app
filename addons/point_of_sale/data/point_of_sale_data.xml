@@ -33,7 +33,6 @@
         <record model="pos.config" id="pos_config_main">
             <field name="name">Shop</field>
             <field name="barcode_nomenclature_id" ref="barcodes.default_barcode_nomenclature"/>
-            <field name="receivable_account_id" ref="pos_receivable_account" />
         </record>
 
         <record id="product_product_consumable" model="product.product">

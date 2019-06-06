@@ -61,7 +61,7 @@ class PosSession(models.Model):
             orders_to_reconcile.sudo()._reconcile_payments()
 
     company_id = fields.Many2one('res.company', related='config_id.company_id', string="Company", readonly=True)
-    
+
     config_id = fields.Many2one(
         'pos.config', string='Point of Sale',
         help="The physical point of sale you will use.",
@@ -132,9 +132,6 @@ class PosSession(models.Model):
         readonly=True,
         copy=False)
     move_id = fields.Many2one(comodel_name='account.move', string='Pos Session Journal Entry')
-    receivable_account_id = fields.Many2one(comodel_name='account.account', string='PoS Receivable Account', 
-                                            help='Receivable account for this session. Can be different from the current value set in config.'
-                                                '\nThis value is set during the creation of the pos session.')
     payment_method_ids = fields.Many2many(comodel_name='pos.payment.method', string='Payment Methods')
 
     _sql_constraints = [('uniq_name', 'unique(name)', "The name of this POS Session must be unique !")]
@@ -221,24 +218,11 @@ class PosSession(models.Model):
             pos_config.with_context(ctx).sudo().write({
                 'journal_id': default_journals['journal_id'],
                 'invoice_journal_id': default_journals['invoice_journal_id']})
-        # define some cash journal if no payment method exists
-        if not pos_config.journal_ids:
-            Journal = self.env['account.journal']
-            journals = Journal.with_context(ctx).search([('journal_user', '=', True), ('type', '=', 'cash'), ('company_id', '=', pos_config.company_id.id)])
-            if not journals:
-                journals = Journal.with_context(ctx).search([('type', '=', 'cash'), ('company_id', '=', pos_config.company_id.id)])
-                if not journals:
-                    journals = Journal.with_context(ctx).search([('journal_user', '=', True), ('company_id', '=', pos_config.company_id.id)])
-            if not journals:
-                raise ValidationError(_("No payment method configured! \nEither no Chart of Account is installed or no payment method is configured for this POS."))
-            journals.sudo().write({'journal_user': True})
-            pos_config.sudo().write({'journal_ids': [(6, 0, journals.ids)]})
 
         pos_name = self.env['ir.sequence'].with_context(ctx).next_by_code('pos.session')
         if values.get('name'):
             pos_name += ' ' + values['name']
 
-        
         BankStatement = self.env['account.bank.statement']
         uid = SUPERUSER_ID if self.env.user.has_group('point_of_sale.group_pos_user') else self.env.user.id
         def create_cash_statement(cash_journal):
@@ -259,7 +243,6 @@ class PosSession(models.Model):
             'name': pos_name,
             'statement_ids': [(6, 0, statement_ids)],
             'config_id': config_id,
-            'receivable_account_id': pos_config.receivable_account_id.id,
             'payment_method_ids': [(6, 0, pos_config.payment_method_ids.ids)],
         })
 
@@ -505,7 +488,7 @@ class PosSession(models.Model):
             tax = AccountTax.browse(tax_id)
             partial_args = dict(name=tax.name, account_id=account_id, move_id=account_move.id)
             return self._credit_amount(partial_args, amount)
-        
+
         def compute_tax(order_line):
             currency = order_line.order_id.pricelist_id.currency_id
             # TODO jcb: not so sure if it is necessary to filter the
@@ -519,11 +502,11 @@ class PosSession(models.Model):
 
         line_taxes = [compute_tax(line) for line in all_order_lines]
 
-        # combine list of taxes into a single list 
+        # combine list of taxes into a single list
         # e.g. [[tax_a1, tax_a3], [tax_b2], [], [tax_c1, tax_c2, tax_c3]]
         #      -> [tax_a1, tax_a3, tax_b2, tax_c1, tax_c2, tax_c3]
         flat_line_taxes = itertools.chain.from_iterable(line_taxes)
-        
+
         # group the taxes by account_id and tax id
         args_group_dict = defaultdict(lambda: 0.0)
         for tax in flat_line_taxes:
@@ -535,7 +518,7 @@ class PosSession(models.Model):
     def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders):
         """ Anglo saxon journal items were already created in the invoiced orders
             via the creation of account.invoice record.
-            
+
             This method generates args for creating anglo-saxon journal items
             that are grouped by account.
 
@@ -565,8 +548,8 @@ class PosSession(models.Model):
     @api.model
     def _credit_amount(self, partial_move_line_args, amount):
         """ complete the `partial_move_line_args` by adding 'credit' and 'debit' fields with
-            abs(`amount`) assign to the correct field.  
-        
+            abs(`amount`) assign to the correct field.
+
             TODO jcb: The following is a note about the required parameter of currency._convert method
             required parameters: from_amount, to_currency, company, date
         """
@@ -577,7 +560,7 @@ class PosSession(models.Model):
     @api.model
     def _debit_amount(self, partial_move_line_args, amount):
         """ complete the `partial_move_line_args` by adding 'credit' and 'debit' fields with
-            abs(`amount`) assign to the correct field.  
+            abs(`amount`) assign to the correct field.
         """
         if amount > 0:
             return dict(credit=0.0, debit=amount, **partial_move_line_args)

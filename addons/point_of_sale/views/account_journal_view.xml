@@ -33,6 +33,7 @@
         </field>
     </record>
 
+    <!-- TODO jcb: can be deleted by might still be needed for creating journal in payment method form. -->
     <record id="account_journal_action_point_of_sale" model="ir.actions.act_window">
         <field name="name">POS Journals</field>
         <field name="type">ir.actions.act_window</field>

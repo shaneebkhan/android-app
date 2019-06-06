@@ -167,7 +167,6 @@ class PosConfig(models.Model):
     is_posbox = fields.Boolean("PosBox")
     is_header_or_footer = fields.Boolean("Header & Footer")
     module_pos_hr = fields.Boolean(help="Show employee login screen")
-    receivable_account_id = fields.Many2one(comodel_name='account.account', string='Receivable Account')
     payment_method_ids = fields.Many2many(comodel_name='pos.payment.method', string='Payment Methods')
 
     def _compute_is_installed_account_accountant(self):

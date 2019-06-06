@@ -25,10 +25,18 @@ class PosMakePayment(models.TransientModel):
             return payment_method_ids and (cash_payment_method or payment_method_ids[0]) or False
         return False
 
+    def _default_payment_method_options(self):
+        active_id = self.env.context.get('active_id')
+        if active_id:
+            order_id = self.env['pos.order'].browse(active_id)
+            return order_id.session_id.payment_method_ids
+        return self.env['pos.payment.method'].search([])
+
     amount = fields.Float(digits=0, required=True, default=_default_amount)
     payment_method_id = fields.Many2one('pos.payment.method', string='Payment Method', default=_default_payment_method)
     payment_name = fields.Char(string='Payment Reference')
     payment_date = fields.Date(string='Payment Date', required=True, default=lambda *a: fields.Date.today())
+    payment_method_option_ids = fields.Many2many('pos.payment.method', string='Payment Method Options', store=False, default=_default_payment_method_options)
 
     @api.multi
     def check(self):
@@ -37,15 +45,19 @@ class PosMakePayment(models.TransientModel):
         if the order is paid print ticket.
         """
         self.ensure_one()
+
         order = self.env['pos.order'].browse(self.env.context.get('active_id', False))
         currency = order.pricelist_id.currency_id
+
         data = self.read()[0]
         data.update(dict(
             pos_order_id=order.id,
-            currency_id=currency_id,
+            currency_id=currency.id,
             amount=currency.round(data['amount']) if currency else data['amount'],
             name=data['payment_name'],
+            payment_method_id=data['payment_method_id'][0],
         ))
+
         amount_to_pay = order.amount_total - order.amount_paid
         precision = currency.rounding or 0.01
         if not float_is_zero(amount_to_pay, precision_rounding=precision):
