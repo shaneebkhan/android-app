@@ -7,20 +7,7 @@ from odoo.tools import float_is_zero
 
 class PosMakePayment(models.TransientModel):
     _name = 'pos.make.payment'
-    _description = 'Point of Sale Payment'
-
-    def _default_session(self):
-        active_id = self.env.context.get('active_id')
-        if active_id:
-            return self.env['pos.order'].browse(active_id).session_id
-        return False
-
-    def _default_journal(self):
-        active_id = self.env.context.get('active_id')
-        if active_id:
-            session = self.env['pos.order'].browse(active_id).session_id
-            return session.config_id.journal_ids and session.config_id.journal_ids.ids[0] or False
-        return False
+    _description = 'Point of Sale Make Payment Wizard'
 
     def _default_amount(self):
         active_id = self.env.context.get('active_id')
@@ -29,18 +16,19 @@ class PosMakePayment(models.TransientModel):
             return (order.amount_total - order.amount_paid)
         return False
 
-    session_id = fields.Many2one('pos.session', required=True, default=_default_session)
-    journal_id = fields.Many2one('account.journal', string='Payment Mode', required=True, default=_default_journal)
+    def _default_payment_method(self):
+        active_id = self.env.context.get('active_id')
+        if active_id:
+            order_id = self.env['pos.order'].browse(active_id)
+            payment_method_ids = order_id.session_id.payment_method_ids
+            cash_payment_method = payment_method_ids.filtered(lambda pm: pm.is_cash_count)[0]
+            return payment_method_ids and (cash_payment_method or payment_method_ids[0]) or False
+        return False
+
     amount = fields.Float(digits=0, required=True, default=_default_amount)
+    payment_method_id = fields.Many2one('pos.payment.method', string='Payment Method', default=_default_payment_method)
     payment_name = fields.Char(string='Payment Reference')
     payment_date = fields.Date(string='Payment Date', required=True, default=lambda *a: fields.Date.today())
-
-    @api.onchange('session_id')
-    def _on_change_session(self):
-        if self.session_id:
-            return {
-                'domain': {'journal_id': [('id', 'in', self.session_id.config_id.journal_ids.ids)]}
-            }
 
     @api.multi
     def check(self):
@@ -51,16 +39,23 @@ class PosMakePayment(models.TransientModel):
         self.ensure_one()
         order = self.env['pos.order'].browse(self.env.context.get('active_id', False))
         currency = order.pricelist_id.currency_id
-        amount = order.amount_total - order.amount_paid
         data = self.read()[0]
-        # add_payment expect a journal key
-        data['journal'] = data['journal_id'][0]
-        data['amount'] = currency.round(data['amount']) if currency else data['amount']
-        if not float_is_zero(amount, precision_rounding=currency.rounding or 0.01):
+        data.update(dict(
+            pos_order_id=order.id,
+            currency_id=currency_id,
+            amount=currency.round(data['amount']) if currency else data['amount'],
+            name=data['payment_name'],
+        ))
+        amount_to_pay = order.amount_total - order.amount_paid
+        precision = currency.rounding or 0.01
+        if not float_is_zero(amount_to_pay, precision_rounding=precision):
+            # add_payment mutates the order. order.amount_paid is updated.
             order.add_payment(data)
-        if order.test_paid():
+
+        if float_is_zero(order.amount_total - order.amount_paid, precision_rounding=precision):
             order.action_pos_order_paid()
             return {'type': 'ir.actions.act_window_close'}
+
         return self.launch_payment()
 
     def launch_payment(self):
@@ -74,4 +69,3 @@ class PosMakePayment(models.TransientModel):
             'type': 'ir.actions.act_window',
             'context': self.env.context,
         }
-

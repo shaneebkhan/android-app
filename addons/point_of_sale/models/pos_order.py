@@ -146,7 +146,9 @@ class PosOrder(models.Model):
         for payments in pos_order['statement_ids']:
             if not float_is_zero(payments[2]['amount'], precision_digits=prec_acc):
                 payment_dict = payments[2]
-                PosPayment.create(dict(pos_order_id=order.id, **payment_dict))
+                PosPayment.create(dict(pos_order_id=order.id,
+                                        currency_id=order.pricelist_id.currency_id.id,
+                                        **payment_dict))
 
         if pos_session.sequence_number <= pos_order['sequence_number']:
             pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
@@ -167,7 +169,8 @@ class PosOrder(models.Model):
                 'pos_order_id': order.id,
                 'amount': -pos_order['amount_return'],
                 'payment_date': fields.Date.context_today(self),
-                'payment_method_id': payment_method.id
+                'payment_method_id': payment_method.id,
+                'currency_id': order.pricelist_id.currency_id.id
             }
             PosPayment.create(return_payment_dict)
         return order
@@ -819,17 +822,6 @@ class PosOrder(models.Model):
             _logger.info(f"Pos order: id={pos_order.id} successfully created................")
         return order_ids
 
-    def test_paid(self):
-        """A Point of Sale is paid when the sum
-        @return: True
-        """
-        for order in self:
-            if order.lines and not order.amount_total:
-                continue
-            if (not order.lines) or (not order.statement_ids) or (abs(order.amount_total - order.amount_paid) > 0.00001):
-                return False
-        return True
-
     def create_picking(self):
         """Create a picking for each order and validate it."""
         Picking = self.env['stock.picking']
@@ -1022,39 +1014,13 @@ class PosOrder(models.Model):
 
         return args
 
-    def add_payment(self, data):
+    @api.multi
+    def add_payment(self, payment_vals):
         """Create a new payment for the order
-
-        it says create payment but actually bank statement line is being created?
-        TODO jcb - DONE: do not create bank statement line
-        This function, I think, can be deleted.
         """
-        journal_id = data.get('journal', False)
-        journal = self.env['account.journal'].browse(journal_id)
-        if journal.type == 'bank':
-            # Do not create bank statement lines for bank payment
-            return False
-
         self.ensure_one()
-        # this is not needed as it prepares the payment for bank.statement.line.
-        # what I need is to make pos.payment record that has fields (together with
-        # the pos.order's) that are enough to create an account.payment.
-
-        # args = self._prepare_bank_statement_line_payment_values(data) 
-
-        context = dict(self.env.context)
-        context.pop('pos_session_id', False)
-        
-        # bank statement line created here. Where is the account.payment?
-        # account.payment is created only when pos.order is invoiced, and
-        # only during closing and validating the pos.session.
-        self.env['account.bank.statement.line'].with_context(context).create(args)
-
-        # resetting this field appears to not matter because in the end
-        # (after pos.order is created), the value of amount_paid becomes
-        # the amount to be paid.
-        # self.amount_paid = sum(payment.amount for payment in self.statement_ids)
-        return args.get('statement_id', False)
+        self.write(dict(amount_paid=self.amount_paid + payment_vals['amount']))
+        return self.env['pos.payment'].create(payment_vals)
 
     def _prepare_refund_order_data(self, current_session=None):
         """
