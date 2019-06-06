@@ -431,6 +431,9 @@ class Product(models.Model):
             self = self.with_context(product_tmpl_id=self.product_tmpl_id.id)
         return self.env['stock.quant']._get_quants_action(domain)
 
+    def action_update_quantity_on_hand(self):
+        return self.product_tmpl_id.with_context({'default_product_id': self.id}).action_update_quantity_on_hand()
+
     @api.model
     def get_theoretical_quantity(self, product_id, location_id, lot_id=None, package_id=None, owner_id=None, to_uom=None):
         product_id = self.env['product.product'].browse(product_id)
@@ -630,6 +633,22 @@ class ProductTemplate(models.Model):
 
     def action_open_quants(self):
         return self.product_variant_ids.action_open_quants()
+
+    def action_update_quantity_on_hand(self):
+        if (self.env.user.user_has_groups('stock.group_stock_multi_locations') or
+        self.env.user.user_has_groups('stock.group_production_lot') or
+        self.env.user.user_has_groups('stock.group_tracking_owner') or
+        self.env.user.user_has_groups('product.group_stock_packaging')):
+            return self.action_open_quants()
+        else:
+            default_product_id = len(self.product_variant_ids) == 1 and self.product_variant_id.id
+            res = self.env.ref('stock.action_change_product_quantity')
+            res.context = {
+                'default_product_id': default_product_id,
+                'default_product_tmpl_id': self.id,
+            }
+            action = res.read()[0]
+            return action
 
     def action_view_related_putaway_rules(self):
         self.ensure_one()
