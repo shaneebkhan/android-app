@@ -50,16 +50,10 @@ var DocumentViewer = Widget.extend({
                     attachment.fileType = 'image';
                 }
                 if (match[1] === 'youtu') {
-                    var youtube_array = attachment.url.split('/');
-                    var youtube_token = youtube_array[youtube_array.length-1];
-                    if (youtube_token.indexOf('watch') !== -1) {
-                        youtube_token = youtube_token.split('v=')[1];
-                        var amp = youtube_token.indexOf('&')
-                        if (amp !== -1){
-                            youtube_token = youtube_token.substring(0, amp);
-                        }
+                    let youtubeMatch = attachment.url.match('youtu(?:\.be|be\.com)/(?:.*v(?:/|=)|(?:.*/)?)([a-zA-Z0-9-_]{11})');
+                    if (youtubeMatch.length > 1) {
+                        attachment.youtube = youtubeMatch[1];
                     }
-                    attachment.youtube = youtube_token;
                 }
                 return true;
             }
