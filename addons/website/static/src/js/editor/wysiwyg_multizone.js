@@ -194,12 +194,7 @@ var WysiwygMultizone = Wysiwyg.extend({
             self._summernote.isDisabled = function () {
                 return false;
             };
-
-            self.$('.note-editable').addClass('o_not_editable').attr('contenteditable', false);
-            self._getEditableArea().attr('contenteditable', true);
-            self.$('[data-oe-readonly]').addClass('o_not_editable').attr('contenteditable', false);
-            self.$('.oe_structure').attr('contenteditable', false).addClass('o_fake_not_editable');
-            self.$('[data-oe-field][data-oe-type="image"]').attr('contenteditable', false).addClass('o_fake_not_editable');
+            self.setupEditable();
         });
     },
     /**
@@ -255,6 +250,23 @@ var WysiwygMultizone = Wysiwyg.extend({
                 });
             }.bind(this));
         }.bind(this));
+    },
+    /**
+     * Setup editable attributes on the given element.
+     *
+     * This is also used when element is updated/replaced
+     * after the editor is initialized.
+     *
+     * @public
+     * @param {jQueryElement} $target
+     */
+    setupEditable: function ($target) {
+        var $editable = $target || this.$el;
+        this._getEditableArea($target).attr('contenteditable', true);
+        $editable.find('.note-editable').addClass('o_not_editable').attr('contenteditable', false);
+        $editable.find('[data-oe-readonly]').addClass('o_not_editable').attr('contenteditable', false);
+        $editable.find('.oe_structure').attr('contenteditable', false).addClass('o_fake_not_editable');
+        $editable.find('[data-oe-field][data-oe-type="image"]').attr('contenteditable', false).addClass('o_fake_not_editable');
     },
 
     //--------------------------------------------------------------------------
@@ -366,13 +378,15 @@ var WysiwygMultizone = Wysiwyg.extend({
      * Return the editable areas.
      *
      * @private
+     * @param {jQueryElement} $target
      * @returns {JQuery}
      */
-    _getEditableArea: function () {
+    _getEditableArea: function ($target) {
         if (!this._summernote) {
             return $();
         }
-        return $(this.selectorEditableArea, this._summernote.layoutInfo.editable);
+        $target = $target || this._summernote.layoutInfo.editable;
+        return $(this.selectorEditableArea, $target);
     },
 
     /**
