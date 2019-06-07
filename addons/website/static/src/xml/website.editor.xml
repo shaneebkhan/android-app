@@ -48,6 +48,11 @@
             </label>
         </div>
     </t>
+    <t t-name="website.theme_customize_add_google_font_option">
+        <a class="dropdown-item p-2 o_theme_customize_add_google_font" href="#">
+            <i class="fa fa-plus"></i> Add a Google Font
+        </a>
+    </t>
     <t t-name="website.theme_customize_dropdown_option">
         <div t-attf-class="dropdown o_theme_customize_dropdown">
             <div class="dropdown-menu rounded-0 o_theme_customize_selection" role="menu"/>
@@ -106,6 +111,13 @@
                     <p class="d-none o_anchor_already_exists">The chosen name already exists</p>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Add a Google Font option dialog -->
+    <div t-name="website.dialog.addGoogleFont">
+        <div class="form-group">
+            <textarea class="form-control o_input_google_font" rows="2" placeholder="Google Font HTML"/>
+            <span class="form-text text-muted text-right"><a href="#">How to use a Google Font on your website</a></span>
         </div>
     </div>
 </templates>

@@ -114,6 +114,7 @@ var ThemeCustomizeDialog = Dialog.extend({
     events: {
         'change .o_theme_customize_option_input': '_onChange',
         'click .checked .o_theme_customize_option_input[type="radio"]': '_onChange',
+        'click .o_theme_customize_add_google_font': '_onClickAddGoogleFont',
     },
 
     CUSTOM_BODY_IMAGE_XML_ID: 'option_custom_body_image',
@@ -387,6 +388,7 @@ var ThemeCustomizeDialog = Dialog.extend({
                         $element = $(core.qweb.render('website.theme_customize_dropdown_option'));
                         var $selection = $element.find('.o_theme_customize_selection');
                         _processItems($options, $selection, true);
+                        $selection.append($(core.qweb.render('website.theme_customize_add_google_font_option')));
                         break;
 
                     default:
@@ -750,6 +752,19 @@ var ThemeCustomizeDialog = Dialog.extend({
             $dropdown.prepend($btn);
         });
     },
+    /**
+     * @private
+     */
+    _addGoogleFont: function (font) {
+        var values = {};
+        var googleFontsProperty = this.style.getPropertyValue('--google-fonts').replace(/\s*,\s*/g, "', '").trim();
+        if (googleFontsProperty) {
+            values['google-fonts'] = "('" + googleFontsProperty + "', '" + font + "')";
+        } else {
+            values['google-fonts'] = "('" + font + "')";
+        }
+        return this._makeSCSSCusto('/website/static/src/scss/options/user_values.scss', values);
+    },
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -809,6 +824,34 @@ var ThemeCustomizeDialog = Dialog.extend({
             self._updateValues();
             self.$inputs.prop('disabled', false);
         });
+    },
+    /**
+     * @private
+     */
+    _onClickAddGoogleFont: function () {
+        var self = this;
+        new Dialog(this, {
+            title: _t("Add a Google Font"),
+            $content: $(core.qweb.render('website.dialog.addGoogleFont')),
+            buttons: [
+                {
+                    text: _t("Save"),
+                    classes: 'btn-primary',
+                    click: function () {
+                        var temp = this.$('.o_input_google_font').val().toString();
+                        var font = temp.match(/\bfamily=([^&:" ]+)/);
+                        return self._addGoogleFont(font[1].replace(/\+/g, ' ')).then(function () {
+                            window.location.hash = 'theme=true';
+                            window.location.reload();
+                        });
+                    },
+                },
+                {
+                    text: _t("Discard"),
+                    close: true,
+                },
+            ],
+        }).open();
     },
 });
 
