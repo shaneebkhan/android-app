@@ -302,6 +302,19 @@ class IrFieldsConverter(models.AbstractModel):
         # creation/update of former records (batch creation)
         flush = self._context.get('import_flush', lambda arg=None: None)
 
+        fields_path = self._context.get('fields_path')
+        field_name = ''
+        for f in fields_path:
+            fields = f.split('/')
+            if fields[-1] == 'id' and field.type == 'many2one':
+                pass
+            elif len(fields) > 1 and '.id' not in fields:
+                for fi in fields:
+                    if fi == 'id' and (field.type == 'one2many' or field.type == 'many2many'):
+                        field_name = "/" + "External ID"
+                    elif fi == field.name:
+                        field_name = "/" + field.string
+
         id = None
         warnings = []
         error_msg = ''
@@ -345,8 +358,8 @@ class IrFieldsConverter(models.AbstractModel):
             if ids:
                 if len(ids) > 1:
                     warnings.append(ImportWarning(
-                        _(u"Found multiple matches for field '%%(field)s/%s' (%d matches)")
-                        %(field.string, len(ids))))
+                        _(u"Found multiple matches for field '%%(field)s%s' (%d matches)")
+                        %(field_name, len(ids))))
                 id, _name = ids[0]
             else:
                 name_create_enabled_fields = self.env.context.get('name_create_enabled_fields') or {}
@@ -364,13 +377,13 @@ class IrFieldsConverter(models.AbstractModel):
 
         if id is None:
             if error_msg:
-                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(field_string)s' and the following error was encountered when we attempted to create one: %(error_message)s")
+                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s%(field_name)s' and the following error was encountered when we attempted to create one: %(error_message)s")
             else:
-                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s/%(field_string)s'")
+                message = _("No matching record found for %(field_type)s '%(value)s' in field '%%(field)s%(field_name)s'")
             raise self._format_import_error(
                 ValueError,
                 message,
-                {'field_type': field_type, 'value': value, 'error_message': error_msg, 'field_string': field.string},
+                {'field_type': field_type, 'value': value, 'error_message': error_msg, 'field_name': field_name},
                 {'moreinfo': action})
         return id, field_type, warnings
 
