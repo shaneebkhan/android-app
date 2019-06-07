@@ -359,8 +359,6 @@
         <script type="text/javascript" src="/web/static/src/js/report/utils.js"/>
         <script type="text/javascript" src="/web/static/src/js/report/client_action.js"/>
         <link rel="stylesheet" type="text/scss" href="/web/static/src/scss/report_backend.scss"/>
-
-        <script type="text/javascript" src="/web/static/src/js/widgets/image_zoom.js"></script>
     </template>
 
     <template id="_assets_frontend_minimal_js">

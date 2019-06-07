@@ -22,6 +22,8 @@ var utils = require('web.utils');
 var view_dialogs = require('web.view_dialogs');
 var field_utils = require('web.field_utils');
 
+require("web.zoomodoo");
+
 var qweb = core.qweb;
 var _t = core._t;
 var _lt = core._lt;
@@ -1579,13 +1581,7 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
                 // Use magic-word technique for detecting image type
                 url = 'data:image/' + (this.file_type_magic_word[this.value[0]] || 'png') + ';base64,' + this.value;
             } else {
-                url = session.url('/web/image', {
-                    model: this.model,
-                    id: JSON.stringify(this.res_id),
-                    field: this.nodeOptions.preview_image || this.name,
-                    // unique forces a reload of the image when the record has been updated
-                    unique: field_utils.format.datetime(this.recordData.__last_update).replace(/[^0-9]/g, ''),
-                });
+                url = this._getImageUrl(this.model, this.res_id, this.nodeOptions.preview_image || this.name, this.recordData.__last_update);
             }
         }
         var $img = $(qweb.render("FieldBinaryImage-img", {widget: this, url: url}));
@@ -1608,7 +1604,65 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
             $img.attr('src', self.placeholder);
             self.do_warn(_t("Image"), _t("Could not display the selected image."));
         });
+
+        this._super.apply(this, arguments);
     },
+    _renderReadonly: function() {
+        this._super.apply(this, arguments);
+
+        if(this.nodeOptions.zoom)
+        {
+            var url = this._getImageUrl(this.model, this.res_id, 'image', this.recordData.__last_update);
+
+            if(this.nodeOptions.background)
+            {
+                if('tag' in this.nodeOptions)
+                    this.tagName = this.nodeOptions['tag'];
+
+                if('class' in this.attrs)
+                    this.$el.addClass(this.attrs['class']);
+
+                var url_thumb = this._getImageUrl(this.model, this.res_id, 'image_medium', this.recordData.__last_update);
+
+                this.$el.empty();
+                var $img = this.$el;
+                $img.css('backgroundImage', 'url(' + url_thumb + ')');
+            }
+            else {
+                var $img = this.$el.find('img');
+            }
+
+            if(this.recordData.image) {
+                $img.attr('data-zoom', 1);
+                $img.attr('data-zoom-image', url);
+
+                $img.zoomOdoo({
+                    event: 'mouseenter',
+                    attach: '.o_content',
+                    attachToTarget: true,
+                    onShow: this._checkImageSize,
+                    beforeAttach: this._changeFlyoutSize,
+                    preventClicks: this.nodeOptions.preventClicks,
+                });
+            }
+        }
+    },
+    _getImageUrl: function(model, res_id, field, unique) {
+        return session.url('/web/image', {
+            model: model,
+            id: JSON.stringify(res_id),
+            field: field,
+            unique: field_utils.format.datetime(unique).replace(/[^0-9]/g, ''),
+        });
+    },
+    _checkImageSize: function() {
+        if(this.$zoom.height() < 256 && this.$zoom.width() < 256) {
+            this.hide();
+        }
+    },
+    _changeFlyoutSize: function() {
+        this.$flyout.css({'width': '512px', 'height': '512px'});
+    }
 });
 
 var FieldBinaryFile = AbstractFieldBinary.extend({

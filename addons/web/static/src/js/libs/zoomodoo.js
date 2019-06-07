@@ -48,7 +48,10 @@ var defaults = {
     onHide: $.noop,
 
     // Callback function to execute when the cursor is moved while over the image.
-    onMove: $.noop
+    onMove: $.noop,
+
+    // Callback function to execute when the flyout is attached to the target.
+    beforeAttach: $.noop
 
 };
 
@@ -126,9 +129,11 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
 
     if (this.opts.attachToTarget)
     {
-        if(this.$zoom.height() < $(document).height())
+        this.opts.beforeAttach.call(this);
+
+        if(this.$zoom.height() < this.$flyout.height())
              this.$flyout.css('height', this.$zoom.height() + 'px');
-        if(this.$zoom.width() < $(document).width())
+        if(this.$zoom.width() < this.$flyout.width())
              this.$flyout.css('width', this.$zoom.width() + 'px');
 
         var offset = this.$target.offset();
