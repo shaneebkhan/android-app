@@ -71,18 +71,18 @@
                         <button class="oe_stat_button" name="action_stock_picking" type="object" icon="fa-arrows-v" attrs="{'invisible':[('picking_count', '=', 0)]}">
                             <field name="picking_count" widget="statinfo" string="Picking Errors"/>
                         </button>
-                        <button 
-                            name="show_payments_list" 
-                            type="object" 
-                            class="oe_stat_button" 
-                            icon="fa-bars" 
+                        <button
+                            name="show_payments_list"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-bars"
                             string="Pos Payments">
                         </button>
-                        <button 
-                            name="show_journal_entries" 
-                            type="object" 
-                            class="oe_stat_button" 
-                            icon="fa-pencil-square" 
+                        <button
+                            name="show_journal_entries"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-pencil-square"
                             string="Journal Entries">
                         </button>
                     </div>

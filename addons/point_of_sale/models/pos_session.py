@@ -373,7 +373,7 @@ class PosSession(models.Model):
     @timeit
     def reconcile_stock_output_lines(self, session, account_move, invoiced_orders):
         invoice_account_moves = invoiced_orders.mapped('invoice_id').mapped('move_id')
-        # TODO jcb: Maybe a need of optimization 
+        # TODO jcb: Maybe a need of optimization
         # There is a significant amount of time in performing this function even though
         # there are no involved anglo-saxon products.
         # Perhaps it is because of the pos_order_id put in each stock move.
@@ -571,9 +571,9 @@ class PosSession(models.Model):
         # get all the linked moves to this move
         move = self.move_id
         lines = sum(move.line_ids\
-            .filtered(lambda aml: aml.account_id.reconcile)\
-            .mapped(lambda aml: [r.debit_move_id for r in aml.matched_debit_ids] if aml.credit > 0 else [r.credit_move_id for r in aml.matched_credit_ids]),
-            [])
+                    .filtered(lambda aml: aml.account_id.reconcile)\
+                    .mapped(lambda aml: [r.debit_move_id for r in aml.matched_debit_ids] if aml.credit > 0 else [r.credit_move_id for r in aml.matched_credit_ids]),
+                    [])
         ids = [line.move_id.id for line in lines] + [move.id]
         domain = [('id', 'in', ids)]
 

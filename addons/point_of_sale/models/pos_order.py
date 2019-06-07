@@ -356,11 +356,6 @@ class PosOrder(models.Model):
                 res.append({'data_type': 'tax', 'values': data})
         return res
 
-    def show_payments_list(self):
-        [action] = self.env.ref('point_of_sale.action_show_pos_payment_button').read()
-        action['domain'] = [('id', 'in', self.pos_payment_ids.ids)]
-        return action
-
     def _create_account_move_line(self, session=None):
 
         # Tricky, via the workflow, we only have one id in the ids variable
