@@ -620,9 +620,14 @@ class ProductProduct(models.Model):
             if seller.product_id and seller.product_id != self:
                 continue
 
-            res |= seller
-            break
-        return res
+            res += seller
+        if res and len(res.ids) > 1:
+            duplicate_suppliers = res.filtered(lambda x: x.name == res[0].name)
+            if len(duplicate_suppliers.ids) > 1:
+                max_qty = max(duplicate_suppliers.mapped('min_qty'))
+                return duplicate_suppliers.filtered(lambda x: x.min_qty == max_qty)[0]
+            return duplicate_suppliers
+        return res[0] if res.ids else res
 
     @api.multi
     def price_compute(self, price_type, uom=False, currency=False, company=False):
