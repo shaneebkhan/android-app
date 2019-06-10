@@ -341,7 +341,7 @@ var AbstractView = Factory.extend({
             timeRange: timeRangeMenuData.timeRange || [],
             timeRangeDescription: timeRangeMenuData.timeRangeDescription || '',
         });
-        this.loadParams.orderedBy = searchQuery.orderedBy ? searchQuery.orderedBy : this.loadParams.orderedBy;
+        this.loadParams.orderedBy = searchQuery.orderedBy && searchQuery.orderedBy.length ? searchQuery.orderedBy : this.loadParams.orderedBy;
         this.rendererParams.timeRangeDescription = timeRangeDescription;
         this.rendererParams.comparisonTimeRangeDescription = comparisonTimeRangeDescription;
     },

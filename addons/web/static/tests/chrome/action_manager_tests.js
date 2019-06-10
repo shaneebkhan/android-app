@@ -3258,6 +3258,51 @@ QUnit.module('ActionManager', {
         actionManager.destroy();
     });
 
+    QUnit.test('default_order is applied along with favorite filter', async function (assert) {
+        assert.expect(3);
+
+        this.archs['partner,1,list'] = '<tree default_order="foo desc"><field name="foo"/></tree>';
+
+        this.actions.push({
+            id: 12,
+            name: 'Partners',
+            res_model: 'partner',
+            type: 'ir.actions.act_window',
+            views: [[1, 'list'], [false, 'form']],
+        });
+
+        var actionManager = await createActionManager({
+            actions: this.actions,
+            archs: this.archs,
+            data: this.data,
+            intercepts: {
+                load_filters: function (ev) {
+                    ev.data.on_success([
+                        {
+                            user_id: [2,"Mitchell Admin"],
+                            name: 'sorted filter',
+                            id: 5,
+                            context: {},
+                            sort: '[]',
+                            is_default: true,
+                            domain: '[("bar", "=", 1)]'
+                        }
+                    ]);
+                },
+            },
+        });
+
+        await actionManager.doAction(12);
+        assert.strictEqual($('.o_searchview_facet .o_facet_values').text().trim(), 'sorted filter', 'sorted filter should be applied');
+        assert.strictEqual($('tr.o_data_row .o_data_cell').text(), 'gnapblip', 'record should be in descending order after default_order applied');
+
+        await testUtils.dom.click(actionManager.$('.o_list_view .o_data_row:first'));
+        await testUtils.dom.click($('.o_control_panel .breadcrumb a:eq(0)'));
+        assert.strictEqual($('tr.o_data_row .o_data_cell').text(), 'gnapblip', 'order of records should not be changed, while coming back through breadcrumb');
+
+        actionManager.destroy();
+    });
+
     QUnit.test("search menus are still available when switching between actions", async function (assert) {
         assert.expect(3);
 
