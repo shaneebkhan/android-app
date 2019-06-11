@@ -13,6 +13,7 @@ class PosSession(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     POS_SESSION_STATE = [
+        ('new_session', 'New Session'),
         ('opening_control', 'Opening Control'),  # method action_pos_session_open
         ('opened', 'In Progress'),               # method action_pos_session_closing_control
         ('closing_control', 'Closing Control'),  # method action_pos_session_close
@@ -62,7 +63,7 @@ class PosSession(models.Model):
     state = fields.Selection(
         POS_SESSION_STATE, string='Status',
         required=True, readonly=True,
-        index=True, copy=False, default='opening_control')
+        index=True, copy=False, default='new_session')
 
     sequence_number = fields.Integer(string='Order Sequence Number', help='A sequence number that is incremented with each order', default=1)
     login_number = fields.Integer(string='Login Sequence Number', help='A sequence number that is incremented each time a user resumes the pos session', default=0)
@@ -339,6 +340,7 @@ class PosSession(models.Model):
         context['statement_id'] = self.cash_register_id.id
         context['balance'] = balance_type
         context['default_pos_id'] = self.config_id.id
+        context['pos_session_id'] = self.id
 
         action = {
             'name': _('Cash Control'),
@@ -358,7 +360,6 @@ class PosSession(models.Model):
             cashbox_id = self.cash_register_id.cashbox_end_id.id
         if cashbox_id:
             action['res_id'] = cashbox_id
-
         return action
 
     def action_view_order(self):

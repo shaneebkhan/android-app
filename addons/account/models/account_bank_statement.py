@@ -50,13 +50,14 @@ class AccountBankStmtCashWizard(models.Model):
             vals['start_bank_stmt_ids'] = [(6, 0, [statement_id])]
         if 'end_bank_stmt_ids' in fields and not vals.get('end_bank_stmt_ids') and statement_id and balance == 'close':
             vals['end_bank_stmt_ids'] = [(6, 0, [statement_id])]
+
         return vals
 
     @api.multi
     def name_get(self):
         result = []
         for cashbox in self:
-            result.append((cashbox.id, _("Cashbox: %s")%(cashbox.total)))
+            result.append((cashbox.id, _("%s")%(cashbox.total)))
         return result
 
     @api.depends('cashbox_lines_ids','cashbox_lines_ids.subtotal')
@@ -83,7 +84,9 @@ class AccountBankStmtCashWizard(models.Model):
                 self.start_bank_stmt_ids.write({'balance_start': self.total})
             if self.end_bank_stmt_ids:
                 self.end_bank_stmt_ids.write({'balance_end_real': self.total})
-
+    
+    def confirm_closing_balance(self):
+        self.env['pos.session'].browse(self.env.context['pos_session_id']).write({'state': 'opening_control'})
 
 class AccountBankStmtCloseCheck(models.TransientModel):
     """

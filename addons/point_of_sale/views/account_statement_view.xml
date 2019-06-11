@@ -21,4 +21,24 @@
         </xpath>
       </field>
   </record>
+
+  <record id="view_pos_bnk_stmt_cashbox_close_modal" model="ir.ui.view">
+    <field name="name">account.bnk_stmt_cashbox.form.close.modal</field>
+    <field name="model">account.bank.statement.cashbox</field>
+    <field name="inherit_id" ref="account.view_account_bnk_stmt_cashbox"/>
+    <field name="mode">primary</field>
+    <field name="priority">1000</field>
+    <field name="arch" type="xml">
+        <xpath expr="//form" position="inside">
+            <footer>
+                <button name="confirm_cash_box" type="object" string="Confirm" special="save" class="btn-primary"/>
+                <button string="Cancel" special="cancel"/>
+                <button class="oe_inline oe_link">Modify Starting Cash</button>
+            </footer>
+        </xpath>
+        
+    </field>
+</record>
+
 </odoo>
+
