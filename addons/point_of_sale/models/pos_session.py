@@ -259,7 +259,7 @@ class PosSession(models.Model):
     def action_pos_session_open(self):
         # second browse because we need to refetch the data from the DB for cash_register_id
         # we only open sessions that haven't already been opened
-        for session in self.filtered(lambda session: session.state == 'opening_control'):
+        for session in self.filtered(lambda session: session.state == 'new_session' or session.state == 'opening_control'):
             values = {}
             if not session.start_at:
                 values['start_at'] = fields.Datetime.now()
@@ -339,6 +339,7 @@ class PosSession(models.Model):
         balance_type = context.get('balance') or 'start'
         context['statement_id'] = self.cash_register_id.id
         context['balance'] = balance_type
+        context['show_button_default_cash'] = False if balance_type == 'start' else True
         context['default_pos_id'] = self.config_id.id
         context['pos_session_id'] = self.id
 
@@ -347,7 +348,7 @@ class PosSession(models.Model):
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'account.bank.statement.cashbox',
-            'view_id': self.env.ref('account.view_account_bnk_stmt_cashbox_close_modal').id,
+            'view_id': self.env.ref('point_of_sale.view_account_bnk_stmt_cashbox_close_modal').id,
             'type': 'ir.actions.act_window',
             'context': context,
             'target': 'new'

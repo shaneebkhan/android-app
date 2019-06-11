@@ -23,10 +23,7 @@ class AccountBankStmtCashWizard(models.Model):
         if config_id:
             config = self.env['pos.config'].browse(config_id)
             lines = config.default_cashbox_id.cashbox_lines_ids
-            if self.env.context.get('balance', False) == 'start':
-                vals['cashbox_lines_ids'] = [[0, 0, {'coin_value': line.coin_value, 'number': line.number, 'subtotal': line.subtotal}] for line in lines]
-            else:
-                vals['cashbox_lines_ids'] = [[0, 0, {'coin_value': line.coin_value, 'number': 0, 'subtotal': 0.0}] for line in lines]
+            vals['cashbox_lines_ids'] = [[0, 0, {'coin_value': line.coin_value, 'number': 0, 'subtotal': 0}] for line in lines]
         return vals
 
 class PosConfig(models.Model):
@@ -218,6 +215,12 @@ class PosConfig(models.Model):
                 pos_config.pos_session_username = False
                 pos_config.pos_session_state = False
                 pos_config.pos_session_duration = 0
+
+    @api.constrains('cash_control')
+    def _check_session_state(self):
+        active_session = self.env['pos.session'].search([('config_id', '=', self.id)], limit=1)
+        if not self.cash_control and active_session.state == 'opening_control' or active_session.state == 'new_session':
+            raise ValidationError(_("You are not allowed to change the cash control status while an active session is on opening control"))
 
     @api.constrains('company_id', 'journal_id')
     def _check_company_journal(self):

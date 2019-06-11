@@ -326,7 +326,7 @@
                                     </div>
                                 </div>
                                 <div attrs="{'invisible': [('cash_control', '=', False)]}">
-                                    <label for="amount_authorized_diff" string="Authorized Difference"/>
+                                    <label for="amount_authorized_diff" string="Authorized Difference" class="font-weight-normal"/>
                                     <field name="amount_authorized_diff"/>
                                 </div>
                             </div>
