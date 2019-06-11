@@ -992,8 +992,9 @@ var VideoWidget = MediaWidget.extend({
     /**
      * @constructor
      */
-    init: function (parent, media) {
+    init: function (parent, media, options) {
         this._super.apply(this, arguments);
+        this.options = options;
         this._onVideoCodeInput = _.debounce(this._onVideoCodeInput, 1000);
     },
     /**
@@ -1030,6 +1031,9 @@ var VideoWidget = MediaWidget.extend({
      */
     save: function () {
         this._updateVideo();
+        if (this.options.bgVideoOptions) {
+            return Promise.resolve({bgVideoSrc: this.$content.attr('src')});
+        }
         if (this.$('.o_video_dialog_iframe').is('iframe')) {
             this.$media = $(
                 '<div class="media_iframe_video" data-oe-expression="' + this.$content.attr('src') + '">' +

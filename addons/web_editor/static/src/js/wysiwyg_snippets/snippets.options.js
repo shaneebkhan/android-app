@@ -850,17 +850,10 @@ registry.background = SnippetOption.extend({
         // Put fake image in the DOM, edit it and use it as background-image
         var $image = $('<img/>', {class: 'd-none', src: value === 'true' ? '' : value}).appendTo(this.$target);
 
-        var $editable = this.$target.closest('.o_editable');
-        var _editor = new weWidgets.MediaDialog(this, {
-            onlyImages: true,
-            mediaWidth: 1920,
-            firstFilters: ['background'],
-            res_model: $editable.data('oe-model'),
-            res_id: $editable.data('oe-id'),
-        }, $image[0]).open();
+        var _editor = new weWidgets.MediaDialog(this, this._getMediaDialogOptions(), $image[0]).open();
 
-        _editor.on('save', this, function (image) {
-            this._setCustomBackground(image.src);
+        _editor.on('save', this, function (data) {
+            this._onSaveMediaDialog(data);
             this.$target.trigger('content_changed');
         });
         _editor.on('closed', this, function () {
@@ -881,14 +874,7 @@ registry.background = SnippetOption.extend({
             return;
         }
         this.$target.off('.background-option')
-            .on('background-color-event.background-option', (function (e, previewMode) {
-                e.stopPropagation();
-                if (e.currentTarget !== e.target) return;
-                if (previewMode === false) {
-                    this.__customImageSrc = undefined;
-                }
-                this.background(previewMode);
-            }).bind(this));
+            .on('background-color-event.background-option', this._onBackgroundColorUpdate.bind(this));
     },
     /**
      * @override
@@ -920,6 +906,50 @@ registry.background = SnippetOption.extend({
         return value && value.replace(srcValueWrapper, '') || '';
     },
     /**
+     * Returns the options to be passed during initialization of MediaDialog.
+     *
+     * @private
+     * @returns {Object}
+     */
+    _getMediaDialogOptions: function () {
+        var $editable = this.$target.closest('.o_editable');
+        return {
+            noDocuments: true,
+            noIcons: true,
+            noVideos: true,
+            mediaWidth: 1920,
+            firstFilters: ['background'],
+            res_model: $editable.data('oe-model'),
+            res_id: $editable.data('oe-id'),
+        };
+    },
+    /**
+     * Called on background-color update.
+     *
+     * @private
+     * @param {Event} ev
+     * @param {boolean|string} previewMode
+     */
+    _onBackgroundColorUpdate: function (ev, previewMode) {
+        ev.stopPropagation();
+        if (ev.currentTarget !== ev.target) {
+            return;
+        }
+        if (previewMode === false) {
+            this.__customImageSrc = undefined;
+        }
+        this.background(previewMode);
+    },
+    /**
+     * Called on save mediaDialog.
+     *
+     * @private
+     * @param {Object} data
+     */
+    _onSaveMediaDialog: function (data) {
+        this._setCustomBackground(data.src);
+    },
+    /**
      * @override
      */
     _setActive: function () {
@@ -948,6 +978,18 @@ registry.background = SnippetOption.extend({
         this.$target.addClass('oe_custom_bg');
         this._setActive();
         this.$target.trigger('snippet-option-change', [this]);
+    },
+    _setBgVideo: function (data) {
+        var $target = this.$target;
+        // set attributes to $target
+        _.each(data, function (val, key) {
+            $target.attr(key, val);
+        });
+        $target.addClass('o_background_video');
+        this.trigger_up('widgets_start_request', {
+            editableMode: true,
+            $target: this.$target,
+        });
     },
 });
 

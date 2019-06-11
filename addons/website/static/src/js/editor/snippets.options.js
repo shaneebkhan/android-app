@@ -29,6 +29,50 @@ options.Class.include({
     },
 });
 
+options.registry.background.include({
+    start: function () {
+        if (this.$target.hasClass('o_background_video')) {
+            this.bgVideoSrc = this.$target.attr('bgvideosrc');
+        }
+        return this._super.apply(this, arguments);
+    },
+    /**
+     * @override
+     */
+    _getMediaDialogOptions: function () {
+        var dialogOptions = this._super.apply(this, arguments);
+        dialogOptions.noVideos = false;
+        dialogOptions['bgVideoOptions'] = {};
+        return dialogOptions;
+    },
+    /**
+     * @override
+     */
+    _onSaveMediaDialog: function (data) {
+        if (!data.bgVideoSrc) {
+            return this._super.apply(this, arguments);
+        }
+        this._setBackgroundVideo(data);
+    },
+    /**
+     * @override
+     */
+    _onBackgroundColorUpdate: function () {
+        if (!this.$target.hasClass('o_background_video')) {
+            return this._super.apply(this, arguments);
+        }
+    },
+    _setBackgroundVideo: function (data) {
+        var self = this;
+        this.bgVideoSrc = data.bgVideoSrc;
+        _.each(data, function (val, key) {
+            self.$target.attr(key, val);
+        });
+        this.$target.addClass('o_background_video');
+        this._refreshPublicWidgets();
+    },
+});
+
 options.registry.menu_data = options.Class.extend({
     xmlDependencies: ['/website/static/src/xml/website.editor.xml'],
 

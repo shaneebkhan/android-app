@@ -680,6 +680,29 @@ registry.mediaVideo = publicWidget.Widget.extend({
     },
 });
 
+registry.backgroundVideo = publicWidget.Widget.extend({
+    selector: '.o_background_video',
+    jsLibs: [
+        '/website/static/lib/YTPlayer/jquery.mb.YTPlayer.js',
+    ],
+    disabledInEditableMode: false,
+
+    /**
+    * @override
+    */
+   start: function () {
+       this._startVideo();
+       return this._super.apply(this, arguments);
+   },
+   _startVideo: function () {
+       var $element = $('<iframe/>', {
+           class: 'player',
+           src: this.$target.attr('bgvideosrc'),
+       });
+       $element.prependTo(this.$target);
+   },
+});
+
 registry.ul = publicWidget.Widget.extend({
     selector: 'ul.o_ul_folded, ol.o_ul_folded',
     events: {
