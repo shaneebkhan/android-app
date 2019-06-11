@@ -13,6 +13,7 @@
                     <field name="name"/>
                 </h1>
                 <group name="delivery">
+                  <group>
                     <field name="package_carrier_type"/>
                     <label for="height"/>
                     <div class="o_row" name="height">
@@ -29,6 +30,8 @@
                       <field name="length"/>
                       <span><field name="length_uom_name"/></span>
                     </div>
+                  </group>
+                  <group>
                     <label for="max_weight"/>
                     <div class="o_row" name="max_weight">
                       <field name="max_weight"/>
@@ -36,6 +39,7 @@
                     </div>
                     <field name="barcode"/>
                     <field name="shipper_package_code"/>
+                  </group>
                 </group>
             </sheet>
         </form>
