@@ -397,6 +397,18 @@ class PosSession(models.Model):
         tax_lines_args = self._get_tax_lines_data(account_move, not_invoiced_orders.mapped('lines'))
         anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders)
         line_args = invoiced_receivable_lines_args + sales_lines_args + tax_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
+        # at this point, since multi-currency is not yet implemented in pos,
+        # currency of line_args is the same as the company currency.
+        # This however can be different from the journal currency,
+        # so a conversion should be done.
+        # NOT POSSIBLE HERE because DATE is needed in the convert currency function
+        # But if I put the order date in the line_args, I have the date.
+        # Perhaps this is a kind of optimization? I'm not yet sure.
+        # Ooops, it is again not possible to include the date.
+        # I really need to do currency conversion for each order (or payment).
+        # Or maybe, I compute the amount_currency immediately in the creation of
+        # pos.order and pos.payment records.
+        # currency_converted_line_args = self._convert_currency(line_args, session)
         return self.env['account.move.line'].create(line_args)
 
     @api.model
@@ -535,9 +547,10 @@ class PosSession(models.Model):
         for move in moves.filtered(lambda m: m.product_id.categ_id.property_valuation == 'real_time'):
             exp_account = move.product_id.property_account_expense_id or move.product_id.categ_id.property_account_expense_categ_id
             out_account = move.product_id.categ_id.property_stock_account_output_categ_id
-            # TODO jcb: abs(move.product_uom_qty * move.price_unit) is used temporarily.
-            # Check whether this is also applicable for returns.
-            amount = abs(move.product_uom_qty * move.price_unit)
+            # stock.move.value is recalculated after negative stock, but not the price_unit.
+            # Also, stock.move.value is negative when the product goes out of the stock (e.g. sales),
+            # so it is appropriate to revert the sign.
+            amount = -move.value
             debit_amounts[exp_account] += amount
             credit_amounts[out_account] += amount
 

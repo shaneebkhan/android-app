@@ -589,6 +589,10 @@ class PosOrder(models.Model):
         readonly=True, default=_default_session)
     config_id = fields.Many2one('pos.config', related='session_id.config_id', string="Point of Sale", readonly=False)
     currency_id = fields.Many2one('res.currency', related='config_id.currency_id', string="Currency")
+    # TODO jcb: I think this currency_rate should not be dynamic as it is dependent on the date.
+    # Computing it once is enough. If suddenly the currency_id of the pos.config is changed,
+    # Then this value changes as well which is wrong as there are already written `entries/records`
+    # based on the first recorded currency_rate.
     currency_rate = fields.Float("Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, readonly=True, help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
 
     invoice_group = fields.Boolean(related="config_id.module_account", readonly=False)
@@ -617,7 +621,7 @@ class PosOrder(models.Model):
         states={'draft': [('readonly', False)]},
     )
     pos_payment_ids = fields.One2many(comodel_name='pos.payment', inverse_name='pos_order_id', string='Pos Payments', readonly=True)
-    session_state = fields.Selection(related='session_id.state', readonly=True)
+    session_state = fields.Selection(string="Session State", related='session_id.state', readonly=True)
     session_move_id = fields.Many2one('account.move', string='Session Journal Entry', related='session_id.move_id', readonly=True, copy=False)
 
     @api.depends('date_order', 'company_id', 'currency_id', 'company_id.currency_id')
