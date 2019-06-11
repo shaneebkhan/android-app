@@ -233,3 +233,17 @@ img.o_forum_avatar_big {
 .o_wforum_forum_card_bg {
     background: linear-gradient(99deg, theme-color('secondary') 10%, darken(theme-color('secondary'), 10%) 90%);
 }
+
+//  User is logged-in
+//  =======================
+body.o_connected_user {
+    .o_forum_nav_header_container .navbar {
+        @include media-breakpoint-only(md) {
+            font-size: $font-size-sm;
+
+            .nav-link {
+                padding-left: 0;
+            }
+        }
+    }
+}
