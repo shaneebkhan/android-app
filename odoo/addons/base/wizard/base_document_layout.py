@@ -187,6 +187,8 @@ class BaseDocumentLayout(models.TransientModel):
                 color[1][2] > white_threshold) and color[1][3] > 0:
                 colors.append(color)
 
+        if not colors:  # May happen when the whole image is white
+            return None, None
         primary, remaining = average_dominant_color(colors)
         secondary = average_dominant_color(
             remaining)[0] if len(remaining) > 0 else primary
