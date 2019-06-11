@@ -123,6 +123,8 @@ class HolidaysRequest(models.Model):
     employee_id = fields.Many2one(
         'hr.employee', string='Employee', index=True, readonly=True,
         states={'draft': [('readonly', False)], 'confirm': [('readonly', False)]}, default=_default_employee, tracking=True)
+    employee_tz_mismatch = fields.Boolean(compute='_compute_employee_tz_mismatch')
+    employee_tz = fields.Selection(related='employee_id.tz')
     manager_id = fields.Many2one('hr.employee', string='Manager', readonly=True)
     department_id = fields.Many2one(
         'hr.department', string='Department', readonly=True,
@@ -335,7 +337,7 @@ class HolidaysRequest(models.Model):
             hour_from = float_to_time(attendance_from.hour_from)
             hour_to = float_to_time(attendance_to.hour_to)
 
-        tz = self.env.user.tz if self.env.user.tz and not self.request_unit_custom else 'UTC'  # custom -> already in UTC
+        tz = self.employee_tz if self.employee_tz and not self.request_unit_custom else 'UTC'  # custom -> already in UTC
         self.date_from = timezone(tz).localize(datetime.combine(self.request_date_from, hour_from)).astimezone(UTC).replace(tzinfo=None)
         self.date_to = timezone(tz).localize(datetime.combine(self.request_date_to, hour_to)).astimezone(UTC).replace(tzinfo=None)
         self._onchange_leave_dates()
@@ -402,6 +404,11 @@ class HolidaysRequest(models.Model):
             self.number_of_days = self._get_number_of_days(self.date_from, self.date_to, self.employee_id.id)['days']
         else:
             self.number_of_days = 0
+
+    @api.depends('employee_id')
+    def _compute_employee_tz_mismatch(self):
+        for leave in self:
+            leave.employee_tz_mismatch = leave.employee_id and leave.holiday_type == 'employee' and leave.employee_tz != self.env.user.tz
 
     @api.multi
     @api.depends('number_of_days')
@@ -878,7 +885,9 @@ class HolidaysRequest(models.Model):
     def activity_update(self):
         to_clean, to_do = self.env['hr.leave'], self.env['hr.leave']
         for holiday in self:
-            note = _('New %s Request created by %s from %s to %s') % (holiday.holiday_status_id.name, holiday.create_uid.name, fields.Datetime.to_string(holiday.date_from), fields.Datetime.to_string(holiday.date_to))
+            start = UTC.localize(holiday.date_from).astimezone(timezone(holiday.employee_id.tz or 'UTC'))
+            end = UTC.localize(holiday.date_to).astimezone(timezone(holiday.employee_id.tz or 'UTC'))
+            note = _('New %s Request created by %s from %s to %s') % (holiday.holiday_status_id.name, holiday.create_uid.name, start, end)
             if holiday.state == 'draft':
                 to_clean |= holiday
             elif holiday.state == 'confirm':
