@@ -60,7 +60,7 @@
 
         <div id="wrap" t-attf-class="container #{website_forum_action}">
             <div class="row">
-                <div class="col o_wprofile_email_validation_container mb16 mt16 col-lg-9">
+                <div class="col o_wprofile_email_validation_container mb16 col-lg-9">
                     <t t-call="website_profile.email_validation_banner">
                         <t t-set="redirect_url" t-value="'/forum/%s' % forum.id"/>
                         <t t-set="send_validation_email_message" t-value="'Click here to send a verification email allowing you to participate to the forum.'"/>
@@ -442,13 +442,17 @@
 <!-- Specific Forum Layout -->
 <template id="forum_index" name="Forum">
     <t t-call="website_forum.header">
-        <h2 class="o_page_header">
-            <t t-esc="question_count"/>
-                Questions
-            <t t-esc="search"/>
-            <small class="dropdown d-block float-right" t-if="filters in ('all', 'unanswered','followed', 'tag')">
-                <h6 class="m-0">
-                    <a href="#" class="dropdown-toggle btn btn-primary" data-toggle="dropdown">
+        <div class="o_forum_index_header d-flex flex-wrap justify-content-between align-items-center">
+            <h4 class="mb-3">
+                <t t-if="search"> "<em t-esc="search"/>" - </t>
+                <span class="text-muted">
+                    <t t-esc="question_count"/>
+                    Questions
+                </span>
+            </h4>
+            <div class="text-right mb-3" t-if="filters in ('all', 'unanswered','followed', 'tag')">
+                <span class="dropdown">
+                    <a href="#" class="dropdown-toggle btn btn-link" data-toggle="dropdown">
                         <t t-if="filters == 'unanswered'"> Unanswered</t>
                         <t t-elif="filters == 'followed'"> Followed</t>
                         <t t-elif="tag"> <span t-field="tag.name"/></t>
@@ -460,22 +464,23 @@
                         <t t-elif="sorting == 'vote_count desc'"> by most voted</t>
                     </a>
                     <div class="dropdown-menu" role="menu">
-                        <div role="separator" class="dropdown-header">Filter on</div>
+                        <h6 class="dropdown-header">Filter on</h6>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'sorting', filters='all')" t-attf-class="dropdown-item#{filters == 'all' and ' active' or ''}">All</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'sorting', filters='unanswered')" t-attf-class="dropdown-item#{filters == 'unanswered' and ' active' or ''}">Unanswered</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'sorting', filters='followed')" t-if="uid" t-attf-class="dropdown-item#{filters == 'followed' and ' active' or ''}">Followed</a>
                         <div role="separator" t-if="tag" class="dropdown-header">Tags</div>
                         <a role="menuitem" href="" t-if="tag" t-attf-class="dropdown-item#{tag and ' active' or None}"><t t-esc="tag.name"/></a>
-                        <div role="separator" class="dropdown-header">Sort by</div>
+                        <div class="dropdown-divider"/>
+                        <h6 class="dropdown-header">Sort by</h6>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'filters', sorting='relevancy desc')" t-attf-class="dropdown-item#{sorting == 'relevancy desc' and ' active' or ''}">Relevance</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'filters', sorting='write_date desc')" t-attf-class="dropdown-item#{sorting == 'write_date desc' and ' active' or ''}">Last activity date</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'filters', sorting='create_date desc')" t-attf-class="dropdown-item#{sorting == 'create_date desc' and ' active' or ''}">Newest</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'filters', sorting='child_count desc')" t-attf-class="dropdown-item#{sorting == 'child_count desc' and ' active' or ''}">Most answered</a>
                         <a role="menuitem" t-att-href="url_for('') + '?' + keep_query( 'search', 'filters', sorting='vote_count desc')" t-attf-class="dropdown-item#{sorting == 'vote_count desc' and ' active' or ''}">Most voted</a>
                     </div>
-                </h6>
-            </small>
-        </h2>
+                </span>
+            </div>
+        </div>
         <div t-foreach="question_ids" t-as="question" class="mb-2">
             <t t-call="website_forum.display_post"/>
         </div>
