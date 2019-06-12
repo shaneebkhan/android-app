@@ -523,7 +523,7 @@
 
     <menuitem id="menu_mrp_workcenter_productivity_loss"
             action="mrp_workcenter_productivity_loss_action"
-            groups="group_mrp_routings"
+            groups="group_mrp_routings,base.group_no_one"
             sequence="20"
             parent="menu_mrp_configuration"/>
 

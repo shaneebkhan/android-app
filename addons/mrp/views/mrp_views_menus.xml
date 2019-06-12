@@ -37,6 +37,7 @@
 
         <menuitem id="menu_view_resource_calendar_search_mrp"
             action="resource.action_resource_calendar_form"
+            groups="base.group_no_one"
             parent="menu_mrp_configuration"
             sequence="110"/>
 
