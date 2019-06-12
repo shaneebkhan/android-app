@@ -25,6 +25,9 @@
                 }
             }
         }
+        select.o_input {
+            height: 25px;
+        }
     }
     .o_document_layout_preview {
         flex: 4;
@@ -32,6 +35,7 @@
         border-color: lightgray;
         padding: 12px;
         display: -webkit-flex;
+        min-height: 420px;
         flex-direction: column;
     }
 }
@@ -90,6 +94,13 @@
         .article table {
             border-bottom: 1px solid;
             border-top: 1px solid;
+            margin: 0;
+        }
+        .clearfix table {
+            border-top: none;
+            .o_subtotal td {
+                border: none;
+            }
         }
         thead th {
             border-top: 1px solid;
