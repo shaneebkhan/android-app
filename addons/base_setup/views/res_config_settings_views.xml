@@ -8,6 +8,31 @@
             <field name="arch" type="xml">
                 <xpath expr="//div[hasclass('settings')]" position="inside">
                     <div class="app_settings_block" data-string="General Settings" string="General Settings" data-key="general_settings">
+                        <div id='about'>
+                            <h2>About</h2>
+                            <t t-set="server_version" t-value="widget.data.server_version"/>
+                            <t t-set="debug" t-value="widget.data.debug"/>
+                            <t t-set="demo_active" t-value="widget.data.demo_active"/>
+                            <div class="text-center">
+                                <div class="user-heading">
+                                    <h3>
+                                        Odoo <t t-esc="server_version"/>
+                                        (Community Edition)
+                                    </h3>
+                                </div>
+                                <div>
+                                    <div class="tab-content">
+                                        <div role="tabpanel" id="settings" class="tab-pane active text-muted text-center o_web_settings_dashboard_compact_subtitle">
+                                            <small>Copyright © 2004 <a target="_blank" href="https://www.odoo.com" style="text-decoration: underline;">Odoo S.A.</a> <a target="_blank" href="http://www.gnu.org/licenses/lgpl.html" style="text-decoration: underline;">GNU LGPL Licensed</a></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr/>
+                        </div>
+                        <div id='invite_users'>
+                            <h2>Invite Users</h2>
+                        </div>
                         <div id="business_documents">
                             <h2>Business Documents</h2>
                             <div class="row mt16 o_settings_container">
@@ -116,6 +141,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div id="iap_portal">
+                            <h2>In-App Purchases</h2> 
                         </div>
                         <div id="multi_company" groups="base.group_multi_company">
                             <field name="company_id" invisible="1"/>
@@ -282,6 +310,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div id="developer_tools">
+                            <h2>Developer Tools</h2>
                         </div>
                     </div>
                 </xpath>
