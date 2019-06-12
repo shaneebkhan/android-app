@@ -37,13 +37,6 @@ class AutoresizeInput extends Component {
         return options;
     }
 
-    /**
-     * @return {string}
-     */
-    get value() {
-        return this.el.value;
-    }
-
     //--------------------------------------------------------------------------
     // Public
     //--------------------------------------------------------------------------
@@ -60,32 +53,30 @@ class AutoresizeInput extends Component {
     }
 
     /**
-     * @return {Object}
+     * @return {string}
      */
-    getSelectionRange() {
-        return {
-            start: this.el.selectionStart,
-            end: this.el.selectionEnd,
-        };
+    getValue() {
+        return this.el.value;
+    }
+
+    /**
+     * @param {string} content
+     */
+    insert(content) {
+        const start = this.el.selectionStart;
+        const end = this.el.selectionEnd;
+        const left = this.el.value.substring(0, start);
+        const right = this.el.value.substring(end);
+        const newValue = `${left}${content}${right}`;
+        const newSelection = newValue.length - right.length;
+        this.el.value = newValue;
+        this.focus();
+        this.el.setSelectionRange(newSelection, newSelection);
     }
 
     resetValue() {
         this.el.value = '';
-    }
-
-    /**
-     * @param {integer} start
-     * @param {integer} end
-     */
-    setSelectionRange(start, end) {
-        this.el.setSelectionRange(start, end);
-    }
-
-    /**
-     * @param {string} newValue
-     */
-    setValue(newValue) {
-        this.el.value = newValue;
+        this._compute();
     }
 
     //--------------------------------------------------------------------------

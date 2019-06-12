@@ -12,10 +12,10 @@
         </div>
         <div class="o_core">
             <div class="o_main">
-                <t t-widget="AutoresizeInput"
-                   options="inputOptions"
-                   t-on-keydown="_onKeydownInput"
-                   t-ref="input"/>
+                <t t-widget="Input"
+                   t-ref="input"
+                   class="o_input"
+                   t-on-post-message="_onPostMessageInput"/>
                 <div class="o_commands">
                     <t t-widget="EmojisButton"
                        class="o_command o_emojis"

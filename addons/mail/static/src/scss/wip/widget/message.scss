@@ -119,7 +119,7 @@
         }
     }
 
-    &.o_notification {
+    &.o_notification:not(.o_discussion) {
         background-color: gray('200');
     }
 

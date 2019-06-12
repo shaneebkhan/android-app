@@ -75,6 +75,7 @@
         'static/src/xml/wip/widget/chat_window_manager.xml',
         'static/src/xml/wip/widget/chatter.xml',
         'static/src/xml/wip/widget/composer.xml',
+        'static/src/xml/wip/widget/composer_input.xml',
         'static/src/xml/wip/widget/dialog.xml',
         'static/src/xml/wip/widget/dialog_manager.xml',
         'static/src/xml/wip/widget/discuss.xml',

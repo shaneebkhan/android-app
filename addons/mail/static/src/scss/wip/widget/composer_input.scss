@@ -1,0 +1,35 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_wip_composer_input {
+    min-width: 0;
+
+    > .note-editor.note-frame {
+
+        > .note-editing-area > .note-editable {
+            max-height: 200px;
+            min-height: 39px;
+
+            > p {
+                margin-bottom: 0;
+            }
+        }
+
+        > .note-statusbar {
+            display: none;
+        }
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_wip_composer_input > .note-editor.note-frame {
+    border: none;
+
+    > .note-resizebar {
+        display: none;
+    }
+}

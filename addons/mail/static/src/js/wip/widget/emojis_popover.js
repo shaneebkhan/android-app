@@ -27,7 +27,7 @@ class EmojisPopover extends Component {
     _onClickEmoji(ev) {
         if (ev.odooPrevented) { return; }
         this.trigger('selection', {
-            source: ev.currentTarget.dataset.source,
+            unicode: ev.currentTarget.dataset.unicode,
             originalEvent: ev,
         });
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div t-name="mail.wip.widget.ComposerInput" owl="1"
+         class="o_mail_wip_composer_input">
+        <textarea t-ref="textarea"/>
+    </div>
+
+</templates>

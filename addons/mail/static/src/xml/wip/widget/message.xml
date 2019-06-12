@@ -3,7 +3,12 @@
 
     <div t-name="mail.wip.widget.Message" owl="1"
          class="o_mail_wip_message"
-         t-attf-class="{{ state.toggledClick ? 'o_toggled_click' : '' }} {{ starred ? 'o_starred' : '' }} {{ options.squashed ? 'o_squashed' : '' }} {{ props.message.message_type === 'notification' ? 'o_notification' : '' }}"
+         t-attf-class="
+            {{ state.toggledClick ? 'o_toggled_click' : '' }}
+            {{ starred ? 'o_starred' : '' }}
+            {{ options.squashed ? 'o_squashed' : '' }}
+            {{ props.message.message_type === 'notification' ? 'o_notification' : '' }}
+            {{ props.message.is_discussion or props.message.is_notification ? 'o_discussion': '' }}"
          t-on-click="_onClick"
          t-att-data-message-lid="props.messageLID">
         <div class="o_sidebar"

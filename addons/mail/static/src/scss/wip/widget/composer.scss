@@ -12,9 +12,9 @@
         padding: 10px 3px;
 
         > .o_core {
-            margin-top: 3px;
             margin-right: 10px;
             margin-left: 3px;
+            min-width: 0;
         }
     }
 
@@ -43,15 +43,15 @@
 
             > .o_commands {
                 display: flex;
-                align-items: center;
+                align-items: stretch;
                 flex: 0 0 auto;
                 margin-left: 1px;
+                height: 39px; // match minimal-height of input
             }
 
             > .o_input {
                 flex: 1 1 auto;
                 align-self: stretch;
-                padding: 5px;
             }
 
         }
@@ -82,7 +82,7 @@
 
         > .o_core > .o_main {
 
-            > .o_input {
+            > .o_input > .note-editor {
                 border-radius: 5px 0 0 5px;
             }
 

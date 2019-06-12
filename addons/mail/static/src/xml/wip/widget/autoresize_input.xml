@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <textarea t-name="mail.wip.widget.AutoresizeInput" owl="1"
-              class="o_input"
+              class="o_mail_wip_autoresize_input"
               placeholder="Write something..."
               t-on-input="_onInput"/>
 

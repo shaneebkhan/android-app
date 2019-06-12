@@ -88,10 +88,16 @@ class EmojisButton extends Component {
     /**
      * @private
      * @param {CustomEvent} ev
+     * @param {Object} ev.detail
+     * @param {string} ev.detail.unicode
      */
     _onEmojiSelection(ev) {
         if (ev.odooPrevented) { return; }
         this._hidePopover();
+        this.trigger('emoji-selection', {
+            unicode: ev.detail.unicode,
+            originalEvent: ev,
+        });
     }
 }
 

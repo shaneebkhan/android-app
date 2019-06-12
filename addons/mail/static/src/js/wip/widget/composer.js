@@ -2,7 +2,7 @@ odoo.define('mail.wip.widget.Composer', function (require) {
 'use strict';
 
 const AttachmentList = require('mail.wip.widget.AttachmentList');
-const AutoresizeInput = require('mail.wip.widget.AutoresizeInput');
+const Input = require('mail.wip.widget.ComposerInput');
 const EmojisButton = require('mail.wip.widget.EmojisButton');
 
 const core = require('web.core');
@@ -19,7 +19,7 @@ class Composer extends Component {
         this.fileuploadID = _.uniqueId('o_composer_fileupload');
         this.state = { attachmentLIDs: [] };
         this.template = 'mail.wip.widget.Composer';
-        this.widgets = { AttachmentList, AutoresizeInput, EmojisButton };
+        this.widgets = { AttachmentList, EmojisButton, Input };
     }
 
     mounted() {
@@ -78,14 +78,13 @@ class Composer extends Component {
      * @return {string}
      */
     get userAvatar() {
-        const avatar =
-            this.env.session.uid > 0
-                ? this.env.session.url('/web/image', {
-                      model: 'res.users',
-                      field: 'image_small',
-                      id: this.env.session.uid
-                  })
-                : '/web/static/src/img/user_menu_avatar.png';
+        const avatar = this.env.session.uid > 0
+            ? this.env.session.url('/web/image', {
+                    model: 'res.users',
+                    field: 'image_small',
+                    id: this.env.session.uid
+                })
+            : '/web/static/src/img/user_menu_avatar.png';
         return avatar;
     }
 
@@ -112,7 +111,7 @@ class Composer extends Component {
         this.env.store.dispatch('thread/post_message', {
             data: {
                 attachmentLIDs: this.state.attachmentLIDs,
-                content: this.refs.input.value,
+                content: this.refs.input.getValue(),
             },
             threadLID: this.props.threadLID,
         });
@@ -225,7 +224,7 @@ class Composer extends Component {
      */
     _onClickSend(ev) {
         if (ev.odooPrevented) { return; }
-        if (!this.refs.input.value) {
+        if (!this.refs.input.getValue()) {
             return;
         }
         ev.preventOdoo();
@@ -236,35 +235,22 @@ class Composer extends Component {
      * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
-     * @param {string} ev.detail.source
+     * @param {string} ev.detail.unicode
      */
     _onEmojiSelection(ev) {
         if (ev.odooPrevented) { return; }
         ev.preventOdoo();
-        const input = this.refs.input;
-        const cursorPosition = input.getSelectionRange(input);
-        const leftSubstring = input.value.substring(0, cursorPosition.start);
-        const rightSubstring = input.value.substring(cursorPosition.end);
-        const newValue = [leftSubstring, ev.detail.source, rightSubstring].join(" ");
-        const newCursorPosition = newValue.length - rightSubstring.length;
-        input.setValue(newValue);
-        input.focus();
-        input.setSelectionRange(newCursorPosition, newCursorPosition);
+        this.refs.input.insert(ev.detail.unicode);
     }
 
     /**
      * @private
-     * @param {KeyboardEvent} ev
+     * @param {CustomEvent} ev
      */
-    _onKeydownInput(ev) {
+    _onPostMessageInput(ev) {
         if (ev.odooPrevented) { return; }
-        if (ev.key === 'Enter') {
-            if (!this.refs.input.value) {
-                return;
-            }
-            this._postMessage();
-            ev.preventDefault();
-        }
+        ev.preventOdoo();
+        this._postMessage();
     }
 
     /**
