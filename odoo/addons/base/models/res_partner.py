@@ -780,7 +780,7 @@ class Partner(models.Model):
         self = self.sudo(name_get_uid or self.env.uid)
 
         # as the implementation is in SQL, we force the recompute of fields if necessary
-        self.recompute_fields(['display_name'])
+        self.recompute(['display_name'])
         self.flush()
 
         if args is None:
