@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="website.background.video">
+        <div class="o_bg_video_container">
+            <iframe t-att-src="bgvideosrc" frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" title="YouTube video player"/>
+        </div>
+    </t>
+</templates>

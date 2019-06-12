@@ -30,11 +30,23 @@ options.Class.include({
 });
 
 options.registry.background.include({
+    /**
+     * @override
+     */
     start: function () {
-        if (this.$target.hasClass('o_background_video')) {
-            this.bgVideoSrc = this.$target.attr('bgvideosrc');
+        if (this._hasBgvideo()) {
+            this.__customVideoSrc = this.$target.attr('bgvideosrc');
         }
         return this._super.apply(this, arguments);
+    },
+    /**
+     * @override
+     */
+    setTarget: function () {
+        if (this._hasBgvideo()) {
+            this.__customVideoSrc = this.$target.attr('bgvideosrc');
+        }
+        this._super.apply(this, arguments);
     },
     /**
      * @override
@@ -58,13 +70,29 @@ options.registry.background.include({
      * @override
      */
     _onBackgroundColorUpdate: function () {
-        if (!this.$target.hasClass('o_background_video')) {
+        if (!this._hasBgvideo()) {
             return this._super.apply(this, arguments);
         }
     },
+    /**
+     * Returns whether the current target has background video or not.
+     *
+     * @private
+     * @returns {boolean}
+     */
+    _hasBgvideo: function () {
+        return this.$target.hasClass('o_background_video');
+    },
+    /**
+     * Sets the background-video.
+     *
+     * @private
+     * @param {Object} data
+     */
     _setBackgroundVideo: function (data) {
         var self = this;
-        this.bgVideoSrc = data.bgVideoSrc;
+        this.__customVideoSrc = data.bgVideoSrc;
+        // set attributes to $target
         _.each(data, function (val, key) {
             self.$target.attr(key, val);
         });

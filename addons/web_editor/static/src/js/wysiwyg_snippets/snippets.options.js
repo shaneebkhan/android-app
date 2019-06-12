@@ -979,18 +979,6 @@ registry.background = SnippetOption.extend({
         this._setActive();
         this.$target.trigger('snippet-option-change', [this]);
     },
-    _setBgVideo: function (data) {
-        var $target = this.$target;
-        // set attributes to $target
-        _.each(data, function (val, key) {
-            $target.attr(key, val);
-        });
-        $target.addClass('o_background_video');
-        this.trigger_up('widgets_start_request', {
-            editableMode: true,
-            $target: this.$target,
-        });
-    },
 });
 
 /**

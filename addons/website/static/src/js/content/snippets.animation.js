@@ -682,9 +682,7 @@ registry.mediaVideo = publicWidget.Widget.extend({
 
 registry.backgroundVideo = publicWidget.Widget.extend({
     selector: '.o_background_video',
-    jsLibs: [
-        '/website/static/lib/YTPlayer/jquery.mb.YTPlayer.js',
-    ],
+    xmlDependencies: ['/website/static/src/xml/website.background.video.xml'],
     disabledInEditableMode: false,
 
     /**
@@ -695,10 +693,9 @@ registry.backgroundVideo = publicWidget.Widget.extend({
        return this._super.apply(this, arguments);
    },
    _startVideo: function () {
-       var $element = $('<iframe/>', {
-           class: 'player',
-           src: this.$target.attr('bgvideosrc'),
-       });
+       var $element = $(qweb.render('website.background.video', {
+           bgvideosrc: this.$target.attr('bgVideoSrc'),
+       }));
        $element.prependTo(this.$target);
    },
 });

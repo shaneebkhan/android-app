@@ -256,6 +256,22 @@ font[class*='bg-'] {
     }
 }
 
+.o_background_video {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    .o_bg_video_container {
+        @include o-position-absolute($top: 0, $right: 0)
+        height: 100%;
+        width: 100%;
+        iframe {
+            pointer-events: none;
+            height: 100%;
+            width: 100%;
+        }
+    }
+}
+
 // Probably outdated
 // Lists
 .o_ul_toggle {
