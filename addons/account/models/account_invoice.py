@@ -1011,9 +1011,8 @@ class AccountInvoice(models.Model):
             report_invoice = False
         if report_invoice and report_invoice.attachment:
             for invoice in self:
-                with invoice.env.do_in_draft():
-                    invoice.number, invoice.state = invoice.move_name, 'open'
-                    attachment = self.env.ref('account.account_invoices').retrieve_attachment(invoice)
+                invoice.number, invoice.state = invoice.move_name, 'open'
+                attachment = self.env.ref('account.account_invoices').retrieve_attachment(invoice)
                 if attachment:
                     attachment.unlink()
         return True
