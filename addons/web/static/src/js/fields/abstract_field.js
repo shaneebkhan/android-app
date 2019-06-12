@@ -33,7 +33,41 @@ odoo.define('web.AbstractField', function (require) {
 var field_utils = require('web.field_utils');
 var Widget = require('web.Widget');
 
-var AbstractField = Widget.extend({
+var PropertyFieldMixin = {
+    //--------------------------------------------------------------------------
+    // Private
+    //--------------------------------------------------------------------------
+
+    /**
+     * @private
+     * @returns {jQuery}
+     */
+    _renderPropertyButton: function () {
+        if (this.field.company_dependent === true) {
+            return $('<button>', {
+                    type: 'button',
+                    'class': 'o_field_property fa fa-th-list btn btn-link',
+                })
+                .on('click', this._propertyButtonClick.bind(this));
+        }
+        return $();
+    },
+
+    //--------------------------------------------------------------------------
+    // Handlers
+    //--------------------------------------------------------------------------
+
+    /**
+     * open the translation view for the current field
+     *
+     * @private
+     */
+    _propertyButtonClick: function () {
+        this.trigger_up('open_property', {fieldName: this.name, id: this.dataPointID});
+    },
+};
+
+var AbstractField = Widget.extend(PropertyFieldMixin, {
     events: {
         'keydown': '_onKeydown',
     },
@@ -413,10 +447,12 @@ var AbstractField = Widget.extend({
             this._applyDecorations();
         }
         if (this.mode === 'edit') {
-            return this._renderEdit();
+            var prom = this._renderEdit();
         } else if (this.mode === 'readonly') {
-            return this._renderReadonly();
+            var prom = this._renderReadonly();
         }
+        this.$el = this.$el.add(this._renderPropertyButton());
+        return prom;
     },
     /**
      * Render the widget in edit mode.  The actual implementation is left to the
