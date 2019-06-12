@@ -35,7 +35,7 @@
                                         </div>
                                         <div class="content-group">
                                             <div class="mt16" groups="base.group_no_one">
-                                                <label for="external_report_layout_id" string="Template" class="col-3 col-lg-3 o_light_label"/>
+                                                <label for="external_report_layout_id" string="Layout" class="col-3 col-lg-3 o_light_label"/>
                                                 <field name="external_report_layout_id" domain="[('type','=', 'qweb')]" class="oe_inline"/>
                                             </div>
                                             <div class="mt16">
