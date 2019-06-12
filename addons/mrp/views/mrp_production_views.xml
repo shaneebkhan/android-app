@@ -41,8 +41,8 @@
                     <button name="action_assign" attrs="{'invisible': ['|', '|', ('is_locked', '=', False), ('state', 'in', ('draft', 'done', 'cancel')), ('reservation_state', '=', 'assigned')]}" string="Check availability" type="object" class="oe_highlight"/>
                     <button name="button_plan" attrs="{'invisible': ['|', ('state', 'not in', ('confirmed', 'planned')), '|', ('routing_id', '=', False), '|', ('date_planned_start_wo', '!=', False), ('date_planned_finished_wo', '!=', False)]}" type="object" string="Plan" class="oe_highlight"/>
                     <button name="button_unplan" type="object" string="Unplan" attrs="{'invisible': ['|', '|', ('state', '!=', 'planned'), ('date_planned_start_wo', '=', False), ('date_planned_finished_wo', '=', False)]}"/>
-                    <button name="open_produce_product" attrs="{'invisible': ['|', '|', '|', ('state', '=', 'to_close'), ('is_locked', '=', False), ('reservation_state', '!=', 'assigned'), ('routing_id', '!=', False)]}" string="Produce" type="object" class="oe_highlight"/>
-                    <button name="open_produce_product" attrs="{'invisible': ['|', '|', '|', ('state', '=', 'to_close'), ('is_locked', '=', False), ('reservation_state', 'not in', ('confirmed', 'waiting')), ('routing_id', '!=', False)]}" string="Produce" type="object"/>
+                    <button name="open_produce_product" attrs="{'invisible': ['|', '|', '|', ('state', '=', 'to_close'), ('has_ready_produce', '=', False), ('is_locked', '=', False), ('routing_id', '!=', False)]}" string="Produce" type="object" class="oe_highlight"/>
+                    <button name="open_produce_product" attrs="{'invisible': ['|', '|', '|', '|', ('state', '=', 'to_close'), ('has_ready_produce', '=', True), ('is_locked', '=', False), ('reservation_state', 'not in', ('confirmed', 'waiting')), ('routing_id', '!=', False)]}" string="Produce" type="object"/>
                     <button name="post_inventory" string="Post Inventory" type="object" attrs="{'invisible': [('post_visible', '=', False)]}" groups="base.group_no_one"/>
                     <button name="button_scrap" type="object" string="Scrap" attrs="{'invisible': ['|', ('state', 'in', ('cancel', 'draft')), ('is_locked', '=', False)]}"/>
                     <button name="button_unreserve" type="object" string="Unreserve" attrs="{'invisible': [('unreserve_visible', '=', False)]}"/>
@@ -52,6 +52,7 @@
                     <button name="action_cancel" type="object" string="Cancel" attrs="{'invisible': ['|', '|', ('is_locked', '=', False), ('state', 'in', ('done','cancel'))]}"/>
                 </header>
                 <sheet>
+                    <field name="has_ready_produce" invisible="1"/>
                     <field name="reservation_state" invisible="1"/>
                     <field name="is_locked" invisible="1"/>
                     <field name="post_visible" invisible="1"/>
