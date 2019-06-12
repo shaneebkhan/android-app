@@ -59,8 +59,7 @@
         <t t-if="company.report_layout_id.name == 'Clean'"><t t-set="table_border_color" t-value="company.secondary_color" /></t>
 
         <div t-attf-class="page o_preview_layout o_preview_{{company.report_layout_id.name}}_layout" t-attf-style="font-family: {{company.font}};">
-            <!-- <img class="o_document_layout_preview_logo" t-attf-src="data:image/svg+xml;base64, {{company.logo}}" alt="logo" /> -->
-            <div class="header" style="border-top: 1px solid;">
+            <div class="header">
                 <h2 t-attf-style="color: {{company.primary_color}}">Invoice INV/2019/0005</h2>
                 <div class="row o_layout_information">
                     <div class="col-auto">
@@ -100,7 +99,6 @@
                             <td>190.00</td>
                             <t t-if="company.report_layout_id.name == 'Boxed'">
                                 <!-- fallback to white when browser does not support RRGGBBAA notation -->
-                                <!-- TODO test -->
                                 <td class="o_price_total"
                                     t-attf-style="background-color: white;background-color: {{company.secondary_color}}19;">$ 380.00</td>
                             </t>
@@ -128,7 +126,12 @@
                             <table class="table table-sm"  t-attf-style="border-color: {{table_border_color}}">
                                 <tr class="o_subtotal">
                                     <td>
-                                        <strong t-attf-style="color: {{company.primary_color}}">Subtotal</strong>
+                                        <t t-if="company.report_layout_id.name == 'Clean'">
+                                            <strong t-attf-style="color: {{company.secondary_color}}">Subtotal</strong>
+                                        </t>
+                                        <t t-else="else">
+                                            <strong t-attf-style="color: {{company.primary_color}}">Subtotal</strong>
+                                        </t>
                                     </td>
                                     <td>
                                         <span>$ 1630.00</span>
@@ -137,7 +140,6 @@
                                 <tr class="o_total">
                                     <t t-if="company.report_layout_id.name == 'Boxed'">
                                         <!-- fallback to full opacity when browser does not support RRGGBBAA notation -->
-                                        <!-- TODO test -->
                                         <td t-attf-style="background-color: {{company.primary_color}};background-color: {{company.primary_color}}D0;">
                                             <strong>Total</strong>
                                         </td>
@@ -147,7 +149,12 @@
                                     </t>
                                     <t t-else="else">
                                         <td>
-                                            <strong t-attf-style="color: {{company.primary_color}}">Total</strong>
+                                            <t t-if="company.report_layout_id.name == 'Clean'">
+                                                <strong t-attf-style="color: {{company.secondary_color}}">Total</strong>
+                                            </t>
+                                            <t t-else="else">
+                                                <strong t-attf-style="color: {{company.primary_color}}">Total</strong>
+                                            </t>
                                         </td>
                                         <td>
                                             <span>$ 1630.00</span>

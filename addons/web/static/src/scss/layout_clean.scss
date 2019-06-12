@@ -1,12 +1,9 @@
 .o_clean_footer, .o_clean_header, .o_report_layout_clean {
     color: #000;
 }
-.o_clean_header {
-    border-bottom: 1px solid $o-company-primary-color;
-    img {
-        max-height: 90px;
-        max-width: 300px;
-    }
+.o_clean_header img {
+    max-height: 90px;
+    max-width: 300px;
 }
 .o_clean_footer {
     margin: 0 3px;
