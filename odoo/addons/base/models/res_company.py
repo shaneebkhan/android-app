@@ -351,7 +351,6 @@ class Company(models.Model):
                     'type': "binary",
                     'mimetype': "text/scss",
                     'datas': datas,
-                    'datas_fname': url.split("/")[-1],
                     'url': url,
                 }
                 company.scss_attachment = ir_attachment.create(new_attachment)
