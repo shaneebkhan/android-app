@@ -435,10 +435,6 @@ class StockMove(models.Model):
             pickings = Picking.browse(to_track_picking_ids)
             initial_values = dict((picking.id, {'state': picking.state}) for picking in pickings)
 
-        # FIXME sle
-        if vals.get('date_expected'):
-            vals['date'] = vals['date_expected']
-
         res = super(StockMove, self).write(vals)
         if track_pickings:
             pickings.message_track(pickings.fields_get(['state']), initial_values)
