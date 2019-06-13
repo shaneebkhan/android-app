@@ -11,6 +11,7 @@ WebsiteNewMenu.include({
     actions: _.extend({}, WebsiteNewMenu.prototype.actions || {}, {
         new_forum: '_createNewForum',
     }),
+    xmlDependencies: ['/website_forum/static/src/xml/website_forum_templates.xml'],
 
     //--------------------------------------------------------------------------
     // Actions
@@ -33,14 +34,10 @@ WebsiteNewMenu.include({
                 var $group = this.$dialog.find("div.form-group");
                 $group.removeClass("mb0");
 
-                var $add = $(
-                    '<div class="form-group mb0">'+
-                        '<label class="offset-md-3 col-md-9 text-left">'+
-                        '    <input type="checkbox" required="required"/> '+
-                        '</label>'+
-                    '</div>');
+                var $add = $(core.qweb.render('website_forum.add_to_menu'));
+                var $radio = $(core.qweb.render('website_forum.select_forum_mode'));
                 $add.find('label').append(_t("Add to menu"));
-                $group.after($add);
+                $group.after($add, $radio);
             }
         }).then(function (result) {
             var forum_name = result.val;
@@ -49,10 +46,12 @@ WebsiteNewMenu.include({
                 return;
             }
             var add_menu = ($dialog.find('input[type="checkbox"]').is(':checked'));
+            var forumMode = $dialog.find('input[type="radio"]:checked').val();
             return self._rpc({
                 route: '/forum/new',
                 params: {
                     forum_name: forum_name,
+                    forum_mode: forumMode,
                     add_menu: add_menu || "",
                 },
             }).then(function (url) {

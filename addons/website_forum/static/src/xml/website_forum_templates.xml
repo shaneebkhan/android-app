@@ -1,0 +1,22 @@
+<templates id="template" xml:space="preserve">
+    <t t-name="website_forum.add_to_menu">
+        <div class="form-group mb0">
+            <label class="offset-md-3 col-md-9 text-left">
+                <input type="checkbox" required="required"/>
+            </label>
+        </div>
+    </t>
+    <t t-name="website_forum.select_forum_mode">
+        <div class="form-group row mb0">
+            <label class="col-md-3 col-form-label">Forum Mode:</label>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" name="mode" type="radio" id="questions" value="questions" checked="checked"/>
+                <label class="form-check-label" for="questions">Questions and Answers</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" name="mode" type="radio" id="discussions" value="discussions"/>
+                <label class="form-check-label" for="discussions">Discussions</label>
+            </div>
+        </div>
+    </t>
+</templates>

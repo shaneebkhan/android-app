@@ -830,10 +830,10 @@
             </t>
         </div>
         <div id="post_reply"
-                t-if="not question.uid_has_answered and question.state != 'close' and question.active != False and question.can_answer">
+                t-if="(not question.uid_has_answered or question.forum_id.mode == 'discussions') and question.state != 'close' and question.active != False and question.can_answer">
             <t t-call="website_forum.post_answer"/>
         </div>
-        <div t-if="question.uid_has_answered" class="mb16">
+        <div t-if="question.uid_has_answered and question.forum_id.mode == 'questions'" class="mb16">
             <a role="button" class="btn btn-primary" t-attf-href="/forum/#{slug(forum)}/question/#{slug(question)}/edit_answer">Edit Your Answer</a>
             <span class="text-muted">(only one answer per question is allowed)</span>
         </div>
