@@ -193,6 +193,35 @@ QUnit.module('pos.ui', {
         });
     });
 
+    QUnit.module('OrderSelectorWidget', function () {
+        QUnit.only('basic rendering', async function (assert) {
+            assert.expect(6);
+
+            const pos = await loadPointOfSale({
+                data: this.data,
+                session: this.session,
+            });
+
+            const orderSelector = '.pos-topheader .order-selector';
+
+            assert.containsOnce(pos.$(orderSelector), '.orders',
+                "should have an order list");
+            assert.containsOnce(pos.$(orderSelector), '.neworder-button',
+                "should have a new order button");
+            assert.containsOnce(pos.$(orderSelector), '.deleteorder-button',
+                "should have a delete order button");
+            assert.containsNone(pos.$(orderSelector), '.orders > .order-button');
+
+            await dom.click(pos.$(orderSelector).find('.neworder-button'));
+            assert.containsOnce(pos.$(orderSelector), '.orders > .order-button');
+
+            await dom.click(pos.$(orderSelector).find('.neworder-button'));
+            assert.containsN(pos.$(orderSelector), '.orders > .order-button', 2);
+
+            pos.destroy();
+        });
+    });
+
 });
 
 });
