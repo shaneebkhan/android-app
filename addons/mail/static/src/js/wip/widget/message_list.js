@@ -150,6 +150,12 @@ class MessageList extends Component {
             .map(([refID, ref]) => ref)
             .sort((ref1, ref2) => (ref1.props.message.id < ref2.props.message.id ? -1 : 1));
     }
+    get messages() {
+        if (this.options.order === 'desc') {
+            return this.props.messages.reverse();
+        }
+        return this.props.messages;
+    }
 
     /**
      * @return {Object}

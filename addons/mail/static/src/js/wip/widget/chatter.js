@@ -2,6 +2,8 @@ odoo.define('mail.wip.widget.Chatter', function (require) {
 'use strict';
 
 const Activity = require('mail.Activity');
+// TODO: we should probably use something like ChatterComposer here, which is
+// a bit different from classic composer
 const Composer = require('mail.wip.widget.Composer');
 const Followers = require('mail.Followers');
 const Thread = require('mail.wip.widget.Thread');
@@ -32,7 +34,7 @@ class Chatter extends Component {
      */
     constructor(...args) {
         super(...args);
-        this.state = { composerMode: 'send' };
+        this.state = { composerMode: '' };
         this.template = 'mail.wip.widget.Chatter';
         this.widgets = { Composer, Thread };
 
@@ -67,12 +69,35 @@ class Chatter extends Component {
 
         // append Odoo widgets for optionnal activities and followers
         if (this.fields.activity) {
-            this.el.appendChild(this.fields.activity.$el[0]);
+            this.refs.activity.appendChild(this.fields.activity.$el[0]);
         }
         if (this.fields.followers) {
-            this.el.querySelector('.o_chatter_topbar').appendChild(this.fields.followers.$el[0]);
+            this.refs.topbarRight.appendChild(this.fields.followers.$el[0]);
         }
+    }
 
+    //--------------------------------------------------------------------------
+    // Getters / Setters
+    //--------------------------------------------------------------------------
+
+    /**
+     * @return {Object}
+     */
+    get composerOptions() {
+        return {
+            chatter: true,
+            isLog: this.state.composerMode === 'log',
+            recordName: this.props.record.data.display_name,
+        };
+    }
+    /**
+     * @return {Object}
+     */
+    get threadOptions() {
+        return {
+            order: 'desc',
+            showComposer: false,
+        };
     }
 
     //--------------------------------------------------------------------------

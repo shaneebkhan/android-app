@@ -3,14 +3,33 @@
 
     <div t-name="mail.wip.widget.Composer" owl="1"
          class="o_mail_wip_composer"
-         t-att-class="options.avatar ? 'o_with_avatar' : ''">
+         t-attf-class="{{options.avatar ? 'o_with_avatar' : ''}} {{options.chatter ? 'o_chatter_composer' : ''}}">
         <div t-if="options.avatar"
              class="o_sidebar">
             <img alt=""
                  class="o_avatar rounded-circle"
                  t-att-src="userAvatar"/>
         </div>
+
         <div class="o_core">
+
+            <!-- New message composer -->
+            <t t-if="options.chatter and !options.isLog">
+                <!-- Text for followers -->
+                <small class="o_wip_followers">
+                    <b class="text-muted">To: </b>
+                    <em class="text-muted">Followers of </em>
+                    <b>
+                        <t t-if="options.recordName">
+                            &#32;&quot;<t t-esc="options.recordName"/>&quot;
+                        </t>
+                        <t t-if="!options.recordName">
+                            this document
+                        </t>
+                    </b>
+                </small>
+            </t>
+
             <div class="o_main">
                 <t t-widget="Input"
                    t-ref="input"
@@ -29,7 +48,7 @@
                             class="o_command o_send btn btn-primary"
                             type="button"
                             t-on-click="_onClickSend">
-                        Send
+                        <t t-if="options.isLog">Log</t><t t-else="">Send</t>
                     </button>
                 </div>
             </div>

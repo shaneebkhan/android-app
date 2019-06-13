@@ -114,6 +114,7 @@ class Thread extends Component {
         let options = { ...this.props.options };
         _.defaults(options, {
             domain: [],
+            order: 'asc',
             redirectAuthor: false,
             showComposer: false,
             squashCloseMessages: false,
@@ -189,6 +190,10 @@ Thread.props = {
             domain: {
                 type: Array,
                 default: [],
+            },
+            order: {
+                type: String,
+                optional: true,
             },
             redirectAuthor: {
                 type: Boolean,

@@ -24,7 +24,7 @@
                 <hr class="o_line"/><span class="o_label">New messages</span>
             </div>
         </t>
-        <t t-foreach="props.messages" t-as="message">
+        <t t-foreach="messages" t-as="message">
             <t t-set="message_day" t-value="getDateDay(message)"/>
             <div t-if="current_day !== message_day" class="o_separator o_date">
                 <hr class="o_line"/><span class="o_label"><t t-esc="message_day"/></span><hr class="o_line"/>

@@ -35,6 +35,11 @@
             }
         }
 
+        > .o_wip_followers, .o_suggested_partners {
+            flex: 0 0 100%;
+            margin-bottom: $o-mail-chatter-gap*0.5;
+        }
+
         > .o_main {
             display: flex;
             align-items: flex-start;
