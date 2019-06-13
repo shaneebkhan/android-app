@@ -22,6 +22,7 @@ INT_CURRENCIES = [
     u'BIF', u'XAF', u'XPF', u'CLP', u'KMF', u'DJF', u'GNF', u'JPY', u'MGA', u'PYG', u'RWF', u'KRW',
     u'VUV', u'VND', u'XOF'
 ]
+DEFAULT_ENDPOINT = 'http://localhost:8069'
 
 
 class PaymentAcquirerStripe(models.Model):
@@ -35,6 +36,7 @@ class PaymentAcquirerStripe(models.Model):
         help="A relative or absolute URL pointing to a square image of your "
              "brand or product. As defined in your Stripe profile. See: "
              "https://stripe.com/docs/checkout")
+    stripe_connect_status_msg = fields.Boolean(groups='base.group_user')
 
     @api.multi
     def stripe_form_generate_values(self, tx_values):
@@ -98,6 +100,20 @@ class PaymentAcquirerStripe(models.Model):
         res = super(PaymentAcquirerStripe, self)._get_feature_support()
         res['tokenize'].append('stripe')
         return res
+
+    @api.multi
+    def create_account(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '%s/payment/stripe/create_account/%s' % (DEFAULT_ENDPOINT, self.id),
+            'target': 'self',
+            'res_id': self.id,
+        }
+
+    @api.multi
+    def action_close_status_msg(self):
+        self.stripe_connect_status_msg = False
 
 
 class PaymentTransactionStripe(models.Model):
