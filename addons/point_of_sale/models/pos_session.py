@@ -336,7 +336,8 @@ class PosSession(models.Model):
             'ref': session.name,
             'name': journal.sequence_id.next_by_id()
         })
-        move_lines = self._create_account_move_lines(session, account_move, invoiced_orders, not_invoiced_orders)
+        is_using_company_currency = session.currency_id == session.company_id.currency_id
+        move_lines = self._create_account_move_lines(session, account_move, invoiced_orders, not_invoiced_orders, is_using_company_currency)
         return account_move, move_lines
 
     @api.model
@@ -389,13 +390,13 @@ class PosSession(models.Model):
         self.mapped('statement_ids').filtered(lambda statement: not statement.line_ids).unlink()
 
     @api.model
-    def _create_account_move_lines(self, session, account_move, invoiced_orders, not_invoiced_orders):
+    def _create_account_move_lines(self, session, account_move, invoiced_orders, not_invoiced_orders, is_using_company_currency):
         all_orders = invoiced_orders | not_invoiced_orders
-        receivable_pos_line_args = self._get_pos_receivable_lines(session, account_move, all_orders.mapped('pos_payment_ids'))
-        invoiced_receivable_lines_args = self._get_invoiced_receivable_lines(account_move, invoiced_orders)
-        sales_lines_args = self._get_sales_lines_data(account_move, not_invoiced_orders.mapped('lines'))
-        tax_lines_args = self._get_tax_lines_data(account_move, not_invoiced_orders.mapped('lines'))
-        anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders)
+        receivable_pos_line_args = self._get_pos_receivable_lines(session, account_move, all_orders.mapped('pos_payment_ids'), is_using_company_currency)
+        invoiced_receivable_lines_args = self._get_invoiced_receivable_lines(account_move, invoiced_orders, is_using_company_currency)
+        sales_lines_args = self._get_sales_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
+        tax_lines_args = self._get_tax_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
+        anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders, is_using_company_currency)
         line_args = invoiced_receivable_lines_args + sales_lines_args + tax_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
         # at this point, since multi-currency is not yet implemented in pos,
         # currency of line_args is the same as the company currency.
@@ -439,35 +440,59 @@ class PosSession(models.Model):
         return self.env['account.bank.statement.line'].create([args for args in statement_lines_args if args.get('amount')])
 
     @api.model
-    def _get_invoiced_receivable_lines(self, account_move, invoiced_orders):
-        def generate_line_args(account_id, amount):
-            partial_args = dict(account_id=account_id, move_id=account_move.id)
-            return self._credit_amount(partial_args, amount)
+    def _get_invoiced_receivable_lines(self, account_move, invoiced_orders, is_using_company_currency):
+        if len(invoiced_orders) == 0:
+            return []
 
-        account_amount_dict = defaultdict(lambda: 0.0)
+        currency_id = invoiced_orders[0].session_id.currency_id
+        def generate_line_args(account_id, amount, amount_currency):
+            partial_args = dict(account_id=account_id, move_id=account_move.id)
+            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, currency_id)
+
+        account_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
         for order in invoiced_orders:
             account_id = order.invoice_id.account_id.id
             # Use `amount_total` (w/c includes tax) field since this will be
             # reconciled with receivable item in an invoice move which counts taxes.
-            account_amount_dict[account_id] += order.amount_total
+            if is_using_company_currency:
+                account_amounts[account_id]['amount'] += order.amount_total
+            else:
+                account_amounts[account_id]['amount'] += order.amount_total / order.currency_rate
+                account_amounts[account_id]['amount_currency'] += order.amount_total
 
-        return [generate_line_args(account_id, amount) for account_id, amount in account_amount_dict.items()]
+        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts.items()]
 
     @api.model
-    def _get_pos_receivable_lines(self, session, account_move, payments):
-        def generate_line_args(pm, amount):
+    def _get_pos_receivable_lines(self, session, account_move, payments, is_using_company_currency):
+        if len(payments) == 0:
+            return []
+
+        def generate_line_args(pm, amount, amount_currency):
             data = dict(account_id=pm.receivable_account_id.id,
                         move_id=account_move.id,
                         name='%s - %s' % (session.name, pm.name))
-            return self._debit_amount(data, amount)
+            return self._debit_amount(data, amount) if is_using_company_currency else self._debit_amount(data, amount, amount_currency, session.currency_id)
+
+        def compute_amount_sum(payments):
+            # values coming from the frontend has currency equal to the config.currency_id
+            # which can be not equal to the company.currency_id.
+            # compute amount_currency as the sum of payment.amount.
+            # if is_using_company_currency, then return amount_currency as amount.
+            amount_currency = sum(payments.mapped('amount'))
+            amount = sum([p.amount / p.currency_rate for p in payments])
+            return (amount_currency, None) if is_using_company_currency else (amount, amount_currency)
+
         # Total amount grouped by payment method
-        grouped_total_amount = [(pm, sum(payments.filtered(lambda p: p.payment_method_id == pm).mapped('amount'))) for pm in session.payment_method_ids]
-        return [generate_line_args(pm, amount)
-                    for pm, amount in grouped_total_amount
+        grouped_total_amount = [(pm, *compute_amount_sum(payments.filtered(lambda p: p.payment_method_id == pm))) for pm in session.payment_method_ids]
+        return [generate_line_args(pm, amount, amount_currency)
+                    for pm, amount, amount_currency in grouped_total_amount
                     if not float_is_zero(amount, precision_rounding=session.currency_id.rounding)]
 
     @api.model
-    def _get_sales_lines_data(self, account_move, order_lines):
+    def _get_sales_lines_data(self, account_move, order_lines, is_using_company_currency):
+        if len(order_lines) == 0:
+            return []
+
         def get_income_account(order_line):
             if order_line.product_id.property_account_income_id.id:
                 return order_line.product_id.property_account_income_id
@@ -478,28 +503,40 @@ class PosSession(models.Model):
                                 'account for this product: "%s" (id:%d).')
                                 % (order_line.product_id.name, order_line.product_id.id))
 
-        def generate_line_args(income_account_id, amount):
-            partial_args = dict(account_id=income_account_id, move_id=account_move.id)
-            return self._credit_amount(partial_args, amount)
+        currency_id = order_lines[0].order_id.currency_id
 
-        account_amount_dict = defaultdict(lambda: 0.0)
+        def generate_line_args(income_account_id, amount, amount_currency):
+            partial_args = dict(account_id=income_account_id, move_id=account_move.id)
+            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, currency_id)
+
+        account_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
         for order_line in order_lines:
             income_account_id = get_income_account(order_line).id
-            account_amount_dict[income_account_id] += order_line.price_subtotal
+            if is_using_company_currency:
+                account_amounts[income_account_id]['amount'] += order_line.price_subtotal
+            else:
+                account_amounts[income_account_id]['amount'] += order_line.price_subtotal / order_line.order_id.currency_rate
+                account_amounts[income_account_id]['amount_currency'] += order_line.price_subtotal
 
-        return [generate_line_args(account_id, amount) for account_id, amount in account_amount_dict.items()]
+        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts.items()]
 
     @api.model
-    def _get_tax_lines_data(self, account_move, all_order_lines):
+    def _get_tax_lines_data(self, account_move, all_order_lines, is_using_company_currency):
         """
         return [{**(account.move.line args for the taxes grouped by account_id and tax_id)}]
         """
-        AccountTax = self.env['account.tax']
+        if len(all_order_lines) == 0:
+            return []
 
-        def generate_line_args(account_id, tax_id, amount):
+        AccountTax = self.env['account.tax']
+        currency_id = all_order_lines[0].order_id.currency_id
+
+        def generate_line_args(account_id, tax_id, amount, amount_currency):
             tax = AccountTax.browse(tax_id)
             partial_args = dict(name=tax.name, account_id=account_id, move_id=account_move.id)
-            return self._credit_amount(partial_args, amount)
+            return (self._credit_amount(partial_args, amount)
+                    if is_using_company_currency
+                    else self._credit_amount(partial_args, amount, amount_currency, currency_id))
 
         def compute_tax(order_line):
             currency = order_line.order_id.pricelist_id.currency_id
@@ -508,9 +545,9 @@ class PosSession(models.Model):
             tax_ids = order_line.tax_ids_after_fiscal_position\
                         .filtered(lambda t: t.company_id.id == order_line.order_id.company_id.id)
             price = order_line.price_unit * (1 - (order_line.discount or 0.0) / 100.0)
-            return tax_ids\
-                    .compute_all(price_unit=price, quantity=order_line.qty, currency=currency)\
-                    .get('taxes', [])
+            taxes = tax_ids.compute_all(price_unit=price, quantity=order_line.qty, currency=currency).get('taxes', [])
+            # add the currency_rate field in each tax calculation result
+            return [dict(currency_rate=order_line.order_id.currency_rate, **tax) for tax in taxes]
 
         line_taxes = [compute_tax(line) for line in all_order_lines]
 
@@ -520,14 +557,18 @@ class PosSession(models.Model):
         flat_line_taxes = itertools.chain.from_iterable(line_taxes)
 
         # group the taxes by account_id and tax id
-        args_group_dict = defaultdict(lambda: 0.0)
+        account_tax_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
         for tax in flat_line_taxes:
-            args_group_dict[(tax['account_id'], tax['id'])] += tax['amount']
+            if is_using_company_currency:
+                account_tax_amounts[(tax['account_id'], tax['id'])]['amount'] += tax['amount']
+            else:
+                account_tax_amounts[(tax['account_id'], tax['id'])]['amount'] += tax['amount'] / tax['currency_rate']
+                account_tax_amounts[(tax['account_id'], tax['id'])]['amount_currency'] += tax['amount']
 
-        return [generate_line_args(account_id, tax_id, amount) for (account_id, tax_id), amount in args_group_dict.items()]
+        return [generate_line_args(account_id, tax_id, **amounts) for (account_id, tax_id), amounts in account_tax_amounts.items()]
 
     @api.model
-    def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders):
+    def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders, is_using_company_currency):
         """ Anglo saxon journal items were already created in the invoiced orders
             via the creation of account.invoice record.
 
@@ -537,13 +578,23 @@ class PosSession(models.Model):
             Calculation is based on the created stock moves when creating the
             picking for each order.
         """
+        if len(not_invoiced_orders) == 0:
+            return []
+
+        currency_id = not_invoiced_orders[0].currency_id
+        def generate_line_args(method, account_id, amount, amount_currency):
+            partial_args = dict(account_id=account_id, move_id=account_move.id)
+            return (getattr(self, method)(partial_args, amount)
+                    if is_using_company_currency
+                    else getattr(self, method)(partial_args, amount, amount_currency, currency_id))
+
         StockMove = self.env['stock.move']
         moves = StockMove\
             .search([('pos_order_id', 'in', not_invoiced_orders.ids)])\
             .filtered(lambda m: m.company_id.anglo_saxon_accounting)
         # group amounts by expense and output accounts
-        credit_amounts = defaultdict(lambda: 0.0)
-        debit_amounts = defaultdict(lambda: 0.0)
+        credit_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
+        debit_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
         for move in moves.filtered(lambda m: m.product_id.categ_id.property_valuation == 'real_time'):
             exp_account = move.product_id.property_account_expense_id or move.product_id.categ_id.property_account_expense_categ_id
             out_account = move.product_id.categ_id.property_stock_account_output_categ_id
@@ -551,15 +602,22 @@ class PosSession(models.Model):
             # Also, stock.move.value is negative when the product goes out of the stock (e.g. sales),
             # so it is appropriate to revert the sign.
             amount = -move.value
-            debit_amounts[exp_account] += amount
-            credit_amounts[out_account] += amount
+            if is_using_company_currency:
+                debit_amounts[exp_account]['amount'] += amount
+                credit_amounts[out_account]['amount'] += amount
+            else:
+                currency_rate = move.pos_order_id.currency_rate
+                debit_amounts[exp_account]['amount'] += amount / currency_rate
+                credit_amounts[out_account]['amount'] += amount / currency_rate
+                debit_amounts[exp_account]['amount_currency'] += amount
+                credit_amounts[out_account]['amount_currency'] += amount
 
-        credit_lines = [self._credit_amount({'account_id': account.id, 'move_id': account_move.id}, amount) for account, amount in credit_amounts.items()]
-        debit_lines = [self._debit_amount({'account_id': account.id, 'move_id': account_move.id}, amount) for account, amount in debit_amounts.items()]
+        credit_lines = [generate_line_args('_credit_amount', account, **amounts) for account, amounts in credit_amounts.items()]
+        debit_lines = [generate_line_args('_debit_amount', account, **amounts) for account, amounts in debit_amounts.items()]
         return credit_lines + debit_lines
 
     @api.model
-    def _credit_amount(self, partial_move_line_args, amount):
+    def _credit_amount(self, partial_move_line_args, amount, amount_currency=None, currency=None):
         """ complete the `partial_move_line_args` by adding 'credit' and 'debit' fields with
             abs(`amount`) assign to the correct field.
 
@@ -567,17 +625,27 @@ class PosSession(models.Model):
             required parameters: from_amount, to_currency, company, date
         """
         if amount > 0:
-            return dict(credit=amount, debit=0.0, **partial_move_line_args)
-        return dict(credit=0.0, debit=abs(amount), **partial_move_line_args)
+            init_args = dict(credit=amount, debit=0.0, **partial_move_line_args)
+        else:
+            init_args = dict(credit=0.0, debit=abs(amount), **partial_move_line_args)
+        # negative amount_currency if credit
+        return dict(amount_currency=-amount_currency if amount > 0 else amount_currency,
+                    currency_id=currency.id,
+                    **init_args) if amount_currency else init_args
 
     @api.model
-    def _debit_amount(self, partial_move_line_args, amount):
+    def _debit_amount(self, partial_move_line_args, amount, amount_currency=None, currency=None):
         """ complete the `partial_move_line_args` by adding 'credit' and 'debit' fields with
             abs(`amount`) assign to the correct field.
         """
         if amount > 0:
-            return dict(credit=0.0, debit=amount, **partial_move_line_args)
-        return dict(credit=abs(amount), debit=0.0, **partial_move_line_args)
+            init_args = dict(credit=0.0, debit=amount, **partial_move_line_args)
+        else:
+            init_args = dict(credit=abs(amount), debit=0.0, **partial_move_line_args)
+        # negative amount_currency if credit
+        return dict(amount_currency=amount_currency if amount > 0 else -amount_currency,
+                    currency_id=currency.id,
+                    **init_args) if amount_currency else init_args
 
     @api.multi
     def show_journal_entries(self):

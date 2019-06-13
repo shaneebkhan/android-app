@@ -589,10 +589,6 @@ class PosOrder(models.Model):
         readonly=True, default=_default_session)
     config_id = fields.Many2one('pos.config', related='session_id.config_id', string="Point of Sale", readonly=False)
     currency_id = fields.Many2one('res.currency', related='config_id.currency_id', string="Currency")
-    # TODO jcb: I think this currency_rate should not be dynamic as it is dependent on the date.
-    # Computing it once is enough. If suddenly the currency_id of the pos.config is changed,
-    # Then this value changes as well which is wrong as there are already written `entries/records`
-    # based on the first recorded currency_rate.
     currency_rate = fields.Float("Currency Rate", compute='_compute_currency_rate', compute_sudo=True, store=True, readonly=True, help='The rate of the currency to the currency of rate 1 applicable at the date of the order')
 
     invoice_group = fields.Boolean(related="config_id.module_account", readonly=False)
@@ -793,7 +789,7 @@ class PosOrder(models.Model):
             # if to_invoice:
             #     # if I'm not mistaken, this ensures that when invoice is activated in the pos.order,
             #     # no amount_return should be registered in the invoice. -> this is correct.
-            #     # there is no cash change for this transaction. 
+            #     # there is no cash change for this transaction.
             #     # Possible BUG: Bank payment w/o invoice, there is cash change (return)
             #     #   But for bank payment w/ invoice, there is no cash change (return).
             #     #   These behaviors are inconsistent. -> But perhaps this is related to the
