@@ -1,7 +1,6 @@
 odoo.define('point_of_sale.models', function (require) {
 "use strict";
 
-var ajax = require('web.ajax');
 var BarcodeParser = require('barcodes.BarcodeParser');
 var PosDB = require('point_of_sale.DB');
 var devices = require('point_of_sale.devices');
@@ -9,7 +8,6 @@ var concurrency = require('web.concurrency');
 var config = require('web.config');
 var core = require('web.core');
 var field_utils = require('web.field_utils');
-var rpc = require('web.rpc');
 var session = require('web.session');
 var time = require('web.time');
 var utils = require('web.utils');
@@ -33,9 +31,10 @@ var exports = {};
 // 'pos' and is available to all widgets extending PosWidget.
 
 exports.PosModel = Backbone.Model.extend({
-    initialize: function(session, attributes) {
+    initialize: function(session, attributes, rpc) {
         Backbone.Model.prototype.initialize.call(this, attributes);
         var  self = this;
+        this.rpc = rpc;
         this.flush_mutex = new Mutex();                   // used to make sure the orders are sent to the server once at time
         this.chrome = attributes.chrome;
         this.gui    = attributes.gui;
@@ -110,8 +109,7 @@ exports.PosModel = Backbone.Model.extend({
     destroy: function(){
         // FIXME, should wait for flushing, return a deferred to indicate successfull destruction
         // this.flush();
-        this.proxy.close();
-        this.barcode_reader.disconnect();
+        this.proxy.disconnect();
         this.barcode_reader.disconnect_from_proxy();
     },
 
@@ -195,7 +193,6 @@ exports.PosModel = Backbone.Model.extend({
         },
     },{
         model:  'uom.uom',
-        fields: [],
         domain: null,
         context: function(self){ return { active_test: false }; },
         loaded: function(self,units){
@@ -258,7 +255,6 @@ exports.PosModel = Backbone.Model.extend({
         },
     },{
         model: 'pos.config',
-        fields: [],
         domain: function(self){ return [['id','=', self.pos_session.config_id[0]]]; },
         loaded: function(self,configs){
             self.config = configs[0];
@@ -415,14 +411,12 @@ exports.PosModel = Backbone.Model.extend({
         },
     },  {
         model:  'account.fiscal.position',
-        fields: [],
         domain: function(self){ return [['id','in',self.config.fiscal_position_ids]]; },
         loaded: function(self, fiscal_positions){
             self.fiscal_positions = fiscal_positions;
         }
     }, {
         model:  'account.fiscal.position.tax',
-        fields: [],
         domain: function(self){
             var fiscal_position_tax_ids = [];
 
@@ -550,7 +544,7 @@ exports.PosModel = Backbone.Model.extend({
                             params.orderBy = order;
                         }
 
-                        rpc.query(params).then(function (result) {
+                        self.rpc(params).then(function (result) {
                             try { // catching exceptions in model.loaded(...)
                                 Promise.resolve(model.loaded(self, result, tmp))
                                     .then(function () { load_model(index + 1); },
@@ -593,7 +587,7 @@ exports.PosModel = Backbone.Model.extend({
         return new Promise(function (resolve, reject) {
             var fields = _.find(self.models, function(model){ return model.label === 'load_partners'; }).fields;
             var domain = [['customer','=',true],['write_date','>',self.db.get_partner_write_date()]];
-            rpc.query({
+            self.rpc({
                 model: 'res.partner',
                 method: 'search_read',
                 args: [domain, fields],
@@ -948,7 +942,7 @@ exports.PosModel = Backbone.Model.extend({
                 order.to_invoice = options.to_invoice || false;
                 return order;
             })];
-        return rpc.query({
+        return this.rpc({
                 model: 'pos.order',
                 method: 'create_from_ui',
                 args: args,
