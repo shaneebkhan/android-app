@@ -313,6 +313,11 @@
                         </div>
                         <div id="developer_tools">
                             <h2>Developer Tools</h2>
+                            <div class="col-12 col-lg-6 o_setting_box" id="devel_tools">
+                                <div class="o_setting_left_pane">
+                                    <widget name='res_config_dev_tool'/>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </xpath>
