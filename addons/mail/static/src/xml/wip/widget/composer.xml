@@ -28,6 +28,32 @@
                         </t>
                     </b>
                 </small>
+
+                <!-- List of followers -->
+                <div t-if="props.suggestedRecipients" class="o_composer_suggested_partners">
+                    <div t-foreach="state.showAllSuggested ? props.suggestedRecipients : props.suggestedRecipients.slice(0, 2)" t-as="recipient"
+                        t-attf-title="Add as recipient and follower (reason: #{recipient.reason})">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox"
+                                    class="custom-control-input"
+                                    t-attf-id="_suggested_partners_#{recipient_index}"
+                                    t-att-checked="recipient.checked ? 'checked' : undefined"
+                                    t-att-data-fullname="recipient.full_name"/>
+                            <label t-attf-for="_suggested_partners_#{recipient_index}" class="custom-control-label">
+                                <t t-esc="recipient.name"/><t t-if="recipient.email_address"> (<t t-esc="recipient.email_address"/>)</t>
+                            </label>
+                        </div>
+                    </div>
+                    <t t-if='props.suggestedRecipients.length > 3'>
+
+                        <a href="#" t-if="state.showAllSuggested" t-on-click="_onShowLess">
+                            Show <t t-esc="props.suggestedRecipients.length - 3"/> less
+                        </a>
+                        <a href="#" t-else="" t-on-click="_onShowMore">
+                            Show <t t-esc="props.suggestedRecipients.length - 3"/> more
+                        </a>
+                    </t>
+                </div>
             </t>
 
             <div class="o_main">

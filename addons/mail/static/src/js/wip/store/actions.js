@@ -992,6 +992,34 @@ const actions = {
             commit('message/insert', preview.last_message);
         }
     },
+    async 'thread/get_suggested_recipients'(
+        { commit, env, state },
+        { threadLID }
+    ) {
+        const thread = state.threads[threadLID];
+        const result = await env.rpc({
+            route: '/mail/get_suggested_recipients',
+            params: {
+                model: thread._model,
+                res_ids: [thread.id],
+            },
+        });
+        const suggestedRecipients = result[thread.id].map(recipient => {
+            const parsedEmail = recipient[1] && mailUtils.parseEmail(recipient[1]);
+            return {
+                checked: true,
+                partner_id: recipient[0],
+                full_name: recipient[1],
+                name: parsedEmail[0],
+                email_address: parsedEmail[1],
+                reason: recipient[2],
+            };
+        });
+        commit('thread/update', {
+            changes: { suggestedRecipients },
+            threadLID,
+        });
+    },
 };
 
 return actions;

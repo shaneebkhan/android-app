@@ -17,7 +17,10 @@ class Composer extends Component {
     constructor(...args) {
         super(...args);
         this.fileuploadID = _.uniqueId('o_composer_fileupload');
-        this.state = { attachmentLIDs: [] };
+        this.state = {
+            attachmentLIDs: [],
+            showAllSuggested: false,
+        };
         this.template = 'mail.wip.widget.Composer';
         this.widgets = { AttachmentList, EmojisButton, Input };
     }
@@ -108,6 +111,7 @@ class Composer extends Component {
      * @private
      */
     _postMessage() {
+        // TODO: take suggested recipients into account
         this.env.store.dispatch('thread/post_message', {
             data: {
                 attachmentLIDs: this.state.attachmentLIDs,
@@ -255,6 +259,20 @@ class Composer extends Component {
 
     /**
      * @private
+     */
+    _onShowLess() {
+        this.state.showAllSuggested = false;
+    }
+
+    /**
+     * @private
+     */
+    _onShowMore() {
+        this.state.showAllSuggested = true;
+    }
+
+    /**
+     * @private
      * @param {CustomEvent} ev
      * @param {Object} ev.detail
      * @param {string} ev.detail.attachmentLID
@@ -320,6 +338,10 @@ Composer.props = {
     },
     threadLID: {
         type: String,
+        optional: true,
+    },
+    suggestedRecipients: {
+        type: Array,
         optional: true,
     },
 };

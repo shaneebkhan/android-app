@@ -20,6 +20,7 @@
         <t t-widget="Composer"
            t-if="state.composerMode"
            threadLID="props.threadLID"
+           suggestedRecipients="props.suggestedRecipients"
            options="composerOptions"/>
 
         <div t-if="props.mailFields.mail_activity" t-ref="activity"/>

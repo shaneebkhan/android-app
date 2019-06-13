@@ -20,8 +20,10 @@ function mapStateToProps(state, ownProps) {
     const record = ownProps.record;
     const threadLID = `${record.model}_${record.res_id}`;
     const thread = state.threads[threadLID];
+    const suggestedRecipients = thread ? thread.suggestedRecipients : undefined;
     return {
         record,
+        suggestedRecipients,
         thread,
         threadLID,
     };
@@ -109,6 +111,13 @@ class Chatter extends Component {
      */
     _onClickSend() {
         this.state.composerMode = 'send';
+
+        // TODO: flicker (composer will be re-render when suggested are fetched)
+        if (!this.props.suggestedRecipients) {
+            this.env.store.dispatch('thread/get_suggested_recipients', {
+                threadLID: this.props.threadLID,
+            });
+        }
     }
 
     /**
