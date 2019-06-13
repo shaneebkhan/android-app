@@ -3258,7 +3258,7 @@ QUnit.module('ActionManager', {
         actionManager.destroy();
     });
 
-    QUnit.test('default_order is applied along with favorite filter', async function (assert) {
+    QUnit.test('default_order respected with favorite filter', async function (assert) {
         assert.expect(3);
 
         this.archs['partner,1,list'] = '<tree default_order="foo desc"><field name="foo"/></tree>';
@@ -3293,12 +3293,15 @@ QUnit.module('ActionManager', {
         });
 
         await actionManager.doAction(12);
-        assert.strictEqual($('.o_searchview_facet .o_facet_values').text().trim(), 'sorted filter', 'sorted filter should be applied');
-        assert.strictEqual($('tr.o_data_row .o_data_cell').text(), 'gnapblip', 'record should be in descending order after default_order applied');
+        assert.strictEqual(actionManager.$('.o_control_panel .o_searchview_input_container .o_facet_values').text().trim(),
+            'sorted filter', 'sorted filter should be applied');
+        assert.strictEqual(actionManager.$('.o_list_view tr.o_data_row .o_data_cell').text(), 'gnapblip',
+            'record should be in descending order after default_order applied');
 
         await testUtils.dom.click(actionManager.$('.o_list_view .o_data_row:first'));
-        await testUtils.dom.click($('.o_control_panel .breadcrumb a:eq(0)'));
-        assert.strictEqual($('tr.o_data_row .o_data_cell').text(), 'gnapblip', 'order of records should not be changed, while coming back through breadcrumb');
+        await testUtils.dom.click(actionManager.$('.o_control_panel .breadcrumb a:eq(0)'));
+        assert.strictEqual(actionManager.$('.o_list_view tr.o_data_row .o_data_cell').text(), 'gnapblip',
+            'order of records should not be changed, while coming back through breadcrumb');
 
         actionManager.destroy();
     });
