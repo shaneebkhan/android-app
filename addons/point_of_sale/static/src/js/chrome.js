@@ -11,6 +11,9 @@ var ajax = require('web.ajax');
 var CrashManager = require('web.CrashManager');
 var BarcodeEvents = require('barcodes.BarcodeEvents').BarcodeEvents;
 
+const UsernameWidget = require('point_of_sale.UsernameWidget');
+
+const TEMPLATES_URL = '/point_of_sale/static/src/xml/pos_owl.xml';
 
 var _t = core._t;
 var _lt = core._lt;
@@ -75,26 +78,6 @@ var OrderSelectorWidget = PosBaseWidget.extend({
         this.$('.deleteorder-button').click(function(event){
             self.deleteorder_click_handler(event,$(this));
         });
-    },
-});
-
-/* ------- The User Name Widget ------- */
-
-// Displays the current cashier's name
-
-var UsernameWidget = PosBaseWidget.extend({
-    template: 'UsernameWidget',
-    init: function(parent, options){
-        options = options || {};
-        this._super(parent,options);
-    },
-    get_name: function(){
-        var user = this.pos.get_cashier();
-        if(user){
-            return user.name;
-        }else{
-            return "";
-        }
     },
 });
 
@@ -569,7 +552,7 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         this.widget = {};   // contains references to subwidgets instances
 
         this.cleanup_dom();
-        this.pos.ready.then(function(){
+        this.pos.ready.then(this.loadOwlTemplates.bind(this)).then(function(){
             self.build_chrome();
             self.build_widgets();
             self.disable_rubberbanding();
@@ -835,20 +818,45 @@ var Chrome = PosBaseWidget.extend(AbstractAction.prototype, {
         },
     ],
 
+    loadOwlWidget(env, {widget, replace}, props) {
+        const w = new widget(env, props);
+        const container = document.querySelector(replace);
+        w.mount(container);
+        return w;
+    },
+
+    async loadOwlTemplates(url) {
+        this.templates = await owl.utils.loadTemplates(TEMPLATES_URL);
+    },
+
+    loadLegacyWidget: function (widget, args) {
+        var w = new widget.widget(this, args || {});
+        if (widget.replace) {
+            w.replace(this.$(widget.replace));
+        } else if (widget.append) {
+            w.appendTo(this.$(widget.append));
+        } else if (widget.prepend) {
+            w.prependTo(this.$(widget.prepend));
+        } else {
+            w.appendTo(this.$el);
+        }
+        return w;
+    },
+
     load_widgets: function(widgets) {
+        const qweb = new owl.QWeb(this.templates);
+        const env = {qweb, model: this.pos};
+
         for (var i = 0; i < widgets.length; i++) {
             var widget = widgets[i];
             if ( !widget.condition || widget.condition.call(this) ) {
                 var args = typeof widget.args === 'function' ? widget.args(this) : widget.args;
-                var w = new widget.widget(this, args || {});
-                if (widget.replace) {
-                    w.replace(this.$(widget.replace));
-                } else if (widget.append) {
-                    w.appendTo(this.$(widget.append));
-                } else if (widget.prepend) {
-                    w.prependTo(this.$(widget.prepend));
+                let w;
+                if (owl.Component.isPrototypeOf(widget.widget)) {
+                    const props = typeof widget.props === 'function' ? widget.props.call(this) : widget.props;
+                    w = this.loadOwlWidget(env, widget, props);
                 } else {
-                    w.appendTo(this.$el);
+                    w = this.loadLegacyWidget(widget, args);
                 }
                 this.widget[widget.name] = w;
             }

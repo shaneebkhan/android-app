@@ -8,6 +8,9 @@
 
             <link rel="stylesheet" type="text/less" href="/web/static/src/scss/fontawesome_overriden.scss"/>
 
+            <script type="text/javascript" src="/point_of_sale/static/lib/owl.js"/>
+            <script type="text/javascript" src="/point_of_sale/static/src/js/components/username_widget.js"/>
+
             <script type="text/javascript" src="/point_of_sale/static/lib/backbone/backbone.js"></script>
             <script type="text/javascript" src="/point_of_sale/static/lib/waitfont.js"></script>
             <script type="text/javascript" src="/point_of_sale/static/src/js/main.js"></script>

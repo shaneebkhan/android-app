@@ -1494,12 +1494,6 @@
         </div>
     </t>
 
-    <t t-name="UsernameWidget">
-        <span class="username">
-            <t t-esc="widget.get_name()" />
-        </span>
-    </t>
-
     <t t-name="PosTicket">
         <div class="pos-sale-ticket">
 
