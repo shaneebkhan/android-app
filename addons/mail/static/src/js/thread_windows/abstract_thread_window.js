@@ -139,19 +139,10 @@ var AbstractThreadWindow = Widget.extend({
         return this._getThreadID();
     },
     /**
-     * @returns {mail.model.Thread|undefined}
+     * Get out of office info
+     *
+     * @returns {string|undefined}
      */
-    getThread: function () {
-        if (!this.hasThread) {
-            return undefined;
-        }
-        return this._thread;
-    },
-    /**
-    *Get out of office info
-    *
-    * @returns {string|undefined}
-    */
     getOutOfOfficeInfo: function () {
         if (!this.hasThread()) {
             return undefined;
@@ -168,6 +159,15 @@ var AbstractThreadWindow = Widget.extend({
             return undefined;
         }
         return this._thread.getOutOfOfficeMessage();
+    },
+    /**
+     * @returns {mail.model.Thread|undefined}
+     */
+    getThread: function () {
+        if (!this.hasThread) {
+            return undefined;
+        }
+        return this._thread;
     },
     /**
      * Get the status of the thread, such as the im status of a DM chat
@@ -279,13 +279,28 @@ var AbstractThreadWindow = Widget.extend({
      * Render the header of this thread window.
      * This is useful when some information on the header have be updated such
      * as the status or the title of the thread that have changed.
-     *
-     * @private
      */
     renderHeader: function () {
         var options = this._getHeaderRenderingOptions();
         this.$header.html(
             QWeb.render('mail.AbstractThreadWindow.HeaderContent', options));
+    },
+    renderOutOfOffice: function () {
+        var $outOfOffice = this.$('.o_out_of_office');
+        if (!this.getOutOfOfficeInfo() && !this.getOutOfOfficeMessage()) {
+            if ($outOfOffice.length) {
+                $outOfOffice.remove();
+            }
+            return;
+        }
+        var $newOutOfOffice = $(QWeb.render('mail.thread_window.OutOfOffice', {
+            widget: this,
+        }));
+        if ($outOfOffice.length) {
+            this.$('.o_out_of_office').replaceWith($newOutOfOffice);
+        } else {
+            $newOutOfOffice.insertAfter(this.$('.o_thread_window_header'));
+        }
     },
     /**
      * Scroll to the bottom of the thread in the thread window
