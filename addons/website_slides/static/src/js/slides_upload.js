@@ -129,6 +129,7 @@ var SlideUploadDialog = Dialog.extend({
             'url': this._formGetFieldValue('url'),
             'description': this._formGetFieldValue('description'),
             'index_content': this._formGetFieldValue('index_content'),
+            'duration': this._formGetFieldValue('duration'),
             'is_preview': this.$('#is_preview').is(':checked'),
             'website_published': forcePublished,
         }, this._getSelect2DropdownValues()); // add tags and category
@@ -370,6 +371,17 @@ var SlideUploadDialog = Dialog.extend({
         this.$('.o_w_slide_upload_modal_container').empty();
         this.$('.o_w_slide_upload_modal_container').append(QWeb.render(tmpl, {widget: this}));
 
+        if (currentType === 'video'){
+            if(!this.$('.duration').hasClass('o_hidden')){
+                this.$('.duration').addClass('o_hidden');
+                this.$('#duration').removeAttr('required');
+            }
+        } else {
+            if(this.$('.duration').hasClass('o_hidden')){
+                this.$('.duration').removeClass('o_hidden');
+                this.$('#duration').attr('required','required');
+            }
+        }
         this._resetModalButton();
     },
     _onChangeCanSubmitForm: function (ev) {
@@ -407,6 +419,10 @@ var SlideUploadDialog = Dialog.extend({
         BinaryReader.onloadend = function (upload) {
             var buffer = upload.target.result;
             if (isImage) {
+                if(self.$('.duration').hasClass('o_hidden')){
+                    self.$('.duration').removeClass('o_hidden');
+                    self.$('#duration').attr('required','required');
+                }
                 self.$('#slide-image').attr('src', buffer);
             }
             buffer = buffer.split(',')[1];
@@ -414,6 +430,10 @@ var SlideUploadDialog = Dialog.extend({
         };
 
         if (file.type === 'application/pdf') {
+            if(!this.$('.duration').hasClass('o_hidden')){
+                this.$('.duration').addClass('o_hidden');
+                this.$('#duration').removeAttr('required');
+            }
             var ArrayReader = new FileReader();
             this.set('can_submit_form', false);
             // file read as ArrayBuffer for PDFJS get_Document API
@@ -449,6 +469,7 @@ var SlideUploadDialog = Dialog.extend({
                     var maxPages = pdf.pdfInfo.numPages;
                     var page, j;
                     self.index_content = '';
+                    self.nbr_words = 0;
                     for (j = 1; j <= maxPages; j += 1) {
                         page = pdf.getPage(j);
                         page.then(function (pageObj) {
@@ -456,12 +477,16 @@ var SlideUploadDialog = Dialog.extend({
                             pageObj.getTextContent().then(function (data) {
                                 var pageContent = '';
                                 _.each(data.items, function (obj) {
-                                    pageContent = pageContent + obj.str + ' ';
+                                    pageContent = pageContent + obj.str;
                                 });
                                 // page_content may contain null characters
                                 pageContent = pageContent.replace(/\0/g, '');
+                                pageContent = pageContent.replace(/ +/g, ' ');
+                                self.nbr_words = self.nbr_words + (pageContent.match(/ /g)).length;
                                 var indexContent = self._formGetFieldValue('index_content') + pageNumber + '. ' + pageContent + '\n';
                                 self._formSetFieldValue('index_content', indexContent);
+                                var duration = Math.round(self.nbr_words / 130);
+                                self._formSetFieldValue('duration', duration);
 
                                 if (maxPages === pageNumber) {
                                     if (loaded) {
@@ -493,9 +518,13 @@ var SlideUploadDialog = Dialog.extend({
             if (data.error) {
                 self._alertDisplay(data.error);
             } else {
+                var re = /PT(([0-9]+)H)?(([0-9]+)M)?(([0-9]+)S)?/;
+                var result = re.exec(data.duration);
+                var duration = Math.round(parseInt(result[6]) / 60) + parseInt(result[4]|0) + parseInt(result[2]|0) * 60;
                 self.$('#slide-image').attr('src', data.url_src);
                 self._formSetFieldValue('name', data.title);
                 self._formSetFieldValue('description', data.description);
+                self._formSetFieldValue('duration', duration);
 
                 self.isValidUrl = true;
             }
