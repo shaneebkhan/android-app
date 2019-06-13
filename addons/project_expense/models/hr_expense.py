@@ -11,5 +11,5 @@ class Expense(models.Model):
 
     @api.onchange('project_id')
     def _onchange_project_id(self):
-        if self.project_id:
+        if self.project_id and not self.analytic_account_id:
             self.analytic_account_id = self.project_id.analytic_account_id

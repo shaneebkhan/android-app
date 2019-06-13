@@ -7,11 +7,18 @@ from odoo import api, fields, models
 class Expense(models.Model):
     _inherit = "hr.expense"
 
-    sale_order_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)]}, domain=[('state', '=', 'sale')])
+    sale_order_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)]}, domain=[('state', '=', 'sale')],
+        help="If the product has an expense policy, it will be reinvoiced on this sales order")
+    can_be_reinvoiced = fields.Boolean("Can be reinvoiced", compute='_compute_can_be_reinvoiced')
+
+    @api.multi
+    def _compute_can_be_reinvoiced(self):
+        for expense in self:
+            expense.can_be_reinvoiced = expense.product_id.expense_policy in ['sales_price', 'cost']
 
     @api.onchange('sale_order_id')
     def _onchange_sale_order(self):
-        if self.sale_order_id:
+        if self.sale_order_id and not self.analytic_account_id:
             self.analytic_account_id = self.sale_order_id.analytic_account_id
 
     @api.multi
