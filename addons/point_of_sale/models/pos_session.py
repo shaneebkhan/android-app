@@ -4,13 +4,14 @@
 from datetime import timedelta
 from odoo import api, fields, models, SUPERUSER_ID, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_is_zero
+from odoo.tools import float_is_zero, groupby
 import json
 import logging
 import time
 import itertools
 from collections import defaultdict
 from functools import partial
+from operator import attrgetter
 
 _logger = logging.getLogger(__name__)
 
@@ -398,18 +399,6 @@ class PosSession(models.Model):
         tax_lines_args = self._get_tax_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
         anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders, is_using_company_currency)
         line_args = invoiced_receivable_lines_args + sales_lines_args + tax_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
-        # at this point, since multi-currency is not yet implemented in pos,
-        # currency of line_args is the same as the company currency.
-        # This however can be different from the journal currency,
-        # so a conversion should be done.
-        # NOT POSSIBLE HERE because DATE is needed in the convert currency function
-        # But if I put the order date in the line_args, I have the date.
-        # Perhaps this is a kind of optimization? I'm not yet sure.
-        # Ooops, it is again not possible to include the date.
-        # I really need to do currency conversion for each order (or payment).
-        # Or maybe, I compute the amount_currency immediately in the creation of
-        # pos.order and pos.payment records.
-        # currency_converted_line_args = self._convert_currency(line_args, session)
         return self.env['account.move.line'].create(line_args)
 
     @api.model
@@ -426,15 +415,21 @@ class PosSession(models.Model):
 
     @api.model
     def _create_cash_statement_lines(self, session, statement, statement_payments):
+        session_currency = session.currency_id
+        company = session.company_id
         def create_arg_dict(payment_method):
             # create statement line for each payment method
+            method_payments = statement_payments.filtered(lambda p: p.payment_method_id == payment_method)
+            method_currency = payment_method.cash_journal_id.currency_id or company.currency_id
+            amount_converter = lambda payment: session_currency._convert(payment.amount, method_currency, company, payment.pos_order_id.date_order)
             return dict(
                 date=fields.Date.context_today(self),
-                amount=sum(p.amount for p in statement_payments.filtered(lambda p: p.payment_method_id == payment_method)),
+                amount=sum(method_payments.mapped(amount_converter)),
                 name=session.name,
                 statement_id=statement.id,
                 account_id=payment_method.receivable_account_id.id,
             )
+
         cash_payment_methods = [pm for pm in session.payment_method_ids if pm.is_cash_count and (pm.cash_journal_id == statement.journal_id)]
         statement_lines_args = [create_arg_dict(pm) for pm in cash_payment_methods]
         return self.env['account.bank.statement.line'].create([args for args in statement_lines_args if args.get('amount')])
@@ -444,28 +439,38 @@ class PosSession(models.Model):
         if len(invoiced_orders) == 0:
             return []
 
-        currency_id = invoiced_orders[0].session_id.currency_id
+        company = invoiced_orders[0].session_id.company_id
+        session_currency = invoiced_orders[0].session_id.currency_id
+        company_currency = company.currency_id
+
         def generate_line_args(account_id, amount, amount_currency):
             partial_args = dict(account_id=account_id, move_id=account_move.id)
-            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, currency_id)
+            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, session_currency)
 
-        account_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
-        for order in invoiced_orders:
-            account_id = order.invoice_id.account_id.id
+        def compute_total_amounts(orders):
             # Use `amount_total` (w/c includes tax) field since this will be
             # reconciled with receivable item in an invoice move which counts taxes.
+            amount_converter = lambda order: session_currency._convert(order.amount_total, company_currency, company, order.date_order)
+            total_amount_currency = sum(order.amount_total for order in orders)
             if is_using_company_currency:
-                account_amounts[account_id]['amount'] += order.amount_total
+                total_amount = total_amount_currency
+                total_amount_currency = 0
             else:
-                account_amounts[account_id]['amount'] += order.amount_total / order.currency_rate
-                account_amounts[account_id]['amount_currency'] += order.amount_total
+                total_amount = sum(amount_converter(order) for order in orders)
+            return {"amount": total_amount, "amount_currency": total_amount_currency}
 
-        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts.items()]
+        grouped_invoiced_orders = groupby(invoiced_orders, key=attrgetter('invoice_id.account_id.id'))
+        account_amounts = [(account_id, compute_total_amounts(orders)) for account_id, orders in grouped_invoiced_orders]
+        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts]
 
     @api.model
     def _get_pos_receivable_lines(self, session, account_move, payments, is_using_company_currency):
         if len(payments) == 0:
             return []
+
+        company = session.company_id
+        session_currency = session.currency_id
+        company_currency = company.currency_id
 
         def generate_line_args(pm, amount, amount_currency):
             data = dict(account_id=pm.receivable_account_id.id,
@@ -478,8 +483,11 @@ class PosSession(models.Model):
             # which can be not equal to the company.currency_id.
             # compute amount_currency as the sum of payment.amount.
             # if is_using_company_currency, then return amount_currency as amount.
+            if len(payments) == 0:
+                return (0.0, 0.0)
+            amount_converter = lambda payment: session_currency._convert(payment.amount, company_currency, company, payment.pos_order_id.date_order)
             amount_currency = sum(payments.mapped('amount'))
-            amount = sum([p.amount / p.currency_rate for p in payments])
+            amount = sum(payments.mapped(amount_converter))
             return (amount_currency, None) if is_using_company_currency else (amount, amount_currency)
 
         # Total amount grouped by payment method
@@ -493,32 +501,37 @@ class PosSession(models.Model):
         if len(order_lines) == 0:
             return []
 
+        company = order_lines[0].order_id.company_id
+        session_currency = order_lines[0].order_id.currency_id
+        company_currency = company.currency_id
+
         def get_income_account(order_line):
             if order_line.product_id.property_account_income_id.id:
-                return order_line.product_id.property_account_income_id
+                return order_line.product_id.property_account_income_id.id
             elif order_line.product_id.categ_id.property_account_income_categ_id.id:
-                return order_line.product_id.categ_id.property_account_income_categ_id
+                return order_line.product_id.categ_id.property_account_income_categ_id.id
             else:
                 raise UserError(_('Please define income '
                                 'account for this product: "%s" (id:%d).')
                                 % (order_line.product_id.name, order_line.product_id.id))
 
-        currency_id = order_lines[0].order_id.currency_id
+        def compute_total_amounts(order_lines):
+            amount_converter = lambda line: session_currency._convert(line.price_subtotal, company_currency, company, line.order_id.date_order)
+            total_amount_currency = sum(line.price_subtotal for line in order_lines)
+            if is_using_company_currency:
+                total_amount = total_amount_currency
+                total_amount_currency = 0
+            else:
+                total_amount = sum(amount_converter(line) for line in order_lines)
+            return {"amount": total_amount, "amount_currency": total_amount_currency}
 
         def generate_line_args(income_account_id, amount, amount_currency):
             partial_args = dict(account_id=income_account_id, move_id=account_move.id)
-            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, currency_id)
+            return self._credit_amount(partial_args, amount) if is_using_company_currency else self._credit_amount(partial_args, amount, amount_currency, session_currency)
 
-        account_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
-        for order_line in order_lines:
-            income_account_id = get_income_account(order_line).id
-            if is_using_company_currency:
-                account_amounts[income_account_id]['amount'] += order_line.price_subtotal
-            else:
-                account_amounts[income_account_id]['amount'] += order_line.price_subtotal / order_line.order_id.currency_rate
-                account_amounts[income_account_id]['amount_currency'] += order_line.price_subtotal
-
-        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts.items()]
+        grouped_order_lines = groupby(order_lines, key=get_income_account)
+        account_amounts = [(account_id, compute_total_amounts(lines)) for account_id, lines in grouped_order_lines]
+        return [generate_line_args(account_id, **amounts) for account_id, amounts in account_amounts]
 
     @api.model
     def _get_tax_lines_data(self, account_move, all_order_lines, is_using_company_currency):
@@ -529,25 +542,33 @@ class PosSession(models.Model):
             return []
 
         AccountTax = self.env['account.tax']
-        currency_id = all_order_lines[0].order_id.currency_id
+        company = all_order_lines[0].order_id.company_id
+        session_currency = all_order_lines[0].order_id.currency_id
+        company_currency = all_order_lines[0].order_id.company_id.currency_id
 
         def generate_line_args(account_id, tax_id, amount, amount_currency):
             tax = AccountTax.browse(tax_id)
             partial_args = dict(name=tax.name, account_id=account_id, move_id=account_move.id)
             return (self._credit_amount(partial_args, amount)
                     if is_using_company_currency
-                    else self._credit_amount(partial_args, amount, amount_currency, currency_id))
+                    else self._credit_amount(partial_args, amount, amount_currency, session_currency))
 
         def compute_tax(order_line):
-            currency = order_line.order_id.pricelist_id.currency_id
-            # TODO jcb: not so sure if it is necessary to filter the
-            # taxes because of the new implementation of multicompany
             tax_ids = order_line.tax_ids_after_fiscal_position\
                         .filtered(lambda t: t.company_id.id == order_line.order_id.company_id.id)
             price = order_line.price_unit * (1 - (order_line.discount or 0.0) / 100.0)
-            taxes = tax_ids.compute_all(price_unit=price, quantity=order_line.qty, currency=currency).get('taxes', [])
-            # add the currency_rate field in each tax calculation result
-            return [dict(currency_rate=order_line.order_id.currency_rate, **tax) for tax in taxes]
+            taxes = tax_ids.compute_all(price_unit=price, quantity=order_line.qty, currency=session_currency).get('taxes', [])
+            # add the date_order field in each tax calculation result for currency conversion
+            return [dict(date_order=order_line.order_id.date_order, **tax) for tax in taxes]
+
+        def compute_total_amounts(taxes):
+            total_amount_currency = sum(tax['amount'] for tax in taxes)
+            if is_using_company_currency:
+                total_amount = total_amount_currency
+                total_amount_currency = 0
+            else:
+                total_amount = sum(session_currency._convert(tax['amount'], company_currency, company, tax['date_order']) for tax in taxes)
+            return {"amount": total_amount, "amount_currency": total_amount_currency}
 
         line_taxes = [compute_tax(line) for line in all_order_lines]
 
@@ -557,15 +578,9 @@ class PosSession(models.Model):
         flat_line_taxes = itertools.chain.from_iterable(line_taxes)
 
         # group the taxes by account_id and tax id
-        account_tax_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
-        for tax in flat_line_taxes:
-            if is_using_company_currency:
-                account_tax_amounts[(tax['account_id'], tax['id'])]['amount'] += tax['amount']
-            else:
-                account_tax_amounts[(tax['account_id'], tax['id'])]['amount'] += tax['amount'] / tax['currency_rate']
-                account_tax_amounts[(tax['account_id'], tax['id'])]['amount_currency'] += tax['amount']
-
-        return [generate_line_args(account_id, tax_id, **amounts) for (account_id, tax_id), amounts in account_tax_amounts.items()]
+        grouped_line_taxes = groupby(flat_line_taxes, key=lambda tax: (tax['account_id'], tax['id']))
+        account_tax_amounts = (((account_id, tax_id), compute_total_amounts(taxes)) for (account_id, tax_id), taxes in grouped_line_taxes)
+        return [generate_line_args(account_id, tax_id, **amounts) for (account_id, tax_id), amounts in account_tax_amounts]
 
     @api.model
     def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders, is_using_company_currency):
@@ -581,12 +596,15 @@ class PosSession(models.Model):
         if len(not_invoiced_orders) == 0:
             return []
 
-        currency_id = not_invoiced_orders[0].currency_id
+        company = not_invoiced_orders[0].company_id
+        session_currency = not_invoiced_orders[0].currency_id
+        company_currency = company.currency_id
+
         def generate_line_args(method, account_id, amount, amount_currency):
             partial_args = dict(account_id=account_id, move_id=account_move.id)
             return (getattr(self, method)(partial_args, amount)
                     if is_using_company_currency
-                    else getattr(self, method)(partial_args, amount, amount_currency, currency_id))
+                    else getattr(self, method)(partial_args, amount, amount_currency, session_currency))
 
         StockMove = self.env['stock.move']
         moves = StockMove\
@@ -595,6 +613,7 @@ class PosSession(models.Model):
         # group amounts by expense and output accounts
         credit_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
         debit_amounts = defaultdict(lambda: dict(amount=0.0, amount_currency=0.0))
+        amount_converter = lambda amount, order_id: session_currency._convert(amount, company_currency, company, order_id.date_order)
         for move in moves.filtered(lambda m: m.product_id.categ_id.property_valuation == 'real_time'):
             exp_account = move.product_id.property_account_expense_id or move.product_id.categ_id.property_account_expense_categ_id
             out_account = move.product_id.categ_id.property_stock_account_output_categ_id
@@ -606,9 +625,9 @@ class PosSession(models.Model):
                 debit_amounts[exp_account]['amount'] += amount
                 credit_amounts[out_account]['amount'] += amount
             else:
-                currency_rate = move.pos_order_id.currency_rate
-                debit_amounts[exp_account]['amount'] += amount / currency_rate
-                credit_amounts[out_account]['amount'] += amount / currency_rate
+                converted_amount = amount_converter(amount, move.pos_order_id)
+                debit_amounts[exp_account]['amount'] += converted_amount
+                credit_amounts[out_account]['amount'] += converted_amount
                 debit_amounts[exp_account]['amount_currency'] += amount
                 credit_amounts[out_account]['amount_currency'] += amount
 
