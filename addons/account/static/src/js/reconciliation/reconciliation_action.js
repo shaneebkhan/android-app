@@ -34,6 +34,7 @@ var StatementAction = AbstractAction.extend({
         load_more: '_onLoadMore',
         reload: 'reload',
         search: '_onSearch',
+        navigation_move:'_onNavigationMove',
     },
     config: _.extend({}, AbstractAction.prototype.config, {
         // used to instantiate the model
@@ -49,6 +50,25 @@ var StatementAction = AbstractAction.extend({
         // number of moves lines displayed in 'match' mode
         limitMoveLines: 15,
     }),
+
+    _onNavigationMove: function (ev) {
+        var non_reconciled_keys = _.keys(_.pick(this.model.lines, function(value, key, object) {return !value.reconciled}));
+        var currentIndex = _.indexOf(non_reconciled_keys, ev.data.handle);
+        var widget = false;
+        switch (ev.data.direction) {
+            case 'up':
+            case 'previous':
+                ev.stopPropagation();
+                widget = this._getWidget(non_reconciled_keys[currentIndex-1]);
+                break;
+            case 'down':
+            case 'next':
+                ev.stopPropagation();
+                widget = this._getWidget(non_reconciled_keys[currentIndex+1]);
+                break;
+        }
+        if (widget) widget.$el.focus();
+    },
 
     /**
      * @override
@@ -187,12 +207,10 @@ var StatementAction = AbstractAction.extend({
         this._super.apply(this, arguments);
         if (this.action_manager) {
             this.$pager = $(QWeb.render('reconciliation.control.pager', {widget: this.renderer}));
-            this.$buttons = $(QWeb.render('reconciliation.control.buttons', {context: this.model.context}));
             this.updateControlPanel({
                 clear: true,
                 cp_content: {
                     $pager: this.$pager,
-                    $buttons: this.$buttons,
                 },
             });
             this.renderer.$progress = this.$pager;

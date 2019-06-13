@@ -16,10 +16,6 @@
     </div>
 </t>
 
-<t t-name="reconciliation.control.buttons">
-    <button t-if="!context.edition_mode" class='import_to_suspense btn btn-primary' name="import_to_suspense">Post &amp; Check later</button>
-</t>
-
 <t t-name="reconciliation.statement">
     <div t-if="widget._initialState.valuemax">
         <div class="notification_area"/>
@@ -67,13 +63,13 @@
 
 <t t-name="reconciliation.line">
     <t t-set="state" t-value="widget._initialState"/>
-    <div class="o_reconciliation_line" t-att-data-mode="state.mode">
+    <div class="o_reconciliation_line" t-att-data-mode="state.mode" tabindex="0">
         <table class="accounting_view">
             <caption style="caption-side: top;">
                 <div class="float-right o_buttons">
-                    <button t-attf-class="o_no_valid btn btn-secondary #{state.balance.type &lt; 0 ? '' : 'd-none'}" disabled="disabled" data-toggle="tooltip" title="Select a partner or choose a counterpart">Validate</button>
-                    <button t-attf-class="o_validate btn btn-secondary #{!state.balance.type ? '' : 'd-none'}">Validate</button>
-                    <button t-attf-class="o_reconcile btn btn-primary #{state.balance.type &gt; 0 ? '' : 'd-none'}">Validate</button>
+                    <button t-attf-class="o_no_valid btn btn-secondary #{state.balance.type &lt; 0 ? '' : 'd-none'}" disabled="disabled" data-toggle="tooltip" title="Select a partner or choose a counterpart" accesskey="">Validate</button>
+                    <button t-attf-class="o_validate btn btn-secondary #{!state.balance.type ? '' : 'd-none'}" accesskey="">Validate</button>
+                    <button t-attf-class="o_reconcile btn btn-primary #{state.balance.type &gt; 0 ? '' : 'd-none'}" accesskey="">Validate</button>
                 </div>
             </caption>
             <thead>
@@ -95,8 +91,8 @@
         </table>
         <div class="o_notebook">
             <ul class="nav nav-tabs ml-0 mr-0">
-                <li class="nav-item" t-attf-title="{{'Match statement with existing lines&lt;br&gt;* Black line: they are dark&lt;br&gt;* Blue lines: they are like the color of the see'}}" data-toggle="tooltip"><a data-toggle="tab" disable_anchor="true" t-attf-href="#notebook_page_matching_#{state.st_line.id}" class="nav-link active" role="tab" aria-selected="true">Matching</a></li>
-                <li class="nav-item" title="Create a counterpart" data-toggle="tooltip"><a data-toggle="tab" disable_anchor="true" t-attf-href="#notebook_page_misc_#{state.st_line.id}" class="nav-link" role="tab" aria-selected="false">Miscellaneous</a></li>
+                <li class="nav-item" t-attf-title="{{'Match statement with existing lines&lt;br&gt;* Black line: existing journal entry that should be matched&lt;br&gt;* Blue lines: existing payment that should be matched'}}" data-toggle="tooltip"><a data-toggle="tab" disable_anchor="true" t-attf-href="#notebook_page_matching_#{state.st_line.id}" class="nav-link active nav-match" role="tab" aria-selected="true">Matching</a></li>
+                <li class="nav-item" title="Create a counterpart" data-toggle="tooltip"><a data-toggle="tab" disable_anchor="true" t-attf-href="#notebook_page_misc_#{state.st_line.id}" class="nav-link nav-misc" role="tab" aria-selected="false">Miscellaneous</a></li>
             </ul>
             <div class="tab-content">
                 <div class="tab-pane active" t-attf-id="notebook_page_matching_#{state.st_line.id}">
@@ -149,7 +145,7 @@
 
 <div t-name="reconciliation.line.match">
     <div class="match_controls">
-        <input class="filter o_input" placeholder="Filter..." type="text" value=""/>
+        <span><input class="filter o_input" placeholder="Filter..." type="text" value=""/></span>
         <button class="btn btn-secondary btn-sm fa fa-search" type="button"></button>
     </div>
     <table>

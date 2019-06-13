@@ -215,7 +215,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
     template: "reconciliation.line",
     events: {
         'click .accounting_view caption .o_buttons button': '_onValidate',
-        'click .accounting_view': '_onTogglePanel',
+        'focus': '_onTogglePanel',
         'click .o_notebook li a': '_onChangeTab',
         'click .cell': '_onEditAmount',
         'change input.filter': '_onFilterChange',
@@ -228,12 +228,54 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         'click .reconcile_model_edit': '_onEditReconcileModel',
         'keyup input': '_onInputKeyup',
         'blur input': '_onInputKeyup',
+        'keydown': '_onKeydown',
     },
     custom_events: _.extend({}, FieldManagerMixin.custom_events, {
         'field_changed': '_onFieldChanged',
     }),
     _avoidFieldUpdate: {},
     MV_LINE_DEBOUNCE: 200,
+
+    _onKeydown: function (ev) {
+        switch (ev.which) {
+            case $.ui.keyCode.TAB:
+                var event = this.trigger_up('navigation_move', {
+                    direction: ev.shiftKey ? 'previous' : 'next',
+                    handle: this.handle,
+                });
+                if (event.is_stopped()) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                }
+                break;
+            case $.ui.keyCode.ENTER:
+                this.trigger_up('navigation_move', {direction: 'next_line', handle: this.handle});
+                break;
+            case $.ui.keyCode.ESCAPE:
+                this.trigger_up('navigation_move', {direction: 'cancel', handle: this.handle, originalEvent: ev});
+                break;
+            case $.ui.keyCode.UP:
+                ev.stopPropagation();
+                ev.preventDefault();
+                this.trigger_up('navigation_move', {direction: 'up', handle: this.handle});
+                break;
+            case $.ui.keyCode.RIGHT:
+                ev.stopPropagation();
+                ev.preventDefault();
+                this.trigger_up('navigation_move', {direction: 'right', handle: this.handle});
+                break;
+            case $.ui.keyCode.DOWN:
+                ev.stopPropagation();
+                ev.preventDefault();
+                this.trigger_up('navigation_move', {direction: 'down', handle: this.handle});
+                break;
+            case $.ui.keyCode.LEFT:
+                ev.stopPropagation();
+                ev.preventDefault();
+                this.trigger_up('navigation_move', {direction: 'left', handle: this.handle});
+                break;
+        }
+    },
 
     /**
      * create partner_id field in editable mode
@@ -359,7 +401,7 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         var recs_count = stateMvLines.length > 0 ? stateMvLines[0].recs_count : 0;
         var remaining = recs_count - stateMvLines.length;
         var $mv_lines = this.$('.match table tbody').empty();
-        this.$('.o_notebook li a[href*="notebook_page_matching"]').toggleClass('d-none', recs_count === 0);
+        this.$('.o_notebook li a[href*="notebook_page_matching"]').toggleClass('d-none', recs_count === 0 && !state.filter);
 
         _.each(stateMvLines, function (line) {
             var $line = $(qweb.render("reconciliation.line.mv_line", {'line': line, 'state': state}));
@@ -437,6 +479,18 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
                 });
         }
         this.$('.create .add_line').toggle(!!state.balance.amount_currency);
+
+        if (this.$el.is(':focus')) {
+            this.$('caption .o_buttons button:not(:disabled)').attr('accesskey', 'V');
+            this.$('.nav-match').attr('accesskey', 'M');
+            this.$('.nav-misc').attr('accesskey', 'C');
+            this.$('input.filter.o_input').attr('accesskey', 'Z');
+        } else {
+            this.$('caption .o_buttons button:not(:disabled)').attr('accesskey', '');
+            this.$('.nav-match').attr('accesskey', '');
+            this.$('.nav-misc').attr('accesskey', '');
+            this.$('.filter.o_input').attr('accesskey', '');
+        }
     },
 
     updatePartialAmount: function(line_id, amount) {

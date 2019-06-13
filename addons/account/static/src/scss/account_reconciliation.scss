@@ -221,6 +221,10 @@
         &:not([data-mode="inactive"]) > .o_notebook {
             display: block;
         }
+
+        &:not(:focus) caption .o_web_accesskey_overlay {
+            display: none;
+        }
     }
 
     .o_reconcile_models .btn-primary {
