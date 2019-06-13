@@ -1,0 +1,88 @@
+*PPD-Adobe:             "4.3"
+*FormatVersion:         "4.3"
+*FileVersion:           "2.0"
+*LanguageVersion:       English
+*LanguageEncoding:      ISOLatin1
+*PCFileName:            "Escpos.ppd"
+*Manufacturer:          "Generic"
+*Product:               "(EPSON TM-T20, EPSON TM-T20II, EPSON TM-T20IIIL, EPSON TM-T20X, EPSON TM-T70, EPSON TM-T70II, EPSON TM-T88IV, EPSON TM-T88V, EPSON TM-T88VI, EPSON TM-T88VI-iHUB, Star TSP650, Star TSP651, Star TSP654)"
+*1284DeviceID:          "CLS:PRINTER;"
+*cupsVersion:           1.1
+*cupsManualCopies:      True
+*cupsModelNumber:       20
+*cupsFilter:            "application/vnd.cups-raster 0 rastertoescpos"
+*ModelName:             "ESC/POS"
+*ShortNickName:         "Generic ESC/POS"
+*NickName:              "Generic ESC/POS Driver"
+*PSVersion:             "(3010.000) 550"
+*LanguageLevel:         "3"
+*ColorDevice:           False
+*DefaultColorSpace:     Gray
+*FileSystem:            False
+*Throughput:            "1"
+*LandscapeOrientation:  Plus90
+*VariablePaperSize:     True
+*TTRasterizer:          Type42
+*cupsSNMPSupplies:      False
+*cupsIPPReason com.star-paper_out_error/Printer is out of paper: ""
+
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: X80MMY2000MM
+*PageSize X80MMY2000MM/80mm * 2000mm:            "<</PageSize[226 5668]/HWResolution[203 203]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: X80MMY2000MM
+*PageRegion X80MMY2000MM/80mm * 2000mm:          "<</PageSize[226 5668]/HWResolution[203 203]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageRegion
+
+*DefaultImageableArea: X80MMY2000MM
+*ImageableArea X80MMY2000MM:        "0.0 0.0 226.0 5668.0"
+
+*DefaultPaperDimension: X80MMY2000MM
+*PaperDimension X80MMY2000MM:       "226 5668"
+
+*MaxMediaWidth:  "226"
+*MaxMediaHeight: "5670"
+*HWMargins:      0 0 0 0
+*CustomPageSize True: "pop pop pop <</PageSize[5 -2 roll]/HWResolution[203 203]/ImagingBBox null>>setpagedevice"
+*ParamCustomPageSize Width:        1 points 72 226
+*ParamCustomPageSize Height:       2 points 72 5670
+*ParamCustomPageSize WidthOffset:  3 points 0 0
+*ParamCustomPageSize HeightOffset: 4 points 0 0
+*ParamCustomPageSize Orientation:  5 int 0 0
+
+*OpenGroup: OutputGroup/Output Options
+*OpenUI *PageType/3. Page Type: PickOne
+*DefaultPageType: 0Variable
+*PageType 0Variable/Variable Length: ""
+*PageType 1Fixed/Fixed Length: ""
+*CloseUI: *PageType
+
+*OpenUI *PixelDoublingType/Pixel Doubling: PickOne
+*DefaultPixelDoublingType: 0NoDoubling
+*PixelDoublingType 0NoDoubling/None: ""
+*PixelDoublingType 1HorizontalDoubling/Double Width: ""
+*PixelDoublingType 2VerticalDoubling/Double High: ""
+*PixelDoublingType 3BothDoubling/Double Wide and High: ""
+*CloseUI: *PixelDoublingType
+*CloseGroup: OutputGroup
+
+*OpenGroup: CutGroup/Cut Options
+*OpenUI *PageCutType/1. Page Cut Type: PickOne
+*DefaultPageCutType: 0NoCutPage
+*PageCutType 0NoCutPage/No Cut: ""
+*PageCutType 1CutPage/Cut: ""
+*CloseUI: *PageCutType
+
+*OpenUI *DocCutType/2. Document Cut Type: PickOne
+*DefaultDocCutType: 1CutDoc
+*DocCutType 0NoCutDoc/No Cut: ""
+*DocCutType 1CutDoc/Cut: ""
+*CloseUI: *DocCutType
+*CloseGroup: CutGroup
+
+
+*% End

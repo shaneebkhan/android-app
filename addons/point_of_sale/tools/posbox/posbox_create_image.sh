@@ -117,6 +117,10 @@ if [ -z ${DISPLAY:-} ] ; then
 fi
 qemu-system-arm "${QEMU_OPTS[@]}"
 
+# Change permissions of Cups filters
+chmod -R 755 "${OVERWRITE_FILES_AFTER_INIT_DIR}"/usr/lib/cups/filter
+chown -R root:root "${OVERWRITE_FILES_AFTER_INIT_DIR}"/usr/lib/cups/filter
+
 mount "${LOOP_MAPPER_PATH}" "${MOUNT_POINT}"
 cp -av "${OVERWRITE_FILES_AFTER_INIT_DIR}"/* "${MOUNT_POINT}"
 
