@@ -25,6 +25,7 @@ class User(models.Model):
     coach_id = fields.Many2one(related='employee_id.coach_id', readonly=False, related_sudo=False)
     address_home_id = fields.Many2one(related='employee_id.address_home_id', readonly=False, related_sudo=False)
     is_address_home_a_company = fields.Boolean(related='employee_id.is_address_home_a_company', readonly=False, related_sudo=False)
+    private_email = fields.Char(related='address_home_id.email', string="Private Email", readonly=False)
     km_home_work = fields.Integer(related='employee_id.km_home_work', readonly=False, related_sudo=False)
     # res.users already have a field bank_account_id and country_id from the res.partner inheritance: don't redefine them
     employee_bank_account_id = fields.Many2one(related='employee_id.bank_account_id', string="Employee's Bank Account Number", related_sudo=False, readonly=False)

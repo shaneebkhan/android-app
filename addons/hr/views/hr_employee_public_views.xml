@@ -8,6 +8,15 @@
             <field name="arch" type="xml">
                 <search string="Employees">
                     <field name="name" string="Employees" filter_domain="['|',('work_email','ilike',self),('name','ilike',self)]"/>
+                    <field name="job_title" string="Job Title" filter_domain="[('job_title','ilike',self)]"/>
+                    <field name="job_id" string="Job Position" filter_domain="[('job_id','ilike',self)]"/>
+                    <field name="department_id" string="Department" filter_domain="[('department_id','ilike',self)]"/>
+                    <field name="company_id" string="Company" filter_domain="[('company_id','ilike',self)]"/>
+                    <group expand="0" string="Group By">
+                        <filter name="group_manager" string="Manager" domain="[]" context="{'group_by':'parent_id'}"/>
+                        <filter name="group_department" string="Department" domain="[]" context="{'group_by':'department_id'}"/>
+                        <filter name="group_company" string="Company" domain="[]" context="{'group_by':'company_id'}"/>
+                    </group>
                 </search>
              </field>
         </record>
@@ -80,7 +89,7 @@
                     <field name="work_email"/>
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="department_id"/>
-                    <field name="job_id"/>
+                    <field name="job_title"/>
                     <field name="parent_id"/>
                     <field name="coach_id" invisible="1"/>
                 </tree>
@@ -108,12 +117,13 @@
                                         <strong class="o_kanban_record_title">
                                             <field name="name"/>
                                         </strong>
-                                        <span t-if="record.job_id.raw_value" class="o_kanban_record_subtitle"><field name="job_id"/></span>
+                                        <span t-if="record.job_title.raw_value" class="o_kanban_record_subtitle"><field name="job_title"/></span>
                                     </div>
                                 </div>
                                 <ul>
                                     <li id="last_login"/>
-                                    <li t-if="record.work_location.raw_value"><field name="work_location"/></li>
+                                    <li t-if="record.work_email.raw_value"><field name="work_email" /></li>
+                                    <li t-if="record.work_phone.raw_value"><field name="work_phone" /></li>
                                 </ul>
                             </div>
                         </div>

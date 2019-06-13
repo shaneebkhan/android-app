@@ -165,8 +165,8 @@
                         help="Remaining leaves">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
-                            <field name="allocation_used_count" digits="[42,1]"/>/
-                            <field name="allocation_count" digits="[42,1]"/>
+                            <field name="allocation_used_display"/>/
+                            <field name="allocation_display"/>
                         </span>
                         <span class="o_stat_text">
                             Time Off
@@ -189,10 +189,9 @@
                 <field name="current_leave_id" invisible="1"/>
                 <field name="show_leaves" invisible="1"/>
                 <field name="is_absent" invisible="1"/>
-                <button name="%(hr_leave_action_new_request)d" type="action"
-                        class="oe_stat_button"
+                <a class="btn oe_stat_button" role="button"
                         attrs="{'invisible': [('is_absent', '=', False)]}">
-                    <div role="img" class="fa fa-fw fa-circle o_button_icon text-danger" aria-label="Absent Until" title="Absent Until"/>
+                    <div role="img" class="fa fa-fw fa-plane o_button_icon text-warning" aria-label="Absent Until" title="Absent Until"/>
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
                             <field name="leave_date_to"/>
@@ -201,24 +200,7 @@
                             Absent Until
                         </span>
                     </div>
-                </button>
-                <button name="%(hr_leave_action_new_request)d"
-                        type="action"
-                        class="oe_stat_button"
-                        icon="fa-calendar"
-                        attrs="{'invisible': [('show_leaves','=', False)]}" 
-                        groups="base.group_user"
-                        help="Remaining leaves">
-                    <div class="o_field_widget o_stat_info">
-                        <span class="o_stat_value">
-                            <field name="allocation_used_count" digits="[42,1]"/>/
-                            <field name="allocation_count" digits="[42,1]"/>
-                        </span>
-                        <span class="o_stat_text">
-                            Time Off
-                        </span>
-                    </div>
-                </button>
+                </a>
             </xpath>
         </field>
     </record>
@@ -269,8 +251,8 @@
                         help="Remaining leaves">
                     <div class="o_field_widget o_stat_info">
                         <span class="o_stat_value">
-                            <field name="allocation_used_count" digits="[42,1]"/>/
-                            <field name="allocation_count" digits="[42,1]"/>
+                            <field name="allocation_used_display"/>/
+                            <field name="allocation_display"/>
                         </span>
                         <span class="o_stat_text">
                             Time Off

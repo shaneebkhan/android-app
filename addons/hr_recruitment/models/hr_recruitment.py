@@ -450,6 +450,7 @@ class Applicant(models.Model):
                 employee = self.env['hr.employee'].create({
                     'name': applicant.partner_name or contact_name,
                     'job_id': applicant.job_id.id,
+                    'job_title': applicant.job_id.name,
                     'address_home_id': address_id,
                     'department_id': applicant.department_id.id or False,
                     'address_id': applicant.company_id and applicant.company_id.partner_id

@@ -44,6 +44,7 @@ class HrEmployeePrivate(models.Model):
         'The employee adress has a company linked',
         compute='_compute_is_address_home_a_company',
     )
+    private_email = fields.Char(related='address_home_id.email', string="Private Email", readonly=False)
     country_id = fields.Many2one(
         'res.country', 'Nationality (Country)', groups="hr.group_hr_user", tracking=True)
     gender = fields.Selection([
@@ -112,7 +113,7 @@ class HrEmployeePrivate(models.Model):
     category_ids = fields.Many2many(
         'hr.employee.category', 'employee_category_rel',
         'emp_id', 'category_id',
-        string='Tags')
+        string='Tags', groups="hr.group_hr_user")
     # misc
     notes = fields.Text('Notes', groups="hr.group_hr_user")
     color = fields.Integer('Color Index', default=0, groups="hr.group_hr_user")
