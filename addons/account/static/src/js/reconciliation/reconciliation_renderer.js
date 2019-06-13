@@ -59,6 +59,9 @@ var StatementRenderer = Widget.extend(FieldManagerMixin, {
         }
     },
     showRainbowMan: function (state) {
+        if (this.model.display_context !== 'validate') {
+            return
+        }
         var dt = Date.now()-this.time;
         var $done = $(qweb.render("reconciliation.done", {
             'duration': moment(dt).utc().format(time.getLangTimeFormat()),

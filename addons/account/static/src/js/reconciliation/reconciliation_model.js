@@ -113,6 +113,7 @@ var StatementModel = BasicModel.extend({
         this.domain = [];
         this.defaultDisplayQty = options && options.defaultDisplayQty || 10;
         this.limitMoveLines = options && options.limitMoveLines || 15;
+        this.display_context = 'init';
     },
 
     //--------------------------------------------------------------------------
@@ -687,6 +688,7 @@ var StatementModel = BasicModel.extend({
      */
     validate: function (handle) {
         var self = this;
+        this.display_context = 'validate';
         var handles = [];
         if (handle) {
             handles = [handle];

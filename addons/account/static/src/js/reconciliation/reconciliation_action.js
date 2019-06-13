@@ -345,6 +345,7 @@ var StatementAction = AbstractAction.extend({
     _onSearch: function (ev) {
         ev.stopPropagation();
         this.model.domain = ev.data.domain;
+        this.model.display_context = 'search';
         this.reload();
     },
 
