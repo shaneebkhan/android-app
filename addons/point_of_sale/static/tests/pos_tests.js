@@ -5,6 +5,23 @@ const {createActionManager} = require('web.test_utils');
 
 QUnit.module('Point of Sale');
 
+async function createPointOfSale(params) {
+    const actionManager = await createActionManager(params);
+    await actionManager.doAction('pos.ui');
+    return actionManager;
+}
+
+async function isPointOfSaleLoaded() {
+    // FIXME: this is hacky and shouldn't be exposed that way...
+    return window.posmodel.chrome.ready;
+}
+
+async function loadPointOfSale(params) {
+    const actionManager = await createPointOfSale(params);
+    await isPointOfSaleLoaded();
+    return actionManager
+}
+
 QUnit.module('pos.ui', {
     beforeEach() {
         this.data = {
@@ -129,39 +146,53 @@ QUnit.module('pos.ui', {
     QUnit.test('basic rendering', async function (assert) {
         assert.expect(9);
 
-        const actionManager = await createActionManager({
+        const pos = await createPointOfSale({
             data: this.data,
             session: this.session,
         });
-        await actionManager.doAction('pos.ui');
 
-        assert.containsOnce(actionManager, '.pos',
+        assert.containsOnce(pos, '.pos',
             "should have a Point of Sale container");
-        assert.containsOnce(actionManager, '.loader',
+        assert.containsOnce(pos, '.loader',
             "should have a loading screen");
-        assert.isVisible(actionManager, '.loader .progressbar',
+        assert.isVisible(pos, '.loader .progressbar',
             "should have a loading screen with a progress bar");
 
-        // FIXME: this is hacky and shouldn't be exposed that way...
-        await window.posmodel.chrome.ready;
+        await isPointOfSaleLoaded();
 
-        assert.isNotVisible(actionManager.$('.loader .progressbar'),
+        assert.isNotVisible(pos.$('.loader .progressbar'),
             "should have hidden the progress bar when loading is complete");
 
         // Chrome main parts
-        assert.containsOnce(actionManager, '.pos-topheader',
+        assert.containsOnce(pos, '.pos-topheader',
             "should have a top navbar");
-        assert.containsOnce(actionManager, '.pos-topheader .username',
+        assert.containsOnce(pos, '.pos-topheader .username',
             "should have a UsernameWidget in the top navbar");
-        assert.containsOnce(actionManager, '.pos-topheader .order-selector',
+        assert.containsOnce(pos, '.pos-topheader .order-selector',
             "should have an OrderSelectorWidget in the top navbar");
-        assert.containsOnce(actionManager, '.pos-content .screens',
+        assert.containsOnce(pos, '.pos-content .screens',
             "should have a screens container");
-        assert.containsOnce(actionManager, '.pos-content .keyboard_frame',
+        assert.containsOnce(pos, '.pos-content .keyboard_frame',
             "should have a virtual keyboard container");
 
-        actionManager.destroy();
+        pos.destroy();
     });
+
+    QUnit.module('UsernameWidget', function () {
+        QUnit.test('basic rendering', async function (assert) {
+            assert.expect(1);
+
+            const pos = await loadPointOfSale({
+                data: this.data,
+                session: this.session,
+            });
+
+            assert.strictEqual(pos.$('.pos-topheader .username').text().trim(), "Mitchell Admin");
+
+            pos.destroy();
+        });
+    });
+
 });
 
 });
