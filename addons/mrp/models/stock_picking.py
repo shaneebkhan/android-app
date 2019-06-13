@@ -27,7 +27,7 @@ class StockPickingType(models.Model):
         domains = {
             'count_mo_waiting': [('reservation_state', '=', 'waiting')],
             'count_mo_todo': ['|', ('state', 'in', ('confirmed', 'draft', 'planned', 'progress'))],
-            'count_mo_late': [('date_planned_start', '<', fields.Date.today()), ('state', '=', 'confirmed')],
+            'count_mo_late': [('date_deadline_start', '<', fields.Date.today()), ('state', '=', 'confirmed')],
         }
         for field in domains:
             data = self.env['mrp.production'].read_group(domains[field] +

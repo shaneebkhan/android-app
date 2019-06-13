@@ -14,9 +14,9 @@ class MrpProduction(models.Model):
     """ Manufacturing Orders """
     _name = 'mrp.production'
     _description = 'Production Order'
-    _date_name = 'date_planned_start'
+    _date_name = 'date_deadline_start'
     _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'date_planned_start asc,id'
+    _order = 'date_deadline_start asc,id'
 
     @api.model
     def _get_default_picking_type(self):
@@ -88,11 +88,11 @@ class MrpProduction(models.Model):
         readonly=True,  required=True,
         states={'draft': [('readonly', False)]},
         help="Location where the system will stock the finished products.")
-    date_planned_start = fields.Datetime(
+    date_deadline_start = fields.Datetime(
         'Deadline Start', copy=False, default=fields.Datetime.now,
         index=True, required=True,
         states={'draft': [('readonly', False)]}, oldname="date_planned")
-    date_planned_finished = fields.Datetime(
+    date_deadline_stop = fields.Datetime(
         'Deadline End', copy=False, default=fields.Datetime.now,
         index=True,
         states={'draft': [('readonly', False)]})
@@ -100,14 +100,14 @@ class MrpProduction(models.Model):
         'Scheduled Start Date', compute='_compute_date_planned',
         copy=False, store=True,
         states={'done': [('readonly', True)], 'cancel': [('readonly', True)]})
-    date_planned_finished_wo = fields.Datetime(
+    date_planned_finished = fields.Datetime(
         'Scheduled End Date', compute='_compute_date_planned',
-        copy=False, store=True,
+        copy=False, store=True, default=fields.Datetime.now,
         states={'done': [('readonly', True)], 'cancel': [('readonly', True)]})
     date_start = fields.Datetime('Start Date', copy=False, index=True, readonly=True)
     date_finished = fields.Datetime('End Date', copy=False, index=True, readonly=True)
-    date_start_wo = fields.Datetime(
-        'Planning Start Date', copy=False, readonly=True,
+    date_planned_start = fields.Datetime(
+        'Planned Start Date', copy=False, readonly=True, default=fields.Datetime.now,
         states={'draft': [('readonly', False)], 'confirmed': [('readonly', False)]},
         help="The work orders will be planned based on the availability of the work centers starting from "
         "this date. If emtpy, the work orders are planned as soon as possible.")
@@ -359,14 +359,14 @@ class MrpProduction(models.Model):
     @api.depends('workorder_ids.date_planned_start', 'workorder_ids.date_planned_finished')
     def _compute_date_planned(self):
         for order in self:
-            date_planned_start_wo = date_planned_finished_wo = False
+            date_planned_start_wo = date_planned_finished = False
             if order.workorder_ids:
                 start_dates = order.workorder_ids.filtered(lambda r: r.date_planned_start is not False).sorted(key=lambda r: r.date_planned_start)
                 date_planned_start_wo = start_dates[0].date_planned_start if start_dates else False
                 finished_dates = order.workorder_ids.filtered(lambda r: r.date_planned_finished is not False).sorted(key=lambda r: r.date_planned_finished)
-                date_planned_finished_wo = finished_dates[-1].date_planned_finished if finished_dates else False
+                date_planned_finished = finished_dates[-1].date_planned_finished if finished_dates else False
             order.date_planned_start_wo = date_planned_start_wo
-            order.date_planned_finished_wo = date_planned_finished_wo
+            order.date_planned_finished = date_planned_finished
 
     _sql_constraints = [
         ('name_uniq', 'unique(name, company_id)', 'Reference must be unique per Company!'),
@@ -394,11 +394,11 @@ class MrpProduction(models.Model):
         self.product_qty = self.bom_id.product_qty
         self.product_uom_id = self.bom_id.product_uom_id.id
 
-    @api.onchange('date_planned_start')
-    def _onchange_date_planned_start(self):
+    @api.onchange('date_deadline_start')
+    def _onchange_date_deadline_start(self):
         self.move_raw_ids.update({
-            'date': self.date_planned_start,
-            'date_expected': self.date_planned_start,
+            'date': self.date_deadline_start,
+            'date_expected': self.date_deadline_start,
         })
 
     @api.onchange('bom_id', 'product_id', 'product_qty', 'product_uom_id')
@@ -431,11 +431,11 @@ class MrpProduction(models.Model):
     @api.multi
     def write(self, vals):
         res = super(MrpProduction, self).write(vals)
-        if 'date_planned_start' in vals:
+        if 'date_deadline_start' in vals:
             moves = (self.mapped('move_raw_ids') + self.mapped('move_finished_ids')).filtered(
                 lambda r: r.state not in ['done', 'cancel'])
             moves.write({
-                'date_expected': vals['date_planned_start'],
+                'date_expected': vals['date_deadline_start'],
             })
         for production in self:
             if 'move_raw_ids' in vals and production.state != 'draft':
@@ -475,8 +475,8 @@ class MrpProduction(models.Model):
             'byproduct_id': byproduct_id,
             'unit_factor': product_uom_qty / self.product_qty,
             'name': self.name,
-            'date': self.date_planned_start,
-            'date_expected': self.date_planned_finished,
+            'date': self.date_deadline_start,
+            'date_expected': self.date_deadline_stop,
             'picking_type_id': self.picking_type_id.id,
             'location_id': self.product_id.property_stock_production.id,
             'location_dest_id': self.location_dest_id.id,
@@ -527,8 +527,8 @@ class MrpProduction(models.Model):
             'sequence': bom_line.sequence,
             'name': self.name,
             'reference': self.name,
-            'date': self.date_planned_start,
-            'date_expected': self.date_planned_start,
+            'date': self.date_deadline_start,
+            'date_expected': self.date_deadline_start,
             'bom_line_id': bom_line.id,
             'picking_type_id': self.picking_type_id.id,
             'product_id': bom_line.product_id.id,
@@ -635,7 +635,7 @@ class MrpProduction(models.Model):
         return True
 
     def _get_start_date(self):
-        return self.date_start_wo or datetime.datetime.now()
+        return self.date_planned_start or datetime.datetime.now()
 
     def _plan_workorders(self):
         """ Plan all the production's workorders depending on the workcenters

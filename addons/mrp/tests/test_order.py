@@ -69,7 +69,7 @@ class TestMrpOrder(TestMrpCommon):
         man_order_form.bom_id = self.bom_1
         man_order_form.product_uom_id = self.product_4.uom_id
         man_order_form.product_qty = test_quantity
-        man_order_form.date_planned_start = test_date_planned
+        man_order_form.date_deadline_start = test_date_planned
         man_order_form.location_src_id = self.location_1
         man_order_form.location_dest_id = self.warehouse_1.wh_output_stock_loc_id
         man_order = man_order_form.save()

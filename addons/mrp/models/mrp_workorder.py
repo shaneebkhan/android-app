@@ -112,7 +112,7 @@ class MrpWorkorder(models.Model):
     next_work_order_id = fields.Many2one('mrp.workorder', "Next Work Order")
     scrap_ids = fields.One2many('stock.scrap', 'workorder_id')
     scrap_count = fields.Integer(compute='_compute_scrap_move_count', string='Scrap Move')
-    production_date = fields.Datetime('Production Date', related='production_id.date_planned_start', store=True, readonly=False)
+    production_date = fields.Datetime('Production Date', related='production_id.date_deadline_start', store=True, readonly=False)
     color = fields.Integer('Color', compute='_compute_color')
     capacity = fields.Float(
         'Capacity', default=1.0,
@@ -241,9 +241,9 @@ class MrpWorkorder(models.Model):
             workorder.scrap_count = count_data.get(workorder.id, 0)
 
     @api.multi
-    @api.depends('date_planned_finished', 'production_id.date_planned_finished')
+    @api.depends('date_planned_finished', 'production_id.date_deadline_stop')
     def _compute_color(self):
-        late_orders = self.filtered(lambda x: x.production_id.date_planned_finished and x.date_planned_finished > x.production_id.date_planned_finished)
+        late_orders = self.filtered(lambda x: x.production_id.date_deadline_stop and x.date_planned_finished > x.production_id.date_deadline_stop)
         for order in late_orders:
             order.color = 4
         for order in (self - late_orders):

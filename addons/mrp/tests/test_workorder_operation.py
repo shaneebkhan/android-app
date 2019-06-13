@@ -851,7 +851,7 @@ class TestWorkOrderProcess(TestMrpCommon):
         production_table_form.bom_id = self.env.ref("mrp.mrp_bom_desk")
         production_table_form.product_qty = 1.0
         production_table_form.product_uom_id = dining_table.uom_id
-        production_table_form.date_start_wo = date_start
+        production_table_form.date_planned_start = date_start
         production_table = production_table_form.save()
         production_table.action_confirm()
 
@@ -987,9 +987,9 @@ class TestWorkOrderProcess(TestMrpCommon):
         mo_form.product_id = self.product_4
         mo_form.bom_id = self.planning_bom
         mo_form.product_qty = 1
-        mo_form.date_start_wo = datetime(2019, 5, 13, 14, 0, 0, 0)
+        mo_form.date_planned_start = datetime(2019, 5, 13, 14, 0, 0, 0)
         mo = mo_form.save()
-        start = mo.date_start_wo
+        start = mo.date_planned_start
         mo.action_confirm()
         mo.button_plan()
         self.assertEqual(mo.workorder_ids[0].workcenter_id, self.wc_alt_2, "wrong workcenter")
@@ -1003,7 +1003,7 @@ class TestWorkOrderProcess(TestMrpCommon):
         mo_form.product_id = self.product_4
         mo_form.bom_id = self.planning_bom
         mo_form.product_qty = 1
-        mo_form.date_start_wo = datetime(2019, 5, 13, 9, 0, 0, 0)
+        mo_form.date_planned_start = datetime(2019, 5, 13, 9, 0, 0, 0)
         mo = mo_form.save()
         mo.action_confirm()
         mo.button_plan()

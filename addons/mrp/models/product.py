@@ -45,7 +45,7 @@ class ProductTemplate(models.Model):
         action['domain'] = [('state', '=', 'done'), ('product_tmpl_id', 'in', self.ids)]
         action['context'] = {
             'graph_measure': 'product_uom_qty',
-            'time_ranges': {'field': 'date_planned_start', 'range': 'last_365_days'}
+            'time_ranges': {'field': 'date_deadline_start', 'range': 'last_365_days'}
         }
         return action
 
@@ -78,7 +78,7 @@ class ProductProduct(models.Model):
     def _compute_mrp_product_qty(self):
         date_from = fields.Datetime.to_string(fields.datetime.now() - timedelta(days=365))
         #TODO: state = done?
-        domain = [('state', '=', 'done'), ('product_id', 'in', self.ids), ('date_planned_start', '>', date_from)]
+        domain = [('state', '=', 'done'), ('product_id', 'in', self.ids), ('date_deadline_start', '>', date_from)]
         read_group_res = self.env['mrp.production'].read_group(domain, ['product_id', 'product_uom_qty'], ['product_id'])
         mapped_data = dict([(data['product_id'][0], data['product_uom_qty']) for data in read_group_res])
         for product in self:
@@ -132,7 +132,7 @@ class ProductProduct(models.Model):
         action = self.env.ref('mrp.mrp_production_report').read()[0]
         action['domain'] = [('state', '=', 'done'), ('product_id', 'in', self.ids)]
         action['context'] = {
-            'time_ranges': {'field': 'date_planned_start', 'range': 'last_365_days'},
+            'time_ranges': {'field': 'date_deadline_start', 'range': 'last_365_days'},
             'graph_measure': 'product_uom_qty',
         }
         return action

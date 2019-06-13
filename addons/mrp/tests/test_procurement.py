@@ -193,6 +193,6 @@ class TestProcurement(TestMrpCommon):
         self.assertEqual(move_orig.product_qty, 10, 'the quantity to produce is not good relative to the move')
 
         move_dest_scheduled_date = move_dest.date_expected
-        mo.date_planned_start += timedelta(days=5)
+        mo.date_deadline_start += timedelta(days=5)
 
         self.assertAlmostEqual(move_dest.date_expected, move_dest_scheduled_date + timedelta(days=5), delta=timedelta(seconds=1), msg='date is not propagated')
