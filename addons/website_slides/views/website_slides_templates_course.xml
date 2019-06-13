@@ -112,7 +112,7 @@
                         <!-- ==== Header Left ==== -->
                         <div class="col-12 col-md-4 col-lg-3">
                             <div class="d-flex align-items-start justify-content-around h-100">
-                                <div class="o_wslides_course_pict d-inline-block mb-2 mt-3 my-md-0" t-attf-style="background-image:url(/web/image/slide.channel/#{channel.id}/image)" t-ignore="True"/>
+                                <div class="o_wslides_course_pict d-inline-block mb-2 mt-3 my-md-0" t-attf-style="background-image: url(#{website.image_url(channel, 'image')});" t-ignore="True"/>
                             </div>
                         </div>
 
@@ -516,7 +516,7 @@
     <!-- Featured lesson  -->
     <div t-if="not search and not search_slide_type and slide_promoted" class="container py-1 mb-2">
         <div class="card flex-column flex-lg-row">
-            <t t-set="image_url" t-value="'/web/image/slide.slide/%s/image' % slide_promoted.id"/>
+            <t t-set="image_url" t-att-value="website.image_url(slide_promoted, 'image')"/>
 
             <a t-if="slide_promoted.is_preview or channel.is_member or is_slides_publisher"
                t-attf-href="/slides/slide/#{slug(slide_promoted)}" class="w-100 w-lg-50 flex-shrink-0 rounded">
@@ -596,7 +596,7 @@
         <t t-set="can_access" t-value="slide.is_preview or channel.is_member or channel.can_publish"/>
 
         <t t-if="slide.image">
-            <t t-set="lesson_image" t-value="'/web/image/slide.slide/%s/image' % slide.id"/>
+            <t t-set="lesson_image" t-att-value="website.image_url(slide, 'image')"/>
             <a t-if="can_access" t-attf-href="/slides/slide/#{slug(slide)}" t-title="slide.name">
                 <div class="card-img-top border-bottom" t-attf-style="padding-top: 50%; background-image: url(#{lesson_image}); background-size: cover; background-position:center"/>
             </a>
