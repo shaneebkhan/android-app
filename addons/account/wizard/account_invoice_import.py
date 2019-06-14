@@ -16,7 +16,7 @@ class ImportInvoiceImportWizard(models.TransientModel):
 
     @api.multi
     def _create_invoice_from_file(self, attachment):
-        self = self.with_context(default_journal_id=self.journal_id.id)
+        self = self.with_context(default_journal_id=(self.journal_id or self._get_default_journal_id()).id)
         invoice_form = Form(self.env['account.invoice'], view='account.invoice_supplier_form')
         invoice = invoice_form.save()
         attachment.write({'res_model': 'account.invoice', 'res_id': invoice.id})
@@ -28,15 +28,17 @@ class ImportInvoiceImportWizard(models.TransientModel):
         return self._create_invoice_from_file(attachment)
 
     @api.multi
-    def create_invoices(self):
+    def create_invoices(self, attachment_ids=[]):
         ''' Create the invoices from files.
          :return: A action redirecting to account.invoice tree/form view.
         '''
-        if not self.attachment_ids:
+        print(self.env.context)
+        attachments = self.attachment_ids or self.env['ir.attachment'].browse(attachment_ids)
+        if not attachments:
             raise UserError(_("No attachment was provided"))
 
         invoices = self.env['account.invoice']
-        for attachment in self.attachment_ids:
+        for attachment in attachments:
             invoices += self._create_invoice(attachment)
 
         form_view = self.env.context.get('journal_type') == 'purchase' and self.env.ref('account.invoice_supplier_form').id or self.env.ref('account.invoice_form').id
