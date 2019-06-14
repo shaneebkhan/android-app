@@ -22,5 +22,9 @@ Shows you a list of applications features to install from.
     'installable': True,
     'auto_install': False,
 
-    'qweb': ['static/src/xml/res_config_dev_tool.xml']
+    'qweb': [
+        'static/src/xml/res_config_dev_tool.xml',
+        'static/src/xml/res_config_edition.xml',
+        'static/src/xml/res_config_invite_users.xml',
+    ],
 }

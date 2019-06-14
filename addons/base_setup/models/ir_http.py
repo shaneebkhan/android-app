@@ -10,4 +10,5 @@ class IrHttp(models.AbstractModel):
     def session_info(self):
         result = super(IrHttp, self).session_info()
         result['show_effect'] = request.env['ir.config_parameter'].sudo().get_param('base_setup.show_effect')
+        result['demo_active'] = bool(request.env['ir.module.module'].search_count([('demo', '=', True)]))
         return result
