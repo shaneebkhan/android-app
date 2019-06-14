@@ -44,6 +44,22 @@ class MrpAbstractWorkorder(models.AbstractModel):
         self.ensure_one()
         return self.raw_workorder_line_ids | self.finished_workorder_line_ids
 
+    @api.onchange('finished_lot_id')
+    def _onchange_lot_id(self):
+        # sanity check
+        if self.product_tracking == 'serial' and self.finished_lot_id:
+            # Alert the user if this serial number as already been produced
+            quants = self.env['stock.quant'].search_count([
+                ('lot_id', '=', self.finished_lot_id.id),
+                ('location_id', '=', self.production_id.location_dest_id.id),
+                ('quantity', '>', 0)
+            ])
+            if quants:
+                return {'warning': {
+                    'title': _('Used serial number'),
+                    'message': _('This serial number is already produced')
+                }}
+
     @api.onchange('qty_producing')
     def _onchange_qty_producing(self):
         """ Modify the qty currently producing will modify the existing
@@ -318,6 +334,19 @@ class MrpAbstractWorkorderLine(models.AbstractModel):
         """
         if self.product_id.tracking == 'serial':
             self.qty_done = 1
+            # Alert the user if this serial number as already been used
+            sml = self.env['stock.move.line'].search_count([
+                ('lot_id', '=', self.lot_id.id),
+                ('location_id', '=', self._get_production().location_src_id.id),
+                ('location_dest_id', '=', self._get_production().production_location_id.id),
+                ('qty_done', '=', 1),
+                ('state', '=', 'done')
+            ])
+            if sml:
+                return {'warning': {
+                    'title': _('Used serial number'),
+                    'message': _('This serial number is already used in another production')
+                }}
 
     @api.onchange('product_id')
     def _onchange_product_id(self):
