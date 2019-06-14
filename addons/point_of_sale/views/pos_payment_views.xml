@@ -7,6 +7,7 @@
             <form string="Pos Payments" create="0">
                 <sheet>
                     <group>
+                        <field name="currency_id" invisible="1" />
                         <field name="name" />
                         <field name="amount" />
                         <field name="pos_order_id" />
@@ -22,6 +23,7 @@
         <field name="model">pos.payment</field>
         <field name="arch" type="xml">
             <tree string="POS Payments" create="0">
+                <field name="currency_id" invisible="1" />
                 <field name="payment_date" />
                 <field name="pos_order_id" />
                 <field name="amount" />
@@ -46,7 +48,7 @@
     </record>
 
     <record id="action_pos_payment_form" model="ir.actions.act_window">
-        <field name="name">Pos Payments</field>
+        <field name="name">Payments</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">pos.payment</field>
         <field name="view_type">form</field>
@@ -63,7 +65,7 @@
         </field>
     </record>
 
-    <menuitem id="menu_pos_payment" parent="menu_point_of_sale" action="action_pos_payment_form" sequence="1" groups="group_pos_manager,group_pos_user"/>
+    <menuitem id="menu_pos_payment" parent="menu_point_of_sale" action="action_pos_payment_form" sequence="3" groups="group_pos_manager,group_pos_user"/>
 
     <record id="action_show_pos_payment_button" model="ir.actions.act_window">
         <field name="context">{'search_default_group_by_payment_method': 1}</field>

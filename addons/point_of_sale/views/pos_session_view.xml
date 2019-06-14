@@ -79,11 +79,11 @@
                             string="Pos Payments">
                         </button>
                         <button
-                            name="show_journal_entries"
+                            name="show_journal_items"
                             type="object"
                             class="oe_stat_button"
                             icon="fa-pencil-square"
-                            string="Journal Entries">
+                            string="Journal Items">
                         </button>
                     </div>
                     <h1 class="oe_title">
@@ -96,6 +96,7 @@
                             <field name="user_id"/>
                             <field name="currency_id" invisible="1"/>
                             <field name="config_id"/>
+                            <field name="move_id" />
                         </group>
                         <group>
                             <field name="start_at" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>

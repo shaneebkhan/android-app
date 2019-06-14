@@ -618,7 +618,7 @@ class PosOrder(models.Model):
     )
     pos_payment_ids = fields.One2many(comodel_name='pos.payment', inverse_name='pos_order_id', string='Pos Payments', readonly=True)
     session_state = fields.Selection(string="Session State", related='session_id.state', readonly=True)
-    session_move_id = fields.Many2one('account.move', string='Session Journal Entry', related='session_id.move_id', readonly=True, copy=False)
+    session_move_id = fields.Many2one('account.move', string='Journal Entry', related='session_id.move_id', readonly=True, copy=False)
 
     @api.depends('date_order', 'company_id', 'currency_id', 'company_id.currency_id')
     def _compute_currency_rate(self):
@@ -1102,6 +1102,7 @@ class PosOrderLine(models.Model):
     tax_ids = fields.Many2many('account.tax', string='Taxes', readonly=True)
     tax_ids_after_fiscal_position = fields.Many2many('account.tax', compute='_get_tax_ids_after_fiscal_position', string='Taxes to Apply')
     pack_lot_ids = fields.One2many('pos.pack.operation.lot', 'pos_order_line_id', string='Lot/serial Number')
+    currency_id = fields.Many2one('res.currency', related='order_id.currency_id')
 
     @api.model
     def _prepare_refund_data(self, refund_order_id):

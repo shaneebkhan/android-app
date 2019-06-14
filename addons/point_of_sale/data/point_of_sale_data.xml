@@ -23,13 +23,6 @@
             <field name="available_in_pos" eval="True"/>
         </record>
 
-        <record id="pos_receivable_account" model="account.account">
-            <field name="code">101210</field>
-            <field name="name">Account Receivable PoS</field>
-            <field name="user_type_id" ref="account.data_account_type_receivable" />
-            <field name="reconcile" eval="True" />
-        </record>
-
         <record model="pos.config" id="pos_config_main">
             <field name="name">Shop</field>
             <field name="barcode_nomenclature_id" ref="barcodes.default_barcode_nomenclature"/>

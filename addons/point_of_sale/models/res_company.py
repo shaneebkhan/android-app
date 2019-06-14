@@ -6,6 +6,8 @@ from odoo.exceptions import ValidationError
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
+    default_pos_receivable_account = fields.Many2one('account.account', string='Default receivable account for PoS.')
+
     @api.constrains('period_lock_date', 'fiscalyear_lock_date')
     def validate_period_lock_date(self):
         """ This constrains makes it impossible to change the period lock date if
@@ -19,3 +21,6 @@ class ResCompany(models.Model):
             if sessions_in_period:
                 sessions_str = ', '.join(sessions_in_period.mapped('name'))
                 raise ValidationError(_("Please close all the point of sale sessions in this period before closing it. Open sessions are: %s ") % (sessions_str))
+
+    def get_default_pos_receivable_account(self):
+        return self.default_pos_receivable_account

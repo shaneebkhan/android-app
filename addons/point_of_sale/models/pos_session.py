@@ -132,7 +132,7 @@ class PosSession(models.Model):
         help="Auto-generated session for orphan orders, ignored in constraints",
         readonly=True,
         copy=False)
-    move_id = fields.Many2one(comodel_name='account.move', string='Pos Session Journal Entry')
+    move_id = fields.Many2one(comodel_name='account.move', string='Journal Entry')
     payment_method_ids = fields.Many2many(comodel_name='pos.payment.method', string='Payment Methods')
 
     _sql_constraints = [('uniq_name', 'unique(name)', "The name of this POS Session must be unique !")]
@@ -667,21 +667,29 @@ class PosSession(models.Model):
                     **init_args) if amount_currency else init_args
 
     @api.multi
-    def show_journal_entries(self):
-        # get all the linked moves to this move
-        move = self.move_id
-        lines = sum(move.line_ids\
-                    .filtered(lambda aml: aml.account_id.reconcile)\
-                    .mapped(lambda aml: [r.debit_move_id for r in aml.matched_debit_ids] if aml.credit > 0 else [r.credit_move_id for r in aml.matched_credit_ids]),
-                    [])
-        ids = [line.move_id.id for line in lines] + [move.id]
-        domain = [('id', 'in', ids)]
+    def show_journal_items(self):
+        def get_matched_move_lines(aml):
+            if aml.credit > 0:
+                return [r.debit_move_id.id for r in aml.matched_debit_ids]
+            else:
+                return [r.credit_move_id.id for r in aml.matched_credit_ids]
 
-        # call the account move action tree view with default filter (journal)
+        # get all the linked move lines to this account move.
+        move = self.move_id
+        non_reconcilable_lines = move.line_ids.filtered(lambda aml: not aml.account_id.reconcile)
+        reconcilable_lines = move.line_ids - non_reconcilable_lines
+        fully_reconciled_lines = reconcilable_lines.filtered(lambda aml: aml.full_reconcile_id)
+        partially_reconciled_lines = reconcilable_lines - fully_reconciled_lines
+
+        ids = (non_reconcilable_lines.ids
+                + fully_reconciled_lines.mapped('full_reconcile_id').mapped('reconciled_line_ids').ids
+                + sum(partially_reconciled_lines.mapped(get_matched_move_lines), partially_reconciled_lines.ids))
+
+        # call the account move line action tree view with default filter (account)
         # and domain containing the calculated ids above
-        [action] = self.env.ref('account.action_move_journal_line').read()
+        [action] = self.env.ref('account.action_account_moves_all_a').read()
         action['domain'] = [('id', 'in', ids)]
-        action['context'] = json.dumps({'search_default_journal': 1})
+        action['context'] = "{'search_default_account': 1}"
         return action
 
     @api.multi

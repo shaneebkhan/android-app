@@ -11,10 +11,14 @@
                         <h1><field name="name" class="oe_inline"/></h1>
                     </div>
                     <group name="Payment methods">
-                        <field name="receivable_account_id" />
-                        <field name="is_cash_count" />
-                        <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)], 'required': [('is_cash_count', '=', True)]}" />
-                        <field name="is_identify_customer" />
+                        <group>
+                            <field name="receivable_account_id" />
+                            <field name="is_cash_count" />
+                            <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)], 'required': [('is_cash_count', '=', True)]}" />
+                            <field name="split_transactions" widget="radio"/>
+                        </group>
+                        <group>
+                        </group>
                     </group>
                 </sheet>
             </form>
@@ -29,7 +33,7 @@
                 <field name="name" />
                 <field name="receivable_account_id" />
                 <field name="is_cash_count" />
-                <field name="is_identify_customer" />
+                <field name="split_transactions" />
             </tree>
         </field>
     </record>
@@ -49,7 +53,7 @@
     </record>
 
     <record id="action_pos_payment_method_form" model="ir.actions.act_window">
-        <field name="name">Pos Payment Methods</field>
+        <field name="name">Payment Methods</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">pos.payment.method</field>
         <field name="view_type">form</field>
@@ -58,15 +62,18 @@
         <field name="domain">[]</field>
         <field name="context">{'search_default_group_by_account': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_empty_folder">
-                No orders found
+            <p class="o_view_nocontent_smiling_face">
+                Add a new payment method
             </p><p>
-                To record new orders, start a new session.
+                Payment methods are defined by accounting journals having the
+                field <i>PoS Payment Method</i> checked. In order to be useable
+                from the touchscreen interface, you must set the payment method
+                on the <i>Point of Sale</i> configuration.
             </p>
         </field>
     </record>
 
-    <menuitem id="menu_pos_payment_method" parent="menu_point_of_sale" action="action_pos_payment_method_form" sequence="1" groups="group_pos_manager,group_pos_user"/>
+    <menuitem id="menu_pos_payment_method" parent="menu_point_config_product" action="action_pos_payment_method_form" sequence="3" groups="group_pos_manager,group_pos_user"/>
 
     <record id="action_payment_methods_tree" model="ir.actions.act_window">
         <field name="context">{}</field>

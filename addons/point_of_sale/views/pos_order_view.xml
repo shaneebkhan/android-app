@@ -78,7 +78,8 @@
                     </page>
                     <page string="Payments">
                         <field name="pos_payment_ids" colspan="4" nolabel="1">
-                            <tree editable="bottom" string="Statement lines">
+                            <tree string="Payments">
+                                <field name="currency_id" invisible="1" />
                                 <field name="payment_date"/>
                                 <field name="payment_method_id"/>
                                 <field name="amount"/>
