@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 
+from . import account_accrual_accounting
 from . import account_unreconcile
 from . import account_invoice_import
 from . import account_invoice_refund

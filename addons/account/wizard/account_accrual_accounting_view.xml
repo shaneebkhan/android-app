@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="account_accrual_accounting_wizard_form_view" model="ir.ui.view">
+            <field name="name">account.accrual.accounting.wizard.form</field>
+            <field name="model">account.accrual.accounting.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="date"/>
+                        <field name="accrual_account"/>
+                    </group>
+                    <footer>
+                        <button string="Validate" name="amend_entries" type="object" class="oe_highlight"/>
+                        <button string="Cancel" class="btn btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="account_accrual_accounting_wizard_action" model="ir.actions.act_window">
+            <field name="name">Create accrual entry</field>
+            <field name="res_model">account.accrual.accounting.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>
