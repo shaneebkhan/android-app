@@ -66,3 +66,24 @@ class StockMove(SavepointCase):
         internal_picking.button_validate()
         self.assertEquals(move1.move_line_ids.company_id, self.comp2, 'The move line was created in the wrong company')
 
+    def test_multicompany_2(self):
+        """ Validate a picking in secondary company while user is on main company
+        every new object should be located in secondary company.
+        """
+        inventory = self.env['stock.inventory'].create({
+            'company_id': self.comp2.id,
+            'name': 'inventory'
+        })
+        inventory.action_start()
+        line1 = self.env['stock.inventory.line'].create({
+            'inventory_id': inventory.id,
+            'product_id': self.product.id,
+            'product_uom_id': self.product.uom_id.id,
+            'location_id': self.stock_location.id,
+            'product_qty': 10,
+        })
+        self.assertEquals(line1.company_id, self.comp2, 'The line was created in the wrong company')
+
+        self.new_user.company_ids = [(4, self.comp2.id)]
+        inventory.action_validate()
+        self.assertEquals(inventory.move_ids.company_id, self.comp2, 'The moves was created in the wrong company')
