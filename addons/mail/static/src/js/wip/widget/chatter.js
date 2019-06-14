@@ -63,11 +63,13 @@ class Chatter extends Component {
     }
 
     mounted() {
-        this.env.store.commit('thread/insert', {
-            _model: this.props.record.model,
-            _messageIds: this.props.record.data.message_ids.res_ids,
-            id: this.props.record.res_id,
-        });
+        if (!this.props.thread) {
+            this.env.store.commit('thread/insert', {
+                _model: this.props.record.model,
+                _messageIds: this.props.record.data.message_ids.res_ids,
+                id: this.props.record.res_id,
+            });
+        }
 
         // append Odoo widgets for optionnal activities and followers
         if (this.fields.activity) {
@@ -75,6 +77,16 @@ class Chatter extends Component {
         }
         if (this.fields.followers) {
             this.refs.topbarRight.appendChild(this.fields.followers.$el[0]);
+        }
+    }
+
+    patched() {
+        if (!this.props.thread) {
+            this.env.store.commit('thread/insert', {
+                _model: this.props.record.model,
+                _messageIds: this.props.record.data.message_ids.res_ids,
+                id: this.props.record.res_id,
+            });
         }
     }
 

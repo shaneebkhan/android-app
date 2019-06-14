@@ -33,7 +33,7 @@ FormRenderer.include({
         this._super.apply(this, arguments);
 
         if (this.chatterWIP) {
-            this.chatterWIP.mount(this.$temporaryParentDiv[0]).then(() => {
+            this.chatterWIP.mount(this.$temporaryChatterDiv[0]).then(() => {
                 $(this.chatterWIP.el).unwrap();
                 this._handleAttributes($(this.chatterWIP.el), this._chatterNode);
             });
@@ -55,7 +55,11 @@ FormRenderer.include({
             var updatedMailFields = _.intersection(fields, chatterFields);
             if (updatedMailFields.length) {
                 this.chatter.update(state, updatedMailFields);
-                this._instanciateChatter(state);
+                this.chatterWIP._updateProps({
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: state,
+                });
             }
         }
         return this._super.apply(this, arguments);
@@ -65,16 +69,6 @@ FormRenderer.include({
     // Private
     //--------------------------------------------------------------------------
 
-    _instanciateChatter: function (state) {
-        if (this.chatterWIP) {
-            this.chatterWIP.destroy();
-        }
-        this.chatterWIP = new ChatterWIP(this.env, {
-            mailFields: this.mailFields,
-            parent: this,
-            record: state,
-        });
-    },
     /**
      * Overrides the function that renders the nodes to return the chatter's $el
      * for the 'oe_chatter' div node.
@@ -86,26 +80,40 @@ FormRenderer.include({
         var self = this;
         if (node.tag === 'div' && node.attrs.class === 'oe_chatter') {
 
+            // see @on_attach_callback
+            // class needed to avoid wrapping in sheet, see @__updateView
+            this.$temporaryChatterDiv = $('<div>', { class: 'oe_chatter' });
             this._chatterNode = node;
-            this._instanciateChatter(this.state);
-            this.$temporaryParentDiv = $('<div>', {class: 'oe_chatter'});
-            // return this.$temporaryParentDiv;
+
+            if (!this.chatterWIP) {
+                this.chatterWIP = new ChatterWIP(this.env, {
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: this.state,
+                });
+                // TODO: when remove old chatter, just do:
+                // return this.$temporaryChatterDiv
+            }
 
             if (!this.chatter) {
                 this.chatter = new Chatter(this, this.state, this.mailFields, {
                     isEditable: this.activeActions.edit,
                     viewType: 'form',
                 });
-
                 var $temporaryParentDiv = $('<div>');
                 this.defs.push(this.chatter.appendTo($temporaryParentDiv).then(function () {
                     self.chatter.$el.unwrap();
                     self._handleAttributes(self.chatter.$el, node);
                 }));
-                return $temporaryParentDiv.add(this.$temporaryParentDiv);
+                return $temporaryParentDiv.add(this.$temporaryChatterDiv);
             } else {
                 this.chatter.update(this.state);
-                return this.chatter.$el.add(this.$temporaryParentDiv);
+                this.chatterWIP._updateProps({
+                    mailFields: this.mailFields,
+                    parent: this,
+                    record: this.state,
+                });
+                return this.chatter.$el.add($(this.chatterWIP.el));
             }
         } else {
             return this._super.apply(this, arguments);

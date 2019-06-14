@@ -958,7 +958,9 @@ var FormRenderer = BasicRenderer.extend({
                 self._activateNextFieldWidget(self.state, self.lastActivatedFieldIndex);
             }
             if (self._isInDom) {
-                self.on_attach_callback();
+                _.forEach(self.allFieldWidgets, function (widgets) {
+                    _.invoke(widgets, 'on_attach_callback');
+                });
             }
         }).guardedCatch(function () {
             $form.remove();
