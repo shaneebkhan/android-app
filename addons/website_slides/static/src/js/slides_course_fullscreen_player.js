@@ -307,6 +307,7 @@ odoo.define('website_slides.fullscreen', function (require) {
                     params: {
                         slide_id: slideID,
                         email: input.val(),
+                        fullscreen: true
                     },
                 }).then(function () {
                     form.html($('<div class="alert alert-info" role="alert"><strong>Thank you!</strong> Mail has been sent.</div>'));

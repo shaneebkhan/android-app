@@ -626,9 +626,9 @@ class WebsiteSlides(WebsiteProfile):
         return False
 
     @http.route(['/slides/slide/send_share_email'], type='json', auth='user', website=True)
-    def slide_send_share_email(self, slide_id, email):
+    def slide_send_share_email(self, slide_id, email, fullscreen=False):
         slide = request.env['slide.slide'].browse(int(slide_id))
-        result = slide._send_share_email(email)
+        result = slide._send_share_email(email, fullscreen)
         return result
 
     # --------------------------------------------------

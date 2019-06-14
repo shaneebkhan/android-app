@@ -374,12 +374,12 @@ class Slide(models.Model):
             self.write({'access_token': self._default_access_token()})
         return self._sign_token(partner_id)
 
-    def _send_share_email(self, email):
+    def _send_share_email(self, email, fullscreen):
         # TDE FIXME: template to check
         mail_ids = []
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         for record in self:
-            mail_ids.append(self.channel_id.share_template_id.with_context(email=email, base_url=base_url).send_mail(record.id, notif_layout='mail.mail_notification_light'))
+            mail_ids.append(self.channel_id.share_template_id.with_context(email=email, base_url=base_url, fullscreen=fullscreen).send_mail(record.id, notif_layout='mail.mail_notification_light'))
         return mail_ids
 
     def action_like(self):
