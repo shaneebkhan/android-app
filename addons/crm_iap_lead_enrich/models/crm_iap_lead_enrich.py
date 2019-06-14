@@ -33,7 +33,7 @@ class Lead(models.Model):
     
     @api.model
     def enrich_with_cron(self):
-        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False),('won_status','=','pending')])
+        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False)])
         leads.lead_enrich_mail()
 
     @api.model
