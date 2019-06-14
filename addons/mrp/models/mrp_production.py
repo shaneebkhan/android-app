@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 import datetime
+from collections import defaultdict
 from itertools import groupby
 
 from odoo import api, fields, models, _
@@ -602,7 +603,7 @@ class MrpProduction(models.Model):
                 move_raw.write({
                     'group_id': production.procurement_group_id.id,
                     'unit_factor': move_raw.product_uom_qty / production.product_qty,
-                    'reference': self.name,  # set reference when MO name is different than 'New'
+                    'reference': production.name,  # set reference when MO name is different than 'New'
                 })
             production._generate_finished_moves()
             production.move_raw_ids._adjust_procure_method()
@@ -787,56 +788,54 @@ class MrpProduction(models.Model):
         if not self.move_raw_ids:
             self.state = 'cancel'
             return True
-        productions_cancel_to_validated = []
-        for production in self:
-            done_moves = (production.move_raw_ids | production.move_finished_ids).filtered(lambda mv: mv.state == 'done')
-            if done_moves:
-                productions_cancel_to_validated.append((4, production.id))
-            else:
-                production._action_cancel()
-        if productions_cancel_to_validated:
+        productions_cancel_to_validate = self.move_raw_ids.filtered(lambda mv: mv.state == 'done').raw_material_production_id
+        productions_cancel_to_validate |= self.move_finished_ids.filtered(lambda mv: mv.state == 'done').production_id
+
+        (self - productions_cancel_to_validate)._action_cancel()
+        if productions_cancel_to_validate:
             # If we can't cancel all production's lines, we return a wizard to
             # ask to user if he/she confirms the cancel even so.
-            wiz = self.env['mrp.confirm.cancel.production'].create({
-                'production_ids': productions_cancel_to_validated,
-            })
             return {
                 'name': _('Confirm Cancel'),
                 'type': 'ir.actions.act_window',
-                'res_model': wiz._name,
+                'res_model': 'mrp.confirm.cancel.production',
                 'view_type': 'form',
                 'view_mode': 'form',
                 'views': [[False, 'form']],
                 'target': 'new',
-                'res_id': wiz.id,
+                'context': {
+                    'default_production_ids': productions_cancel_to_validate.ids,
+                },
             }
         return True
 
     def _action_cancel(self):
-        self.ensure_one()
-        documents = {}
-        for move_raw_id in self.move_raw_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
-            iterate_key = self._get_document_iterate_key(move_raw_id)
-            if iterate_key:
-                document = self.env['stock.picking']._log_activity_get_documents({move_raw_id: (move_raw_id.product_uom_qty, 0)}, iterate_key, 'UP')
-                for key, value in document.items():
-                    if documents.get(key):
+        documents_by_production = {}
+        for production in self:
+            documents = defaultdict(list)
+            for move_raw_id in self.move_raw_ids.filtered(lambda m: m.state not in ('done', 'cancel')):
+                iterate_key = self._get_document_iterate_key(move_raw_id)
+                if iterate_key:
+                    document = self.env['stock.picking']._log_activity_get_documents({move_raw_id: (move_raw_id.product_uom_qty, 0)}, iterate_key, 'UP')
+                    for key, value in document.items():
                         documents[key] += [value]
-                    else:
-                        documents[key] = [value]
+            if documents:
+                documents_by_production[production] = documents
+
         self.workorder_ids.filtered(lambda x: x.state not in ['done', 'cancel']).action_cancel()
         finish_moves = self.move_finished_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
         raw_moves = self.move_raw_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
         (finish_moves | raw_moves)._action_cancel()
         picking_ids = self.picking_ids.filtered(lambda x: x.state not in ('done', 'cancel'))
         picking_ids.action_cancel()
-        if documents:
+
+        for production, documents in documents_by_production.items():
             filtered_documents = {}
             for (parent, responsible), rendering_context in documents.items():
-                if not parent or parent._name == 'stock.picking' and parent.state == 'cancel' or parent == self:
+                if not parent or parent._name == 'stock.picking' and parent.state == 'cancel' or parent == production:
                     continue
                 filtered_documents[(parent, responsible)] = rendering_context
-            self._log_manufacture_exception(filtered_documents, cancel=True)
+            production._log_manufacture_exception(filtered_documents, cancel=True)
         return True
 
     def _get_document_iterate_key(self, move_raw_id):
