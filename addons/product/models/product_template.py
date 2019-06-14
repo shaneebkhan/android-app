@@ -574,10 +574,12 @@ class ProductTemplate(models.Model):
                         # This is the case from existing stock reordering rules.
                         variant.write({'active': False})
 
-        # prefetched o2m have to be reloaded (because of active_test)
-        # (eg. product.template: product_variant_ids)
         # We can't rely on existing invalidate_cache because of the savepoint.
-        self.invalidate_cache()
+        self.env['product.template'].invalidate_cache(fnames=[
+            'product_variant_ids',
+            'product_variant_id',
+            'product_variant_count',
+        ], ids=self.ids)
         return True
 
     def has_dynamic_attributes(self):
