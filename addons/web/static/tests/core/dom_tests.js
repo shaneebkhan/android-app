@@ -127,6 +127,22 @@ QUnit.module('dom', {}, function () {
             "autoresized textarea should have height of fixed textarea + border (4 lines)");
     });
 
+    QUnit.test('hidden autoresize element should calculate right height', function (assert) {
+        assert.expect(2);
+        var $textarea = prepareAutoresizeTextArea();
+        $('#qunit-fixture').css('display', 'none');
+        testUtils.fields.editInput($textarea, 'a\nb\nc\nd');
+        assert.strictEqual($('textarea').length, 2,
+            "there should be two textareas in the DOM");
+
+        $('#qunit-fixture').css('display', 'block');
+        $textarea = $('textarea:eq(0)');
+        var $fixedTextarea = $('textarea:eq(1)');
+        assert.strictEqual($textarea.css('height'),
+            $fixedTextarea[0].scrollHeight + 'px',
+            "autoresized textarea should have height of fixed textarea + padding (0 line)");
+    });
+
 });
 
 });

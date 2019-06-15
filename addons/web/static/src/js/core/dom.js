@@ -75,18 +75,27 @@ var dom = {
         var minHeight;
 
         function resize() {
-            $fixedTextarea.insertAfter($textarea);
+            // always create clone of $textarea and append it in body as $textarea may have
+            // display none style and display none style component will not give actual height
+            // of element, so add it in body with visiblity:hidden and later remove it from dom
+            var $textareaClone = $textarea.clone();
+            $textareaClone.css({visibility:"hidden", display:"block", position:"absolute"});
+            $("body").append($textareaClone);
+            $fixedTextarea.insertAfter($textareaClone);
             var heightOffset = 0;
-            var style = window.getComputedStyle($textarea[0], null);
+            var style = window.getComputedStyle($textareaClone[0], null);
             if (style.boxSizing === 'border-box') {
                 var paddingHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
                 var borderHeight = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
                 heightOffset = borderHeight + paddingHeight;
             }
-            $fixedTextarea.width($textarea.width());
-            $fixedTextarea.val($textarea.val());
+            $fixedTextarea.width($textareaClone.width());
+            $fixedTextarea.val($textareaClone.val());
             var height = $fixedTextarea[0].scrollHeight;
             $textarea.css({height: Math.max(height + heightOffset, minHeight)});
+            $textareaClone.remove();
+            $fixedTextarea.insertAfter($textarea);
+            $fixedTextarea.scrollHeight = height; // need to reassign scrollHeight as inserAfter removes it
         }
 
         function removeVerticalResize() {
