@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_work_entry_action_conflict" model="ir.actions.act_window">
+        <field name="name">Work Entry</field>
+        <field name="res_model">hr.work.entry</field>
+        <field name="context">{'search_default_work_entries_error': 1}</field>
+        <field name="view_mode">tree,calendar,form,pivot</field>
+    </record>
+</odoo>
