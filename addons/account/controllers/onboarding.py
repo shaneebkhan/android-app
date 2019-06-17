@@ -11,7 +11,7 @@ class OnboardingController(http.Controller):
             the permission to see it. """
 
         company = request.env.company
-        if not request.env.user._is_admin() or \
+        if not company.user_is_admin() or \
                 company.account_invoice_onboarding_state == 'closed':
             return {}
 
@@ -29,7 +29,7 @@ class OnboardingController(http.Controller):
             the permission to see it. """
         company = request.env.company
 
-        if not request.env.user._is_admin() or \
+        if not company.user_is_admin() or \
                 company.account_dashboard_onboarding_state == 'closed':
             return {}
 

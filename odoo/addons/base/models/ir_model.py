@@ -986,7 +986,7 @@ class IrModelConstraint(models.Model):
         """
         Delete PostgreSQL foreign keys and constraints tracked by this model.
         """
-        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
+        if not self.user_is_system():
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         ids_set = set(self.ids)
@@ -1099,7 +1099,7 @@ class IrModelRelation(models.Model):
         """
         Delete PostgreSQL many2many relations tracked by this model.
         """
-        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
+        if not self.user_is_system():
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         ids_set = set(self.ids)
@@ -1563,7 +1563,7 @@ class IrModelData(models.Model):
         the chance of gracefully deleting all records.
         This step is performed as part of the full uninstallation of a module.
         """ 
-        if not (self.env.sumode or self.env.user.has_group('base.group_system')):
+        if not self.user_is_system():
             raise AccessError(_('Administrator access is required to uninstall a module'))
 
         # enable model/field deletion

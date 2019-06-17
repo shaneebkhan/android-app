@@ -38,7 +38,7 @@ class AutoVacuum(models.AbstractModel):
 
     @api.model
     def power_on(self, *args, **kwargs):
-        if not self.env.user._is_admin():
+        if not self.user_is_admin():
             raise AccessDenied()
         self.env['ir.attachment']._file_gc()
         self._gc_transient_models()

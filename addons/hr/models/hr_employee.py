@@ -329,7 +329,7 @@ class HrEmployeePrivate(models.Model):
         to post messages as the correct user.
         """
         real_user = self.env.context.get('binary_field_real_user')
-        if self.env.user.id == SUPERUSER_ID and real_user:
+        if self.user_is_superuser() and real_user:
             self = self.with_user(real_user)
         return self
 

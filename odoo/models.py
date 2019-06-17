@@ -1255,6 +1255,19 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         return not has_groups
 
     @api.model
+    def user_is_superuser(self):
+        """ Return whether the current user is in superuser mode. """
+        return self.env.sumode
+
+    @api.model
+    def user_is_admin(self):
+        return self.env.sumode or self.env.user._is_admin()
+
+    @api.model
+    def user_is_system(self):
+        return self.env.sumode or self.env.user._is_system()
+
+    @api.model
     def _get_default_form_view(self):
         """ Generates a default single-line form view using all fields
         of the current model.

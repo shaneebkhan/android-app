@@ -251,7 +251,7 @@ class GamificationBadge(models.Model):
         :param badge_id: the granted badge id
         :return: integer representing the permission.
         """
-        if self.env.user._is_admin():
+        if self.user_is_admin():
             return self.CAN_GRANT
 
         if self.rule_auth == 'nobody':

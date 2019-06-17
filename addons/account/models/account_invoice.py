@@ -543,7 +543,7 @@ class AccountInvoice(models.Model):
         """ computes the prefix of the number that will be assigned to the first invoice/bill/refund of a journal, in order to
         let the user manually change it.
         """
-        if not self.env.user._is_system():
+        if not self.user_is_system():
             for invoice in self:
                 invoice.sequence_number_next_prefix = False
                 invoice.sequence_number_next = ''
@@ -575,7 +575,7 @@ class AccountInvoice(models.Model):
         ''' Set the number_next on the sequence related to the invoice/bill/refund'''
         self.ensure_one()
         journal_sequence, domain = self._get_seq_number_next_stuff()
-        if not self.env.user._is_admin() or not self.sequence_number_next or self.search_count(domain):
+        if not self.user_is_admin() or not self.sequence_number_next or self.search_count(domain):
             return
         nxt = re.sub("[^0-9]", '', self.sequence_number_next)
         result = re.match("(0*)([0-9]+)", nxt)
