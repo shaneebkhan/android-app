@@ -129,7 +129,7 @@ class ProductAttributeValue(models.Model):
         states={'created': [('readonly', True)], 'on_product': [('readonly', True)]}
     )
 
-    product_template_attribute_value_ids = fields.One2many('product.template.attribute.value', 'product_attribute_value_id',
+    pav_product_template_attribute_value_ids = fields.One2many('product.template.attribute.value', 'product_attribute_value_id',
         help="Technical field to associate attribute values to products.")
     state = fields.Selection(compute='_compute_state',
         selection=[
@@ -145,15 +145,15 @@ class ProductAttributeValue(models.Model):
     ]
 
     @api.multi
-    @api.depends('product_template_attribute_value_ids')
+    @api.depends('pav_product_template_attribute_value_ids')
     def _compute_state(self):
         for pav in self:
-            pav.state = 'draft' if not isinstance(pav.id, int) else 'on_product' if pav.product_template_attribute_value_ids else 'created'
+            pav.state = 'draft' if not isinstance(pav.id, int) else 'on_product' if pav.pav_product_template_attribute_value_ids else 'created'
 
     @api.multi
     def _compute_products(self):
         for pav in self:
-            pav.product_tmpl_ids = pav.product_template_attribute_value_ids.product_tmpl_id
+            pav.product_tmpl_ids = pav.pav_product_template_attribute_value_ids.product_tmpl_id
 
     @api.multi
     def name_get(self):
