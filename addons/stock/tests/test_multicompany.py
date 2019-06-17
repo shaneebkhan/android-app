@@ -26,7 +26,9 @@ class StockMove(SavepointCase):
         cls.new_user.partner_id.email = 'xxx@odoo.com'
 
         cls.picking_type_internal = cls.env.ref('stock.picking_type_internal')
+        cls.picking_type_in = cls.env.ref('stock.picking_type_in')
         cls.stock_location = cls.env.ref('stock.stock_location_stock')
+        cls.vendor_location = cls.env.ref('stock.stock_location_suppliers')
         cls.product = cls.env['product.product'].create({
             'name': 'Product A',
             'type': 'product',
@@ -87,3 +89,31 @@ class StockMove(SavepointCase):
         self.new_user.company_ids = [(4, self.comp2.id)]
         inventory.action_validate()
         self.assertEquals(inventory.move_ids.company_id, self.comp2, 'The moves was created in the wrong company')
+
+    def test_multicompany_3(self):
+        """ Validate a receipt with a lot name. This should create the lot in the
+        receipt company.
+        """
+        self.product.tracking = 'lot'
+        receipt = self.env['stock.picking'].create({
+            'location_id': self.vendor_location.id,
+            'location_dest_id': self.stock_location.id,
+            'picking_type_id': self.picking_type_in.id,
+            'company_id': self.comp2.id,
+        })
+        moveline1 = self.env['stock.move.line'].create({
+            'picking_id': receipt.id,
+            'product_id': self.product.id,
+            'product_uom_id': self.product.uom_id.id,
+            'location_id': self.stock_location.id,
+            'location_dest_id': self.stock_location.id,
+            'qty_done': 10,
+            'lot_name': 'new_lot',
+        })
+        receipt.action_confirm()
+        receipt.button_validate()
+        lot = self.env['stock.production.lot'].search([
+            ('name', '=', 'new_lot')
+        ])
+        self.assertEquals(lot.product_id, self.product, 'This lot belong to the wrong product')
+        self.assertEquals(lot.company_id, self.comp2, 'This lot belong to the wrong product')
