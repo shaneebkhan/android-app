@@ -24,14 +24,36 @@ class ProductAttribute(models.Model):
     name = fields.Char('Attribute', required=True, translate=True)
     value_ids = fields.One2many('product.attribute.value', 'attribute_id', 'Values', copy=True)
     sequence = fields.Integer('Sequence', help="Determine the display order", index=True)
-    attribute_line_ids = fields.One2many('product.template.attribute.line', 'attribute_id', 'Lines')
+    attribute_line_ids = fields.One2many('product.template.attribute.line', 'attribute_id', 'Lines',
+        help="Technical field to associate attributes to products.")
     create_variant = fields.Selection([
         ('no_variant', 'Never'),
         ('always', 'Always'),
         ('dynamic', 'Only when the product is added to a sales order')],
         default='always',
+        states={'on_product': [('readonly', True)]},
         string="Create Variants",
-        help="Check this if you want to create multiple variants for this attribute.", required=True)
+        help="This cannot be changed after the attribute has been set on products.", required=True)
+
+    state = fields.Selection(compute='_compute_state',
+        selection=[
+            ('draft', "Draft"),
+            ('on_product', "Used on products")
+        ],
+    )
+    product_tmpl_ids = fields.Many2many('product.template', string="Used on products", compute='_compute_products')
+
+    @api.multi
+    @api.depends('attribute_line_ids')
+    def _compute_state(self):
+        for pa in self:
+            pa.state = 'on_product' if pa.attribute_line_ids else 'draft'
+
+    @api.multi
+    @api.depends('attribute_line_ids.product_tmpl_id')
+    def _compute_products(self):
+        for pa in self:
+            pa.product_tmpl_ids = pa.attribute_line_ids.product_tmpl_id
 
     product_tmpl_ids = fields.Many2many('product.template', string="Used on products", compute='_compute_products', store=True)
 
@@ -59,10 +81,12 @@ class ProductAttribute(models.Model):
         the prefeteched o2m `attribute_line_ids` has to be resequenced.
         """
         if 'create_variant' in vals:
-            products = self._get_related_product_templates()
-            if products:
-                message = ', '.join(products.mapped('name'))
-                raise UserError(_('You are trying to change the type of an attribute value still referenced on at least one product template: %s') % message)
+            for pa in self:
+                if vals['create_variant'] != pa.create_variant and pa.product_tmpl_ids:
+                    raise UserError(
+                        _("You cannot change the variant creation of the attribute %s because it is used on at least one product:\n%s") %
+                        (pa.name, ", ".join(pa.product_tmpl_ids.mapped('name')))
+                    )
         to_invalidate = self.filtered(lambda pa: pa.sequence != vals['sequence']) if 'sequence' in vals else self.env['product.attribute']
 
         res = super(ProductAttribute, self).write(vals)
@@ -77,15 +101,19 @@ class ProductAttribute(models.Model):
                 'valid_product_attribute_value_wnva_ids',
                 'valid_product_attribute_ids',
                 'valid_product_attribute_wnva_ids',
-            ], ids=to_invalidate.mapped('attribute_line_ids.product_tmpl_id').ids)
+            ], ids=to_invalidate.product_tmpl_ids.ids)
 
         return res
 
     @api.multi
-    def _get_related_product_templates(self):
-        return self.env['product.template'].with_context(active_test=False).search([
-            ('attribute_line_ids.attribute_id', 'in', self.ids),
-        ])
+    def unlink(self):
+        for pa in self:
+            if pa.product_tmpl_ids:
+                raise UserError(
+                    _("You cannot delete the attribute %s because it is used on at least one product:\n%s") %
+                    (pa.name, ", ".join(pa.product_tmpl_ids.mapped('name')))
+                )
+        return super(ProductAttribute, self).unlink()
 
 
 class ProductAttributeValue(models.Model):
@@ -97,11 +125,35 @@ class ProductAttributeValue(models.Model):
 
     name = fields.Char(string='Value', required=True, translate=True)
     sequence = fields.Integer(string='Sequence', help="Determine the display order", index=True)
-    attribute_id = fields.Many2one('product.attribute', string='Attribute', ondelete='cascade', required=True, index=True)
+    attribute_id = fields.Many2one('product.attribute', string='Attribute', ondelete='cascade', required=True, index=True,
+        states={'created': [('readonly', True)], 'on_product': [('readonly', True)]}
+    )
+
+    product_template_attribute_value_ids = fields.One2many('product.template.attribute.value', 'product_attribute_value_id',
+        help="Technical field to associate attribute values to products.")
+    state = fields.Selection(compute='_compute_state',
+        selection=[
+            ('draft', "Draft"),
+            ('created', "Created"),
+            ('on_product', "Used on products")
+        ]
+    )
+    product_tmpl_ids = fields.Many2many('product.template', string="Used on products", compute='_compute_products')
 
     _sql_constraints = [
-        ('value_company_uniq', 'unique (name, attribute_id)', 'This attribute value already exists !')
+        ('value_company_uniq', 'unique (name, attribute_id)', "You cannot create two attribute values with the same name for the same attribute.")
     ]
+
+    @api.multi
+    @api.depends('product_template_attribute_value_ids')
+    def _compute_state(self):
+        for pav in self:
+            pav.state = 'draft' if not isinstance(pav.id, int) else 'on_product' if pav.product_template_attribute_value_ids else 'created'
+
+    @api.multi
+    def _compute_products(self):
+        for pav in self:
+            pav.product_tmpl_ids = pav.product_template_attribute_value_ids.product_tmpl_id
 
     @api.multi
     def name_get(self):
@@ -115,6 +167,11 @@ class ProductAttributeValue(models.Model):
 
     @api.multi
     def write(self, values):
+        if 'attribute_id' in values:
+            for pav in self:
+                if pav.attribute_id.id != values['attribute_id']:
+                    raise UserError(_("You cannot change the attribute of the existing attribute value %s." % pav.name))
+
         to_invalidate = self.filtered(lambda pav: pav.sequence != values['sequence']) if 'sequence' in values else self.env['product.attribute.value']
 
         res = super(ProductAttributeValue, self).write(values)
@@ -134,20 +191,17 @@ class ProductAttributeValue(models.Model):
 
     @api.multi
     def unlink(self):
-        linked_products = self._get_related_product_templates()
-        if linked_products:
-            raise UserError(_('The operation cannot be completed:\nYou are trying to delete an attribute value with a reference on a product variant.'))
+        for pav in self:
+            if pav.product_tmpl_ids:
+                raise UserError(
+                    _("You cannot delete the attribute value %s because it is used on at least one product:\n%s") %
+                    (pav.name, ", ".join(pav.product_tmpl_ids.mapped('name')))
+                )
         return super(ProductAttributeValue, self).unlink()
 
     @api.multi
     def _without_no_variant_attributes(self):
         return self.filtered(lambda pav: pav.attribute_id.create_variant != 'no_variant')
-
-    @api.multi
-    def _get_related_product_templates(self):
-        return self.env['product.template'].with_context(active_test=False).search([
-            ('attribute_line_ids.value_ids', 'in', self.ids),
-        ])
 
 
 class ProductTemplateAttributeLine(models.Model):
@@ -155,23 +209,54 @@ class ProductTemplateAttributeLine(models.Model):
     Used as a configuration model to generate the appropriate product.template.attribute.value"""
 
     _name = "product.template.attribute.line"
-    _rec_name = 'attribute_id'
     _description = 'Product Template Attribute Line'
     _order = 'attribute_id, id'
 
-    product_tmpl_id = fields.Many2one('product.template', string='Product Template', ondelete='cascade', required=True, index=True)
-    attribute_id = fields.Many2one('product.attribute', string='Attribute', ondelete='restrict', required=True, index=True)
-    value_ids = fields.Many2many('product.attribute.value', string='Attribute Values')
+    name = fields.Char("Attribute Name", related='attribute_id.name')
+    product_tmpl_id = fields.Many2one('product.template', string='Product Template', ondelete='cascade', required=True, index=True,
+        states={'created': [('readonly', True)]})
+    attribute_id = fields.Many2one('product.attribute', string='Attribute', ondelete='restrict', required=True, index=True,
+        states={'created': [('readonly', True)]})
+    value_ids = fields.Many2many('product.attribute.value', string='Attribute Values', domain="[('attribute_id', '=', attribute_id)]")
     product_template_value_ids = fields.Many2many(
         'product.template.attribute.value',
         string='Product Attribute Values',
         compute="_set_product_template_value_ids",
         store=False)
+    state = fields.Selection(compute='_compute_state',
+        selection=[
+            ('draft', "Draft"),
+            ('created', "Created"),
+        ]
+    )
+
+    _sql_constraints = [
+        ('template_attribute_unique', 'unique(product_tmpl_id, attribute_id)', "You cannot create two attribute lines with the same attribute on the same product."),
+    ]
+
+    @api.multi
+    def _compute_state(self):
+        for ptal in self:
+            ptal.state = 'created' if isinstance(ptal.id, int) else 'draft'
+
+    @api.onchange('attribute_id')
+    def _onchange_attribute_id(self):
+        self.value_ids = self.value_ids.filtered(lambda pav: pav.attribute_id == self.attribute_id)
 
     @api.constrains('value_ids', 'attribute_id')
-    def _check_valid_attribute(self):
-        if any(not line.value_ids or line.value_ids > line.attribute_id.value_ids for line in self):
-            raise ValidationError(_('You cannot use this attribute with the following value.'))
+    def _check_valid_values(self):
+        for ptal in self:
+            if not ptal.value_ids:
+                raise ValidationError(
+                    _("The attribute %s set on product %s must have at least one value.") %
+                    (ptal.name, ptal.product_tmpl_id.name)
+                )
+            for pav in ptal.value_ids:
+                if pav.attribute_id != ptal.attribute_id:
+                    raise ValidationError(
+                        _("The attribute value %s does not belong to the attribute %s set on product %s.") %
+                        (pav.name, ptal.name, ptal.product_tmpl_id.name)
+                    )
         return True
 
     @api.model_create_multi
@@ -181,6 +266,22 @@ class ProductTemplateAttributeLine(models.Model):
         return res
 
     def write(self, values):
+        if 'product_tmpl_id' in values:
+            for ptal in self:
+                if ptal.product_tmpl_id.id != values['product_tmpl_id']:
+                    raise UserError(
+                        _("You cannot change the product of the attribute %s set on product %s.") %
+                        (ptal.name, ptal.product_tmpl_id.name)
+                    )
+
+        if 'attribute_id' in values:
+            for ptal in self:
+                if ptal.attribute_id.id != values['attribute_id']:
+                    raise UserError(
+                        _("You cannot change the attribute of the attribute %s set on product %s.") %
+                        (ptal.name, ptal.product_tmpl_id.name)
+                    )
+
         res = super(ProductTemplateAttributeLine, self).write(values)
         self._update_product_template_attribute_values()
         return res
@@ -293,6 +394,25 @@ class ProductTemplateAttributeValue(models.Model):
         relation="product_template_attribute_exclusion",
         help="""Make this attribute value not compatible with
         other values of the product or some attribute values of optional and accessory products.""")
+
+    @api.multi
+    def write(self, values):
+        pav_in_values = 'product_attribute_value_id' in values
+        product_in_values = 'product_tmpl_id' in values
+        if pav_in_values or product_in_values:
+            for ptav in self:
+                if pav_in_values and ptav.product_attribute_value_id.id != values['product_attribute_value_id']:
+                    raise UserError(
+                        _("You cannot change the value of the attribute value %s set on product %s.") %
+                        (ptav.name, ptav.product_tmpl_id.name)
+                    )
+                if product_in_values and ptav.product_tmpl_id.id != values['product_tmpl_id']:
+                    raise UserError(
+                        _("You cannot change the product of the attribute value %s set on product %s.") %
+                        (ptav.name, ptav.product_tmpl_id.name)
+                    )
+
+        return super(ProductTemplateAttributeValue, self).write(values)
 
     @api.multi
     def name_get(self):
