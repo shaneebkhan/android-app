@@ -36,7 +36,7 @@ class TestAccountVoucher(common.TransactionCase):
                 self.ref('account.group_account_invoice'),
             ])]
         })
-        Voucher = self.env['account.voucher'].sudo(voucher_user)
+        Voucher = self.env['account.voucher'].with_user(voucher_user)
 
         # Create Customer Voucher
         c = Form(Voucher.with_context(default_voucher_type="sale", voucher_type="sale"),

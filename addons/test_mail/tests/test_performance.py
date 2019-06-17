@@ -397,7 +397,7 @@ class TestHeavyMailPerformance(TransactionCase):
     @warmup
     def test_complex_message_post(self):
         self.umbrella.message_subscribe(self.user_portal.partner_id.ids)
-        record = self.umbrella.sudo(self.env.user)
+        record = self.umbrella.with_user(self.env.user)
 
         with self.assertQueryCount(__system__=78, emp=82):  # com runbot: 78 - 82 // test_mail only: 78 - 82
             record.message_post(
@@ -413,7 +413,7 @@ class TestHeavyMailPerformance(TransactionCase):
     @warmup
     def test_complex_message_post_template(self):
         self.umbrella.message_subscribe(self.user_portal.partner_id.ids)
-        record = self.umbrella.sudo(self.env.user)
+        record = self.umbrella.with_user(self.env.user)
         template_id = self.env.ref('test_mail.mail_test_tpl').id
 
         with self.assertQueryCount(__system__=95, emp=101):  # com runbot: 95 - 101 // test_mail only: 95 - 101
@@ -743,13 +743,13 @@ class TestMailPerformancePost(TransactionCase):
         # aims to cover as much features of message_post as possible
         partner_ids = [self.user_inbox.partner_id.id, self.user_email.partner_id.id, self.partner.id]
         channel_ids = [self.channel_inbox.id, self.channel_email.id]
-        record = self.record.sudo(self.env.user)
+        record = self.record.with_user(self.env.user)
         attachements = [ # not linear on number of attachements
             ('attach tuple 1', "attachement tupple content 1"),
             ('attach tuple 2', "attachement tupple content 2", {'cid': 'cid1'}),
             ('attach tuple 3', "attachement tupple content 3", {'cid': 'cid2'}),
         ]
-        self.attachements = self.env['ir.attachment'].sudo(self.env.user).create(self.vals) #-> 163-> 165 query 
+        self.attachements = self.env['ir.attachment'].with_user(self.env.user).create(self.vals) #-> 163-> 165 query 
         attachement_ids = self.attachements.ids
         with self.assertQueryCount(emp=175):  # com runbot 156 // test_mail only: 133
             self.cr.sql_log = self.warm and self.cr.sql_log_count

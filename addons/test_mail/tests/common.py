@@ -125,7 +125,7 @@ class BaseFunctionalTest(common.SavepointCase):
             # switch user
             self.uid = user.id
             self.env = self.env(user=self.uid)
-            self.test_record = self.test_record.sudo(self.uid)
+            self.test_record = self.test_record.with_user(self.uid)
             yield
         finally:
             # back

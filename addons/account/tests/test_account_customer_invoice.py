@@ -11,7 +11,7 @@ class TestAccountCustomerInvoice(AccountTestUsers):
     def test_customer_invoice(self):
         # I will create bank detail with using manager access rights
         # because account manager can only create bank details.
-        self.res_partner_bank_0 = self.env['res.partner.bank'].sudo(self.account_manager.id).create(dict(
+        self.res_partner_bank_0 = self.env['res.partner.bank'].with_user(self.account_manager).create(dict(
             acc_type='bank',
             company_id=self.main_company.id,
             partner_id=self.main_partner.id,
@@ -29,7 +29,7 @@ class TestAccountCustomerInvoice(AccountTestUsers):
         self.ova = self.env['account.account'].search([('user_type_id', '=', self.env.ref('account.data_account_type_current_assets').id)], limit=1)
 
         #only adviser can create an account
-        self.account_rec1_id = self.account_model.sudo(self.account_manager.id).create(dict(
+        self.account_rec1_id = self.account_model.with_user(self.account_manager).create(dict(
             code="cust_acc",
             name="customer account",
             user_type_id=account_user_type.id,
@@ -48,7 +48,7 @@ class TestAccountCustomerInvoice(AccountTestUsers):
              )
         ]
 
-        self.account_invoice_customer0 = self.account_invoice_obj.sudo(self.account_user.id).create(dict(
+        self.account_invoice_customer0 = self.account_invoice_obj.with_user(self.account_user).create(dict(
             name="Test Customer Invoice",
             payment_term_id=self.payment_term.id,
             journal_id=self.journalrec.id,
