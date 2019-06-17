@@ -207,7 +207,7 @@ class TestUi(odoo.tests.HttpCase):
         }])
 
         # set a price on the value
-        ptal.product_template_value_ids.price_extra = 10
+        ptal.ptal_product_template_attribute_value_ids.price_extra = 10
 
         product_template.create_variant_ids()
 

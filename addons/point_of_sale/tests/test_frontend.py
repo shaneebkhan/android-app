@@ -41,7 +41,7 @@ class TestUi(odoo.tests.HttpCase):
             'attribute_id': attribute.id,
             'value_ids': [(6, 0, attribute_value.ids)]
         })
-        line.product_template_value_ids[0].price_extra = 2
+        line.ptal_product_template_attribute_value_ids[0].price_extra = 2
 
         fixed_pricelist = env['product.pricelist'].create({
             'name': 'Fixed',

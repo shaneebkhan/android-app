@@ -396,5 +396,5 @@ class TestSaleProductAttributeValueConfig(TestSaleProductAttributeValueSetup):
             'attribute_id': self.keyboard_attribute.id,
             'value_ids': [(6, 0, [self.keyboard_included.id, self.keyboard_excluded.id])],
         })
-        self.computer_keyboard_attribute_lines.product_template_value_ids[0].price_extra = 5
-        self.computer_keyboard_attribute_lines.product_template_value_ids[1].price_extra = -5
+        self.computer_keyboard_attribute_lines.ptal_product_template_attribute_value_ids[0].price_extra = 5
+        self.computer_keyboard_attribute_lines.ptal_product_template_attribute_value_ids[1].price_extra = -5

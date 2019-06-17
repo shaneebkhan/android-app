@@ -180,7 +180,7 @@ class ProductAttributeValue(models.Model):
             lines = self.env['product.template.attribute.line'].search([('value_ids', 'in', to_invalidate.ids)])
             self.env['product.template.attribute.line'].invalidate_cache(fnames=[
                 'value_ids',
-                'product_template_value_ids',
+                'ptal_product_template_attribute_value_ids',
             ], ids=lines.ids)
             self.env['product.template'].invalidate_cache(fnames=[
                 'valid_product_attribute_value_ids',
@@ -224,7 +224,7 @@ class ProductTemplateAttributeLine(models.Model):
             ('created', "Created"),
         ]
     )
-    product_template_value_ids = fields.One2many('product.template.attribute.value', 'product_template_attribute_line_id', string="Product Attribute Values")
+    ptal_product_template_attribute_value_ids = fields.One2many('product.template.attribute.value', 'product_template_attribute_line_id', string="Product Attribute Values")
 
     _sql_constraints = [
         ('template_attribute_unique', 'unique(product_tmpl_id, attribute_id)', "You cannot create two attribute lines with the same attribute on the same product."),
@@ -304,7 +304,7 @@ class ProductTemplateAttributeLine(models.Model):
 
         for ptal in self:
             existing_attribute_values = self.env['product.attribute.value']
-            for ptav in ptal.product_template_value_ids:
+            for ptav in ptal.ptal_product_template_attribute_value_ids:
                 if ptav.product_attribute_value_id not in ptal.value_ids:
                     # remove values that existed but don't exist anymore
                     product_template_attribute_values_to_remove += ptav

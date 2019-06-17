@@ -349,11 +349,11 @@
         <function model="ir.model.data" name="_update_xmlids">
             <value model="base" eval="[{
                 'xml_id': 'product.product_template_attribute_value_1',
-                'record': obj().env.ref('product.product_template_attribute_line_1').product_template_value_ids[1],
+                'record': obj().env.ref('product.product_template_attribute_line_1').ptal_product_template_attribute_value_ids[1],
                 'noupdate': True,
             }, {
                 'xml_id': 'product.product_template_attribute_value_2',
-                'record': obj().env.ref('product.product_template_attribute_line_4').product_template_value_ids[1],
+                'record': obj().env.ref('product.product_template_attribute_line_4').ptal_product_template_attribute_value_ids[1],
                 'noupdate': True,
             }]"/>
         </function>

@@ -694,7 +694,7 @@ class ProductTemplate(models.Model):
         the value is an array with the other ptav that they exclude (empty if no exclusion).
         """
         self.ensure_one()
-        product_template_attribute_values = self.valid_product_template_attribute_line_ids.product_template_value_ids
+        product_template_attribute_values = self.valid_product_template_attribute_line_ids.ptal_product_template_attribute_value_ids
         return {
             ptav.id: [
                 value_id
@@ -727,7 +727,7 @@ class ProductTemplate(models.Model):
                 if filter_line.value_ids:
                     result[product_attribute_value.id] = filter_line.value_ids.ids
                 else:
-                    result[product_attribute_value.id] = filter_line.product_tmpl_id.mapped('attribute_line_ids.product_template_value_ids').ids
+                    result[product_attribute_value.id] = filter_line.product_tmpl_id.mapped('attribute_line_ids.ptal_product_template_attribute_value_ids').ids
 
         return result
 
@@ -741,7 +741,7 @@ class ProductTemplate(models.Model):
         the parent combination if provided.
         """
         self.ensure_one()
-        all_product_attribute_values = self.valid_product_template_attribute_line_ids.product_template_value_ids
+        all_product_attribute_values = self.valid_product_template_attribute_line_ids.ptal_product_template_attribute_value_ids
         if parent_combination:
             all_product_attribute_values |= parent_combination
 
@@ -926,7 +926,7 @@ class ProductTemplate(models.Model):
                     yield(combination)
             else:
                 # we have remaining attribute lines to consider
-                for ptav in reversed(attribute_lines[0].product_template_value_ids):
+                for ptav in reversed(attribute_lines[0].ptal_product_template_attribute_value_ids):
                     ptal_stack.append(attribute_lines[1:])
                     combination_stack.append(combination + ptav)
 

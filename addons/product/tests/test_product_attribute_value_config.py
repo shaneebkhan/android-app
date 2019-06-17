@@ -54,8 +54,8 @@ class TestProductAttributeValueSetup(TransactionCase):
             'attribute_id': self.ssd_attribute.id,
             'value_ids': [(6, 0, [self.ssd_256.id, self.ssd_512.id])],
         })
-        self.computer_ssd_attribute_lines.product_template_value_ids[0].price_extra = 200
-        self.computer_ssd_attribute_lines.product_template_value_ids[1].price_extra = 400
+        self.computer_ssd_attribute_lines.ptal_product_template_attribute_value_ids[0].price_extra = 200
+        self.computer_ssd_attribute_lines.ptal_product_template_attribute_value_ids[1].price_extra = 400
 
     def _add_ram_attribute(self):
         self.ram_attribute = self.env['product.attribute'].create({'name': 'RAM', 'sequence': 2})
@@ -79,9 +79,9 @@ class TestProductAttributeValueSetup(TransactionCase):
             'attribute_id': self.ram_attribute.id,
             'value_ids': [(6, 0, [self.ram_8.id, self.ram_16.id, self.ram_32.id])],
         })
-        self.computer_ram_attribute_lines.product_template_value_ids[0].price_extra = 20
-        self.computer_ram_attribute_lines.product_template_value_ids[1].price_extra = 40
-        self.computer_ram_attribute_lines.product_template_value_ids[2].price_extra = 80
+        self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[0].price_extra = 20
+        self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[1].price_extra = 40
+        self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[2].price_extra = 80
 
     def _add_hdd_attribute(self):
         self.hdd_attribute = self.env['product.attribute'].create({'name': 'HDD', 'sequence': 3})
@@ -109,9 +109,9 @@ class TestProductAttributeValueSetup(TransactionCase):
             'attribute_id': self.hdd_attribute.id,
             'value_ids': [(6, 0, [self.hdd_1.id, self.hdd_2.id, self.hdd_4.id])],
         })
-        self.computer_hdd_attribute_lines.product_template_value_ids[0].price_extra = 2
-        self.computer_hdd_attribute_lines.product_template_value_ids[1].price_extra = 4
-        self.computer_hdd_attribute_lines.product_template_value_ids[2].price_extra = 8
+        self.computer_hdd_attribute_lines.ptal_product_template_attribute_value_ids[0].price_extra = 2
+        self.computer_hdd_attribute_lines.ptal_product_template_attribute_value_ids[1].price_extra = 4
+        self.computer_hdd_attribute_lines.ptal_product_template_attribute_value_ids[2].price_extra = 8
 
     def _add_ram_exclude_for(self):
         self._get_product_value_id(self.computer_ram_attribute_lines, self.ram_16).update({
@@ -145,7 +145,7 @@ class TestProductAttributeValueSetup(TransactionCase):
         })
 
     def _get_product_value_id(self, product_template_attribute_lines, product_attribute_value):
-        return product_template_attribute_lines.product_template_value_ids.filtered(
+        return product_template_attribute_lines.ptal_product_template_attribute_value_ids.filtered(
             lambda product_value_id: product_value_id.product_attribute_value_id == product_attribute_value)[0]
 
     def _get_product_template_attribute_value(self, product_attribute_value, model=False):
@@ -161,7 +161,7 @@ class TestProductAttributeValueSetup(TransactionCase):
             model = self.computer
         return model.valid_product_template_attribute_line_ids.filtered(
             lambda l: l.attribute_id == product_attribute_value.attribute_id
-        ).product_template_value_ids.filtered(
+        ).ptal_product_template_attribute_value_ids.filtered(
             lambda v: v.product_attribute_value_id == product_attribute_value
         )
 
@@ -178,13 +178,13 @@ class TestProductAttributeValueSetup(TransactionCase):
 class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
 
     def test_product_template_attribute_values_creation(self):
-        self.assertEqual(len(self.computer_ssd_attribute_lines.product_template_value_ids), 2,
+        self.assertEqual(len(self.computer_ssd_attribute_lines.ptal_product_template_attribute_value_ids), 2,
             'Product attribute values (ssd) were not automatically created')
-        self.assertEqual(len(self.computer_ram_attribute_lines.product_template_value_ids), 3,
+        self.assertEqual(len(self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids), 3,
             'Product attribute values (ram) were not automatically created')
-        self.assertEqual(len(self.computer_hdd_attribute_lines.product_template_value_ids), 3,
+        self.assertEqual(len(self.computer_hdd_attribute_lines.ptal_product_template_attribute_value_ids), 3,
             'Product attribute values (hdd) were not automatically created')
-        self.assertEqual(len(self.computer_case_size_attribute_lines.product_template_value_ids), 3,
+        self.assertEqual(len(self.computer_case_size_attribute_lines.ptal_product_template_attribute_value_ids), 3,
             'Product attribute values (size) were not automatically created')
 
     def test_get_variant_for_combination(self):
@@ -475,7 +475,7 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
         # take time to reach it (if looping one by one like before the fix).
         combination = self.env['product.template.attribute.value']
         for ptal in product_template.attribute_line_ids:
-            combination += ptal.product_template_value_ids[5]
+            combination += ptal.ptal_product_template_attribute_value_ids[5]
 
         started_at = time.time()
         self.assertEqual(product_template._get_closest_possible_combination(combination), combination)
@@ -543,10 +543,10 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
             self.computer_ssd_attribute_lines.product_tmpl_id = self.computer_case.id
 
         with self.assertRaises(UserError, msg="can't change the value of a product template attribute value"):
-            self.computer_ram_attribute_lines.product_template_value_ids[0].product_attribute_value_id = self.hdd_1
+            self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[0].product_attribute_value_id = self.hdd_1
 
         with self.assertRaises(UserError, msg="can't change the product of a product template attribute value"):
-            self.computer_ram_attribute_lines.product_template_value_ids[0].product_tmpl_id = self.computer_case.id
+            self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[0].product_tmpl_id = self.computer_case.id
 
     def test_constraints_sql_1(self):
         # different transaction needed since it will be aborted due to the error
