@@ -20,7 +20,7 @@ class VariantController(http.Controller):
             if not combination.exists() and product_id:
                 product = request.env['product.product'].browse(int(product_id))
                 if product.exists():
-                    combination = product.product_template_attribute_value_ids
+                    combination = product.variant_product_template_attribute_value_ids
             res.update({
                 'is_combination_possible': product_template._is_combination_possible(combination=combination, parent_combination=parent_combination),
             })

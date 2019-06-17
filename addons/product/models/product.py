@@ -99,7 +99,7 @@ class ProductProduct(models.Model):
         help="International Article Number used for product identification.")
     attribute_value_ids = fields.Many2many(
         'product.attribute.value', string='Attribute Values', ondelete='restrict')
-    product_template_attribute_value_ids = fields.Many2many(
+    variant_product_template_attribute_value_ids = fields.Many2many(
         'product.template.attribute.value', string='Template Attribute Values', compute="_compute_product_template_attribute_value_ids")
     is_product_variant = fields.Boolean(compute='_compute_is_product_variant')
 
@@ -291,10 +291,10 @@ class ProductProduct(models.Model):
             value -= product.price_extra
             product.write({'list_price': value})
 
-    @api.depends('product_template_attribute_value_ids.price_extra')
+    @api.depends('variant_product_template_attribute_value_ids.price_extra')
     def _compute_product_price_extra(self):
         for product in self:
-            product.price_extra = sum(product.mapped('product_template_attribute_value_ids.price_extra'))
+            product.price_extra = sum(product.variant_product_template_attribute_value_ids.mapped('price_extra'))
 
     @api.depends('list_price', 'price_extra')
     def _compute_product_lst_price(self):
@@ -329,7 +329,7 @@ class ProductProduct(models.Model):
             self.partner_ref = self.display_name
 
     @api.depends('product_tmpl_id', 'attribute_value_ids')
-    def _compute_product_template_attribute_value_ids(self):
+    def _compute_variant_product_template_attribute_value_ids(self):
         # Fetch and pre-map the values first for performance. It assumes there
         # won't be too many values, but there might be a lot of products.
         values = self.env['product.template.attribute.value'].search([
@@ -345,12 +345,12 @@ class ProductProduct(models.Model):
             values_per_template[pt_id][ptav.product_attribute_value_id.id] = ptav
 
         for product in self:
-            product.product_template_attribute_value_ids = self.env['product.template.attribute.value']
+            product.variant_product_template_attribute_value_ids = self.env['product.template.attribute.value']
             for pav in product.attribute_value_ids:
                 if product.product_tmpl_id.id not in values_per_template or pav.id not in values_per_template[product.product_tmpl_id.id]:
                     _logger.warning("A matching product.template.attribute.value was not found for the product.attribute.value #%s on the template #%s" % (pav.id, product.product_tmpl_id.id))
                 else:
-                    product.product_template_attribute_value_ids += values_per_template[product.product_tmpl_id.id][pav.id]
+                    product.variant_product_template_attribute_value_ids += values_per_template[product.product_tmpl_id.id][pav.id]
 
     @api.one
     def _get_pricelist_items(self):
@@ -752,7 +752,7 @@ class ProductProduct(models.Model):
         :rtype: bool
         """
         self.ensure_one()
-        return self.product_tmpl_id._is_combination_possible(self.product_template_attribute_value_ids, parent_combination=parent_combination)
+        return self.product_tmpl_id._is_combination_possible(self.variant_product_template_attribute_value_ids, parent_combination=parent_combination)
 
     @api.multi
     def toggle_active(self):

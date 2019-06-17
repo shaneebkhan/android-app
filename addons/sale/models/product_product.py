@@ -53,7 +53,7 @@ class ProductProduct(models.Model):
         See `_get_combination_info` for more information.
         """
         self.ensure_one()
-        return self.product_tmpl_id._get_combination_info(self.product_template_attribute_value_ids, self.id, add_qty, pricelist, parent_combination)
+        return self.product_tmpl_id._get_combination_info(self.variant_product_template_attribute_value_ids, self.id, add_qty, pricelist, parent_combination)
 
 
 class ProductAttribute(models.Model):

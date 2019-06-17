@@ -196,7 +196,7 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
         # completely defined variant
         combination = computer_ssd_256 + computer_ram_8 + computer_hdd_1
         ok_variant = self.computer._get_variant_for_combination(combination)
-        self.assertEqual(ok_variant.product_template_attribute_value_ids, combination)
+        self.assertEqual(ok_variant.variant_product_template_attribute_value_ids, combination)
 
         # over defined variant
         combination = computer_ssd_256 + computer_ram_8 + computer_ram_16 + computer_hdd_1

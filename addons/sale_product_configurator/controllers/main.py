@@ -42,7 +42,7 @@ class ProductConfiguratorController(http.Controller):
         add_qty = int(kw.get('add_qty', 1))
         product = request.env['product.product'].browse(int(product_id))
 
-        parent_combination = product.product_template_attribute_value_ids
+        parent_combination = product.variant_product_template_attribute_value_ids
         if product.env.context.get('no_variant_attribute_values'):
             # Add "no_variant" attribute values' exclusions
             # They are kept in the context since they are not linked to this product variant

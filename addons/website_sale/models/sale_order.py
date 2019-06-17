@@ -180,7 +180,7 @@ class SaleOrder(models.Model):
 
             no_variant_attribute_values = kwargs.get('no_variant_attribute_values') or []
             received_no_variant_values = product.env['product.template.attribute.value'].browse([int(ptav['value']) for ptav in no_variant_attribute_values])
-            received_combination = product.product_template_attribute_value_ids | received_no_variant_values
+            received_combination = product.variant_product_template_attribute_value_ids | received_no_variant_values
             product_template = product.product_tmpl_id
 
             # handle all cases where incorrect or incomplete data are received
@@ -296,7 +296,7 @@ class SaleOrder(models.Model):
             products = order.website_order_line.mapped('product_id')
             accessory_products = self.env['product.product']
             for line in order.website_order_line.filtered(lambda l: l.product_id):
-                combination = line.product_id.product_template_attribute_value_ids + line.product_no_variant_attribute_value_ids
+                combination = line.product_id.variant_product_template_attribute_value_ids + line.product_no_variant_attribute_value_ids
                 accessory_products |= line.product_id.accessory_product_ids.filtered(lambda product:
                     product.website_published and
                     product not in products and

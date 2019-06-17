@@ -1410,7 +1410,7 @@ class SaleOrderLine(models.Model):
             ptav.price_extra for ptav in self.product_no_variant_attribute_value_ids.filtered(
                 lambda ptav:
                     ptav.price_extra and
-                    ptav not in product.product_template_attribute_value_ids
+                    ptav not in product.variant_product_template_attribute_value_ids
             )
         ]
         if no_variant_attributes_price_extra:
