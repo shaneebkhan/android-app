@@ -117,47 +117,34 @@ html[lang] > body.editor_enable [data-oe-translation-state] {
 // NOTE EDITOR
 
 // SNIPPET PANEL
-#oe_snippets {
-    @include o-w-preserve-btn;
-    @include o-position-absolute(0, auto, 0, -$o-we-sidebar-width);
-    width: $o-we-sidebar-width;
+we3-editor {
 
-    border-right: 1px solid $o-we-color-divider;
-    transition: left 400ms $o-we-md-ease 0s;
-    background-image: linear-gradient(45deg, $o-we-color-normal, darken($o-we-color-normal, 10%));
+    we3-dropblock {
+        @include o-w-preserve-btn;
 
-    #snippets_menu {
-        color: #999999;
-        background: $o-we-color-dark;
-        font-family: $o-we-font-family;
-        height: $o-navbar-height;
-        line-height: $o-navbar-height;
-    }
+        margin: 0;
+        border-right: 1px solid $o-we-color-divider;
+        background-image: linear-gradient(45deg, $o-we-color-normal, darken($o-we-color-normal, 10%));
 
-    #o_scroll {
-        .o_panel_header {
+        we3-title {
             color: #999999;
         }
     }
-}
 
-.oe_snippet {
-    background-color: $o-we-color-normal;
+    we3-block {
+        background-color: $o-we-color-normal;
 
-    .oe_snippet_thumbnail {
-        .oe_snippet_thumbnail_img {
-            border: 1px solid $o-we-color-normal;
-        }
+        we3-dropblock-thumbnail {
 
-        img.oe_snippet_thumbnail_img {}
-
-        .oe_snippet_thumbnail_title {
-            border: 1px solid $o-we-color-dark;
-            color: $o-we-color-text-light;
-        }
-
-        &:hover .oe_snippet_thumbnail_title {
-            color: $o-we-color-text-lighter;
+            we3-preview {
+                border: 1px solid $o-we-color-normal;
+            }
+            we3-title {
+                color: $o-we-color-text-light;
+            }
+            &:hover we3-title {
+                color: $o-we-color-text-lighter;
+            }
         }
     }
 }
