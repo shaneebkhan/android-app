@@ -4,12 +4,6 @@ $sizes: map-merge((
     0: 0,
 ), $sizes);
 
-// Body
-//
-// Settings for the `<body>` element.
-
-$body-bg: $o-portal-default-body-bg !default;
-
 // Fonts
 //
 // Font, line-height, and color for body text, headings, and more.

@@ -18,10 +18,9 @@ $o-portal-table-td-pt: map-get($spacers, 1) !default; // bts4 pt-1
 $o-portal-table-td-pb: map-get($spacers, 1) !default; // bts4 pb-1
 
 // Portal custom bg color
-$o-portal-bg-color: desaturate($gray-200, 100%);
+$o-portal-bg-color: rgba(black, 0.05);
+$o-portal-use-default-colors: $body-bg == #fff;
 
-// Check if portal uses default colors
-$o-portal-use-default-colors: $body-bg == $o-portal-default-body-bg;
 
 // Frontend general
 #wrapwrap {
@@ -312,10 +311,8 @@ img.o_we_custom_image {
 // Portal specific
 // ===  Page custom bg ===
 // To be applied to all portal pages if bg-color is white (default).
-@if ($o-portal-use-default-colors) {
-    #wrapwrap.o_portal {
-        @include o-bg-color($o-portal-bg-color);
-    }
+#wrapwrap.o_portal {
+    background-color: $o-portal-bg-color;
 }
 
 .o_portal {
