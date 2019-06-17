@@ -3,6 +3,11 @@ $silver: #cccccc;
 $bronze: #eea91e;
 
 .website_forum {
+    .o_forum_ask_btn {
+        @include media-breakpoint-up(md) {
+            width: 200px;
+        }
+    }
 
     .question-block .question-name {
         max-width: 80%;
