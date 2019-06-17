@@ -30,32 +30,23 @@ var EditorMenu = Widget.extend({
     /**
      * @override
      */
-    willStart: function () {
-        var self = this;
-        this.$el = null; // temporary null to avoid hidden error (@see start)
-        return this._super()
-            .then(function () {
-                self.wysiwyg = self._wysiwygInstance();
-                return self.wysiwyg.attachTo($('#wrapwrap'));
-            });
-    },
-    /**
-     * @override
-     */
     start: function () {
         var self = this;
-        this.$el.css({width: '100%'});
-        return this._super().then(function () {
+        this.wysiwyg = this._wysiwygInstance();
+        return Promise.all([
+            this._super.apply(this, arguments),
+            this.wysiwyg.attachTo($('#wrapwrap'))
+        ]).then(function () {
             self.trigger_up('edit_mode');
-            $('body').addClass('editor_enable');
-            self.$el.css({width: ''});
+            $(document.body).addClass('editor_enable');
+            self.$el.addClass('show');
         });
     },
     /**
      * @override
      */
     destroy: function () {
-        $('body').removeClass('editor_enable');
+        $(document.body).removeClass('editor_enable');
         this.trigger_up('readonly_mode');
         this._super.apply(this, arguments);
     },

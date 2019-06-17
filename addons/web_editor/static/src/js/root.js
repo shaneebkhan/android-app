@@ -23,10 +23,8 @@ var WysiwygRoot = Widget.extend({
      *
      * @override
      **/
-    willStart: function () {
+    start: function () {
         var self = this;
-        var $target = this.$el;
-        this.$el = null;
         var params = Object.assign({}, this._params);
         if (!assetsLoaded || this._params.preload) {
             params.test = {
@@ -47,7 +45,7 @@ var WysiwygRoot = Widget.extend({
                 self[methodName] = instance[methodName].bind(instance);
             });
 
-            return instance.attachTo($target).then(function () {
+            return instance.attachTo(self.$el).then(function () {
                 self.$editor = instance.$el;
             });
         });
