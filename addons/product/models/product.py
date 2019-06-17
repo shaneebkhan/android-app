@@ -15,7 +15,6 @@ from odoo.tools import float_compare
 _logger = logging.getLogger(__name__)
 
 
-
 class ProductCategory(models.Model):
     _name = "product.category"
     _description = "Product Category"
@@ -383,16 +382,38 @@ class ProductProduct(models.Model):
 
     @api.multi
     def write(self, values):
+        """Clear caches when appropriate."""
+        existing_attribute_value_ids = []
+        to_invalidate = self.env['product.product']
+
+        # avoid testing it the loop, for performance
+        pav_in_values = 'attribute_value_ids' in values
+        active_in_values = 'active' in values
+
+        # only loop if needed, for performance
+        if pav_in_values or active_in_values:
+            for product in self:
+                if pav_in_values:
+                    existing_attribute_value_ids.append(product.attribute_value_ids)
+
+                if active_in_values and product.active != values['active']:
+                    to_invalidate += product
+
         res = super(ProductProduct, self).write(values)
-        if 'attribute_value_ids' in values:
+
+        if to_invalidate:
+            self.env['product.template'].invalidate_cache(fnames=[
+                'product_variant_ids',
+                'product_variant_id',
+                'product_variant_count',
+            ], ids=to_invalidate.mapped('product_tmpl_id').ids)
+
+        if to_invalidate or any(attribute_value_ids != p.attribute_value_ids for attribute_value_ids, p in zip(existing_attribute_value_ids, self)):
+            # `_get_first_possible_variant_id` depends on variants active state
             # `_get_variant_id_for_combination` depends on `attribute_value_ids`
             self.clear_caches()
-        if 'active' in values:
-            # prefetched o2m have to be reloaded (because of active_test)
-            # (eg. product.template: product_variant_ids)
-            self.invalidate_cache()
-            # `_get_first_possible_variant_id` depends on variants active state
-            self.clear_caches()
+        return res
+
         return res
 
     @api.multi

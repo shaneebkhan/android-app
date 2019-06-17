@@ -6,6 +6,13 @@ from odoo.addons import decimal_precision as dp
 from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 
+# In the context of product attributes, the following abbreviations might be
+# used in local variables for the sake of simplicity:
+#   pa = Product Attribute
+#   pav = Product Attribute Value
+#   ptal = Product Template Attribute Line
+#   ptav = Product Template Attribute Value
+
 
 class ProductAttribute(models.Model):
     _name = "product.attribute"
@@ -38,18 +45,32 @@ class ProductAttribute(models.Model):
         This is important to prevent because changing the type would make
         existing combinations invalid without recomputing them, and recomputing
         them might take too long and we don't want to change products without
-        the user knowing about it."""
+        the user knowing about it.
+
+        We also need to invalidate the cache when changing the sequence because
+        the prefeteched o2m `attribute_line_ids` has to be resequenced.
+        """
         if 'create_variant' in vals:
             products = self._get_related_product_templates()
             if products:
                 message = ', '.join(products.mapped('name'))
                 raise UserError(_('You are trying to change the type of an attribute value still referenced on at least one product template: %s') % message)
-        invalidate_cache = 'sequence' in vals and any(record.sequence != vals['sequence'] for record in self)
+        to_invalidate = self.filtered(lambda pa: pa.sequence != vals['sequence']) if 'sequence' in vals else self.env['product.attribute']
+
         res = super(ProductAttribute, self).write(vals)
-        if invalidate_cache:
-            # prefetched o2m have to be resequenced
-            # (eg. product.template: attribute_line_ids)
-            self.invalidate_cache()
+
+        if to_invalidate:
+            self.env['product.attribute'].invalidate_cache(fnames=['attribute_line_ids'], ids=to_invalidate.ids)
+            self.env['product.template'].invalidate_cache(fnames=[
+                'attribute_line_ids',
+                'valid_product_template_attribute_line_ids',
+                'valid_product_template_attribute_line_wnva_ids',
+                'valid_product_attribute_value_ids',
+                'valid_product_attribute_value_wnva_ids',
+                'valid_product_attribute_ids',
+                'valid_product_attribute_wnva_ids',
+            ], ids=to_invalidate.mapped('attribute_line_ids.product_tmpl_id').ids)
+
         return res
 
     @api.multi
@@ -86,12 +107,21 @@ class ProductAttributeValue(models.Model):
 
     @api.multi
     def write(self, values):
-        invalidate_cache = 'sequence' in values and any(record.sequence != values['sequence'] for record in self)
+        to_invalidate = self.filtered(lambda pav: pav.sequence != values['sequence']) if 'sequence' in values else self.env['product.attribute.value']
+
         res = super(ProductAttributeValue, self).write(values)
-        if invalidate_cache:
-            # prefetched o2m have to be resequenced
-            # (eg. product.template.attribute.line: value_ids)
-            self.invalidate_cache()
+
+        if to_invalidate:
+            lines = self.env['product.template.attribute.line'].search([('value_ids', 'in', to_invalidate.ids)])
+            self.env['product.template.attribute.line'].invalidate_cache(fnames=[
+                'value_ids',
+                'product_template_value_ids',
+            ], ids=lines.ids)
+            self.env['product.template'].invalidate_cache(fnames=[
+                'valid_product_attribute_value_ids',
+                'valid_product_attribute_value_wnva_ids',
+            ], ids=lines.product_tmpl_id.ids)
+
         return res
 
     @api.multi
@@ -195,6 +225,16 @@ class ProductTemplateAttributeLine(models.Model):
             # at this point, existing properties can be removed to reflect the modifications on value_ids
             if product_template_attribute_values_to_remove:
                 product_template_attribute_values_to_remove.unlink()
+
+        self.env['product.template'].invalidate_cache(fnames=[
+            'attribute_line_ids',
+            'valid_product_template_attribute_line_ids',
+            'valid_product_template_attribute_line_wnva_ids',
+            'valid_product_attribute_value_ids',
+            'valid_product_attribute_value_wnva_ids',
+            'valid_product_attribute_ids',
+            'valid_product_attribute_wnva_ids',
+        ], ids=self.product_tmpl_id.ids)
 
     @api.model
     def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
