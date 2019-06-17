@@ -74,7 +74,7 @@ class MrpProductProduce(models.TransientModel):
         product_produce_wiz = self.env.ref('mrp.view_mrp_product_produce_wizard', False)
         self.finished_lot_id = self.env['stock.production.lot'].create({
             'product_id': self.product_id.id,
-            'company_id': self.production_id.company_id,
+            'company_id': self.production_id.company_id.id,
         })
         return {
             'name': _('Produce'),
@@ -127,7 +127,7 @@ class MrpProductProduce(models.TransientModel):
                             'group_id': self.production_id.procurement_group_id.id,
                             'origin': self.production_id.name,
                             'state': 'confirmed',
-                            'company_id': self.production_id.company_id,
+                            'company_id': self.production_id.company_id.id,
                         }
                     else:
                         values = self.production_id._get_finished_move_value(line.product_id.id, 0, line.product_uom_id.id)
