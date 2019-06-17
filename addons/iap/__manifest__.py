@@ -15,6 +15,7 @@ This module provides standard tools (account model, context manager and helpers)
         'security/ir_rule.xml',
         'views/assets.xml',
         'views/iap_views.xml',
+        'views/res_config_settings.xml',
     ],
     'images': [
         'static/src/img/iap_logo.svg',

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-
+import uuid
 from odoo import api, fields, models, _
 
 
@@ -44,6 +44,7 @@ class ResConfigSettings(models.TransientModel):
     paperformat_id = fields.Many2one(related="company_id.paperformat_id", string='Paper format', readonly=False)
     external_report_layout_id = fields.Many2one(related="company_id.external_report_layout_id", readonly=False)
     show_effect = fields.Boolean(string="Show Effect", config_parameter='base_setup.show_effect')
+    
 
     @api.model
     def get_values(self):
@@ -108,3 +109,7 @@ class ResConfigSettings(models.TransientModel):
             'view_id': template.id,
             'target': 'new',
         }
+    
+    
+
+    
