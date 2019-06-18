@@ -2178,22 +2178,6 @@ var PaymentScreenWidget = ScreenWidget.extend({
                 self.invoicing = false;
                 self.gui.show_screen('receipt');
             });
-        } else if (order.is_to_identify_customer() && !order.get_client()) {
-            var payment_method_names = Array.from(new Set(order.paymentlines.map(function(pl) {
-                return pl.payment_method
-            }).filter(function(pm) {
-                return pm.is_identify_customer;
-            }).map(function(pm) {
-                return pm.name
-            })));
-            order.finalized = false;
-            this.gui.show_popup('confirm',{
-                'title': _t('Please select the Customer'),
-                'body': _t(`You need to select the customer before you use the following payment methods: \n[${payment_method_names.join(', ')}].`),
-                confirm: function(){
-                    self.gui.show_screen('clientlist', null, false);
-                },
-            }); 
         } else {
             this.pos.push_order(order);
             this.gui.show_screen('receipt');

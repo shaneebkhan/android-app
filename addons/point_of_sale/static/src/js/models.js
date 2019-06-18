@@ -416,7 +416,7 @@ exports.PosModel = Backbone.Model.extend({
         },
     },  {
         model:  'pos.payment.method',
-        fields: ['name', 'is_cash_count', 'cash_journal_id', 'is_identify_customer', 'receivable_account_id'],
+        fields: ['name', 'is_cash_count', 'cash_journal_id', 'receivable_account_id'],
         domain: function(self, tmp) {
             return [['id', 'in', tmp.payment_method_ids]];
         },
@@ -2753,11 +2753,6 @@ exports.Order = Backbone.Model.extend({
     },
     is_to_invoice: function(){
         return this.to_invoice;
-    },
-    is_to_identify_customer: function() {
-        return this.paymentlines.some(function (pl) {
-            return pl.payment_method.is_identify_customer
-        })
     },
     /* ---- Client / Customer --- */
     // the client related to the current order.

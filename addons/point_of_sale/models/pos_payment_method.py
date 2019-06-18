@@ -22,18 +22,12 @@ class PosPaymentMethod(models.Model):
         string='Cash Journal',
         domain=[('type', '=', 'cash')],
         help='The payment method is of type cash. A cash statement will be automatically generated.')
-    is_identify_customer = fields.Boolean(string='Split Journal Items', compute='_compute_is_identify_customer', store=True)
     split_transactions = fields.Selection(
-        [('not_split', 'One journal item for all transactions'),
+        [('combine', 'One journal item for all transactions'),
          ('split', 'One journal item per transaction'),
-        ], string='Split Transactions', default='not_split',
-        help='Determine whether payment made with this method will generate separate journal item.')
+        ], string='Split Transactions', default='combine',
+        help='Determine whether payment made with this method will generate separate receivable journal item.')
     session_ids = fields.Many2many(comodel_name='pos.session', string='Pos Sessions', help='Pos sessions that are using this payment method.')
-
-    @api.depends('split_transactions')
-    def _compute_is_identify_customer(self):
-        for method in self:
-            method.is_identify_customer = method.split_transactions == 'split'
 
     @api.multi
     def write(self, vals):

@@ -232,7 +232,7 @@ class PosSession(models.Model):
                 'journal_id': cash_journal.id,
                 'user_id': self.env.user.id,
                 'name': pos_name,
-                'balance_start': self.env["account.bank.statement"]._get_opening_balance(journal.id)
+                'balance_start': self.env["account.bank.statement"]._get_opening_balance(cash_journal.id)
             }
             return BankStatement.with_context(ctx).sudo(uid).create(st_values)
         statement_ids = pos_config.payment_method_ids\
@@ -406,6 +406,8 @@ class PosSession(models.Model):
         """ Validates each statement of the given session then returns
             cash account.bank.statement.line records.
         """
+        if not statement_payments:
+            return self.env['account.bank.statement.line']
         cash_statement_lines = self._create_cash_statement_lines(session, statement, statement_payments)
         statement_line_ids = cash_statement_lines.ids
         if statement.balance_end != statement.balance_end_real:
@@ -468,6 +470,19 @@ class PosSession(models.Model):
         if len(payments) == 0:
             return []
 
+        split_payment_methods = session.payment_method_ids.filtered(lambda pm: pm.split_transactions == 'split')
+        combine_payment_methods = session.payment_method_ids.filtered(lambda pm: pm.split_transactions == 'combine')
+        split_payments = payments.filtered(lambda payment: payment.payment_method_id <= split_payment_methods)
+        combine_payments = payments.filtered(lambda payment: payment.payment_method_id <= combine_payment_methods)
+
+        return (self._receivable_lines_from_split_pm(session, account_move, split_payment_methods, split_payments, is_using_company_currency)
+                + self._receivable_lines_from_combine_pm(session, account_move, combine_payment_methods, combine_payments, is_using_company_currency))
+
+    @api.model
+    def _receivable_lines_from_combine_pm(self, session, account_move, combine_payment_methods, combine_payments, is_using_company_currency):
+        if len(combine_payments) == 0:
+            return []
+
         company = session.company_id
         session_currency = session.currency_id
         company_currency = company.currency_id
@@ -476,7 +491,7 @@ class PosSession(models.Model):
             data = dict(account_id=pm.receivable_account_id.id,
                         move_id=account_move.id,
                         name='%s - %s' % (session.name, pm.name))
-            return self._debit_amount(data, amount) if is_using_company_currency else self._debit_amount(data, amount, amount_currency, session.currency_id)
+            return self._debit_amount(data, amount) if is_using_company_currency else self._debit_amount(data, amount, amount_currency, session_currency)
 
         def compute_amount_sum(payments):
             # values coming from the frontend has currency equal to the config.currency_id
@@ -491,10 +506,46 @@ class PosSession(models.Model):
             return (amount_currency, None) if is_using_company_currency else (amount, amount_currency)
 
         # Total amount grouped by payment method
-        grouped_total_amount = [(pm, *compute_amount_sum(payments.filtered(lambda p: p.payment_method_id == pm))) for pm in session.payment_method_ids]
+        grouped_total_amount = [(pm, *compute_amount_sum(combine_payments.filtered(lambda p: p.payment_method_id == pm))) for pm in combine_payment_methods]
         return [generate_line_args(pm, amount, amount_currency)
                     for pm, amount, amount_currency in grouped_total_amount
                     if not float_is_zero(amount, precision_rounding=session.currency_id.rounding)]
+
+    @api.model
+    def _receivable_lines_from_split_pm(self, session, account_move, split_payment_methods, split_payments, is_using_company_currency):
+        if len(split_payments) == 0:
+            return []
+
+        company = session.company_id
+        session_currency = session.currency_id
+        company_currency = company.currency_id
+        Partner = self.env['res.partner']
+
+        def generate_line_args(pm, partner, amount, amount_currency):
+            partial_args = dict(account_id=pm.receivable_account_id.id,
+                        move_id=account_move.id,
+                        partner_id=partner.id if partner else False,
+                        name='%s - %s' % (session.name, pm.name))
+            return self._debit_amount(partial_args, amount) if is_using_company_currency else self._debit_amount(partial_args, amount, amount_currency, session_currency)
+
+        def get_pm_and_partner(payment):
+            return (payment.payment_method_id, Partner._find_accounting_partner(payment.partner_id))
+
+        def compute_amounts(payments):
+            # values coming from the frontend has currency equal to the config.currency_id
+            # which can be not equal to the company.currency_id.
+            # compute amount_currency as the sum of payment.amount.
+            # if is_using_company_currency, then return amount_currency as amount.
+            if len(payments) == 0:
+                return (0.0, 0.0)
+            amount_converter = lambda payment: session_currency._convert(payment.amount, company_currency, company, payment.pos_order_id.date_order)
+            amount_currency = sum(payment.amount for payment in payments)
+            amount = sum(amount_converter(payment) for payment in payments)
+            return (amount_currency, None) if is_using_company_currency else (amount, amount_currency)
+
+        grouped_payments = groupby(split_payments, key=get_pm_and_partner)
+        pm_partner_amounts = [(pm, partner, *compute_amounts(payments)) for (pm, partner), payments in grouped_payments]
+        return [generate_line_args(pm, partner, amount, amount_currency) for pm, partner, amount, amount_currency in pm_partner_amounts]
 
     @api.model
     def _get_sales_lines_data(self, account_move, order_lines, is_using_company_currency):
@@ -548,7 +599,7 @@ class PosSession(models.Model):
 
         def generate_line_args(account_id, tax_id, amount, amount_currency):
             tax = AccountTax.browse(tax_id)
-            partial_args = dict(name=tax.name, account_id=account_id, move_id=account_move.id)
+            partial_args = dict(name=tax.name, account_id=account_id, move_id=account_move.id, tax_ids=[(6, 0, [tax_id])])
             return (self._credit_amount(partial_args, amount)
                     if is_using_company_currency
                     else self._credit_amount(partial_args, amount, amount_currency, session_currency))
@@ -559,6 +610,7 @@ class PosSession(models.Model):
             price = order_line.price_unit * (1 - (order_line.discount or 0.0) / 100.0)
             taxes = tax_ids.compute_all(price_unit=price, quantity=order_line.qty, currency=session_currency).get('taxes', [])
             # add the date_order field in each tax calculation result for currency conversion
+            # date_order is needed in the conversion of currency
             return [dict(date_order=order_line.order_id.date_order, **tax) for tax in taxes]
 
         def compute_total_amounts(taxes):
@@ -689,7 +741,6 @@ class PosSession(models.Model):
         # and domain containing the calculated ids above
         [action] = self.env.ref('account.action_account_moves_all_a').read()
         action['domain'] = [('id', 'in', ids)]
-        action['context'] = "{'search_default_account': 1}"
         return action
 
     @api.multi
