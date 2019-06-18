@@ -143,6 +143,7 @@ class ThemePage(models.Model):
 
 class Theme(models.AbstractModel):
     _name = 'theme.utils'
+    _inherit = 'web_editor.assets'
     _description = 'Theme Utils'
     _auto = False
 

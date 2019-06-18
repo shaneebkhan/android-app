@@ -273,3 +273,29 @@ class Assets(models.AbstractModel):
             dict
         """
         return {}
+
+    def _make_scss_customization(self, url, values):
+        """
+        Makes a scss customization of the given file. That file must
+        contain a scss map including a line comment containing the word 'hook',
+        to indicate the location where to write the new key,value pairs.
+
+        Returns:
+            boolean
+        """
+        custom_url = self.make_custom_asset_file_url(url, 'web.assets_common')
+        updatedFileContent = self.get_asset_content(custom_url) or self.get_asset_content(url)
+        updatedFileContent = updatedFileContent.decode('utf-8')
+        for name, value in values.items():
+            pattern = "'%s': %%s,\n" % name
+            regex = re.compile(pattern % ".+")
+            replacement = pattern % value
+            if regex.search(updatedFileContent):
+                updatedFileContent = re.sub(regex, replacement, updatedFileContent)
+            else:
+                updatedFileContent = re.sub(r'( *)(.*hook.*)', r'\1%s\1\2' % replacement, updatedFileContent)
+
+        # Bundle is 'assets_common' as this route is only meant to update
+        # variables scss files
+        self.save_asset(url, 'web.assets_common', updatedFileContent, 'scss')
+        return True
