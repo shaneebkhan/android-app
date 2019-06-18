@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<template>
+    <div t-name='res_config_edition'>
+        <div class="col-12 o_setting_box" id="edition">
+            <div class="o_setting_right_pane text-center">
+                <div class="user-heading">
+                    <h3>
+                        Odoo <t t-esc="widget.server_version"/>
+                        (Community Edition)
+                    </h3>
+                </div>
+                <div>
+                    <div class="tab-content">
+                        <div role="tabpanel" id="settings" class="tab-pane active text-muted text-center o_web_settings_compact_subtitle">
+                            <small>Copyright © 2004 <a target="_blank" href="https://www.odoo.com" style="text-decoration: underline;">Odoo S.A.</a> <a target="_blank" href="http://www.gnu.org/licenses/lgpl.html" style="text-decoration: underline;">GNU LGPL Licensed</a></small>
+                        </div>
+                    </div> 
+                </div>                      
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- <div class="text-center">
+                <div class="user-heading">
+                    <h3>
+                        Odoo <t t-esc="server_version"/>
+                        (Community Edition)
+                    </h3>
+                </div>
+                <div>
+                    <div class="tab-content">
+                        <div role="tabpanel" id="settings" class="tab-pane active text-muted text-center o_web_settings_compact_subtitle">
+                            <small>Copyright © 2004 <a target="_blank" href="https://www.odoo.com" style="text-decoration: underline;">Odoo S.A.</a> <a target="_blank" href="http://www.gnu.org/licenses/lgpl.html" style="text-decoration: underline;">GNU LGPL Licensed</a></small>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
