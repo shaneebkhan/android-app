@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<odoo>
+    <data>
+      <!-- IPaymu Production Test Account (e2e + token) -->
+      <!-- This is a test account for testing with test cards and cannot be used in a live environment -->
+      <record id="pos_ipaymu_configuration" model="pos_ipaymu.configuration">
+        <field name="name">IPaymu Demo</field>
+        <field name="merchant_api_key">755847002</field>
+      </record>
+    </data>
+</odoo>

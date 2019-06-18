@@ -1,0 +1,448 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+#	* pos_ipaymu
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 11.0-20190507\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-05-11 08:59+0000\n"
+"PO-Revision-Date: 2019-05-11 08:59+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:76
+#, python-format
+msgid "&nbsp;&nbsp;APPROVAL CODE:"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.pos_config_view_form_inherit_pos_ipaymu
+msgid "<i class=\"fa fa-fw fa-arrow-right\"/>Buy a card reader"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+msgid "<i>IPaymu Configurations</i> define what IPaymu account will be used when\n"
+"                                processing credit card transactions in the Point Of Sale. Setting up a IPaymu\n"
+"                                configuration will enable you to allow payments with various credit cards\n"
+"                                (eg. Visa, MasterCard, Discovery, American Express, ...). After setting up this\n"
+"                                configuration you should associate it with a Point Of Sale payment method."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:47
+#, python-format
+msgid "ABOVE AMOUNT PURSUANT"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:61
+#, python-format
+msgid "APPROVAL CODE:"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_account_bank_statement_line
+msgid "Bank Statement Line"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:46
+#, python-format
+msgid "CARDHOLDER WILL PAY CARD ISSUER"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_brand
+msgid "Card Brand"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_number
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_prefixed_card_number
+msgid "Card Number"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_owner_name
+msgid "Card Owner Name"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_tree
+msgid "Card Reader"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.actions.act_window,help:pos_ipaymu.action_configuration_form
+msgid "Click to configure your card reader."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:361
+#, python-format
+msgid "Could not read card"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_create_uid
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_create_uid
+msgid "Created by"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_create_date
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_create_date
+msgid "Created on"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:347
+#, python-format
+msgid "Credit card refunds are not supported. Instead select your credit card payment method, click 'Validate' and refund the original charge manually through the Vantiv backend."
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_display_name
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_display_name
+msgid "Display Name"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:7
+#, python-format
+msgid "Electronic Payment"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+msgid "For quickly handling orders: just swiping a credit card when on the payment screen\n"
+"                                (without having pressed anything else) will charge the full amount of the order to\n"
+"                                the card."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:257
+#, python-format
+msgid "Go to payment screen to use cards"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:397
+#, python-format
+msgid "Handling transaction..."
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_id
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_id
+msgid "ID"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_pos_ipaymu_configuration_merchant_api_key
+msgid "ID of the merchant to authenticate him on the payment provider server"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.pos_config_view_form_inherit_pos_ipaymu
+msgid "IPaymu Accounts"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.actions.act_window,name:pos_ipaymu.action_configuration_form
+#: model:ir.ui.menu,name:pos_ipaymu.menu_pos_pos_ipaymu_config
+msgid "IPaymu Configurations"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_journal_pos_ipaymu_config_id
+msgid "IPaymu Credentials"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_invoice_no
+msgid "IPaymu invoice number"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_record_no
+msgid "IPaymu record number"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_account_bank_statement_line_ipaymu_ref_no
+msgid "IPaymu reference number"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+msgid "If you don't already have a IPaymu account, visit https://www.ipaymu.com\n"
+"                                to create one."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:656
+#, python-format
+msgid "Info"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_invoice_no
+msgid "Invoice number from IPaymu Pay"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_account_journal
+msgid "Journal"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration___last_update
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction___last_update
+msgid "Last Modified on"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_write_uid
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_write_uid
+msgid "Last Updated by"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_write_date
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_ipaymu_transaction_write_date
+msgid "Last Updated on"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_merchant_api_key
+msgid "Merchant API Key"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,field_description:pos_ipaymu.field_pos_ipaymu_configuration_name
+msgid "Name"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_pos_ipaymu_configuration_name
+msgid "Name of this IPaymu configuration"
+msgstr ""
+
+#. module: pos_ipaymu
+#: code:addons/pos_ipaymu/models/pos_ipaymu_transaction.py:33
+#, python-format
+msgid "No IPaymu configuration associated with the journal."
+msgstr ""
+
+#. module: pos_ipaymu
+#: code:addons/pos_ipaymu/models/pos_ipaymu_transaction.py:21
+#, python-format
+msgid "No opened point of sale session for user %s found"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:329
+#, python-format
+msgid "No response from IPaymu (IPaymu down?)"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:331
+#, python-format
+msgid "No response from server (connected to network?)"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:424
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:578
+#, python-format
+msgid "Odoo error while processing transaction."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:471
+#, python-format
+msgid "Partially approved"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_record_no
+msgid "Payment record number from IPaymu Pay"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_ref_no
+msgid "Payment reference number from IPaymu Pay"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:417
+#, python-format
+msgid "Please setup your IPaymu merchant account."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:657
+#, python-format
+msgid "Please wait ..."
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_pos_order
+msgid "Point of Sale Orders"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:346
+#, python-format
+msgid "Refunds not supported"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:550
+#, python-format
+msgid "Reversal failed, sending VoidSale..."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:592
+#, python-format
+msgid "Reversal succeeded"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:553
+#, python-format
+msgid "Sending reversal..."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:48
+#, python-format
+msgid "TO CARDHOLDER AGREEMENT"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_brand
+msgid "The brand of the payment card (e.g. Visa, AMEX, ...)"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_prefixed_card_number
+msgid "The card number used for the payment."
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_journal_pos_ipaymu_config_id
+msgid "The configuration of IPaymu used for this journal"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_number
+msgid "The last 4 numbers of the card used to pay"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model.fields,help:pos_ipaymu.field_account_bank_statement_line_ipaymu_card_owner_name
+msgid "The name of the card owner"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:362
+#, python-format
+msgid "This can be caused by a badly executed swipe or by not having your keyboard layout set to US QWERTY (not US International)."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:147
+#, python-format
+msgid "Transaction approved"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+msgid "Using the IPaymu integration in the Point Of Sale is easy: just press the\n"
+"                                associated payment method. After that the amount can be adjusted (eg. for cashback)\n"
+"                                just like on any other payment line. Whenever the payment line is set up, a card\n"
+"                                can be swiped through the card reader device."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/js/pos_ipaymu.js:600
+#, python-format
+msgid "VoidSale succeeded"
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:18
+#, python-format
+msgid "WAITING FOR QR SCAN"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.ui.view,arch_db:pos_ipaymu.view_pos_ipaymu_configuration_form
+msgid "We currently support the MagTek Dynamag card reader device. It can be connected\n"
+"                                directly to the Point Of Sale device or it can be connected to the POSBox."
+msgstr ""
+
+#. module: pos_ipaymu
+#. openerp-web
+#: code:addons/pos_ipaymu/static/src/xml/pos_ipaymu.xml:51
+#, python-format
+msgid "X______________________________"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_barcode_rule
+msgid "barcode.rule"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_ir_autovacuum
+msgid "ir.autovacuum"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_pos_ipaymu_configuration
+msgid "pos_ipaymu.configuration"
+msgstr ""
+
+#. module: pos_ipaymu
+#: model:ir.model,name:pos_ipaymu.model_pos_ipaymu_ipaymu_transaction
+msgid "pos_ipaymu.ipaymu_transaction"
+msgstr ""
+

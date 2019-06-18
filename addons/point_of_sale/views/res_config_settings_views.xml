@@ -83,6 +83,10 @@
                                         <button string="Save" type="object" name="execute" class="oe_highlight"/>
                                     </div>
                                 </div>
+                                <div class="mt16" id="btn_use_pos_ipaymu">
+                                    <!--placeholder to test module-->
+                                    <!--button string="Save" type="object" name="execute" class="oe_highlight"/-->
+                                </div>
                             </div>
                         </div>
                     </div>
