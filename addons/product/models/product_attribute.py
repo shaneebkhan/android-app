@@ -26,6 +26,14 @@ class ProductAttribute(models.Model):
         string="Create Variants",
         help="Check this if you want to create multiple variants for this attribute.", required=True)
 
+    product_tmpl_ids = fields.Many2many('product.template', string="Used on products", compute='_compute_products', store=True)
+
+    @api.multi
+    @api.depends('attribute_line_ids.product_tmpl_id')
+    def _compute_products(self):
+        for pa in self:
+            pa.product_tmpl_ids = pa.attribute_line_ids.product_tmpl_id
+
     @api.multi
     def _without_no_variant_attributes(self):
         return self.filtered(lambda pa: pa.create_variant != 'no_variant')
