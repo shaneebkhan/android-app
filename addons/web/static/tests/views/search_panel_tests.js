@@ -77,11 +77,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field select="multi" name="category_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field select="multi" name="category_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         assert.containsOnce(kanban, '.o_content.o_kanban_with_searchpanel > .o_search_panel');
@@ -129,11 +133,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id" icon="fa-car" color="blue"/>' +
-                        '<field select="multi" name="state" icon="fa-star" color="#000"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id" icon="fa-car" color="blue"/>' +
+                            '<field select="multi" name="state" icon="fa-star" color="#000"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         assert.hasClass(kanban.$('.o_search_panel_section_header:first i'), 'fa-car');
@@ -160,11 +168,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field select="multi" invisible="1" name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field select="multi" invisible="1" name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 assert.step(args.method || route);
                 return this._super.apply(this, arguments);
@@ -195,12 +207,16 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field select="multi" name="category_id"/>' +
-                        '<field name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field select="multi" name="category_id"/>' +
+                            '<field name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            }
         });
 
         assert.containsN(kanban, '.o_search_panel_section', 3);
@@ -228,11 +244,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, [["state", "=", "ghi"]]);
@@ -268,10 +288,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -326,10 +350,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // select 'abc'
@@ -393,10 +421,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, [['company_id', 'child_of', expectedActiveId]]);
@@ -448,10 +480,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, []);
@@ -490,11 +526,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -557,10 +597,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // 'All' is selected by default
@@ -635,10 +679,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         assert.strictEqual(kanban.$('.o_search_panel_category_value:contains(agrolait) .o_toggle_fold').length, 1,
@@ -680,10 +728,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // unfold agrolait
@@ -724,10 +776,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -801,11 +857,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="state"/>' +
-                        '<field select="multi" name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="state"/>' +
+                            '<field select="multi" name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // 'All' should be selected by default
@@ -872,10 +932,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 4);
@@ -928,10 +992,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -1027,10 +1095,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -1111,11 +1183,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="state"/>' +
-                        '<field select="multi" name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="state"/>' +
+                            '<field select="multi" name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             viewOptions: {
                 limit: 2,
             },
@@ -1187,10 +1263,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id" groupby="category_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id" groupby="category_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             domain: [['bar', '=', true]],
         });
 
@@ -1305,10 +1385,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id" domain="[(\'parent_id\',\'=\',False)]"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id" domain="[(\'parent_id\',\'=\',False)]"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         assert.containsN(kanban, '.o_search_panel_filter_value', 2);
@@ -1334,10 +1418,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id" groupby="category_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id" groupby="category_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // groups are opened by default
@@ -1405,11 +1493,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="category_id"/>' +
-                        '<field select="multi" name="company_id" domain="[[\'category_id\', \'=\', category_id]]"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="category_id"/>' +
+                            '<field select="multi" name="company_id" domain="[[\'category_id\', \'=\', category_id]]"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         // select 'gold' category
@@ -1467,11 +1559,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id"/>' +
-                        '<field select="multi" name="state"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id"/>' +
+                            '<field select="multi" name="state"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, expectedDomain);
@@ -1509,10 +1605,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, [["company_id", "in", [3]]]);
@@ -1543,10 +1643,14 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field select="multi" name="company_id" groupby="category_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field select="multi" name="company_id" groupby="category_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.deepEqual(args.domain, [['company_id', 'in', [5]]]);
@@ -1581,11 +1685,15 @@ QUnit.module('Views', {
                             '<field name="foo"/>' +
                         '</div>' +
                     '</t></templates>' +
-                    '<searchpanel>' +
-                        '<field name="company_id"/>' +
-                        '<field select="multi" name="category_id"/>' +
-                    '</searchpanel>' +
                 '</kanban>',
+            archs: {
+                'partner,false,search': '<search>' +
+                        '<searchpanel>' +
+                            '<field name="company_id"/>' +
+                            '<field select="multi" name="category_id"/>' +
+                        '</searchpanel>' +
+                    '</search>',
+            },
         });
 
         var $firstSection = kanban.$('.o_search_panel_section:first');
