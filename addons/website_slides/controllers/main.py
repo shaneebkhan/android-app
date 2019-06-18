@@ -7,7 +7,7 @@ import logging
 import werkzeug
 import math
 
-from odoo import http, modules, tools, _
+from odoo import http, modules, tools, _, fields
 from odoo.exceptions import AccessError, UserError
 from odoo.http import request
 from odoo.osv import expression
@@ -153,9 +153,9 @@ class WebsiteSlides(WebsiteProfile):
         base_domain = expression.AND([request.website.website_domain(), [('channel_id', '=', channel.id)]])
         if not channel.can_publish:
             if request.website.is_public_user():
-                base_domain = expression.AND([base_domain, [('website_published', '=', True)]])
+                base_domain = expression.AND([base_domain, [('website_published', '=', True), ('publishing_date', '<=', fields.Datetime.now())]])
             else:
-                base_domain = expression.AND([base_domain, ['|', ('website_published', '=', True), ('user_id', '=', request.env.user.id)]])
+                base_domain = expression.AND([base_domain, ['|', '&', ('website_published', '=', True), ('publishing_date', '<=', fields.Datetime.now()), ('user_id', '=', request.env.user.id)]])
         return base_domain
 
     def _get_channel_progress(self, channel, include_quiz=False):
@@ -506,7 +506,7 @@ class WebsiteSlides(WebsiteProfile):
 
     @http.route('''/slides/slide/<model("slide.slide", "[('website_id', 'in', (False, current_website_id))]"):slide>''', type='http', auth="public", website=True)
     def slide_view(self, slide, **kwargs):
-        if not slide.channel_id.can_access_from_current_website():
+        if not slide.channel_id.can_access_from_current_website() or slide.publishing_date > fields.Datetime.now():
             raise werkzeug.exceptions.NotFound()
         self._set_viewed_slide(slide)
 

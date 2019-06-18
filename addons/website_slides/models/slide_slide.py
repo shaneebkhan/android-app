@@ -146,7 +146,11 @@ class Slide(models.Model):
     html_content = fields.Html("HTML Content", help="Custom HTML content for slides of type 'Web Page'.", translate=True)
     # website
     website_id = fields.Many2one(related='channel_id.website_id', readonly=True)
+
     date_published = fields.Datetime('Publish Date')
+    publishing_date = fields.Datetime('Publishing date', compute='_compute_publishing_date', inverse='_set_publishing_date', store=True,
+                                help="The slide will be visible for your visitors as of this date on the website if it is set as published.")
+
     likes = fields.Integer('Likes', compute='_compute_user_info', store=True)
     dislikes = fields.Integer('Dislikes', compute='_compute_user_info', store=True)
     user_vote = fields.Integer('User vote', compute='_compute_user_info')
@@ -165,6 +169,19 @@ class Slide(models.Model):
     _sql_constraints = [
         ('exclusion_html_content_and_url', "CHECK(html_content IS NULL OR url IS NULL)", "A slide is either filled with a document url or HTML content. Not both.")
     ]
+
+    @api.multi
+    @api.depends('create_date', 'date_published')
+    def _compute_publishing_date(self):
+        for slide in self:
+            slide.publishing_date = slide.date_published or slide.create_date
+
+    @api.multi
+    def _set_publishing_date(self):
+        for slide in self:
+            slide.date_published = slide.publishing_date
+            if not slide.date_published:
+                slide._write(dict(publishing_date=slide.create_date)) # dont trigger inverse function
 
     @api.depends('website_message_ids.res_id')
     def _compute_comments_count(self):

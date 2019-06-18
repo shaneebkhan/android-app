@@ -76,7 +76,7 @@
                                         <field name="website_id" groups="website.group_multi_website"/>
                                         <field name="website_url"/>
                                         <field name="is_preview"/>
-                                        <field name="date_published"/>
+                                        <field name="publishing_date"/>
                                     </group>
                                 </group>
                                 <field name="index_content"/>
