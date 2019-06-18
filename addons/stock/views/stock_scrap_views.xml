@@ -159,7 +159,7 @@
                         <group>
                             <field name="picking_id" invisible="1"/>
                             <field name="tracking" invisible="1"/>
-                            <field name="lot_id" attrs="{'invisible': [('tracking', '=', 'none')], 'required': [('tracking', '!=', 'none')]}" groups="stock.group_production_lot"/>
+                            <field name="lot_id" attrs="{'invisible': ['|',('product_id', '=', False),('tracking', '=', 'none')], 'required': [('tracking', '!=', 'none')]}" groups="stock.group_production_lot"/>
                             <field name="package_id" groups="stock.group_tracking_lot"/>
                             <field name="owner_id" groups="stock.group_tracking_owner"/>
                             <field name="location_id" groups="stock.group_stock_multi_locations" options="{'no_open': True, 'no_create': True}"/>

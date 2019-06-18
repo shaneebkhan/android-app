@@ -73,13 +73,6 @@ class StockScrap(models.Model):
                         self.location_id = move_line.location_id
                         break
 
-    @api.model
-    def create(self, vals):
-        if 'name' not in vals or vals['name'] == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('stock.scrap') or _('New')
-        scrap = super(StockScrap, self).create(vals)
-        return scrap
-
     def unlink(self):
         if 'done' in self.mapped('state'):
             raise UserError(_('You cannot delete a scrap which is done.'))
@@ -114,6 +107,7 @@ class StockScrap(models.Model):
     @api.multi
     def do_scrap(self):
         for scrap in self:
+            scrap.name = self.env['ir.sequence'].next_by_code('stock.scrap') or _('New')
             move = self.env['stock.move'].create(scrap._prepare_move_values())
             # master: replace context by cancel_backorder
             move.with_context(is_scrap=True)._action_done()
