@@ -9,10 +9,13 @@ odoo.define('web.SearchPanel', function (require) {
 var core = require('web.core');
 var Domain = require('web.Domain');
 var Widget = require('web.Widget');
+var viewUtils = require('web.viewUtils');
+var pyUtils = require('web.py_utils');
 
 var qweb = core.qweb;
 
 var SearchPanel = Widget.extend({
+    view_types: ['kanban', 'tree'], // acts as default too
     className: 'o_search_panel',
     events: {
         'click .o_search_panel_category_value header': '_onCategoryValueClicked',
@@ -569,6 +572,82 @@ var SearchPanel = Widget.extend({
         filter.groups[groupId].folded = !filter.groups[groupId].folded;
         this._render();
     },
+    /**
+     * Populate this.searchPanelSections with category/filter descriptions.
+     *
+     * @classmethod
+     * @private
+     * @param {Object} node
+     * @param {Object} fv
+     */
+    _processSearchPanelNode: function (node, fv) {
+        var searchPanelSections = {};
+        node.children.forEach(function (childNode, index) {
+            if (childNode.tag !== 'field') {
+                return;
+            }
+            if (childNode.attrs.invisible === "1") {
+                return;
+            }
+            var fieldName = childNode.attrs.name;
+            var type = childNode.attrs.select === 'multi' ? 'filter' : 'category';
+
+            var sectionId = _.uniqueId('section_');
+            var section = {
+                color: childNode.attrs.color,
+                description: childNode.attrs.string || fv.fields[fieldName].string,
+                fieldName: fieldName,
+                icon: childNode.attrs.icon,
+                id: sectionId,
+                index: index,
+                type: type,
+            };
+            if (section.type === 'category') {
+                section.icon = section.icon || 'fa-folder';
+            } else if (section.type === 'filter') {
+                section.disableCounters = !!pyUtils.py_eval(childNode.attrs.disable_counters || '0');
+                section.domain = childNode.attrs.domain || '[]';
+                section.groupBy = childNode.attrs.groupby;
+                section.icon = section.icon || 'fa-filter';
+            }
+            searchPanelSections[sectionId] = section;
+        });
+        return searchPanelSections;
+    },
+    /**
+     * Given an arch, parses it, and returns the searchPanel's
+     * full viewInfo
+     * Determines if a view controller needs a SearchPanel
+     *
+     * @classmethod
+     * @params {Object} loadParams: the controller's loadParams
+     * @params {Object} viewInfo: the viewInfo of the searchView
+     * @returns {Object || false}
+     */
+    computeSearchPanelParams: function (loadParams, viewInfo) {
+        var cls = this || SearchPanel;
+        var searchPanelSections;
+        if (viewInfo) {
+            viewInfo = _.extend({}, viewInfo);
+            if (typeof viewInfo.arch === 'string') {
+                viewInfo.arch = viewUtils.parseArch(viewInfo.arch);
+                viewInfo.viewFields = _.defaults({}, viewInfo.viewFields, viewInfo.fields);
+            }
+            var viewTypeLoad = loadParams.viewType === 'list' ? 'tree' : loadParams.viewType;
+            viewInfo.arch.children.forEach(function (node) {
+                if (node.tag === 'searchpanel') {
+                    var AllowedViewTypes = node.attrs.view_types ? node.attrs.view_types.split(',') : cls.view_types;
+                    if (AllowedViewTypes.indexOf(viewTypeLoad) === -1) {
+                        searchPanelSections = false;
+                        return;
+                    }
+                    searchPanelSections = cls._processSearchPanelNode(node, viewInfo);
+                    return;
+                }
+            });
+        }
+        return searchPanelSections;
+    }
 });
 
 return SearchPanel;
