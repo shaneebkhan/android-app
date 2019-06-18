@@ -9,10 +9,10 @@ class AccountChartTemplate(models.Model):
     def _create_bank_journals(self, company, acc_template_ref):
         """ This is a helper function in loading a chart of account.
 
-            The goal of inheriting this function is to, after creation of
-            accounts and journals, create default records such as pos
-            account receivable, and bank and cash payment methods and set
-            them in the payment methods field of the main pos config.
+        The goal of inheriting this function is to, after creation of
+        accounts and journals, create default records such as pos
+        account receivable, and bank and cash payment methods and set
+        them in the payment methods field of the main pos config.
         """
         res = super(AccountChartTemplate, self)._create_bank_journals(company, acc_template_ref)
 

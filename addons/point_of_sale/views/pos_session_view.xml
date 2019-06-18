@@ -72,7 +72,7 @@
                             <field name="picking_count" widget="statinfo" string="Picking Errors"/>
                         </button>
                         <button
-                            name="show_payments_list"
+                            name="action_show_payments_list"
                             type="object"
                             class="oe_stat_button"
                             icon="fa-bars"

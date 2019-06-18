@@ -6,7 +6,6 @@ from functools import partial
 
 import psycopg2
 import pytz
-import time
 
 from odoo import api, fields, models, tools, _
 from odoo.tools import float_is_zero
@@ -17,13 +16,6 @@ from odoo.osv.expression import AND
 
 _logger = logging.getLogger(__name__)
 
-def timeit(func):
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        res = func(*args, **kwargs)
-        _logger.info(f"CALLING `{func.__name__}` took `{time.time() - start_time}` seconds to finish.......")
-        return res
-    return wrapper
 
 class PosOrder(models.Model):
     _name = "pos.order"
@@ -68,19 +60,6 @@ class PosOrder(models.Model):
             'payment_name': ui_paymentline.get('note', False),
             'journal':      ui_paymentline['journal_id'],
         }
-
-    def _get_payment_fields(self, payment_dict):
-        """ This function should return the necessary fields in creating pos.payment object.
-        """
-        payment_date = payment_dict['name']
-        payment_date = fields.Date.context_today(self, fields.Datetime.from_string(payment_date))
-        return dict(
-            name=payment_dict.get('note', False),
-            pos_order_id=payment_dict['pos_order_id'],
-            amount=payment_dict.get('amount', 0.0),
-            payment_date=payment_date,
-            payment_method_id=payment
-        )
 
     # This deals with orders that belong to a closed session. In order
     # to recover from this situation we create a new rescue session,
@@ -142,13 +121,13 @@ class PosOrder(models.Model):
             pos_order['pos_session_id'] = self._get_valid_session(pos_order).id
         order = self.create(self._order_fields(pos_order))
         prec_acc = order.pricelist_id.currency_id.decimal_places
-        PosPayment = self.env['pos.payment']
         for payments in pos_order['statement_ids']:
             if not float_is_zero(payments[2]['amount'], precision_digits=prec_acc):
-                payment_dict = payments[2]
-                PosPayment.create(dict(pos_order_id=order.id,
-                                        currency_id=order.pricelist_id.currency_id.id,
-                                        **payment_dict))
+                payment_vals = {
+                    'pos_order_id': order.id,
+                    **payments[2]
+                }
+                self.env['pos.payment'].create(payment_vals)
 
         if pos_session.sequence_number <= pos_order['sequence_number']:
             pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
@@ -159,20 +138,16 @@ class PosOrder(models.Model):
                                     .payment_method_ids\
                                     .filtered(lambda pm: pm.is_cash_count)\
                                     .sorted(key=lambda pm: pm.id)
-            payment_method = None
-            if cash_payment_methods:
-                payment_method = cash_payment_methods[0]
-            else:
+            if not cash_payment_methods:
                 raise UserError(_("No cash statement found for this session. Unable to record returned cash."))
-            return_payment_dict = {
+            return_payment_vals = {
                 'name': _('return'),
                 'pos_order_id': order.id,
                 'amount': -pos_order['amount_return'],
                 'payment_date': fields.Date.context_today(self),
-                'payment_method_id': payment_method.id,
-                'currency_id': order.pricelist_id.currency_id.id
+                'payment_method_id': cash_payment_methods[0].id,
             }
-            PosPayment.create(return_payment_dict)
+            self.env['pos.payment'].create(return_payment_vals)
         return order
 
     def _prepare_analytic_account(self, line):
@@ -616,7 +591,7 @@ class PosOrder(models.Model):
         readonly=True,
         states={'draft': [('readonly', False)]},
     )
-    pos_payment_ids = fields.One2many(comodel_name='pos.payment', inverse_name='pos_order_id', string='Pos Payments', readonly=True)
+    pos_payment_ids = fields.One2many('pos.payment', 'pos_order_id', string='Pos Payments', readonly=True)
     session_state = fields.Selection(string="Session State", related='session_id.state', readonly=True)
     session_move_id = fields.Many2one('account.move', string='Journal Entry', related='session_id.move_id', readonly=True, copy=False)
 
@@ -772,7 +747,6 @@ class PosOrder(models.Model):
         return self._create_account_move_line()
 
     @api.model
-    @timeit
     def create_from_ui(self, orders):
         # Keep only new orders
         submitted_references = [o['data']['name'] for o in orders]
@@ -785,16 +759,7 @@ class PosOrder(models.Model):
         for tmp_order in orders_to_save:
             to_invoice = tmp_order['to_invoice']
             order = tmp_order['data']
-            # # do not do this
-            # if to_invoice:
-            #     # if I'm not mistaken, this ensures that when invoice is activated in the pos.order,
-            #     # no amount_return should be registered in the invoice. -> this is correct.
-            #     # there is no cash change for this transaction.
-            #     # Possible BUG: Bank payment w/o invoice, there is cash change (return)
-            #     #   But for bank payment w/ invoice, there is no cash change (return).
-            #     #   These behaviors are inconsistent. -> But perhaps this is related to the
-            #     #   created invoice and a limitation.
-            #     self._match_payment_to_invoice(order)
+
             pos_order = self._process_order(order)
             order_ids.append(pos_order.id)
 
@@ -814,7 +779,6 @@ class PosOrder(models.Model):
                 # validate the invoice here
                 pos_order.invoice_id.sudo().with_context(force_company=self.env.user.company_id.id).action_invoice_open()
                 pos_order.account_move = pos_order.invoice_id.move_id
-            _logger.info(f"Pos order: id={pos_order.id} successfully created................")
         return order_ids
 
     def create_picking(self):
@@ -1014,7 +978,7 @@ class PosOrder(models.Model):
         """Create a new payment for the order
         """
         self.ensure_one()
-        self.write(dict(amount_paid=self.amount_paid + payment_vals['amount']))
+        self.write({'amount_paid':self.amount_paid + payment_vals['amount']})
         return self.env['pos.payment'].create(payment_vals)
 
     def _prepare_refund_order_data(self, current_session=None):

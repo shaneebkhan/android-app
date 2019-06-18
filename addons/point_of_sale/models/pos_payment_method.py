@@ -11,14 +11,14 @@ class PosPaymentMethod(models.Model):
         return self.env.company.get_default_pos_receivable_account()
 
     name = fields.Char(string="Name", required=True)
-    receivable_account_id = fields.Many2one(comodel_name='account.account',
+    receivable_account_id = fields.Many2one('account.account',
         string='Intermediary Account',
         required=True,
         domain=[('reconcile', '=', True), ('user_type_id.type', '=', 'receivable')],
         default=_default_pos_receivable_account,
         help='Account used as counterpart of the income account in the accounting entry representing the pos sales.')
     is_cash_count = fields.Boolean(string='Cash')
-    cash_journal_id = fields.Many2one(comodel_name='account.journal',
+    cash_journal_id = fields.Many2one('account.journal',
         string='Cash Journal',
         domain=[('type', '=', 'cash')],
         help='The payment method is of type cash. A cash statement will be automatically generated.')
@@ -27,7 +27,7 @@ class PosPaymentMethod(models.Model):
          ('split', 'One journal item per transaction'),
         ], string='Split Transactions', default='combine',
         help='Determine whether payment made with this method will generate separate receivable journal item.')
-    session_ids = fields.Many2many(comodel_name='pos.session', string='Pos Sessions', help='Pos sessions that are using this payment method.')
+    session_ids = fields.Many2many('pos.session', string='Pos Sessions', help='Pos sessions that are using this payment method.')
 
     @api.multi
     def write(self, vals):

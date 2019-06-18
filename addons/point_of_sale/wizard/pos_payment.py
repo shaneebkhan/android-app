@@ -50,13 +50,13 @@ class PosMakePayment(models.TransientModel):
         currency = order.pricelist_id.currency_id
 
         data = self.read()[0]
-        data.update(dict(
-            pos_order_id=order.id,
-            currency_id=currency.id,
-            amount=currency.round(data['amount']) if currency else data['amount'],
-            name=data['payment_name'],
-            payment_method_id=data['payment_method_id'][0],
-        ))
+        data.update({
+            'pos_order_id': order.id,
+            'currency_id': currency.id,
+            'amount': currency.round(data['amount']) if currency else data['amount'],
+            'name': data['payment_name'],
+            'payment_method_id': data['payment_method_id'][0],
+        })
 
         amount_to_pay = order.amount_total - order.amount_paid
         precision = currency.rounding or 0.01

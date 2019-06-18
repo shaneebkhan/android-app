@@ -66,13 +66,4 @@
     </record>
 
     <menuitem id="menu_pos_payment" parent="menu_point_of_sale" action="action_pos_payment_form" sequence="3" groups="group_pos_manager,group_pos_user"/>
-
-    <record id="action_show_pos_payment_button" model="ir.actions.act_window">
-        <field name="context">{'search_default_group_by_payment_method': 1}</field>
-        <field name="name">Pos Payments</field>
-        <field name="res_model">pos.payment</field>
-        <field name="view_id" ref="view_pos_payment_tree"/>
-        <field name="view_mode">tree,form,kanban</field>
-    </record>
-
 </odoo>
