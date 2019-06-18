@@ -19,11 +19,9 @@
                     r.push(context.engine.tools.call(context, 'ImportView.import_button', dict));
                 };
             </t>
-            <t t-if="widget.initialState.context.journal_type === 'purchase'">
-                <button type="button" class="btn btn-secondary o_button_upload_bill">
-                    Upload
-                </button>
-            </t>
+            <button type="button" class="btn btn-secondary o_button_upload_bill">
+                Upload
+            </button>
         </t>
     </t>
 </templates>

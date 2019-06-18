@@ -293,23 +293,22 @@ class AccountInvoice(models.Model):
                 )
             self.l10n_it_send_state = 'invalid'
 
-    def _import_xml_invoice(self, content, attachment):
+    def _import_xml_invoice(self, tree):
         ''' Extract invoice values from the E-Invoice xml tree passed as parameter.
 
         :param content: The tree of the xml file.
         :return: A dictionary containing account.invoice values to create/update it.
         '''
 
-        try:
-            tree = etree.fromstring(content)
-        except:
-            _logger.info('Error during decoding XML file')
-            return self.env['account.invoice']
-
         invoices = self.env['account.invoice']
+        multi = False
 
         # possible to have multiple invoices in the case of an invoice batch, the batch itself is repeated for every invoice of the batch
         for body_tree in tree.xpath('//FatturaElettronicaBody', namespaces=tree.nsmap):
+            if multi:
+                # make sure all the iterations create a new invoice record (except the first which could have already created one)
+                self = self.env['account.invoice']
+            multi = True
 
             elements = tree.xpath('//DatiGeneraliDocumento/TipoDocumento', namespaces=tree.nsmap)
             if elements and elements[0].text and elements[0].text == 'TD01':
@@ -663,7 +662,7 @@ class AccountInvoice(models.Model):
                     })
 
                     # default_res_id is had to context to avoid facturx to import his content
-                    new_invoice.with_context(default_res_id=new_invoice.id).message_post(
+                    new_invoice.with_context(no_new_invoice=True, default_res_id=new_invoice.id).message_post(
                         body=(_("Attachment from XML")),
                         attachment_ids=[attachment_64.id]
                     )
@@ -671,10 +670,6 @@ class AccountInvoice(models.Model):
             for message in message_to_log:
                 new_invoice.message_post(body=message)
 
-            if attachment:
-                new_invoice.l10n_it_einvoice_name = attachment.name
-                attachment.write({'res_model': 'account.invoice', 'res_id': new_invoice.id})
-                new_invoice.message_post(attachment_ids=[attachment.id])
             invoices += new_invoice
         return invoices
 
@@ -703,6 +698,20 @@ class AccountInvoice(models.Model):
                 if text:
                     output_str += "<li>%s: %s</li>" % (element.tag, text)
         return output_str + "</ul>"
+
+    @api.model
+    def _get_xml_decoders(self):
+        # Override
+        ubl_decoders = [('Italy', self._detect_italy_edi, self._import_xml_invoice)]
+        return super(AccountInvoice, self)._get_xml_decoders() + ubl_decoders
+
+    @api.model
+    def _detect_italy_edi(self, tree, file_name):
+        # Quick check the file name looks like the one of an Italian EDI XML.
+        flag = re.search("([A-Z]{2}[A-Za-z0-9]{2,28}_[A-Za-z0-9]{0,5}.(xml.p7m|xml))", file_name)
+        error = None
+
+        return {'flag': flag, 'error': error}
 
 class AccountTax(models.Model):
     _name = "account.tax"
@@ -739,19 +748,3 @@ class AccountTax(models.Model):
                     raise ValidationError("If the tax has exoneration, you must enter a kind of exoneration, a law reference and the amount of the tax must be 0.0.")
                 if tax.l10n_it_kind_exoneration == 'N6' and tax.l10n_it_vat_due_date == 'S':
                     raise UserError(_("'Scissione dei pagamenti' is not compatible with exoneration of kind 'N6'"))
-
-class ImportInvoiceImportWizard(models.TransientModel):
-    _name = 'account.invoice.import.wizard'
-    _inherit = 'account.invoice.import.wizard'
-
-    @api.multi
-    def _create_invoice_from_file(self, attachment):
-        if attachment.mimetype == 'application/xml' and re.search("([A-Z]{2}[A-Za-z0-9]{2,28}_[A-Za-z0-9]{0,5}.(xml.p7m|xml))", attachment.name):
-            if self.env['account.invoice'].search([('l10n_it_einvoice_name', '=', attachment.name)], limit=1):
-                # invoice already exist
-                raise UserError(_('E-invoice already exist: %s') % attachment.name)
-            self = self.with_context(default_journal_id= self.journal_id.id)
-            invoice = self.env['account.invoice']._import_xml_invoice(base64.decodestring(attachment.datas), attachment)
-        else:
-            invoice = super(ImportInvoiceImportWizard, self)._create_invoice_from_file(attachment)
-        return invoice

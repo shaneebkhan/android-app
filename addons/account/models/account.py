@@ -9,6 +9,7 @@ from odoo.tools.float_utils import float_round as round, float_compare
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.exceptions import UserError, ValidationError
 from odoo import api, fields, models, _
+from odoo.tests.common import Form
 
 
 class AccountAccountType(models.Model):
@@ -974,6 +975,40 @@ class AccountJournal(models.Model):
         """
         # We simply call the setup bar function.
         return self.env['res.company'].setting_init_bank_account_action()
+
+    @api.multi
+    def create_invoice_from_attachment(self, attachment_ids=[]):
+        ''' Create the invoices from files.
+         :return: A action redirecting to account.invoice tree/form view.
+        '''
+        attachments = self.env['ir.attachment'].browse(attachment_ids)
+        if not attachments:
+            raise UserError(_("No attachment was provided"))
+
+        invoices = self.env['account.invoice']
+        journal_type = self.env.context.get('journal_type', self.type) or 'purchase'
+        journal_id = self or self.env['account.journal'].search([('type', '=', journal_type)], limit=1)
+        for attachment in attachments:
+            invoice_form = Form(self.env['account.invoice'].with_context(default_journal_id=journal_id.id), view='account.invoice_supplier_form')
+            invoice = invoice_form.save()
+            attachment.write({'res_model': 'account.invoice', 'res_id': invoice.id})
+            invoice.message_post(attachment_ids=[attachment.id])
+            invoices += invoice
+
+        form_view = journal_type == 'purchase' and self.env.ref('account.invoice_supplier_form').id or self.env.ref('account.invoice_form').id
+        tree_view = journal_type == 'purchase' and self.env.ref('account.invoice_supplier_tree').id or self.env.ref('account.invoice_tree').id
+        action_vals = {
+            'name': _('Generated Documents'),
+            'domain': [('id', 'in', invoices.ids)],
+            'res_model': 'account.invoice',
+            'views': [[tree_view, "tree"], [form_view, "form"]],
+            'type': 'ir.actions.act_window',
+        }
+        if len(invoices) == 1:
+            action_vals.update({'res_id': invoices[0].id, 'view_mode': 'form'})
+        else:
+            action_vals['view_mode'] = 'tree,form'
+        return action_vals
 
 
 class ResPartnerBank(models.Model):

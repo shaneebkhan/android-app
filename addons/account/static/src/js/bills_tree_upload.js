@@ -32,15 +32,12 @@ odoo.define('account.upload.bill.mixin', function (require) {
             var attachent_ids = attachments.reduce(function(filtered, record) {
                 if (record.id) {
                     filtered.push(record.id);
-                } 
+                }
                 return filtered;
             }, []);
-            if (!attachent_ids.length) {
-                return self.do_notify(_t("Error"), _t("An error occurred during the upload"));
-            }
             return this._rpc({
-                model: 'account.invoice.import.wizard',
-                method: 'create_invoices',
+                model: 'account.journal',
+                method: 'create_invoice_from_attachment',
                 args: ["", attachent_ids],
                 context: this.initialState.context,
             }).then(function(result) {
