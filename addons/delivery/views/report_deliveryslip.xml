@@ -3,7 +3,7 @@
         <xpath expr="//div[@name='div_sched_date']" position="after">
             <div t-if="o.picking_type_id.code == 'outgoing' and o.carrier_id" class="col-auto">
                 <strong>Carrier:</strong>
-                <p class="m-0" t-field="o.carrier_id"/>
+                <p t-field="o.carrier_id"/>
             </div>
             <div t-if="o.weight" class="col-auto">
                 <strong>Weight:</strong>
