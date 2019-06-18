@@ -26,6 +26,7 @@ var ListController = BasicController.extend({
         activate_next_widget: '_onActivateNextWidget',
         add_record: '_onAddRecord',
         button_clicked: '_onButtonClicked',
+        change_mode: '_onChangeMode',
         group_edit_button_clicked: '_onEditGroupClicked',
         edit_line: '_onEditLine',
         save_line: '_onSaveLine',
@@ -50,6 +51,7 @@ var ListController = BasicController.extend({
         this.editable = params.editable;
         this.noLeaf = params.noLeaf;
         this.selectedRecords = params.selectedRecords || [];
+        this.recordEvents = {};
     },
 
     //--------------------------------------------------------------------------
@@ -347,8 +349,7 @@ var ListController = BasicController.extend({
      */
     _inMultipleRecordEdition: function (recordId) {
         var record = this.model.get(recordId, { raw: true });
-        var recordIds = _.union([recordId], this.selectedRecords);
-        return recordIds.length > 1 && record.res_id;
+        return this.renderer.inMultipleRecordEdition(recordId) && record.res_id;
     },
     /**
      * Only display the pager when there are data to display.
@@ -361,39 +362,74 @@ var ListController = BasicController.extend({
         return !!state.count;
     },
     /**
+     * Saves multiple records at once. This method is prepared by the _onFieldChange
+     * method and is called by the _saveRecord method. This is required to have:
+     * - the onFieldChanged event arguments (actual changes and modifiers from current record)
+     * - the evaluation of the current record with canBeSaved 
+     * With this method we can then properly validate the current row (and trigger potential
+     * warnings), and then apply pseudo-validation based on modifiers for other records.
+     * 
      * @private
      * @param {string} recordId
-     * @param {Object} node
-     * @param {Object} changes
+     * @param {Object} ev
      */
-    _saveMultipleRecords: function (recordId, node, changes) {
+    _saveMultipleRecords: function (recordId, ev) {
         var self = this;
-        var value = Object.values(changes)[0];
+        var value = Object.values(ev.data.changes)[0];
+        var node = ev.target.__node;
         var recordIds = _.union([recordId], this.selectedRecords);
-        var validRecordIds = recordIds.reduce(function (result, recordId) {
-            var record = self.model.get(recordId);
-            var modifiers = self.renderer._registerModifiers(node, record);
-            if (!modifiers.readonly && (!modifiers.required || value)) {
+        var validRecordIds = recordIds.reduce(function (result, otherRecordId) {
+            // recordId has already been checked earlier
+            if (otherRecordId === recordId) {
                 result.push(recordId);
+            } else {
+                var record = self.model.get(otherRecordId);
+                var modifiers = self.renderer._registerModifiers(node, record);
+                if (!modifiers.readonly && (!modifiers.required || value)) {
+                    result.push(otherRecordId);
+                }
             }
             return result;
         }, []);
-        var message = _.str.sprintf(
-            _t('Do you want to set the value on the %d valid selected records?'),
-            validRecordIds.length);
-        if (recordIds.length !== validRecordIds.length) {
-            var nbInvalid = recordIds.length - validRecordIds.length;
-            message += ' ' + _.str.sprintf(_t('(%d invalid)'), nbInvalid);
-        }
-        Dialog.confirm(this, message, {
-            confirm_callback: function () {
-                self.model.saveRecords(recordId, validRecordIds)
-                    .then(function () {
-                        self._updateButtons('readonly');
-                        var state = self.model.get(self.handle);
-                        self.renderer.updateState(state, {});
-                    });
-            },
+        var nbInvalid = recordIds.length - validRecordIds.length;
+        return new Promise(function (resolve, reject) {
+            var message;
+            if (nbInvalid === 0) {
+                message = _.str.sprintf(
+                    _t('Do you want to set the value on the %d selected records?'),
+                    validRecordIds.length);
+            } else {
+                message = _.str.sprintf(
+                    _t('Do you want to set the value on the %d valid selected records? (%d invalid)'),
+                    validRecordIds.length, nbInvalid);
+            }
+            // This is to prevent an issue (unknown source):
+            // When changing a value and pressing ENTER, it appears that
+            // the modal opens too fast, registers the ENTER key press and
+            // then confirms automatically.
+            new Promise(function (res) {
+                setTimeout(res);
+            }).then(function () {
+                Dialog.confirm(self, message, {
+                    confirm_callback: function () {
+                        self.model.saveRecords(recordId, validRecordIds)
+                            .then(function () {
+                                self._updateButtons('readonly');
+                                var state = self.model.get(self.handle);
+                                self.renderer.updateState(state, {});
+                                resolve();
+                            }).guardedCatch(function () {
+                                // Server error : changes are discarded
+                                self.model.discardChanges(recordId);
+                                self._confirmSave(recordId);
+                                reject();
+                            });
+                    },
+                    cancel_callback: function () {
+                        reject();
+                    },
+                });
+            });
         });
     },
     /**
@@ -406,8 +442,14 @@ var ListController = BasicController.extend({
         var record = this.model.get(recordId, { raw: true });
         if (record.isDirty() && this._inMultipleRecordEdition(recordId)) {
             // do not save the record (see _saveMultipleRecords)
-            return Promise.resolve();
-
+            // canBeSaved is called to display warnings
+            if (this.canBeSaved(recordId)) {
+                var ev = this.recordEvents[recordId];
+                this.recordEvents[recordId] = null;
+                return (ev ? this._saveMultipleRecords(recordId, ev) : Promise.resolve());
+            } else {
+                return Promise.reject();
+            }
         }
         return this._super.apply(this, arguments);
     },
@@ -523,6 +565,16 @@ var ListController = BasicController.extend({
         ev.stopPropagation();
         this._callButtonAction(ev.data.attrs, ev.data.record);
     },
+    _onChangeMode: function (ev) {
+        ev.stopPropagation();
+        var recordId = ev.data.recordId;
+        this.editable = ev.data.mode === 'edit';
+        this.mode = ev.data.mode;
+        if (recordId) {
+            this.model.discardChanges(recordId);
+            this._confirmSave(recordId);
+        }
+    },
     /**
      * When the user clicks on the 'create' button, two things can happen. We
      * can switch to the form view with no active res_id, so it is in 'create'
@@ -617,13 +669,14 @@ var ListController = BasicController.extend({
     _onFieldChanged: function (ev) {
         ev.stopPropagation();
         var self = this;
+        var recordId = ev.data.dataPointID;
 
-        if (this._inMultipleRecordEdition(ev.data.dataPointID)) {
+        if (this._inMultipleRecordEdition(recordId)) {
             // deal with edition of multiple lines
             var _onSuccess = ev.data.onSuccess;
             ev.data.onSuccess = function () {
                 Promise.resolve(_onSuccess()).then(function () {
-                    self._saveMultipleRecords(ev.data.dataPointID, ev.target.__node, ev.data.changes);
+                    self.recordEvents[recordId] = ev;
                 });
             };
         }

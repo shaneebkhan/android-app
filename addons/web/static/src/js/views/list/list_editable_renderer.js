@@ -102,9 +102,7 @@ ListRenderer.include({
      * @returns {Promise}
      */
     start: function () {
-        if (this.editable) {
-            core.bus.on('click', this, this._onWindowClicked.bind(this));
-        }
+        core.bus.on('click', this, this._onWindowClicked.bind(this));
         return this._super();
     },
 
@@ -289,6 +287,20 @@ ListRenderer.include({
         return null;
     },
     /**
+     * Get the current multi-editable state of the list.
+     * recordId can either be the current row or the current record.
+     * 
+     * @param {string|number} recordId 
+     * @returns {boolean}
+     */
+    inMultipleRecordEdition: function (recordId) {
+        if (!isNaN(recordId)) {
+            recordId = this._getRecordID(recordId);
+        }
+        var recordIds = _.union([recordId], this.selection);
+        return this._getEditableState() && recordIds.length > 1;
+    },
+    /**
      * Removes the line associated to the given recordID (the index of the row
      * is found thanks to the old state), then updates the state.
      *
@@ -412,15 +424,19 @@ ListRenderer.include({
      * Note that we have to disable the focusable elements (inputs, ...) to
      * prevent subsequent editions. These edits would be lost, because the list
      * view only saves records when unselecting a row.
+     * 
+     * There is however the possibility to provide a multiEdit argument that when set to true
+     * will trigger the save_line event when changing cell even on the same row.
      *
+     * @param {boolean} [multiEdit]
      * @returns {Promise} The promise resolves if the row was unselected (and
      *   possibly removed). If may be rejected, when the row is dirty and the
      *   user refuses to discard its changes.
      */
-    unselectRow: function () {
+    unselectRow: function (multiEdit) {
         var self = this;
         // Protect against calling this method when no row is selected
-        if (this.currentRow === null) {
+        if (this.currentRow === null && !multiEdit) {
             return Promise.resolve();
         }
         var recordID = this._getRecordID(this.currentRow);
@@ -510,6 +526,14 @@ ListRenderer.include({
             case 'text': return 3;
             default: return 1;
         }
+    },
+    /**
+     * Returns whether the list can be considered as editable
+     * 
+     * @returns {boolean}
+     */
+    _getEditableState: function () {
+        return Boolean(this.editable || this.selection.length);
     },
     /**
      *
@@ -728,7 +752,7 @@ ListRenderer.include({
     _processColumns: function () {
         this._super.apply(this, arguments);
 
-        if (this.editable) {
+        if (this._getEditableState()) {
             var self = this;
             this.columns.forEach(function (column) {
                 if (column.attrs.width_factor) {
@@ -812,7 +836,7 @@ ListRenderer.include({
     _renderHeader: function () {
         var $thead = this._super.apply(this, arguments);
 
-        if (this.editable) {
+        if (this._getEditableState()) {
             var totalWidth = this.columns.reduce(function (acc, column) {
                 return acc + column.attrs.widthFactor;
             }, 0);
@@ -901,7 +925,7 @@ ListRenderer.include({
         this.currentRow = null;
         this.allRecordsIds = null;
         return this._super.apply(this, arguments).then(function () {
-            if (self.editable) {
+            if (self._getEditableState()) {
                 self.$('table').addClass('o_editable_list');
             }
         });
@@ -935,10 +959,11 @@ ListRenderer.include({
             return Promise.resolve();
         }
         var wrap = options.wrap === undefined ? true : options.wrap;
+        var multiEdit = this.inMultipleRecordEdition(rowIndex);
 
         // Select the row then activate the widget in the correct cell
         var self = this;
-        return this._selectRow(rowIndex).then(function () {
+        return this._selectRow(rowIndex, multiEdit).then(function () {
             var recordID = self._getRecordID(rowIndex);
             var record = self._getRecord(recordID);
             if (fieldIndex >= (self.allFieldWidgets[record.id] || []).length) {
@@ -965,17 +990,18 @@ ListRenderer.include({
      * Activates the row at the given row index.
      *
      * @param {integer} rowIndex
+     * @param {boolean} [multiEdit]
      * @returns {Promise}
      */
-    _selectRow: function (rowIndex) {
+    _selectRow: function (rowIndex, multiEdit) {
         // Do nothing if already selected
-        if (rowIndex === this.currentRow) {
+        if (rowIndex === this.currentRow && !multiEdit) {
             return Promise.resolve();
         }
         var recordId = this._getRecordID(rowIndex);
         // To select a row, the currently selected one must be unselected first
         var self = this;
-        return this.unselectRow().then(function () {
+        return this.unselectRow(multiEdit).then(function () {
             if (!recordId) {
                 // The row to selected doesn't exist anymore (probably because
                 // an onchange triggered when unselecting the previous one
@@ -990,6 +1016,24 @@ ListRenderer.include({
                 });
             });
         });
+    },
+
+    /**
+     * Override to toggle readonly editable state
+     * 
+     * @override
+     */
+    _updateSelection: function () {
+        var previousState = this._getEditableState();
+        this._super.apply(this, arguments);
+        var newState = this._getEditableState();
+        if (!this.editable && previousState !== newState) {
+            this.$('table').toggleClass('o_editable_list', newState);
+            this.trigger_up('change_mode', {
+                mode: newState ? 'edit' : 'readonly',
+                recordId: this._getRecordID(this.currentRow),
+            });
+        }
     },
 
     //--------------------------------------------------------------------------
@@ -1056,7 +1100,7 @@ ListRenderer.include({
     _onCellClick: function (event) {
         // The special_click property explicitely allow events to bubble all
         // the way up to bootstrap's level rather than being stopped earlier.
-        if (!this.editable || $(event.target).prop('special_click')) {
+        if (!this._getEditableState() || $(event.target).prop('special_click')) {
             return;
         }
         var $td = $(event.currentTarget);
@@ -1091,12 +1135,12 @@ ListRenderer.include({
         var $target = $(ev.currentTarget);
         var $tr = $target.closest('tr');
 
-        if (this.editable && ev.keyCode === $.ui.keyCode.ENTER && $tr.hasClass('o_selected_row')) {
+        if (this._getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && $tr.hasClass('o_selected_row')) {
             // enter on a textarea for example, let it bubble
             return;
         }
 
-        if (this.editable && ev.keyCode === $.ui.keyCode.ENTER && !$tr.hasClass('o_selected_row') && !$tr.hasClass('o_group_header')) {
+        if (this._getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && !$tr.hasClass('o_selected_row') && !$tr.hasClass('o_group_header')) {
             ev.stopPropagation();
             ev.preventDefault();
             if ($target.closest('td').hasClass('o_group_field_row_add')) {
@@ -1237,7 +1281,7 @@ ListRenderer.include({
      * @private
      */
     _onRowClicked: function () {
-        if (!this.editable) {
+        if (!this._getEditableState()) {
             this._super.apply(this, arguments);
         }
     },
@@ -1266,6 +1310,11 @@ ListRenderer.include({
      * @param {MouseEvent} event
      */
     _onWindowClicked: function (event) {
+        // ignore clicks on readonly lists with no selected rows
+        if (!this._getEditableState()) {
+            return;
+        }
+
         // ignore clicks if this renderer is not in the dom.
         if (!document.contains(this.el)) {
             return;
