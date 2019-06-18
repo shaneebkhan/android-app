@@ -6,7 +6,7 @@
         <field name="arch" type="xml">
             <form string="Choose your date">
                 <group>
-                    <field name="date"/>
+                    <field name="inventory_datetime"/>
                 </group>
                 <footer>
                     <button name="open_at_date" string="Confirm" type="object" class="btn-primary"/>
