@@ -20,6 +20,7 @@ class StockMove(SavepointCase):
         ], limit=1)
         cls.uom_unit = cls.env.ref('uom.product_uom_unit')
         cls.uom_dozen = cls.env.ref('uom.product_uom_dozen')
+        cls.uom_kg = cls.env.ref('uom.product_uom_kgm')
         cls.product = cls.env['product.product'].create({
             'name': 'Product A',
             'type': 'product',
@@ -41,6 +42,32 @@ class StockMove(SavepointCase):
             'name': 'Product A',
             'type': 'consu',
             'categ_id': cls.env.ref('product.product_category_all').id,
+        })
+        cls.product_category_5 = cls.env['product.category'].create({
+            'name': 'Office Furniture',
+        })
+        cls.product_product_5 = cls.env['product.product'].create({
+            'name': 'Corner Desk Right Sit',
+            'type': 'consu',
+            'categ_id': cls.product_category_5.id,
+            'standard_price': 600.0,
+            'list_price': 147.0,
+            'weight': 0.01,
+            'uom_id': cls.uom_unit.id,
+            'uom_po_id': cls.uom_unit.id,
+            'default_code': 'E-COM06'
+        })
+        cls.product_cable_management_box = cls.env['product.product'].create({
+            'name': 'Cable Management Box',
+            'type': 'product',
+            # 'categ_id': cls.product_category_5.id,
+            'standard_price': 70.0,
+            'list_price': 100.0,
+            'weight': 0.01,
+            'uom_id': cls.uom_kg.id,
+            'uom_po_id': cls.uom_kg.id,
+            'default_code': 'FURN_5555',
+            'tracking': 'lot'
         })
 
     def gather_relevant(self, product_id, location_id, lot_id=None, package_id=None, owner_id=None, strict=False):
@@ -715,7 +742,7 @@ class StockMove(SavepointCase):
         })
         # putaway from stock to shelf1
         putaway = self.env['stock.putaway.rule'].create({
-            'product_id': self.env.ref('product.product_product_5').id,
+            'product_id': self.product_product_5.id,
             'location_in_id': self.stock_location.id,
             'location_out_id': shelf1_location.id,
         })
@@ -728,7 +755,7 @@ class StockMove(SavepointCase):
             'name': 'test_putaway_2',
             'location_id': self.supplier_location.id,
             'location_dest_id': self.stock_location.id,
-            'product_id': self.env.ref('product.product_product_5').id,
+            'product_id': self.product_product_5.id,
             'product_uom': self.uom_unit.id,
             'product_uom_qty': 100.0,
         })
@@ -766,7 +793,7 @@ class StockMove(SavepointCase):
             'location_out_id': shelf1_location.id,
         })
         putaway_product = self.env['stock.putaway.rule'].create({
-            'product_id': self.env.ref('stock.product_cable_management_box').id,
+            'product_id': self.product_cable_management_box.id,
             'location_in_id': self.supplier_location.id,
             'location_out_id': shelf2_location.id,
         })
@@ -782,7 +809,7 @@ class StockMove(SavepointCase):
             'name': 'test_putaway_3',
             'location_id': self.supplier_location.id,
             'location_dest_id': self.stock_location.id,
-            'product_id': self.env.ref('stock.product_cable_management_box').id,
+            'product_id': self.product_cable_management_box.id,
             'product_uom': self.env.ref('uom.product_uom_kgm').id,
             'product_uom_qty': 100.0,
         })
@@ -822,7 +849,7 @@ class StockMove(SavepointCase):
             'location_out_id': shelf1_location.id,
         })
         putaway_product = self.env['stock.putaway.rule'].create({
-            'product_id': self.env.ref('stock.product_cable_management_box').id,
+            'product_id': self.product_cable_management_box.id,
             'location_in_id': self.stock_location.id,
             'location_out_id': shelf2_location.id,
         })
@@ -876,19 +903,17 @@ class StockMove(SavepointCase):
                 putaway.id,
             ])],
         })
-
         # creation
         move1 = self.env['stock.move'].create({
             'name': 'test_putaway_5',
             'location_id': self.supplier_location.id,
             'location_dest_id': self.stock_location.id,
-            'product_id': self.env.ref('stock.product_cable_management_box').id,
-            'product_uom': self.env.ref('uom.product_uom_kgm').id,
+            'product_id': self.product_cable_management_box.id,
+            'product_uom': self.uom_kg.id,
             'product_uom_qty': 100.0,
         })
         move1._action_confirm()
         self.assertEqual(move1.state, 'confirmed')
-
         # assignment
         move1._action_assign()
         self.assertEqual(move1.state, 'assigned')
@@ -920,7 +945,7 @@ class StockMove(SavepointCase):
             'location_out_id': shelf1_location.id,
         })
         putaway_category_office_furn = self.env['stock.putaway.rule'].create({
-            'category_id': self.env.ref('product.product_category_5').id,
+            'category_id': self.product_category_5.id,
             'location_in_id': self.supplier_location.id,
             'location_out_id': shelf2_location.id,
         })
@@ -930,13 +955,14 @@ class StockMove(SavepointCase):
                 putaway_category_office_furn.id,
             ])],
         })
+        self.product_cable_management_box.categ_id = self.product_category_5.id
 
         # creation
         move1 = self.env['stock.move'].create({
             'name': 'test_putaway_6',
             'location_id': self.supplier_location.id,
             'location_dest_id': self.stock_location.id,
-            'product_id': self.env.ref('stock.product_cable_management_box').id,
+            'product_id': self.product_cable_management_box.id,
             'product_uom': self.env.ref('uom.product_uom_kgm').id,
             'product_uom_qty': 100.0,
         })
