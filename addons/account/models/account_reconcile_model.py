@@ -635,6 +635,9 @@ class AccountReconcileModel(models.Model):
                 grouped_candidates.setdefault(res['id'], {})
                 grouped_candidates[res['id']].setdefault(res['model_id'], True)
 
+        # Keep track of already processed amls.
+        amls_ids_to_exclude = set()
+
         # Keep track of already reconciled amls.
         reconciled_amls_ids = set()
 
@@ -657,18 +660,26 @@ class AccountReconcileModel(models.Model):
                     # Otherwise, suggest all invoices having the same partner.
                     # N.B: The only way to match a line without a partner is through the communication.
                     first_batch_candidates = []
+                    first_batch_candidates_proposed = []
                     second_batch_candidates = []
+                    second_batch_candidates_proposed = []
                     for c in candidates:
                         # Don't take into account already reconciled lines.
                         if c['aml_id'] in reconciled_amls_ids:
                             continue
 
                         # Dispatch candidates between lines matching invoices with the communication or only the partner.
-                        if c['communication_flag']:
-                            first_batch_candidates.append(c)
+                        elif c['communication_flag']:
+                            if c['aml_id'] in amls_ids_to_exclude:
+                                first_batch_candidates_proposed.append(c)
+                            else:
+                                first_batch_candidates.append(c)
                         elif not first_batch_candidates:
-                            second_batch_candidates.append(c)
-                    available_candidates = first_batch_candidates or second_batch_candidates
+                            if c['aml_id'] in amls_ids_to_exclude:
+                                second_batch_candidates_proposed.append(c)
+                            else:
+                                second_batch_candidates.append(c)
+                    available_candidates = first_batch_candidates + first_batch_candidates_proposed or second_batch_candidates + second_batch_candidates_proposed
 
                     # Special case: the amount are the same, submit the line directly.
                     for c in available_candidates:

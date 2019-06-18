@@ -483,13 +483,13 @@ var LineRenderer = Widget.extend(FieldManagerMixin, {
         }
         this.$('.create .add_line').toggle(!!state.balance.amount_currency);
 
-        if (this.$el.is(':focus')) {
-            this.$('caption .o_buttons button:not(:disabled)').attr('accesskey', 'V');
+        if (this.$el.is(':focus-within')) {
+            this.$('caption .o_buttons button:not(:disabled):visible').attr('accesskey', 'V');
             this.$('.nav-match').attr('accesskey', 'M');
             this.$('.nav-misc').attr('accesskey', 'C');
             this.$('input.filter.o_input').attr('accesskey', 'Z');
         } else {
-            this.$('caption .o_buttons button:not(:disabled)').attr('accesskey', '');
+            this.$('caption .o_buttons button').attr('accesskey', '');
             this.$('.nav-match').attr('accesskey', '');
             this.$('.nav-misc').attr('accesskey', '');
             this.$('.filter.o_input').attr('accesskey', '');

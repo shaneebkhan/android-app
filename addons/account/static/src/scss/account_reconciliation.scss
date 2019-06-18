@@ -222,7 +222,7 @@
             display: block;
         }
 
-        &:not(:focus) caption .o_web_accesskey_overlay {
+        &:not(:focus-within) .o_web_accesskey_overlay {
             display: none;
         }
     }
