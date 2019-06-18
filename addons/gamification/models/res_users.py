@@ -96,6 +96,9 @@ class Users(models.Model):
             if old_rank != user.rank_id:
                 user._rank_changed()
 
+    def _get_next_rank(self):
+        return self.next_rank_id or (not self.rank_id and self.env['gamification.karma.rank'].search([], order="karma_min ASC", limit=1))
+
     def get_gamification_redirection_data(self):
         """
         Hook for other modules to add redirect button(s) in new rank reached mail
