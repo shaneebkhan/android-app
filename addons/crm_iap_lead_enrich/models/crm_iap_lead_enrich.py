@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError
 from odoo.addons.iap import jsonrpc,InsufficientCreditError
@@ -11,29 +13,31 @@ class Lead(models.Model):
 
     @api.multi
     def lead_enrich_mail(self):
-        request = {}
+        domains = {}
         for record in self:
             if record.probability == 0:
                 continue
             email_domain = record.partner_address_email or record.email_from
             if email_domain:
-                request[record.id] = email_domain.split('@')[1]
+                domains[record.id] = email_domain.split('@')[1]
             else:
                 record.message_post_with_view('crm_iap_lead_enrich.lead_enrich_message_no_mail', subtype_id=self.env.ref('mail.mt_note').id)        
-        try:
-            response_clearbit = self._make_request(request)
-            self._enrich_leads_from_response(response_clearbit)
-        except InsufficientCreditError:
-            for record in self:
+        if domains:
+            try:
+                response_clearbit = self._make_request(domains)
+                self._enrich_leads_from_response(response_clearbit)
+                self.sudo().set_param('lead_enrich.already_notified', False)
+            except InsufficientCreditError:
                 data = {
                     'message_title': _("Lead enriched based on email address"),
                     'url' : self.env['iap.account'].get_account_url(),
                 }
-                record.message_post_with_view('crm_iap_lead_enrich.lead_enrich_message_no_credit', values=data, subtype_id=self.env.ref('mail.mt_note').id)
+                self.notify_no_more_credit('reveal', self._name, 'lead_enrich.already_notified')
+                self.message_post_with_view('crm_iap_lead_enrich.lead_enrich_message_no_credit', values=data, subtype_id=self.env.ref('mail.mt_note').id)
     
     @api.model
     def enrich_with_cron(self):
-        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False)])
+        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False),('won_status','=','pending')])
         leads.lead_enrich_mail()
 
     @api.model
@@ -118,3 +122,23 @@ class Lead(models.Model):
                     record._send_message(data)
                 else:
                     record._send_message()
+
+    def notify_no_more_credit(self, service_name, model_name, notification_parameter):
+        """
+        Notify when user has no credits anymore
+        In order to avoid to spam people each hour, an ir.config_parameter is set
+        """
+        already_notified = self.env['ir.config_parameter'].sudo().get_param(notification_parameter, False)
+        if already_notified:
+            return
+        mail_template = self.env.ref('crm_iap_lead_enrich.lead_enrichment_no_credits')
+        iap_account = self.env['iap.account'].search([('service_name', '=', service_name)], limit=1)
+        res = self.env[model_name].search_read([], ['create_uid'])
+        uids = set(r['create_uid'][0] for r in res if r.get('create_uid'))
+        res = self.env['res.users'].search_read([('id', 'in', list(uids))], ['email'])
+        emails = set(r['email'] for r in res if r.get('email'))
+        email_values = {
+            'email_to': ','.join(emails)
+        }
+        mail_template.send_mail(iap_account.id, force_send=True, email_values=email_values)
+        self.env['ir.config_parameter'].sudo().set_param(notification_parameter, True)

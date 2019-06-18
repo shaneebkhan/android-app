@@ -8,6 +8,7 @@
     'depends': ['crm_iap_lead'],
     'data': [
         'data/message_template.xml',
+        'data/mail_template.xml',
         'data/crm_iap_enrich_cron.xml',
         'views/crm_iap_lead_enrichment_email.xml',
         'views/res_config_settings_views.xml',
