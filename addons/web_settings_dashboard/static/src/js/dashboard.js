@@ -45,33 +45,33 @@ var Dashboard = AbstractAction.extend({
     },
 
     load_apps: function(data){
-        return  new DashboardApps(this, data.apps).replace(this.$('.o_web_settings_dashboard_apps'));
+        return  new DashboardApps(this, data.apps).replace(this.$('.o_web_settings_apps'));
     },
 
     load_share: function(data){
-        return new DashboardShare(this, data.share).replace(this.$('.o_web_settings_dashboard_share'));
+        return new DashboardShare(this, data.share).replace(this.$('.o_web_settings_share'));
     },
 
     load_invitations: function(data){
-        return new DashboardInvitations(this, data.users_info).replace(this.$('.o_web_settings_dashboard_invitations'));
+        return new DashboardInvitations(this, data.users_info).replace(this.$('.o_web_settings_invitations'));
     },
 
     load_translations: function (data) {
-        return new DashboardTranslations(this, data.translations).replace(this.$('.o_web_settings_dashboard_translations'));
+        return new DashboardTranslations(this, data.translations).replace(this.$('.o_web_settings_translations'));
     },
 
     load_company: function (data) {
-        return new DashboardCompany(this, data.company).replace(this.$('.o_web_settings_dashboard_company'));
+        return new DashboardCompany(this, data.company).replace(this.$('.o_web_settings_company'));
     },
 });
 
 var DashboardInvitations = Widget.extend({
     template: 'DashboardInvitations',
     events: {
-        'click .o_web_settings_dashboard_invite': '_onClickInvite',
-        'click .o_web_settings_dashboard_access_rights': 'on_access_rights_clicked',
-        'click .o_web_settings_dashboard_user': 'on_user_clicked',
-        'click .o_web_settings_dashboard_more': 'on_more',
+        'click .o_web_settings_invite': '_onClickInvite',
+        'click .o_web_settings_access_rights': 'on_access_rights_clicked',
+        'click .o_web_settings_user': 'on_user_clicked',
+        'click .o_web_settings_more': 'on_more',
         'click .o_badge_remove': '_onClickBadgeRemove',
         'keydown .o_user_emails': '_onKeydownUserEmails',
     },
@@ -237,7 +237,7 @@ var DashboardInvitations = Widget.extend({
         }
         // remove last badge on backspace
         if (ev.which === $.ui.keyCode.BACKSPACE && this.emails.length && !$userEmails.val()) {
-            this._removeBadge(this.$('.o_web_settings_dashboard_invitation_form .badge:last'));
+            this._removeBadge(this.$('.o_web_settings_invitation_form .badge:last'));
         }
     },
 });
@@ -291,7 +291,7 @@ var DashboardShare = Widget.extend({
         'click .tw_share': 'share_twitter',
         'click .fb_share': 'share_facebook',
         'click .li_share': 'share_linkedin',
-        'click .o_web_settings_dashboard_force_demo': '_onClickForceDemo',
+        'click .o_web_settings_force_demo': '_onClickForceDemo',
     },
 
     init: function (parent, data) {

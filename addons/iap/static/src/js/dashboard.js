@@ -23,7 +23,7 @@ Dashboard.Dashboard.include({
         }).then(function (url) {
             data.iap = {};
             data.iap.url = url;
-            return new DashboardIAP(self, data.iap).replace(self.$('.o_web_settings_dashboard_iap'));
+            return new DashboardIAP(self, data.iap).replace(self.$('.o_web_settings_iap'));
         });
     },
 });

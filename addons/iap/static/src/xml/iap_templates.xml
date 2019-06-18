@@ -17,15 +17,15 @@
     </div>
 
     <t t-extend="DashboardMain">
-        <t t-jquery=".o_web_settings_dashboard_apps" t-operation="after">
-            <div class="o_web_settings_dashboard_iap"></div>
+        <t t-jquery=".o_web_settings_apps" t-operation="after">
+            <div class="o_web_settings_iap"></div>
         </t>
     </t>
 
     <t t-name="iap.web_settings_dashboard_iap">
-        <div class="text-center o_web_settings_dashboard_iap mt8">
+        <div class="text-center o_web_settings_iap mt8">
             <img class="col-5" src="/iap/static/src/img/iap_logo.svg"/>
-            <div class="o_web_settings_dashboard_header mt8">
+            <div class="o_web_settings_header mt8">
                 In-App Purchases
             </div>
             <div class="mt16">

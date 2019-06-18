@@ -11,27 +11,20 @@
                         <div id='about'>
                             <h2>About</h2>
                             <div class="row mt16 o_settings_container">
-                                <div class='col-12 col-lg-6 o_setting_box' id='appstore'>
+                                <div class='col-12 col-lg-6 o_setting_box d-flex' id='appstore'>
                                     <div class="o_setting_right_pane">
                                         <a class="d-block mx-auto" href="https://play.google.com/store/apps/details?id=com.odoo.mobile" target="blank">
                                             <img alt="On Google Play" class="d-block mx-auto img img-fluid" src="/web_mobile/static/src/img/google_play.png"/>
                                         </a>
                                     </div>
-                                    <div class="o_setting_right_pane">
-                                        <a class='d-bloc mx-auto' href="https://itunes.apple.com/us/app/odoo/id1272543640" target="blank">
+                                    <div>
+                                        <a class='d-block mx-auto' href="https://itunes.apple.com/us/app/odoo/id1272543640" target="blank">
                                             <img alt="On Apple Store" class="d-block mx-auto img img-fluid" src="/web_mobile/static/src/img/app_store.png"/>
                                         </a>
                                     </div>
                                 </div>
-                                <div class="col-12 col-lg-6 o_setting_box" id="edtion">
-                                    <div class="o_setting_right_pane">
-                                        <widget name='res_config_edition'/>
-                                    </div>
-                                </div>
+                                <widget name='res_config_edition'/>
                             </div>
-
-                            
-                            <hr/>
                         </div>
                         <div id='invite_users'>
                             <h2>Invite Users</h2>
@@ -314,16 +307,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="developer_tool">
-                            <h2>Developer Tools</h2>
-                            
-                                <div class="col-12 col-lg-6 o_setting_box" id="devel_tool">
-                                    <div class="o_setting_left_pane">
-                                        <widget name='res_config_dev_tool'/>
-                                    </div>
-                                </div>
-                            
-                        </div>
+                        <widget name='res_config_dev_tool'/>
                     </div>
                 </xpath>
             </field>

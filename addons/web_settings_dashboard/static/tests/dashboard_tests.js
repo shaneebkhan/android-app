@@ -64,8 +64,8 @@ QUnit.module('settings_dashboard', function () {
             'input should have been cleared');
 
         // send invitation
-        await testUtils.dom.click(dashboard.$('.o_web_settings_dashboard_invite'));
-        assert.strictEqual(dashboard.$('.o_web_settings_dashboard_user').text().trim(), 'lagan@odoo.com',
+        await testUtils.dom.click(dashboard.$('.o_web_settings_invite'));
+        assert.strictEqual(dashboard.$('.o_web_settings_user').text().trim(), 'lagan@odoo.com',
             'should have created a badge in pending invitations');
         assert.containsNone(dashboard, '.o_badge_text',
             'should have removed the badge from the invite area');
