@@ -91,42 +91,13 @@ class StockInventoryReport(models.Model):
         records = super(StockInventoryReport, self).search_read(domain=domain, fields=fields, offset=offset, limit=limit, order=order)
         returned_records = []
 
-        # def _compensate(quantity, lot, owner):
-        #     """ Return the minimum quantity between the quantity given as
-        #     argument or the quantity in records with the passed lot and owner
-        #     as arguments. If the minimum quantity is the quantity found in
-        #     records then dicrease the original quantity on the record.
-        #     """
-        #     quantity_stolen = records[(lot, owner)]['quantity']
-        #     quantity_to_balance = min(quantity_stolen, abs(quantity))
-        #     # TODO float_compare
-        #     if quantity_to_balance > 0:
-        #         quantity += quantity_to_balance
-        #         records[(lot, False)]['quantity'] -= quantity_to_balance
-        #     return quantity
-
         def _key_groupby_sorted(record):
             return [record.get('product_id') or (),
             record.get('package_id') or (), record.get('location_id') or ()]
 
-        # for f, groups in groupby(sorted(records, reverse=True, key=lambda r: _key_groupby_sorted(r) + [r.get('lot_id') or (), r.get('owner_id') or ()]), key=_key_groupby_sorted):
         for f, groups in groupby(sorted(records, key=_key_groupby_sorted), key=_key_groupby_sorted):
             groups = list(groups)
 
-            # Since the possible usecase is possible: receive a product without
-            # lot and add one later during an internal or delivery transfer. We
-            # manage to compensate negative quantities for a lot with the
-            # positive quantity without lot. (for a given product, package,
-            # location).
-            # E.g (prod A, loc WH/stock, Lot False, Quanity 10)
-            #     (prod A, loc WH/stock, Lot 00001, Quanity -5)
-            #     (prod A, loc WH/stock, Lot 00001, Quanity  3)
-            # should return
-            #     (prod A, loc WH/stock, Lot False, Quanity  8)
-            # The same process is used for owner.
-            # The combination of both is like blood donation where a record
-            # without owner and lot is like o- and a record with a lot and
-            # owner is ab+.
             records = OrderedDict()
             for record in groups:
                 lot_and_owner = (record.get('lot_id'), record.get('owner_id'))
@@ -138,18 +109,6 @@ class StockInventoryReport(models.Model):
                             records[lot_and_owner]['date'] = record['date']
                 else:
                     records[lot_and_owner] = record
-
-            # TODO date should be updated when the quantity from an older ml is
-            # taken.
-            # for (lot, owner), record in records.items():
-            #     if not fields or 'quantity' in fields:
-            #         quantity = record['quantity']
-            #         if quantity < 0 and lot and records.get((lot, False)):
-            #             quantity = _compensate(quantity, lot, False)
-            #         if quantity < 0 and owner and records.get((False, owner)):
-            #             quantity = _compensate(quantity, False, owner)
-            #         if quantity < 0 and records.get((False, False)):
-            #             quantity = _compensate(quantity, False, False)
 
             for record in records.values():
                 if not fields or 'quantity' in fields:

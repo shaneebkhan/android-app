@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-from odoo.exceptions import ValidationError
+
+
+from odoo import fields
+from odoo.tools import date_utils
 from odoo.tests.common import TransactionCase
-from odoo import fields, tests
 
 class TestInventoryReport(TransactionCase):
     def setUp(self):
@@ -19,14 +21,15 @@ class TestInventoryReport(TransactionCase):
         })
 
         # Define some old dates
-        self.move_date = fields.Datetime.to_datetime('2017-12-02 00:00:00')
-        self.before_move_date = fields.Datetime.to_datetime('2017-12-01 00:00:00')
-        self.after_move_date = fields.Datetime.to_datetime('2018-01-15 00:00:00')
-
+        self.move_date = date_utils.add(fields.Datetime.now(), days=-2)
+        self.before_move_date = date_utils.add(fields.Datetime.now(), days=-7)
+        self.after_move_date = fields.Datetime.now()
         # Update product quantity
-        self.env['stock.quant']._update_available_quantity(
-            self.product1, self.stock_location, 100
-        )
+        self.env['stock.quant'].with_context(inventory_mode=True).create({
+            'product_id': self.product1.id,
+            'location_id': self.stock_location.id,
+            'inventory_quantity': 100
+        })
 
         # Create a move...
         self.move1 = self.env['stock.move'].create({
@@ -52,21 +55,23 @@ class TestInventoryReport(TransactionCase):
         """ Check that asking a report at date before a move, we get product
         quantity corresponding what we have before this move.
         """
-
+        # Just ensure that id do not raise an error.
         self.stock_quant_history.date = self.before_move_date
         self.stock_quant_history.open_at_date()
 
         report_line = self.env['stock.inventory.report'].search([
             ('product_id', '=', self.product1.id),
             ('location_id', '=', self.customer_location.id),
+            ('date', '<=', self.before_move_date)
         ])
         self.assertEqual(report_line.quantity, 0)
 
         report_line = self.env['stock.inventory.report'].search([
             ('product_id', '=', self.product1.id),
             ('location_id', '=', self.stock_location.id),
+            ('date', '<=', self.before_move_date)
         ])
-        self.assertEqual(report_line.quantity, 100)
+        self.assertEqual(report_line.quantity, 0)
 
     def test_inventory_report_2(self):
         """ Check that asking a report at date after a move, we don't take this
@@ -79,11 +84,13 @@ class TestInventoryReport(TransactionCase):
         report_line = self.env['stock.inventory.report'].search([
             ('product_id', '=', self.product1.id),
             ('location_id', '=', self.customer_location.id),
+            ('date', '<=', self.after_move_date)
         ])
         self.assertEqual(report_line.quantity, 50)
 
         report_line = self.env['stock.inventory.report'].search([
             ('product_id', '=', self.product1.id),
             ('location_id', '=', self.stock_location.id),
+            ('date', '<=', self.after_move_date)
         ])
-        self.assertEqual(report_line.quantity, 50)
+        self.assertEqual(sum(report_line.mapped('quantity')), 50)

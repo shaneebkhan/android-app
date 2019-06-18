@@ -63,7 +63,7 @@
                 <form string="Choose your date">
                     <group>
                         <group>
-                            <field name="date"/>
+                            <field name="inventory_datetime"/>
                         </group>
                     </group>
                     <footer>
