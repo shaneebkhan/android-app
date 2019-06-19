@@ -101,7 +101,7 @@ class StockMove(SavepointCase):
             'picking_type_id': self.picking_type_in.id,
             'company_id': self.comp2.id,
         })
-        moveline1 = self.env['stock.move.line'].create({
+        self.env['stock.move.line'].create({
             'picking_id': receipt.id,
             'product_id': self.product.id,
             'product_uom_id': self.product.uom_id.id,
@@ -117,3 +117,24 @@ class StockMove(SavepointCase):
         ])
         self.assertEquals(lot.product_id, self.product, 'This lot belong to the wrong product')
         self.assertEquals(lot.company_id, self.comp2, 'This lot belong to the wrong product')
+
+    def test_multicompany_4(self):
+        """ Check that each business document takes the user company."""
+        self.new_user.company_ids = [(4, self.ref('base.main_company'))]
+        picking = self.env['stock.picking'].sudo(self.new_user).create({
+            'location_id': self.vendor_location.id,
+            'location_dest_id': self.stock_location.id,
+            'picking_type_id': self.picking_type_in.id,
+        })
+        self.assertEqual(picking.company_id, self.new_user.company_id, 'Picking created in the wrong company')
+        lot = self.env['stock.production.lot'].sudo(self.new_user).create({
+            'product_id': self.product.id,
+            'name': '000001',
+        })
+        self.assertEqual(lot.company_id, self.new_user.company_id, 'Lot created in the wrong company')
+        inventory = self.env['stock.inventory'].sudo(self.new_user).create({
+            'name': 'remove product1',
+            'location_ids': [(4, self.stock_location.id)],
+            'product_ids': [(4, self.product.id)],
+        })
+        self.assertEqual(inventory.company_id, self.new_user.company_id, 'Inventory created in the wrong company')
