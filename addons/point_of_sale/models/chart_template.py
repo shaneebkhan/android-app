@@ -47,7 +47,6 @@ class AccountChartTemplate(models.Model):
             'receivable_account_id': receivable_account.id,
             'is_cash_count': True,
             'cash_journal_id': cash_journal.id,
-            'split_transactions': 'combine',
         }
         return self.env['pos.payment.method'].create(vals)
 
@@ -56,7 +55,6 @@ class AccountChartTemplate(models.Model):
             'name': 'Bank',
             'receivable_account_id': receivable_account.id,
             'is_cash_count': False,
-            'split_transactions': 'combine',
         }
         return self.env['pos.payment.method'].create(vals)
 

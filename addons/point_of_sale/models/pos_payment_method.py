@@ -22,11 +22,11 @@ class PosPaymentMethod(models.Model):
         string='Cash Journal',
         domain=[('type', '=', 'cash')],
         help='The payment method is of type cash. A cash statement will be automatically generated.')
-    split_transactions = fields.Selection(
-        [('combine', 'One journal item for all transactions'),
-         ('split', 'One journal item per transaction'),
-        ], string='Split Transactions', default='combine',
-        help='Determine whether payment made with this method will generate separate receivable journal item.')
+    split_transactions = fields.Boolean(
+        string='Split Transactions',
+        default=False,
+        groups='base.group_no_one',
+        help='Determine whether payment made with this method will generate separate receivable journal items.')
     session_ids = fields.Many2many('pos.session', string='Pos Sessions', help='Pos sessions that are using this payment method.')
 
     @api.multi
