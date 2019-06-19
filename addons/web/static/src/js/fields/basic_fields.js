@@ -1336,10 +1336,19 @@ var UrlWidget = InputField.extend({
      * @private
      */
     _renderReadonly: function () {
-        this.$el.text(this.attrs.text || this.value)
+        var label = this.attrs.text || this.value;
+        this.$el
             .addClass('o_form_uri o_text_overflow')
             .attr('target', '_blank')
             .attr('href', this.value);
+            
+        if (this.nodeOptions.icon) {
+            var $elem = $('<i/>').addClass('fa '+this.nodeOptions.icon);
+            this.$el.append($elem);
+            this.$el.append(label);
+        } else {
+            this.$el.text(label);
+        } 
     },
 
     //--------------------------------------------------------------------------
