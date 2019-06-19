@@ -205,10 +205,13 @@ class WebsiteSale(http.Controller):
     ], type='http', auth="public", website=True)
     def shop(self, page=0, category=None, search='', ppg=False, **post):
         add_qty = int(post.get('add_qty', 1))
+        Category = request.env['product.public.category']
         if category:
-            category = request.env['product.public.category'].search([('id', '=', int(category))], limit=1)
+            category = Category.search([('id', '=', int(category))], limit=1)
             if not category or not category.can_access_from_current_website():
                 raise NotFound()
+        else:
+            category = Category
 
         if ppg:
             try:
@@ -242,24 +245,19 @@ class WebsiteSale(http.Controller):
 
         Product = request.env['product.template'].with_context(bin_size=True)
 
-        Category = request.env['product.public.category']
-        search_categories = False
+        search_categories = Category
         search_product = Product.search(domain)
+        website_domain = request.website.website_domain()
         if search:
-            categories = search_product.mapped('public_categ_ids')
-            search_categories = Category.search([('id', 'parent_of', categories.ids)] + request.website.website_domain())
-            categs = search_categories.filtered(lambda c: not c.parent_id)
+            search_categories = Category.search([('product_tmpl_ids', 'in', search_product.ids)] + website_domain).parents_and_self
+            categs = Category.search(['|', ('id', 'in', search_categories.ids), ('id', 'child_of', search_categories.ids)] + website_domain)
         else:
-            categs = Category.search([('parent_id', '=', False)] + request.website.website_domain())
+            categs = Category.search(website_domain)
+        # ensure read of children is done in batch
+        categs.child_id
 
-        parent_category_ids = []
         if category:
             url = "/shop/category/%s" % slug(category)
-            parent_category_ids = [category.id]
-            current_category = category
-            while current_category.parent_id:
-                parent_category_ids.append(current_category.parent_id.id)
-                current_category = current_category.parent_id
 
         product_count = len(search_product)
         pager = request.website.pager(url=url, total=product_count, page=page, step=ppg, scope=7, url_args=post)
@@ -298,8 +296,7 @@ class WebsiteSale(http.Controller):
             'attributes': attributes,
             'compute_currency': compute_currency,
             'keep': keep,
-            'parent_category_ids': parent_category_ids,
-            'search_categories_ids': search_categories and search_categories.ids,
+            'search_categories': search_categories,
             'layout_mode': layout_mode,
         }
         if category:

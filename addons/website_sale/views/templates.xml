@@ -259,13 +259,15 @@
                             </div>
                             <t t-else="">
                                 <div class="text-center text-muted oe_product">
-                                    <h3 class="css_editable_display mt8">No product defined.</h3>
-                                    <t t-if="search">
-                                        <p>
-                                            No results found for "<strong t-esc='search'/>".
-                                        </p>
+                                    <t t-if="not search">
+                                        <h3 class="mt8">No product defined</h3>
+                                        <p t-if="category">No product defined in category "<strong t-esc="category.display_name"/>".</p>
                                     </t>
-                                    <p groups="sales_team.group_sale_manager">Click <i>'New'</i> in the top-right corner to create your first product.</p>
+                                    <t t-else="">
+                                        <h3 class="mt8">No results</h3>
+                                        <p>No results for "<strong t-esc='search'/>"<t t-if="category"> in category "<strong t-esc="category.display_name"/>"</t>.</p>
+                                    </t>
+                                    <p t-ignore="true" groups="sales_team.group_sale_manager">Click <i>'New'</i> in the top-right corner to create your first product.</p>
                                 </div>
                             </t>
                         </div>
@@ -331,12 +333,12 @@
     <!-- Add to cart button-->
     <template id="categories_recursive" name="Category list">
         <li class="nav-item">
-            <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c.id == int(category or 0) else ''}">
+            <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c == category else ''}">
                 <span t-field="c.name"/>
             </a>
             <ul t-if="c.child_id" class="nav nav-pills flex-column nav-hierarchy">
                 <t t-foreach="c.child_id" t-as="c">
-                    <t t-if="not search or c.id in search_categories_ids">
+                    <t t-if="not search or c in search_categories">
                         <t t-call="website_sale.categories_recursive" />
                     </t>
                 </t>
@@ -359,7 +361,7 @@
                         <a t-att-href="keep('/shop', category=0)" t-attf-class="nav-link#{'' if category else ' active'} o_not_editable">All Products</a>
                     </li>
                     <t t-foreach="categories" t-as="c">
-                        <t t-call="website_sale.categories_recursive" />
+                        <t t-if="not c.parent_id" t-call="website_sale.categories_recursive" />
                     </t>
                 </ul>
             </div>
@@ -368,13 +370,13 @@
 
     <template id="option_collapse_categories_recursive" name="Collapse Category Recursive">
         <li class="nav-item">
-            <i t-if="c.child_id" t-attf-class="text-primary fa #{'fa-chevron-down' if c.id in parent_category_ids else 'fa-chevron-right'}"
-               t-attf-title="#{'Unfold' if c.id in parent_category_ids else 'Fold'}"
-               t-attf-aria-label="#{'Unfold' if c.id in parent_category_ids else 'Fold'}" role="img"/>
-            <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c.id == int(category or 0) else ''}" t-field="c.name"></a>
-            <ul t-if="c.child_id" class="nav nav-pills flex-column nav-hierarchy" t-att-style="'display:block;' if c.id in parent_category_ids else 'display:none;'">
+            <i t-if="c.child_id" t-attf-class="text-primary fa #{'fa-chevron-down' if c in category.parents_and_self else 'fa-chevron-right'}"
+               t-attf-title="#{'Unfold' if c in category.parents_and_self else 'Fold'}"
+               t-attf-aria-label="#{'Unfold' if c in category.parents_and_self else 'Fold'}" role="img"/>
+            <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c == category else ''}" t-field="c.name"></a>
+            <ul t-if="c.child_id" class="nav nav-pills flex-column nav-hierarchy" t-att-style="'display:block;' if c in category.parents_and_self else 'display:none;'">
                 <t t-foreach="c.child_id" t-as="c">
-                    <t t-if="not search or c.id in search_categories_ids">
+                    <t t-if="not search or c in search_categories">
                         <t t-call="website_sale.option_collapse_categories_recursive"/>
                     </t>
                 </t>
