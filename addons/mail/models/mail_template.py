@@ -17,9 +17,9 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 
-def format_date(env, date, pattern=False):
+def format_date(env, date, pattern=False, lang_code=False):
     try:
-        return tools.format_date(env, date, date_format=pattern)
+        return tools.format_date(env, date, date_format=pattern, lang_code=lang_code)
     except babel.core.UnknownLocaleError:
         return date
 
