@@ -336,7 +336,7 @@
             <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c == category else ''}">
                 <span t-field="c.name"/>
             </a>
-            <ul t-if="c.child_id" class="nav nav-pills flex-column nav-hierarchy">
+            <ul t-if="c in category.parents_and_self and c.child_id" class="nav nav-pills flex-column nav-hierarchy">
                 <t t-foreach="c.child_id" t-as="c">
                     <t t-if="not search or c in search_categories">
                         <t t-call="website_sale.categories_recursive" />
@@ -374,7 +374,7 @@
                t-attf-title="#{'Unfold' if c in category.parents_and_self else 'Fold'}"
                t-attf-aria-label="#{'Unfold' if c in category.parents_and_self else 'Fold'}" role="img"/>
             <a t-att-href="keep('/shop/category/' + slug(c), category=0)" t-attf-class="nav-link#{' active' if c == category else ''}" t-field="c.name"></a>
-            <ul t-if="c.child_id" class="nav nav-pills flex-column nav-hierarchy" t-att-style="'display:block;' if c in category.parents_and_self else 'display:none;'">
+            <ul t-if="c in category.parents_and_self and c.child_id" class="nav nav-pills flex-column nav-hierarchy" t-att-style="'display:block;' if c in category.parents_and_self else 'display:none;'">
                 <t t-foreach="c.child_id" t-as="c">
                     <t t-if="not search or c in search_categories">
                         <t t-call="website_sale.option_collapse_categories_recursive"/>

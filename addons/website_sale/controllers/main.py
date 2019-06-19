@@ -252,7 +252,10 @@ class WebsiteSale(http.Controller):
             search_categories = Category.search([('product_tmpl_ids', 'in', search_product.ids)] + website_domain).parents_and_self
             categs = Category.search(['|', ('id', 'in', search_categories.ids), ('id', 'child_of', search_categories.ids)] + website_domain)
         else:
-            categs = Category.search(website_domain)
+            categ_domain = [('parent_id', '=', False)]
+            if category.parents_and_self:
+                categ_domain = ['|', ('id', 'in', category.parents_and_self.ids)] + categ_domain
+            categs = Category.search(categ_domain + website_domain)
         # ensure read of children is done in batch
         categs.child_id
 
