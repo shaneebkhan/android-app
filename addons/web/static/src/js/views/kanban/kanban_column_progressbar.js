@@ -29,6 +29,7 @@ var KanbanColumnProgressBar = Widget.extend({
         // <progressbar/> attributes
         this.fieldName = columnState.progressBarValues.field;
         this.colors = columnState.progressBarValues.colors;
+        _.extend(this.colors,{'normal': 'normal'});
         this.sumField = columnState.progressBarValues.sum_field;
 
         // Previous progressBar state
@@ -77,6 +78,7 @@ var KanbanColumnProgressBar = Widget.extend({
             // current use of progressbars
 
             var subgroupCounts = {};
+            var activityCount = 0;
             _.each(self.colors, function (val, key) {
                 var subgroupCount = self.columnState.progressBarValues.counts[key] || 0;
                 if (self.activeFilter === key && subgroupCount === 0) {
@@ -89,6 +91,10 @@ var KanbanColumnProgressBar = Widget.extend({
             self.subgroupCounts = subgroupCounts;
             self.prevTotalCounterValue = self.totalCounterValue;
             self.totalCounterValue = self.sumField ? (self.columnState.aggregateValues[self.sumField] || 0) : self.columnState.count;
+            _.each(self.subgroupCounts, function (val, key) {
+                activityCount += val;
+            });
+            _.extend(self.subgroupCounts,{'normal': self.columnState.count-activityCount})
             self._notifyState();
             self._render();
         });
@@ -121,7 +127,7 @@ var KanbanColumnProgressBar = Widget.extend({
         });
         this.trigger_up('tweak_column_records', {
             callback: function ($el, recordData) {
-                var categoryValue = recordData[self.fieldName];
+                var categoryValue = recordData[self.fieldName] ? recordData[self.fieldName] : 'normal';
                 _.each(self.colors, function (val, key) {
                     $el.removeClass('oe_kanban_card_' + val);
                 });
@@ -183,6 +189,9 @@ var KanbanColumnProgressBar = Widget.extend({
                     var recordData = record.data;
                     if (self.activeFilter === recordData[self.fieldName]) {
                         end += parseFloat(recordData[self.sumField]);
+                    }
+                    else if(self.activeFilter === 'normal' && recordData[self.fieldName] === false) {
+                        end += recordData.planned_revenue;
                     }
                 });
             } else {

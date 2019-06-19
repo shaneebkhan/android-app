@@ -162,7 +162,7 @@ QUnit.test('activity view: simple activity rendering', async function (assert) {
         'the counter progressbars should be correctly displayed');
     var $th2 = activity.$('table thead tr:first th:nth-child(3)');
     assert.containsOnce($th2, 'span:first:contains(Call)', 'should contain "Call" in header of second column');
-    assert.hasAttrValue($th2.find('.o_kanban_counter_progress .progress-bar:last'), 'data-original-title', '1 overdue',
+    assert.hasAttrValue($th2.find('.o_kanban_counter_progress .progress-bar:nth-child(3)'), 'data-original-title', '1 overdue',
         'the counter progressbars should be correctly displayed');
     assert.containsNone(activity, 'table thead tr:first th:nth-child(4) .o_kanban_counter',
         'should not contain a progressbar in header of 3rd column');
