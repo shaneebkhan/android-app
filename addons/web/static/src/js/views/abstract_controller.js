@@ -165,6 +165,10 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         if (this._controlPanel) {
             state.cpState = this._controlPanel.exportState();
         }
+        if (this._searchPanel) {
+            state.spState = {};
+            state.spState.searchDomain = this._searchPanel.getDomain();
+        }
         return state;
     },
     /**

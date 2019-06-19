@@ -188,6 +188,9 @@ var AbstractView = Factory.extend({
             withBreadcrumbs: params.withBreadcrumbs,
             withSearchBar: params.withSearchBar,
         };
+        this.searchPanelParams = {
+            state: controllerState.spState,
+        };
     },
 
     //--------------------------------------------------------------------------
@@ -264,17 +267,12 @@ var AbstractView = Factory.extend({
             self.controllerParams.controlPanel = controlPanel;
             return controlPanel.appendTo(document.createDocumentFragment()).then(function () {
                 self._updateMVCParams(controlPanel.getSearchQuery());
-<<<<<<< HEAD
-                var searchPanelParams = self.withSearchPanel ? self.config.SearchPanel.prototype.computeSearchPanelParams(self.loadParams, self.controlPanelParams.viewInfo) : false;
-                if (searchPanelParams) {
-=======
                 var searchPanelSections = self.withSearchPanel ? self.SearchPanelProto.computeSearchPanelParams(self.loadParams, self.controlPanelParams.viewInfo) : false;
                 if (searchPanelSections) {
                     self.searchPanelParams.sections = searchPanelSections;
->>>>>>> 87aa65a... [TEMPORARY] protect against views overwriting config
                     self.hasSearchPanel = true;
                     self.rendererParams.withSearchPanel = self.hasSearchPanel;
-                    return self._createSearchPanel(parent, searchPanelParams).then(function () {
+                    return self._createSearchPanel(parent, self.searchPanelParams).then(function () {
                         return controlPanel;
                     });
                 }
@@ -287,7 +285,7 @@ var AbstractView = Factory.extend({
      * @param {Widget} parent
      * @returns {Promise} resolved when the searchPanel is ready
      */
-    _createSearchPanel: function (parent, searchPanelSections) {
+    _createSearchPanel: function (parent, searchPanelParams) {
         var self = this;
         var defaultValues = {};
         Object.keys(this.loadParams.context).forEach(function (key) {
@@ -301,8 +299,8 @@ var AbstractView = Factory.extend({
             defaultValues: defaultValues,
             fields: this.fields,
             model: this.loadParams.modelName,
-            searchDomain: controlPanelDomain,
-            sections: searchPanelSections,
+            searchDomain: searchPanelParams.state ? searchPanelParams.state.searchDomain : controlPanelDomain,
+            sections: searchPanelParams.sections,
         });
         this.controllerParams.searchPanel = searchPanel;
         this.controllerParams.controlPanelDomain = controlPanelDomain;
