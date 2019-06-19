@@ -1738,16 +1738,16 @@ QUnit.module('Views', {
         });
 
         await actionManager.doAction(1);
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_kanban_view');
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_kanban_view');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
         assert.containsOnce(actionManager, '.o_content .o_graph_view');
         assert.containsNone(actionManager, '.o_content .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_list_view');
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_list_view');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_data_row .o_data_cell:first'));
         assert.containsOnce(actionManager, '.o_content .o_form_view');
@@ -1756,7 +1756,7 @@ QUnit.module('Views', {
         actionManager.destroy();
     });
 
-    QUnit.only('search panel with view_types attribute', async function (assert) {
+    QUnit.test('search panel with view_types attribute', async function (assert) {
         assert.expect(6);
 
         this.archs['partner,false,search'] = '<search>' +
@@ -1774,12 +1774,12 @@ QUnit.module('Views', {
         });
 
         await actionManager.doAction(1);
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_kanban_view');
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_kanban_view');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_graph_view');
-        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_graph_view');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
         assert.containsOnce(actionManager, '.o_content .o_list_view');
