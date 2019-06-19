@@ -202,10 +202,10 @@ class ResUsers(models.Model):
             _logger.info("Password reset email sent for user <%s> to <%s>", user.login, user.email)
 
     @api.model
-    def web_dashboard_create_users(self, emails):
+    def web_create_users(self, emails):
         inactive_users = self.search([('state', '=', 'new'), '|', ('login', 'in', emails), ('email', 'in', emails)])
         new_emails = set(emails) - set(inactive_users.mapped('email'))
-        res = super(ResUsers, self).web_dashboard_create_users(list(new_emails))
+        res = super(ResUsers, self).web_create_users(list(new_emails))
         if inactive_users:
             inactive_users.with_context(create_user=True).action_reset_password()
         return res

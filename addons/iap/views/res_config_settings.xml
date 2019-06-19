@@ -10,10 +10,15 @@
                     <h2>In-App Purchases</h2> 
                     <div class='row mt16 o_settings_container iap_portal'>
                         <div class="col-12 col-lg-6 o_setting_box">
-                            <div class='oe_link o_setting_right_pane'>
+                            <div class='o_setting_right_pane'>
                                 <div class="o_form_label">Odoo IAP</div>
+                                <div class="text-muted">
+                                    View your IAP Services and recharge your credits
+                                </div>
+                            </div>
+                            <div class='o_setting_right_pane'>
                                 <div>
-                                    <strong><field name ='iap_account_url' widget='url' text='Go To My Portal'/></strong>
+                                    <field name ='iap_account_url' widget='url' text=' Go To My Portal' options="{'icon':'fa-arrow-right'}" class="font-weight-bold"/>
                                 </div>  
                             </div>
                             

@@ -27,4 +27,6 @@ Shows you a list of applications features to install from.
         'static/src/xml/res_config_edition.xml',
         'static/src/xml/res_config_invite_users.xml',
     ],
+
+    
 }

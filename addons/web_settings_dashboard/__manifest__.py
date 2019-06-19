@@ -15,11 +15,11 @@ Odoo dashboard
 * Quick access to the `App Store` and `Theme Store`
 
         """,
-    'data': [
-        'views/dashboard_views.xml',
-        'views/dashboard_templates.xml',
-    ],
+    # 'data': [
+    #    'views/dashboard_views.xml',
+    #    'views/dashboard_templates.xml',
+    #],
     'depends': ['web'],
-    'qweb': ['static/src/xml/dashboard.xml'],
+    #'qweb': ['static/src/xml/dashboard.xml'],
     'auto_install': True,
 }

@@ -213,7 +213,7 @@ var DashboardInvitations = Widget.extend({
             $button.button('loading');
             this._rpc({
                 model: 'res.users',
-                method: 'web_dashboard_create_users',
+                method: 'web_create_users',
                 args: [this.emails],
             })
             .then(function () {

@@ -46,7 +46,7 @@ QUnit.module('settings_dashboard', function () {
                         users_info: dashboardData,
                     });
                 }
-                if (route === '/web/dataset/call_kw/res.users/web_dashboard_create_users') {
+                if (route === '/web/dataset/call_kw/res.users/web_create_users') {
                     dashboardData.pending_counts++;
                     dashboardData.pending_users.push([5, args.args[0][0]]);
                     return Promise.resolve(true);

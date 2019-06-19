@@ -2,7 +2,7 @@
 
 <templates xml:space="preserve">
     <t t-name="DashboardMain">
-        <div class="container-fluid py-2 o_web_settings_dashboard">
+        <div class="container-fluid py-2 o_web_settings">
             <div class="form-row">
                <div class="col-12 col-lg-4 o_web_settings_col">
                     <div class="o_web_settings_apps"></div>

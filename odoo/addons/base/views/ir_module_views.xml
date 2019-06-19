@@ -220,7 +220,7 @@
         <menuitem id="menu_apps" name="Apps" parent="menu_management" sequence="5"/>
 
         <!--submenu -->
-        <menuitem id="menu_module_tree" parent="menu_apps" name="My Apps" sequence="5" action="open_module_tree" />
+        <menuitem id="menu_module_tree" parent="menu_apps" name="Main Apps" sequence="5" action="open_module_tree" />
         
         <menuitem id="theme_store" parent="menu_apps" name="Theme Store" sequence="15"/>
 
