@@ -8,6 +8,14 @@ class PosOrder(models.Model):
     _inherit = 'pos.order'
 
     currency_rate = fields.Float("Currency Rate", compute='_compute_currency_rate', store=True, digits=(12, 6), readonly=True, help='The rate of the currency to the currency of rate applicable at the date of the order')
+    crm_team_id = fields.Many2one('crm.team', string="Sales Team")
+
+    @api.model
+    def write(self, values):
+        if not values.get('crm_team_id'):
+            session = self.env['pos.session'].browse(values['session_id']) if values.get('session_id') else self._default_session()
+            values['crm_team_id'] = session.config_id.crm_team_id.id
+        return super().write(values)
 
     @api.depends('pricelist_id.currency_id', 'date_order', 'company_id')
     def _compute_currency_rate(self):
@@ -18,5 +26,5 @@ class PosOrder(models.Model):
     @api.multi
     def _prepare_invoice(self):
         invoice_vals = super(PosOrder, self)._prepare_invoice()
-        invoice_vals['team_id'] = self.config_id.crm_team_id
+        invoice_vals['team_id'] = self.crm_team_id
         return invoice_vals
