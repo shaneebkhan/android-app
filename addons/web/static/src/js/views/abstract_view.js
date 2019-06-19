@@ -155,6 +155,7 @@ var AbstractView = Factory.extend({
             modelName: params.modelName,
             res_id: currentId,
             res_ids: controllerState.resIds || params.ids || (currentId ? [currentId] : undefined),
+            viewType: this.viewType,
         };
         // default_order is like:
         //   'name,id desc'
