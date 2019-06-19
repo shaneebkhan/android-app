@@ -206,8 +206,8 @@ var ControlPanelView = Factory.extend({
         // Ideally, this code should whitelist the tags to take into account
         // instead of blacklisting the others, but with the current (messy)
         // structure of a searchview arch, it's way simpler to do it that way.
-        var children = _.omit(arch.children, function (child) {
-            return child.tag === 'searchpanel';
+        var children = arch.children.filter(function (child) {
+            return child.tag !== 'searchpanel';
         });
         var preFilters = _.flatten(children.map(function (child) {
             return child.tag !== 'group' ?
