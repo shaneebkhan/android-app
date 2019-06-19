@@ -153,6 +153,7 @@
                         <div class="col-12 col-lg-6 o_setting_box" id="sale_config_online_confirmation_sign">
                             <div class="o_setting_left_pane">
                                 <field name="portal_confirmation_sign"/>
+                                <field name="group_confirmation_pay"/>
                             </div>
                             <div class="o_setting_right_pane">
                                 <label for="portal_confirmation_sign"/>
@@ -177,7 +178,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-lg-6 o_setting_box" id="confirmation_email_setting" attrs="{'invisible': [('portal_confirmation_pay', '=', False) , ('portal_confirmation_sign', '=', False)]}">
+                        <div class="col-12 col-lg-6 o_setting_box" id="confirmation_email_setting" attrs="{'invisible': [('group_confirmation_pay', '=', False) , ('portal_confirmation_sign', '=', False)]}">
                             <div class="o_setting_right_pane">
                                 <span class="o_form_label">Confirmation Email</span>
                                 <div class="text-muted">
