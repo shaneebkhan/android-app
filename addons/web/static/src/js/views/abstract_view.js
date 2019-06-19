@@ -113,7 +113,9 @@ var AbstractView = Factory.extend({
         this.fields = this.fieldsView.viewFields;
         this.userContext = params.userContext || {};
         this.withControlPanel = this.withControlPanel && params.withControlPanel;
+
         this.withSearchPanel = !params.disableSearchPanel;
+        this.SearchPanelProto = this.withSearchPanel && this.config.SearchPanel.prototype;
 
         // the boolean parameter 'isEmbedded' determines if the view should be
         // considered as a subview. For now this is only used by the graph
@@ -262,8 +264,14 @@ var AbstractView = Factory.extend({
             self.controllerParams.controlPanel = controlPanel;
             return controlPanel.appendTo(document.createDocumentFragment()).then(function () {
                 self._updateMVCParams(controlPanel.getSearchQuery());
+<<<<<<< HEAD
                 var searchPanelParams = self.withSearchPanel ? self.config.SearchPanel.prototype.computeSearchPanelParams(self.loadParams, self.controlPanelParams.viewInfo) : false;
                 if (searchPanelParams) {
+=======
+                var searchPanelSections = self.withSearchPanel ? self.SearchPanelProto.computeSearchPanelParams(self.loadParams, self.controlPanelParams.viewInfo) : false;
+                if (searchPanelSections) {
+                    self.searchPanelParams.sections = searchPanelSections;
+>>>>>>> 87aa65a... [TEMPORARY] protect against views overwriting config
                     self.hasSearchPanel = true;
                     self.rendererParams.withSearchPanel = self.hasSearchPanel;
                     return self._createSearchPanel(parent, searchPanelParams).then(function () {
