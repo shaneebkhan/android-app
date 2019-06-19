@@ -240,6 +240,7 @@ class ProductProduct(models.Model):
         for product in self:
             product.is_product_variant = True
 
+    @api.depends_context('pricelist', 'partner', 'quantity')
     def _compute_product_price(self):
         prices = {}
         pricelist_id_or_name = self._context.get('pricelist')
@@ -302,6 +303,7 @@ class ProductProduct(models.Model):
             product.lst_price = list_price + product.price_extra
 
     @api.one
+    @api.depends_context('partner_id')
     def _compute_product_code(self):
         for supplier_info in self.seller_ids:
             if supplier_info.name.id == self._context.get('partner_id'):
@@ -311,6 +313,7 @@ class ProductProduct(models.Model):
             self.code = self.default_code
 
     @api.one
+    @api.depends_context('partner_id')
     def _compute_partner_ref(self):
         for supplier_info in self.seller_ids:
             if supplier_info.name.id == self._context.get('partner_id'):
