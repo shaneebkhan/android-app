@@ -260,7 +260,8 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
             // wait for the searchPanel to be ready as well, such that the view
             // isn't re-rendered before the searchPanel
             params.noRender = true;
-            searchPanelDef = this._updateSearchPanel();
+            var state = params.controllerState && params.controllerState.spState || {};
+            searchPanelDef = this._updateSearchPanel(state);
         }
 
         var def = shouldReload ? this.model.reload(this.handle, params) : Promise.resolve();
@@ -472,8 +473,9 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
      * @private
      * @returns {Promise}
      */
-    _updateSearchPanel: function () {
-        return this._searchPanel.update({searchDomain: this.controlPanelDomain});
+    _updateSearchPanel: function (state) {
+        state.searchDomain = state.searchDomain ? state.searchDomain : this.controlPanelDomain;
+        return this._searchPanel.update(state);
     },
 
     //--------------------------------------------------------------------------
