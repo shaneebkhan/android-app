@@ -5,8 +5,11 @@ odoo.define("pos_ipaymu.pos_ipaymu", function(require) {
   var screens = require("point_of_sale.screens");
   var pos_model = require("point_of_sale.models");
   var Dialog = require("web.Dialog");
+  var core = require("web.core");
   var check_status;
   var PaymentScreenWidget = screens.PaymentScreenWidget;
+
+  var _t = core._t;
 
   pos_model.load_fields("account.journal", "pos_ipaymu_config_id");
   pos_model.load_fields("pos_ipaymu.configuration", "merchant_api_key");
@@ -148,30 +151,36 @@ odoo.define("pos_ipaymu.pos_ipaymu", function(require) {
             
               please_wait_prompt.close();
               var response = JSON.parse(result_get_qr);
+              if (response['Status'] < -1) {
+                  self.gui.show_popup('error', {
+                      'title': _t('ipaymu API error'),
+                      'body': response['Keterangan'],
+                  })
+              } else {
                 $(".qr_code").remove()
                 $(".payment-numpad").append('<div class="qr_code" style="height:500px;width:500px"><h2>Scan this QR Code To Validate Payment</h2><img src="data:image/jpeg;base64,' +
-                  response.QrCode +
-                  '" style="height:250px;width:250px"></div>')           
-              clearInterval(check_status);
-              check_status = setInterval(function() {
-                rpc
-                  .query({
-                    model: "pos_ipaymu.configuration",
-                    method: "get_status_payment",
-                    args: [
-                      {
-                        trx_id: response.TrxId
+                        response.QrCode + '" style="height:250px;width:250px"></div>')           
+                clearInterval(check_status);
+                check_status = setInterval(function() {
+                  rpc
+                    .query({
+                      model: "pos_ipaymu.configuration",
+                      method: "get_status_payment",
+                      args: [
+                        {
+                          trx_id: response.TrxId
+                        }
+                      ]
+                    })
+                    .then(function(result_check_status) {
+                      var response = JSON.parse(result_check_status);
+                      if (response.Keterangan == "Berhasil") {
+                        clearInterval(check_status);
+                        self.validate_order();
                       }
-                    ]
-                  })
-                  .then(function(result_check_status) {
-                    var response = JSON.parse(result_check_status);
-                    if (response.Keterangan == "Berhasil") {
-                      clearInterval(check_status);
-                      self.validate_order();
-                    }
-                  });
-              }, 5000);
+                    });
+                }, 5000);
+              }
             });
         }
       } else {
