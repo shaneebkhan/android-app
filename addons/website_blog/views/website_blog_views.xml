@@ -63,10 +63,7 @@
                 <form string="Blog Post">
                     <sheet>
                         <div class="oe_button_box" name="button_box">
-                            <button class="oe_stat_button" name="website_publish_button"
-                                type="object" icon="fa-globe">
-                                <field name="is_published" widget="website_button"/>
-                            </button>
+                            <field name="is_published" widget="website_button_icon"/>
                             <button name="toggle_active" type="object" class="oe_stat_button" icon="fa-archive">
                                 <field name="active" widget="boolean_button" options='{"terminology": "archive"}'/>
                             </button>
@@ -255,7 +252,7 @@
         <menuitem name="Blogs"
             id="menu_website_blog_root_global"
             sequence="100"
-            parent="website.menu_website_global_configuration" 
+            parent="website.menu_website_global_configuration"
             groups="website.group_website_designer"/>
 
         <menuitem id="menu_website_blog_tag_category_global" parent="menu_website_blog_root_global"

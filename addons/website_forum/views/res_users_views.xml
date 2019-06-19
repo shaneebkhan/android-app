@@ -12,10 +12,7 @@
                     <field name="karma" string="Forum Karma"/>
                 </field>
                 <button name="toggle_active" position="before">
-                    <button class="oe_stat_button" name="open_website_url"
-                        type="object" icon="fa-globe">
-                        <field name="is_published" widget="website_button"/>
-                    </button>
+                    <field name="is_published" widget="website_button_icon"/>
                 </button>
             </field>
         </record>
