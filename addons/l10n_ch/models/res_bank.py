@@ -3,7 +3,7 @@
 
 import re
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, tools, _
 from odoo.tools.misc import mod10r
 
 import werkzeug.urls
@@ -34,6 +34,7 @@ class ResPartnerBank(models.Model):
     _inherit = 'res.partner.bank'
 
     l10n_ch_postal = fields.Char(string='ISR reference', help='The ISR number of the company within the bank')
+    acc_type = fields.Selection(store=True, selection=lambda x: x.env['res.partner.bank'].get_supported_account_types(), compute='_compute_acc_type', string='Type', help='Bank account type: Normal or IBAN. Inferred from the bank account number.')
 
     @api.model
     def _get_supported_account_types(self):
@@ -50,6 +51,15 @@ class ResPartnerBank(models.Model):
             return 'postal'
         else:
             return super(ResPartnerBank, self).retrieve_acc_type(acc_number)
+
+    @api.model_cr_context
+    def _auto_init(self):
+        res = super(ResPartnerBank, self)._auto_init()
+        if tools.index_exists(self._cr, 'res_partner_bank_unique_number'):
+            tools.drop_constraint(self._cr, self._table, 'res_partner_bank_unique_number')
+        if not tools.index_exists(self._cr, 'res_partner_bank_unique_number_withhout_acc_type_postal'):
+            self._cr.execute("CREATE UNIQUE INDEX res_partner_bank_unique_number_withhout_acc_type_postal ON res_partner_bank (sanitized_acc_number, company_id) WHERE acc_type <> 'postal'")
+        return res
 
     @api.onchange('acc_number')
     def _onchange_set_l10n_ch_postal(self):
