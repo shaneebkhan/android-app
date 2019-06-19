@@ -6,6 +6,7 @@ var KanbanView = require('web.KanbanView');
 var RamStorage = require('web.RamStorage');
 var testUtils = require('web.test_utils');
 
+var createActionManager = testUtils.createActionManager;
 var createView = testUtils.createView;
 
 QUnit.module('Views', {
@@ -48,6 +49,31 @@ QUnit.module('Views', {
             },
         };
 
+        this.actions = [{
+            id: 1,
+            name: 'Partners',
+            res_model: 'partner',
+            type: 'ir.actions.act_window',
+            views: [[false, 'kanban'], [false, 'list'], [false, 'graph'], [false, 'form']],
+        }];
+
+        this.archs = {
+            'partner,false,list': '<tree><field name="foo"/></tree>',
+            'partner,false,kanban': '<kanban>' +
+                    '<templates><t t-name="kanban-box">' +
+                        '<div><field name="foo"/></div>' +
+                    '</t></templates>' +
+                '</kanban>',
+            'partner,false,form': '<form><field name="foo"/></form>',
+            'partner,false,graph': '<graph><field name="bar"/></graph>',
+            'partner,false,search': '<search>' +
+                    '<searchpanel>' +
+                        '<field name="company_id"/>' +
+                        '<field select="multi" name="category_id"/>' +
+                    '</searchpanel>' +
+                '</search>',
+        };
+
         var RamStorageService = AbstractStorageService.extend({
             storage: new RamStorage(),
         });
@@ -57,7 +83,7 @@ QUnit.module('Views', {
     },
 }, function () {
 
-    QUnit.module('SearchPanel in Kanban views');
+    QUnit.module('SearchPanel in multi record views');
 
     QUnit.test('basic rendering', async function (assert) {
         assert.expect(17);
@@ -1700,6 +1726,109 @@ QUnit.module('Views', {
         assert.strictEqual($firstSection.find('.o_search_panel_category_value').text().replace(/\s/g, ''),
             'AllasustekagrolaithighIDlowID');
         kanban.destroy();
+    });
+
+    QUnit.test('search panel is available on list and kanban by default', async function (assert) {
+        assert.expect(8);
+
+        var actionManager = await createActionManager({
+            actions: this.actions,
+            archs: this.archs,
+            data: this.data,
+        });
+
+        await actionManager.doAction(1);
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_kanban_view');
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
+        assert.containsOnce(actionManager, '.o_content .o_graph_view');
+        assert.containsNone(actionManager, '.o_content .o_search_panel');
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_list_view');
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+
+        await testUtils.dom.click(actionManager.$('.o_data_row .o_data_cell:first'));
+        assert.containsOnce(actionManager, '.o_content .o_form_view');
+        assert.containsNone(actionManager, '.o_content .o_search_panel');
+
+        actionManager.destroy();
+    });
+
+    QUnit.only('search panel with view_types attribute', async function (assert) {
+        assert.expect(6);
+
+        this.archs['partner,false,search'] = '<search>' +
+                '<searchpanel view_types="kanban,graph">' +
+                    '<field name="company_id"/>' +
+                    '<field select="multi" name="category_id"/>' +
+                '</searchpanel>' +
+            '</search>';
+
+
+        var actionManager = await createActionManager({
+            actions: this.actions,
+            archs: this.archs,
+            data: this.data,
+        });
+
+        await actionManager.doAction(1);
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_kanban_view');
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_graph_view');
+        assert.containsOnce(actionManager, '.o_content.o_view_with_searchpanel .o_search_panel');
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
+        assert.containsOnce(actionManager, '.o_content .o_list_view');
+        assert.containsNone(actionManager, '.o_content .o_search_panel');
+
+        actionManager.destroy();
+    });
+
+    QUnit.test('search panel state is shared between views', async function (assert) {
+        assert.expect(11);
+
+        var actionManager = await createActionManager({
+            actions: this.actions,
+            archs: this.archs,
+            data: this.data,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+        });
+
+        await actionManager.doAction(1);
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 4);
+
+        // select 'asustek' company
+        await testUtils.dom.click(actionManager.$('.o_search_panel_category_value:nth(1) header'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        // select 'agrolait' company
+        await testUtils.dom.click(actionManager.$('.o_search_panel_category_value:nth(2) header'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_kanban'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+
+        assert.verifySteps([
+            '[]', // initial search_read
+            '[["company_id","=",3]]', // kanban, after selecting the first company
+            '[["company_id","=",3]]', // list
+            '[["company_id","=",5]]', // list, after selecting the other company
+            '[["company_id","=",5]]', // kanban
+        ]);
+
+        actionManager.destroy();
     });
 });
 
