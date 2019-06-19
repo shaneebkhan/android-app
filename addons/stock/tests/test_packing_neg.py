@@ -7,6 +7,29 @@ from odoo.tests.common import TransactionCase
 class TestPackingNeg(TransactionCase):
 
     def test_packing_neg(self):
+        self.res_partner_2 = self.env['res.partner'].create({
+            'name': 'Deco Addict',
+            'is_company': True,
+            'street': '325 Elsie Drive',
+            'city': 'Franklin',
+            'zip': 26807,
+            'email': 'deco.addict82@example.com',
+            'phone': '(603)-996-3829',
+            'website': 'http://www.deco-addict.com'
+            })
+
+        self.res_partner_4 = self.env['res.partner'].create({
+            'name': 'Ready Mat',
+            'customer': False,
+            'supplier': True,
+            'is_company': True,
+            'street': '92 Emily Drive',
+            'city': 'Columbia',
+            'zip': 29201,
+            'email': 'ready.mat28@example.com',
+            'phone': '(803)-873-6126',
+            'website': 'http://www.ready-mat.com'
+            })
 
         # Create a new "negative" storable product
         product_neg = self.env['product.product'].create({
@@ -17,7 +40,7 @@ class TestPackingNeg(TransactionCase):
             'standard_price': 70.0,
             'seller_ids': [(0, 0, {
                 'delay': 1,
-                'name': self.ref('base.res_partner_2'),
+                'name': self.res_partner_2.id,
                 'min_qty': 2.0,})],
             'uom_id': self.ref('uom.product_uom_unit'),
             'uom_po_id': self.ref('uom.product_uom_unit'),
@@ -26,7 +49,7 @@ class TestPackingNeg(TransactionCase):
         # Create an incoming picking for this product of 300 PCE from suppliers to stock
         vals = {
             'name': 'Incoming picking (negative product)',
-            'partner_id': self.ref('base.res_partner_2'),
+            'partner_id': self.res_partner_2.id,
             'picking_type_id': self.ref('stock.picking_type_in'),
             'location_id': self.ref('stock.stock_location_suppliers'),
             'location_dest_id': self.ref('stock.stock_location_stock'),
@@ -83,7 +106,7 @@ class TestPackingNeg(TransactionCase):
         # Make a delivery order of 300 pieces to the customer
         vals = {
             'name': 'outgoing picking (negative product)',
-            'partner_id': self.ref('base.res_partner_4'),
+            'partner_id': self.res_partner_4.id,
             'picking_type_id': self.ref('stock.picking_type_out'),
             'location_id': self.ref('stock.stock_location_stock'),
             'location_dest_id': self.ref('stock.stock_location_customers'),
@@ -140,7 +163,7 @@ class TestPackingNeg(TransactionCase):
         # Create a picking for reconciling the negative quant
         vals = {
             'name': 'reconciling_delivery',
-            'partner_id': self.ref('base.res_partner_4'),
+            'partner_id': self.res_partner_4.id,
             'picking_type_id': self.ref('stock.picking_type_in'),
             'location_id': self.ref('stock.stock_location_suppliers'),
             'location_dest_id': self.ref('stock.stock_location_stock'),
