@@ -75,7 +75,7 @@
                     <field name="symbol"/>
                     <field name="rate_ids" invisible="1"/>
                     <field name="date"/>
-                    <field name="rate"/>
+                    <field name="rate" digits="[12,6]"/>
                     <field name="active" invisible="1"/>
                 </tree>
             </field>
@@ -102,7 +102,7 @@
                                 <div class="row">
                                     <div class="col-12">
                                         <strong><span>Current Rate: </span></strong>
-                                        <field name="rate"/>
+                                        <field name="rate" digits="[12,6]"/>
                                     </div>
                                 </div>
                             </div>
@@ -140,7 +140,7 @@
 
                         <group groups="base.group_no_one">
                             <group string="Price Accuracy">
-                                <field name="rounding"/>
+                                <field name="rounding" digits="[12,6]"/>
                                 <field name="decimal_places"/>
                             </group>
 
