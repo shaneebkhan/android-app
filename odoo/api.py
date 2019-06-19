@@ -819,7 +819,6 @@ class Environment(Mapping):
         self.cr, self.uid, self.context = self.args = (cr, uid, frozendict(context))
         self.registry = Registry(cr.dbname)
         self.cache = envs.cache
-        self._cache_key = (cr, uid)
         self._protected = StackMap()                # {field: ids, ...}
         self.dirty = defaultdict(set)               # {record: set(field_name), ...}
         self.all = envs
