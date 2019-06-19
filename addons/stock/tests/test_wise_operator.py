@@ -17,10 +17,48 @@ class TestWiseOperator(TransactionCase):
             'uom_po_id': self.ref('uom.product_uom_unit'),
         })
 
+        self.res_partner_2 = self.env['res.partner'].create({
+            'name': 'Deco Addict',
+            'is_company': True,
+            'street': '325 Elsie Drive',
+            'city': 'Franklin',
+            'zip': 26807,
+            'email': 'deco.addict82@example.com',
+            'phone': '(603)-996-3829',
+            'website': 'http://www.deco-addict.com'
+            })
+
+        warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.user.id)], limit=1)
+        self.stock_location_shelf2 = self.env['stock.location'].create({
+            'name': 'Shelf 2',
+            'posx': 0,
+            'barcode': 1231985,
+            'location_id': warehouse.lot_stock_id.id
+            })
+        self.stock_location_components = self.env['stock.location'].create({
+            'name': 'Shelf 1',
+            'posx': 0,
+            'barcode': 1231892,
+            'location_id': warehouse.lot_stock_id.id
+            })
+
+        self.res_partner_4 = self.env['res.partner'].create({
+            'name': 'Ready Mat',
+            'customer': False,
+            'supplier': True,
+            'is_company': True,
+            'street': '92 Emily Drive',
+            'city': 'Columbia',
+            'zip': 29201,
+            'email': 'ready.mat28@example.com',
+            'phone': '(803)-873-6126',
+            'website': 'http://www.ready-mat.com'
+            })
+
         # Create an incoming picking for this product of 10 PCE from suppliers to stock
         vals = {
             'name': 'Incoming picking (wise unit)',
-            'partner_id': self.ref('base.res_partner_2'),
+            'partner_id': self.res_partner_2.id,
             'picking_type_id': self.ref('stock.picking_type_in'),
             'location_id': self.ref('stock.stock_location_suppliers'),
             'location_dest_id': self.ref('stock.stock_location_stock'),
@@ -46,7 +84,7 @@ class TestWiseOperator(TransactionCase):
         pick1_wise.move_line_ids[0].write({
             'result_package_id': package1.id,
             'qty_done': 4,
-            'location_dest_id': self.ref('stock.stock_location_components')
+            'location_dest_id': self.stock_location_components.id
         })
         new_pack1 = self.env['stock.move.line'].create({
             'product_id': product_wise.id,
@@ -54,7 +92,7 @@ class TestWiseOperator(TransactionCase):
             'picking_id': pick1_wise.id,
             'qty_done': 6.0,
             'location_id': self.ref('stock.stock_location_suppliers'),
-            'location_dest_id': self.ref('stock.stock_location_14')
+            'location_dest_id': self.stock_location_shelf2.id
         })
 
         # Transfer the receipt
@@ -67,7 +105,7 @@ class TestWiseOperator(TransactionCase):
         # Make a delivery order of 5 pieces to the customer
         vals = {
             'name': 'outgoing picking 1 (wise unit)',
-            'partner_id': self.ref('base.res_partner_4'),
+            'partner_id': self.res_partner_4.id,
             'picking_type_id': self.ref('stock.picking_type_out'),
             'location_id': self.ref('stock.stock_location_stock'),
             'location_dest_id': self.ref('stock.stock_location_customers'),
@@ -92,7 +130,7 @@ class TestWiseOperator(TransactionCase):
         # Make a delivery order of 5 pieces to the customer
         vals = {
             'name': 'outgoing picking 2 (wise unit)',
-            'partner_id': self.ref('base.res_partner_4'),
+            'partner_id': self.res_partner_4.id,
             'picking_type_id': self.ref('stock.picking_type_out'),
             'location_id': self.ref('stock.stock_location_stock'),
             'location_dest_id': self.ref('stock.stock_location_customers'),
@@ -121,10 +159,10 @@ class TestWiseOperator(TransactionCase):
         pack_ids1 = delivery_order_wise1.move_line_ids
         pack_ids2 = delivery_order_wise2.move_line_ids
 
-        self.assertEqual(pack_ids1.location_id.id, self.ref('stock.stock_location_14'))
+        self.assertEqual(pack_ids1.location_id.id, self.stock_location_shelf2.id)
         self.assertEqual(set(pack_ids2.mapped('location_id.id')), set([
-            self.ref('stock.stock_location_components'),
-            self.ref('stock.stock_location_14')]))
+            self.stock_location_components.id,
+            self.stock_location_shelf2.id]))
 
         # put the move lines from delivery_order_wise2 into delivery_order_wise1
         for pack_id2 in pack_ids2:
@@ -136,8 +174,8 @@ class TestWiseOperator(TransactionCase):
         self.assertEqual(sum(new_move_lines.mapped('product_qty')), 0)
         self.assertEqual(sum(new_move_lines.mapped('qty_done')), 5)
         self.assertEqual(set(new_move_lines.mapped('location_id.id')), set([
-            self.ref('stock.stock_location_components'),
-            self.ref('stock.stock_location_14')]))
+            self.stock_location_components.id,
+            self.stock_location_shelf2.id]))
 
         # put the move line from delivery_order_wise1 into delivery_order_wise2
         new_pack_id2 = pack_ids1.copy(default={'picking_id': delivery_order_wise2.id, 'move_id': move2.id})
@@ -148,7 +186,7 @@ class TestWiseOperator(TransactionCase):
         self.assertEqual(len(new_move_lines), 1)
         self.assertEqual(sum(new_move_lines.mapped('product_qty')), 0)
         self.assertEqual(sum(new_move_lines.mapped('qty_done')), 5)
-        self.assertEqual(new_move_lines.location_id.id, self.ref('stock.stock_location_14'))
+        self.assertEqual(new_move_lines.location_id.id, self.stock_location_shelf2.id)
 
         # Process this picking
         delivery_order_wise1.action_done()
