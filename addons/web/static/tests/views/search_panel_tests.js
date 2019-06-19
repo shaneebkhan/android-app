@@ -6,8 +6,29 @@ var KanbanView = require('web.KanbanView');
 var RamStorage = require('web.RamStorage');
 var testUtils = require('web.test_utils');
 
+var GraphRenderer = require('web.GraphRenderer');
+
 var createActionManager = testUtils.createActionManager;
 var createView = testUtils.createView;
+
+async function _wait_graph(user_action) {
+    var prom = new Promise(function (resolve, reject) {
+        testUtils.mock.patch(GraphRenderer, {
+            _render: function () {
+                var self = this;
+                this._super.apply(this, arguments).then(function () {
+                    if (self.isInDOM) {
+                        resolve();
+                    }
+                });
+            }
+        });
+    });
+    if (user_action) await user_action()
+    return prom.then(function () {
+        testUtils.mock.unpatch(GraphRenderer);
+    });
+};
 
 QUnit.module('Views', {
     beforeEach: function () {
@@ -114,8 +135,8 @@ QUnit.module('Views', {
             },
         });
 
-        assert.containsOnce(kanban, '.o_content.o_kanban_with_searchpanel > .o_search_panel');
-        assert.containsOnce(kanban, '.o_content.o_kanban_with_searchpanel > .o_kanban_view');
+        assert.containsOnce(kanban, '.o_content.o_controller_with_searchpanel > .o_search_panel');
+        assert.containsOnce(kanban, '.o_content.o_controller_with_searchpanel > .o_kanban_view');
 
         assert.containsN(kanban, '.o_kanban_view .o_kanban_record:not(.o_kanban_ghost)', 4);
 
@@ -1741,8 +1762,10 @@ QUnit.module('Views', {
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_kanban_view');
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
-        await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
-        assert.containsOnce(actionManager, '.o_content .o_graph_view');
+        await _wait_graph(async function () {
+            await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
+        });
+        assert.containsOnce(actionManager, '.o_content .o_graph_renderer');
         assert.containsNone(actionManager, '.o_content .o_search_panel');
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
@@ -1777,13 +1800,15 @@ QUnit.module('Views', {
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_kanban_view');
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
-        await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
-        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_graph_view');
-        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
-
         await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
         assert.containsOnce(actionManager, '.o_content .o_list_view');
         assert.containsNone(actionManager, '.o_content .o_search_panel');
+
+        await _wait_graph(async function () {
+            await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
+        });
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_graph_renderer');
+        assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
         actionManager.destroy();
     });
