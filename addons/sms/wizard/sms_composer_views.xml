@@ -56,18 +56,17 @@
                     </group>
                 </sheet>
                 <footer>
-                    <group>
-                        <span>
-                            <button string="Send" type="object" class="oe_highlight" name="action_send_sms"/>
-                            <button string="Cancel" class="oe_link" special="cancel" />
-                        </span>
-                    </group>
+                    <button string="Send SMS" type="object" class="oe_highlight" name="action_send_sms"/>
+                    <button string="Close" class="oe_link" special="cancel" />
+                    <button icon="fa-lg fa-save" type="object" name="save_as_template" string="Save as new template"
+                        class="float-right btn-secondary" help="Save as a new template"/>
                 </footer>
             </form>
         </field>
     </record>
+
     <record id="sms_composer_action_form" model="ir.actions.act_window">
-        <field name="name">Send SMS</field>
+        <field name="name">Send SMS Text Message</field>
         <field name="res_model">sms.composer</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>

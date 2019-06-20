@@ -3,14 +3,15 @@
 
 from ast import literal_eval
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, tools, _
+from odoo.addons.mail.wizard.mail_compose_message import _reopen
 from odoo.exceptions import UserError
 from odoo.tools.safe_eval import safe_eval
 
 
 class SendSMS(models.TransientModel):
     _name = 'sms.composer'
-    _description = 'Send SMS'
+    _description = 'Send SMS Wizard'
 
     # documents
     composition_mode = fields.Selection([
@@ -157,3 +158,31 @@ class SendSMS(models.TransientModel):
         else:
             self.env['sms.api']._send_sms(self.numbers, self.body)
         return True
+
+    @api.multi
+    def save_as_template(self):
+        """ hit save as template button: current form value will be a new
+            template attached to the current document. """
+        for record in self:
+            model = self.env['ir.model']._get(record.model or 'mail.message')
+            model_name = model.name or ''
+            record_name = False
+            if record.composition_mode == 'mass_sms':
+                active_model = self.env.context.get('active_model')
+                model = self.env[active_model]
+                records = self._get_records(model)
+                recipients = self.env['sms.sms']._get_sms_recipients(active_model, records and records[0].id)
+                record_name = recipients and recipients[0]['partner_id'] and recipients[0]['partner_id'].display_name or 'New Template'
+            else:
+                record_name = record.recipient_ids and record.recipient_ids[0].partner_id and record.recipient_ids[0].partner_id.display_name or 'New Template'
+            template_name = "%s: %s" % (model_name, record_name)
+            values = {
+                'name': template_name,
+                'body': record.content or False,
+                'model_id': model.id or False,
+            }
+            template = self.env['sms.template'].create(values)
+            # generate the saved template
+            record.write({'template_id': template.id})
+            record._onchange_template_id()
+            return _reopen(self, record.id, record.model, context=self._context)
