@@ -341,27 +341,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <div t-if="slide.channel_id.allow_comment" class="col-12 col-md">
-                        <table class="table table-sm">
-                            <tbody>
-                                <tr>
-                                    <th colspan="2" class="border-top-0">Actions</th>
-                                </tr>
-                                <tr class="border-top-0">
-                                    <th class="border-top-0"><span t-esc="slide.likes"/></th>
-                                    <td class="border-top-0 w-100">Likes</td>
-                                </tr>
-                                <tr>
-                                    <th><span t-esc="slide.dislikes"/></th>
-                                    <td>Dislikes</td>
-                                </tr>
-                                <tr>
-                                    <th><span t-esc="len(slide.website_message_ids)"/></th>
-                                    <td>Comments</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                     <div class="col-12 col-md">
                         <table class="table table-sm">
                             <tbody>
@@ -492,9 +471,9 @@
         <div class="form-group">
             <textarea class="form-control slide_embed_code" readonly="readonly" onClick="this.select();"><t t-esc="slide.embed_code"/></textarea>
         </div>
-        <div class="form-group" t-if="slide.slide_type in ('presentation', 'document')">
-            <div class="form-text col-xl-3 col-lg-3 col-md-6 col-6">Select page to start with</div>
-            <div class="input-group col-xl-3 col-lg-3 col-md-6 col-6">
+        <div class="form-group d-flex" t-if="slide.slide_type in ('presentation', 'document')">
+            <div class="form-text p-0 col-xs-5 col-sm-5 col-md-5 col-lg-5">Select page to start with</div>
+            <div class="input-group col-xs-3 col-sm-2 col-md-2 col-lg-3">
                 <input type="number" value="1" class="form-control"/>
             </div>
         </div>
