@@ -26,13 +26,23 @@ class ImageMixin(models.AbstractModel):
     @api.depends('image_original')
     def _compute_images(self):
         for record in self:
-            images = tools.image_get_resized_images(record.image_original, big_name=False)
-            record.image_big = tools.image_get_resized_images(record.image_original,
-                large_name=False, medium_name=False, small_name=False)['image']
-            record.image_large = images['image_large']
-            record.image_medium = images['image_medium']
-            record.image_small = images['image_small']
-            record.can_image_be_zoomed = tools.is_image_size_above(record.image_original)
+            image = record.image_original
+            # for performance: the end result would be the same, but it's faster
+            # to directly skip all of this when the image is not set
+            if image:
+                images = tools.image_get_resized_images(image, big_name=False)
+                record.image_big = tools.image_get_resized_images(image,
+                    large_name=False, medium_name=False, small_name=False)['image']
+                record.image_large = images['image_large']
+                record.image_medium = images['image_medium']
+                record.image_small = images['image_small']
+                record.can_image_be_zoomed = tools.is_image_size_above(image)
+            else:
+                record.image_big = False
+                record.image_large = False
+                record.image_medium = False
+                record.image_small = False
+                record.can_image_be_zoomed = False
 
     @api.multi
     @api.depends('image_big')
