@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="payment_link_wizard_view_form" model="ir.ui.view">
+        <field name="name">payment.link.wizard.form</field>
+        <field name="model">payment.link.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Payment Link">
+                <group attrs="{'invisible': [('link', '!=', False)]}">
+                    <field name="res_id" invisible="1"/>
+                    <field name="res_model" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="description"/>
+                    <field name="amount"/>
+                    <field name="currency_id" invisible="1"/>
+                </group>
+                <group>
+                    <field name="link" readonly="1" widget="CopyClipboardChar" attrs="{'invisible': [('link', '=', False)]}" options="{'string': 'Copy Link'}"/>
+                </group>
+                <footer>
+                    <button string="Generate Link" name="generate_payment_link" type="object" attrs="{'invisible': [('link','!=', False)]}" class="btn-primary"/>
+                    <button string="Cancel" special="cancel" attrs="{'invisible': [('link','!=', False)]}"/>
+                    <button string="Ok" class="btn-primary" special="cancel" attrs="{'invisible': [('link','==', False)]}"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <act_window
+        name="Generate a Payment Link"
+        res_model="payment.link.wizard"
+        binding_model="account.invoice"
+        binding_views="form"
+        view_mode="form"
+        target="new"
+        view_id="payment_link_wizard_view_form"
+        id="action_invoice_order_generate_link"
+    />
+</odoo>

@@ -2,7 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class AccountInvoice(models.Model):
@@ -96,3 +96,13 @@ class AccountInvoice(models.Model):
     @api.multi
     def payment_action_void(self):
         self.authorized_transaction_ids.s2s_void_transaction()
+
+    @api.multi
+    def _validate_payment_link(self, amount):
+        self.ensure_one()
+        if self.state != 'open':
+            raise UserError(_("Link can be generated only for open invoices."))
+        if self.amount_total < amount:
+            raise UserError(_("Please set an amount smaller than %s.") % (self.amount_total))
+        if amount <= 0:
+            raise UserError(_("The value of the payment amount must be positive."))

@@ -918,6 +918,16 @@ class SaleOrder(models.Model):
         self.ensure_one()
         return 'form_save' if self.require_payment else 'form'
 
+    @api.multi
+    def _validate_payment_link(self, amount):
+        self.ensure_one()
+        if self.state in ['draft', 'cancel']:
+            raise UserError(_("Link cannot be generated for draft and cancel state"))
+        if self.amount_total < amount:
+            raise UserError(_("Please set an amount smaller than %s.") % (self.amount_total))
+        if amount <= 0:
+            raise UserError(_("The value of the payment amount must be positive."))
+
 
 class SaleOrderLine(models.Model):
     _name = 'sale.order.line'
