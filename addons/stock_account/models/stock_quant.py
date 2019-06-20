@@ -8,6 +8,7 @@ class StockQuant(models.Model):
     _inherit = 'stock.quant'
 
     value = fields.Float('Value', compute='_compute_value')
+    currency_id = fields.Many2one(related='product_id.currency_id')
 
     @api.depends('quantity')
     def _compute_value(self):
@@ -20,7 +21,10 @@ class StockQuant(models.Model):
         """
         for quant in self:
             if quant.product_id.cost_method == 'fifo':
-                average_cost = quant.product_id.value_svl / quant.product_id.quantity_svl
+                quantity = quant.product_id.quantity_svl
+                if not quantity:
+                    quant.value = 0.0
+                average_cost = quant.product_id.value_svl / quantity
                 quant.value = quant.quantity * average_cost
             else:
                 quant.value = quant.quantity * quant.product_id.standard_price
