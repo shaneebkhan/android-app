@@ -26,7 +26,7 @@ class Lead(models.Model):
             try:
                 response_clearbit = self._make_request(domains)
                 self._enrich_leads_from_response(response_clearbit)
-                self.sudo().set_param('lead_enrich.already_notified', False)
+                self.env['ir.config_parameter'].sudo().set_param('lead_enrich.already_notified', False)
             except InsufficientCreditError:
                 data = {
                     'message_title': _("Lead enriched based on email address"),
