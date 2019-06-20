@@ -1470,7 +1470,7 @@ var FieldEmbedURLViewer = FieldChar.extend({
     _updateIframePreviews: function ($iframe) {
         this._setEmbedSrc(this.value);
         if (this.src && $iframe.attr('src') !== this.src) {
-            $iframe.removeClass('o_hidden');
+            $iframe.removeClass('o_invisible_modifier');
         }
         $iframe.attr('src', this.src);
     },
@@ -1500,7 +1500,7 @@ var FieldEmbedURLViewer = FieldChar.extend({
     _initIFrame: function () {
         return $('<iframe>', {
             src: this.src || 'about:blank',
-            class: this.src ? 'o_embed_iframe' : 'o_embed_iframe o_hidden',
+            class: this.src ? 'o_embed_iframe' : 'o_embed_iframe o_invisible_modifier',
             width: '100%',
             height: '30rem',
             css: {
