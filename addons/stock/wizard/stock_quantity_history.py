@@ -13,20 +13,16 @@ class StockQuantityHistory(models.TransientModel):
         default=fields.Datetime.now, oldname='date')
 
     def open_at_date(self):
-        self.ensure_one()
-        if self.inventory_datetime.date() != fields.Date.today():
-            return {
-                'name': str(self.inventory_datetime),
-                'type': 'ir.actions.act_window',
-                'res_model': 'stock.inventory.report',
-                'view_type': 'tree',
-                'view_mode': 'tree,pivot,graph',
-                'context': {
-                    'search_default_internal_loc': 1,
-                    'search_default_productgroup': 1,
-                    'search_default_locationgroup': 1,
-                },
-                'domain': [('date', '<=', self.inventory_datetime)],
-            }
-        else:
-            return self.env['stock.quant'].action_view_quants()
+        return {
+            'name': str(self.inventory_datetime),
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.inventory.report',
+            'view_type': 'tree',
+            'view_mode': 'tree,pivot,graph',
+            'context': {
+                'search_default_internal_loc': 1,
+                'search_default_productgroup': 1,
+                'search_default_locationgroup': 1,
+            },
+            'domain': [('date', '<=', self.inventory_datetime)],
+        }
