@@ -106,6 +106,7 @@ class Lang(models.Model):
         position = 'before' if conv.get('p_cs_precedes', 'n_cs_precedes') == 1 else 'after'
         is_space = False if conv.get('p_sep_by_space', 'n_sep_by_space') == 0 else True
         sign_position = conv.get('p_sign_posn', 'n_sign_posn')
+        print("\n\n---lang", language, language.name, position, is_space, sign_position)
         if sign_position == locale.CHAR_MAX:
             sign_position = 1
         if language:
@@ -117,6 +118,7 @@ class Lang(models.Model):
         iso_lang = tools.get_iso_codes(lang)
         for ln in tools.get_locales(lang):
             try:
+                print("\n\n----before setlocale", conv)
                 locale.setlocale(locale.LC_ALL, str(ln))
                 fail = False
                 break
@@ -150,6 +152,15 @@ class Lang(models.Model):
             for pattern, replacement in tools.DATETIME_FORMATS_MAP.items():
                 format = format.replace(pattern, replacement)
             return str(format)
+        conv = locale.localeconv()
+        print("\n\n----after setlocale", conv)
+        language = self.with_context(active_test=False).search([('code', '=', lang)], limit=1)
+        position = 'before' if conv.get('p_cs_precedes', 'n_cs_precedes') == 1 else 'after'
+        is_space = False if conv.get('p_sep_by_space', 'n_sep_by_space') == 0 else True
+        sign_position = conv.get('p_sign_posn', 'n_sign_posn')
+        print("\n\n---lang1", language, language.name, position, is_space, sign_position)
+        if sign_position == locale.CHAR_MAX:
+            sign_position = 1
 
         lang_info = {
             'code': lang,
