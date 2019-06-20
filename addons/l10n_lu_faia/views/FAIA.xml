@@ -2,7 +2,7 @@
 <odoo>
 
 <!-- Address Structure Template -->
-<template id="FAIAAddressStructure">
+<template id="FAIAAddressStructure1">
     <StreetName><t t-esc="address_data['street']"/></StreetName>
     <AdditionalAddressDetail><t t-esc="address_data['street2']"/></AdditionalAddressDetail>
     <City><t t-esc="address_data['city']"/></City>
@@ -12,21 +12,21 @@
 </template>
 
 <!-- ContactHeaderStructure Template -->
-<template id="FAIAContactHeaderStructure">
+<template id="FAIAContactHeaderStructure1">
     <Contact>
         <ContactPerson>
             <Title><t t-esc="contact_data['title']"/></Title>
             <FirstName><t t-esc="contact_data['name']"/></FirstName>
             <LastName></LastName>
         </ContactPerson>
-        <Telephone><t t-esc="contact_data['mobile'] or contact_data['phone']"/></Telephone>
+        <Telephone><t t-esc="contact_data['mobile']"/></Telephone>
         <Email><t t-esc="contact_data['email']"/></Email>
         <Website><t t-esc="contact_data['website']"/></Website>
     </Contact>
 </template>
 
 <!-- BankAccount Template -->
-<template id="FAIABankAccountTemplate">
+<template id="FAIABankAccountTemplate1">
     <BankAccount t-foreach="bank_accounts" t-as="bank_account">
         <!--You have a CHOICE of the next 2 items at this level-->
         <BankAccountNumber><t t-esc="bank_account['acc_number']"/></BankAccountNumber>
@@ -36,7 +36,7 @@
 </template>
 
 <!-- TaxStructure Template -->
-<template id="FAIATaxStructure">
+<template id="FAIATaxStructure1">
     <TaxType><t t-esc="tax['tax_type']"/></TaxType>
     <TaxCode><t t-esc="tax['tax_code']"/></TaxCode>
     <TaxPercentage><t t-esc="tax['tax_percentage']" /></TaxPercentage>
@@ -44,84 +44,70 @@
     <TaxAmount>
         <Amount><t t-esc="tax['amount']"/></Amount>
         <CurrencyCode t-if="tax['currency_code']"><t t-esc="tax['currency_code']"/></CurrencyCode>
-        <!-- <CurrencyAmount t-if="tax['currency_amount']"><t t-esc="tax['currency_amount']"/></CurrencyAmount> -->
+        <CurrencyAmount t-if="tax['currency_amount']"><t t-esc="tax['currency_amount']"/></CurrencyAmount>
         <ExchangeRate t-if="tax.get('exchange_rate')"><t t-esc="tax['exchange_rate']"/></ExchangeRate>
     </TaxAmount>
 </template>
 
 <!-- CompanyStructure Template -->
-<template id="FAIACompanyStructure">
+<template id="FAIACompanyStructure1">
     <RegistrationNumber t-if="partner.get('company_registry')"><t t-esc="partner['company_registry']"/></RegistrationNumber>
     <Name><t t-esc="partner['name']"/></Name>
-    <Address>
-        <!-- partner['addresses'] -->
-        <t t-set="address_data" t-value="partner['address']"/>
-        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
-    </Address>
-    <Address t-foreach="partner['address']['other_address']" t-as="address_data">
-        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+    <Address t-foreach="partner['addresses']" t-as="address_data">
+        <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
     </Address>
     <!-- partner['contacts'] -->
-    <t t-foreach="partner['address']['contact_address']" t-as="contact_data">
-        <t t-call="l10n_lu_faia.FAIAContactHeaderStructure"/>
+    <t t-foreach="partner['contacts']" t-as="contact_data">
+        <t t-call="l10n_lu_faia.FAIAContactHeaderStructure1"/>
     </t>
-    <TaxRegistration t-if="partner['tax_registration']">
-        <TaxRegistrationNumber><t t-esc="partner['tax_registration']"/></TaxRegistrationNumber>
+    <TaxRegistration t-if="partner['vat']">
+        <TaxRegistrationNumber><t t-esc="partner['vat']"/></TaxRegistrationNumber>
     </TaxRegistration>
     <t t-set="bank_accounts" t-value="partner['bank_accounts']"/>
-    <t t-call="l10n_lu_faia.FAIABankAccountTemplate"/>
+    <t t-call="l10n_lu_faia.FAIABankAccountTemplate1"/>
 </template>
 
 <!-- Template for Customer/Supplier -->
-<template id="FAIACustomerSupplierTemplate">
-    <t t-call="l10n_lu_faia.FAIACompanyStructure"/>
+<template id="FAIACustomerSupplierTemplate1">
+    <t t-call="l10n_lu_faia.FAIACompanyStructure1"/>
     <!-- t-if="partner.get('supplier_id')" -->
-    <t t-if="customer">
-        <CustomerID><t t-esc="partner['id']"/></CustomerID>
+    <t t-if="partner.get('customer_id') and customer">
+        <CustomerID><t t-esc="partner.get('customer_id')"/></CustomerID>
     </t>
     <!-- t-if="partner.get('customer_id')" -->
-    <t t-if="not customer">
-        <SupplierID><t t-esc="partner['id']"/></SupplierID>
+    <t t-if="partner.get('supplier_id') and not customer">
+        <SupplierID><t t-esc="partner.get('supplier_id')"/></SupplierID>
     </t>
     <!-- partner['opening_balance'] -->
-    <t t-set="customer_bal_from" t-value="partner['partner_balance_date_from']"/>
-    <OpeningDebitBalance t-if="customer_bal_from['debit']">
-        <t t-esc="customer_bal_from['debit']"/>
-    </OpeningDebitBalance>
-    <OpeningCreditBalance t-if="customer_bal_from['credit']">
-        <t t-esc="customer_bal_from['credit']"/>
-    </OpeningCreditBalance>
+    <t t-set="customer_bal_from" t-value="partner['opening_balance']"/>
     <!-- partner['closing_balance'] -->
-    <t t-set="customer_bal_to" t-value="partner['partner_balance_date_to']"/>
-    <ClosingDebitBalance t-if="customer_bal_to['debit']">
-        <t t-esc="customer_bal_to['debit']"/>
-    </ClosingDebitBalance>
-    <ClosingCreditBalance t-if="customer_bal_to['credit']">
-        <t t-esc="customer_bal_to['credit']"/>
-    </ClosingCreditBalance>
+    <t t-set="customer_bal_to" t-value="partner['closing_balance']"/>
+    <OpeningDebitBalance t-if="customer_bal_from['debit']"><t t-esc="customer_bal_from['debit']"/></OpeningDebitBalance>
+    <OpeningCreditBalance t-if="not customer_bal_from['debit']"><t t-esc="customer_bal_from['credit']"/></OpeningCreditBalance>
+    <ClosingDebitBalance t-if="customer_bal_to['debit']"><t t-esc="customer_bal_to['debit']"/></ClosingDebitBalance>
+    <ClosingCreditBalance t-if="not customer_bal_to['debit']"><t t-esc="customer_bal_to['credit']"/></ClosingCreditBalance>
 </template>
 
 
 <!-- Main FAIA Template -->
-<template id="FAIATemplate">
+<template id="FAIATemplate1">
 <AuditFile>
     <Header>
         <AuditFileVersion>2.01</AuditFileVersion>
-        <t t-set="company" t-value="request.env.user.company_id"/>
-        <AuditFileCountry><t t-esc="company.partner_id.country_id.code"/></AuditFileCountry>
-        <AuditFileRegion><t t-esc="company.partner_id.state_id.code"/></AuditFileRegion>
-        <AuditFileDateCreated><t t-esc="AuditFileDateCreated"/></AuditFileDateCreated>
+        <AuditFileCountry><t t-esc="header_structure['country']"/></AuditFileCountry>
+        <AuditFileRegion><t t-esc="header_structure['region']"/></AuditFileRegion>
+        <AuditFileDateCreated><t t-esc="header_structure['date_created']"/></AuditFileDateCreated>
         <SoftwareCompanyName>Odoo SA</SoftwareCompanyName>
         <SoftwareID>Odoo</SoftwareID>
-        <SoftwareVersion><t t-esc="SoftwareVersion"/></SoftwareVersion>
+        <SoftwareVersion><t t-esc="header_structure['software_version']"/></SoftwareVersion>
         <Company>
-            <t t-set="partner" t-value="company_data"/>
-            <t t-call="l10n_lu_faia.FAIACompanyStructure"/>
+            <t t-set="partner" t-value="header_structure['company_structure']"/>
+            <t t-call="l10n_lu_faia.FAIACompanyStructure1"/>
         </Company>
-        <DefaultCurrencyCode><t t-esc="company.currency_id.name"/></DefaultCurrencyCode>
+        <DefaultCurrencyCode><t t-esc="header_structure['company_currency']"/></DefaultCurrencyCode>
         <SelectionCriteria>
-            <SelectionStartDate><t t-esc="date_from"/></SelectionStartDate>
-            <SelectionEndDate><t t-esc="date_to"/></SelectionEndDate>
+            <SelectionStartDate><t t-esc="header_structure['date_from']"/></SelectionStartDate>
+            <SelectionEndDate><t t-esc="header_structure['date_to']"/></SelectionEndDate>
         </SelectionCriteria>
         <TaxAccountingBasis>Invoice Accounting</TaxAccountingBasis>
     </Header>
@@ -151,13 +137,13 @@
         <Customers t-if="customers">
             <Customer t-foreach="customers" t-as="partner">
                 <t t-set="customer" t-value="True"/>
-                <t t-call="l10n_lu_faia.FAIACustomerSupplierTemplate"/>
+                <t t-call="l10n_lu_faia.FAIACustomerSupplierTemplate1"/>
             </Customer>
         </Customers>
         <Suppliers t-if="suppliers">
             <Supplier t-foreach="suppliers" t-as="partner">
                 <t t-set="customer" t-value="False"/>
-                <t t-call="l10n_lu_faia.FAIACustomerSupplierTemplate"/>
+                <t t-call="l10n_lu_faia.FAIACustomerSupplierTemplate1"/>
             </Supplier>
         </Suppliers>
         <TaxTable t-if="taxes">
@@ -172,7 +158,7 @@
                     <FlatTaxRate t-if="TaxTableEntry.get('fix_amount')">
                         <Amount><t t-esc="TaxTableEntry['fix_amount']"/></Amount>
                         <CurrencyCode t-if="TaxTableEntry['currency_code']"><t t-esc="TaxTableEntry['currency_code']"/></CurrencyCode>
-                        <!-- <CurrencyAmount t-if="TaxTableEntry['currency_amount']"><t t-esc="TaxTableEntry['currency_amount']"/></CurrencyAmount> -->
+                        <CurrencyAmount t-if="TaxTableEntry['currency_amount']"><t t-esc="TaxTableEntry['currency_amount']"/></CurrencyAmount>
                     </FlatTaxRate>
                     <Country><t t-esc="TaxTableEntry['country']"/></Country>
                     <Region><t t-esc="TaxTableEntry['state_code']"/></Region>
@@ -192,7 +178,7 @@
                 <Description><t t-esc="product['description']"/></Description>
                 <ProductNumberCode><t t-esc="product['product_number_code']"/></ProductNumberCode>
                 <!-- valuation >> cost_method -->
-                <ValuationMethod><t t-esc="product['valuation']"/></ValuationMethod>
+                <ValuationMethod><t t-esc="product['cost_method']"/></ValuationMethod>
                 <UOMBase><t t-esc="product['uom_base']"/></UOMBase>
                 <UOMStandard><t t-esc="product['uom_standard']"/></UOMStandard>
                 <UOMToUOMBaseConversionFactor><t t-esc="product['convert_fact']"/></UOMToUOMBaseConversionFactor>
@@ -205,25 +191,9 @@
         </Products>
         <Owners>
             <Owner>
-<!--                 <t t-set="partner" t-value="company_data"/>
-                <t t-call="l10n_lu_faia.FAIACompanyStructure"/> -->
-                 <Name><t t-esc="company.name"/></Name>
-                <Address>
-                    <t t-set="address_data" t-value="owner_address['address']"/>
-                    <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
-                </Address>
-                <Address t-foreach="owner_address['address']['other_address']" t-as="address_data">
-                    <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
-                </Address>
-                <t t-foreach="owner_address['address']['contact_address']" t-as="contact_data">
-                    <t t-call="l10n_lu_faia.FAIAContactHeaderStructure"/>
-                </t>
-                <TaxRegistration t-if="company.vat">
-                    <TaxRegistrationNumber><t t-esc="company.vat"/></TaxRegistrationNumber>
-                </TaxRegistration>
-                <t t-set="bank_accounts" t-value="company.bank_ids"/>
-                <t t-call="l10n_lu_faia.FAIABankAccountTemplate"/>
-                <OwnerID><t t-esc="company.id"/></OwnerID>
+                <t t-set="partner" t-value="company_data"/>
+                <t t-call="l10n_lu_faia.FAIACompanyStructure1"/>
+                <OwnerID><t t-esc="company_data['id']"/></OwnerID>
             </Owner>
         </Owners>
     </MasterFiles>
@@ -258,15 +228,15 @@
                     <DebitAmount t-if="line.get('debit_amount')">
                         <Amount><t t-esc="line['debit_amount']['amount']"/></Amount>
                         <CurrencyCode t-if="line['debit_amount']['currency_code']"><t t-esc="line['debit_amount']['currency_code']"/></CurrencyCode>
-                        <!-- <CurrencyAmount t-if="line['debit_amount']['currency_amount']"><t t-esc="line['debit_amount']['currency_amount']"/></CurrencyAmount> -->
+                        <CurrencyAmount t-if="line['debit_amount']['currency_amount']"><t t-esc="line['debit_amount']['currency_amount']"/></CurrencyAmount>
                     </DebitAmount>
                     <CreditAmount t-if="line.get('credit_amount')">
                         <Amount><t t-esc="line['credit_amount']['amount']"/></Amount>
                         <CurrencyCode t-if="line['credit_amount']['currency_code']"><t t-esc="line['credit_amount']['currency_code']"/></CurrencyCode>
-                        <!-- <CurrencyAmount t-if="line['credit_amount']['currency_amount']"><t t-esc="line['credit_amount']['currency_amount']"/></CurrencyAmount> -->
+                        <CurrencyAmount t-if="line['credit_amount']['currency_amount']"><t t-esc="line['credit_amount']['currency_amount']"/></CurrencyAmount>
                     </CreditAmount>
                     <TaxInformation t-foreach="line.get('tax_information')" t-as="tax">
-                        <t t-call="l10n_lu_faia.FAIATaxStructure"/>
+                        <t t-call="l10n_lu_faia.FAIATaxStructure1"/>
                     </TaxInformation>
                 </Line>
             </Transaction>
@@ -283,14 +253,14 @@
                     <CustomerID><t t-esc="invoice['partner_id']"/></CustomerID>
                     <BillingAddress>
                         <t t-set="address_data" t-value="invoice['customer_info']"/>
-                        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                        <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                     </BillingAddress>
                 </CustomerInfo>
                 <SupplierInfo t-if="invoice['supplier_info']">
                     <SupplierID><t t-esc="invoice['partner_shipping_id']"/></SupplierID>
                     <BillingAddress>
                         <t t-set="address_data" t-value="invoice['supplier_info']"/>
-                        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                        <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                     </BillingAddress>
                 </SupplierInfo>
                 <AccountID><t t-esc="invoice['account_id']"/></AccountID>
@@ -302,23 +272,23 @@
                     <DeliveryDate><t t-esc="invoice.get('ship_to_delivery_date')"/></DeliveryDate>
                     <Address>
                         <t t-set="address_data" t-value="invoice['ship_to_address']"/>
-                        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                        <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                     </Address>
                 </ShipTo>
                 <ShipFrom>
                     <DeliveryDate><t t-esc="invoice['ship_from_delivery_date']"/></DeliveryDate>
                     <Address>
                         <t t-set="address_data" t-value="invoice['ship_from_address']"/>
-                        <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                        <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                     </Address>
                 </ShipFrom>
                 <PaymentTerms><t t-esc="invoice['payment_term_id']"/></PaymentTerms>
                 <SourceID t-if="invoice['source_id']"><t t-esc="invoice['source_id']"/></SourceID>
                 <GLPostingDate><t t-esc="invoice['gl_posting_date']"/></GLPostingDate>
-                <TransactionID><t t-esc="invoice['transaction_id']"/></TransactionID>
+                <!-- <TransactionID><t t-esc="invoice['transaction_id']"/></TransactionID> -->
                 <ReceiptNumbers t-if="invoice['receipt_number']"><t t-esc="invoice['receipt_number']"/></ReceiptNumbers>
                 <Line t-foreach="invoice['lines']" t-as="line">
-                    <LineNumber><t t-esc="line.get('line_number')"/></LineNumber>
+                    <!-- <LineNumber><t t-esc="line.get('line_number')"/></LineNumber> -->
                     <AccountID><t t-esc="line.get('account_id')"/></AccountID>
                     <OrderReferences>
                         <OriginatingON><t t-esc="line.get('order_ref')"/></OriginatingON>
@@ -327,14 +297,14 @@
                         <DeliveryDate><t t-esc="line.get('ship_delivery_date')"/></DeliveryDate>
                         <Address>
                             <t t-set="address_data" t-value="line['ship_to_address']"/>
-                            <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                            <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                         </Address>
                     </ShipTo>
                     <ShipFrom>
                         <DeliveryDate><t t-esc="line.get('ship_delivery_date')"/></DeliveryDate>
                         <Address>
                             <t t-set="address_data" t-value="line['ship_from_address']"/>
-                            <t t-call="l10n_lu_faia.FAIAAddressStructure"/>
+                            <t t-call="l10n_lu_faia.FAIAAddressStructure1"/>
                         </Address>
                     </ShipFrom>
                     <ProductCode t-if="line.get('product_code')"><t t-esc="line.get('product_code')"/></ProductCode>
@@ -357,14 +327,14 @@
                     <InvoiceLineAmount>
                         <Amount><t t-esc="line.get('amount')"/></Amount>
                         <CurrencyCode t-if="line.get('currency_code')"><t t-esc="line.get('currency_code')"/></CurrencyCode>
-                        <!-- <CurrencyAmount t-if="line.get('currency_amount')"><t t-esc="line.get('currency_amount')"/></CurrencyAmount> -->
+                        <CurrencyAmount t-if="line.get('currency_code')"><t t-esc="line.get('currency_amount')"/></CurrencyAmount>
                         <ExchangeRate t-if="line.get('exchange_rate')"><t t-esc="line.get('exchange_rate')"/></ExchangeRate>
                     </InvoiceLineAmount>
                     <DebitCreditIndicator><t t-esc="line.get('indicator')"/></DebitCreditIndicator>
                 </Line>
                 <DocumentTotals>
                     <TaxInformationTotals t-foreach="invoice.get('tax_information')" t-as="tax">
-                        <t t-call="l10n_lu_faia.FAIATaxStructure"/>
+                        <t t-call="l10n_lu_faia.FAIATaxStructure1"/>
                     </TaxInformationTotals>
                     <NetTotal><t t-esc="invoice.get('net_total')" /></NetTotal>
                     <GrossTotal><t t-esc="invoice.get('gross_total')" /></GrossTotal>
