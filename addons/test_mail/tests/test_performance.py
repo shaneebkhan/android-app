@@ -220,7 +220,7 @@ class TestAdvMailPerformance(TransactionCase):
     @warmup
     def test_message_assignation_inbox(self):
         record = self.env['mail.test.track'].create({'name': 'Test'})
-        with self.assertQueryCount(__system__=34, emp=40):  # test_mail only: 34 - 40
+        with self.assertQueryCount(__system__=35, emp=41):  # test_mail only: 35 - 41
             record.write({
                 'user_id': self.user_test.id,
             })
@@ -276,7 +276,7 @@ class TestAdvMailPerformance(TransactionCase):
     def test_message_post_one_inbox_notification(self):
         record = self.env['mail.test.simple'].create({'name': 'Test'})
 
-        with self.assertQueryCount(__system__=30, emp=36):  # com runbot 30 - 36 // test_mail only: 30 - 36
+        with self.assertQueryCount(__system__=31, emp=37):  # com runbot 31 - 37 // test_mail only: 31 - 37
             record.message_post(
                 body='<p>Test Post Performances with an inbox ping</p>',
                 partner_ids=self.user_test.partner_id.ids,
@@ -751,7 +751,7 @@ class TestMailPerformancePost(TransactionCase):
         ]
         self.attachements = self.env['ir.attachment'].sudo(self.env.user).create(self.vals) #-> 163-> 165 query 
         attachement_ids = self.attachements.ids
-        with self.assertQueryCount(emp=175):  # com runbot 156 // test_mail only: 133
+        with self.assertQueryCount(emp=176):  # com runbot 157 // test_mail only: 134
             self.cr.sql_log = self.warm and self.cr.sql_log_count
             record.with_context({}).message_post(
                 body='<p>Test body <img src="cid:cid1"> <img src="cid:cid2"></p>',

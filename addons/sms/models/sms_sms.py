@@ -119,3 +119,12 @@ class SmsSms(models.Model):
         # if not failure_type or failure_type == 'RECIPIENT':  # if we have another error, we want to keep the mail.
         #     mail_to_delete_ids = [mail.id for mail in self if mail.auto_delete]
         #     self.browse(mail_to_delete_ids).sudo().unlink()
+
+    @api.multi
+    def _cancel(self):
+        """ Cancel SMS """
+        self.write({
+            'state': 'canceled',
+            'error_code': False
+        })
+        self._notify_sms_update()
