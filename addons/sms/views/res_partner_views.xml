@@ -19,8 +19,7 @@
                         aria-label="Send SMS Text Message"
                         title="Send SMS Text Message"
                         attrs="{'invisible':[('phone', '=', False)]}"
-                        context="{'field_name': 'phone'}"
-                    />
+                        context="{'field_name': 'phone'}" />
                 </div>
             </xpath>
             <xpath expr="//field[@name='mobile']" position="replace">
@@ -30,14 +29,13 @@
                     <button
                         type="action"
                         name="%(sms.sms_composer_action_form)d"
-                        class="btn-sm btn-link mb4 fa fa-envelope-o"
+                        class="btn-sm btn-link mb4 fa fa-comment"
                         aria-label="Send SMS Text Message"
                         title="Send SMS Text Message"
                         attrs="{'invisible':[('mobile', '=', False)]}"
-                        context="{'field_name': 'mobile'}"
-                        />
-                    </div>
-                </xpath>
+                        context="{'field_name': 'mobile'}" />
+                </div>
+            </xpath>
         </field>
     </record>
 
