@@ -402,6 +402,7 @@ var ListRenderer = BasicRenderer.extend({
             data: record.data,
             escape: true,
             isPassword: 'password' in node.attrs,
+            digits: node.attrs.digits && JSON.parse(node.attrs.digits),
         });
         this._handleAttributes($td, node);
         return $td.html(formattedValue).attr('title', formattedValue);
