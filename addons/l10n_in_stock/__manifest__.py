@@ -14,6 +14,7 @@
         'data/product_demo.xml',
         'views/report_stockpicking_operations.xml',
     ],
+    'demo': ['data/stock_account_demo.xml'],
     'installable': True,
     'application': False,
     'auto_install': True,

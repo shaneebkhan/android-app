@@ -8,6 +8,7 @@
     'category': 'Accounting',
     'depends': [
         'l10n_in',
+        'l10n_in_multi_units',
         'purchase',
     ],
     'data': [

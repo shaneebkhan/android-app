@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_pos_form_inherit" model="ir.ui.view">
+        <field name="name">pos.order.form.inherit.l10n_in</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='extra']//field[@name='company_id']" position="after">
+            <field name="unit_id" domain="[('company_unit_id', '=', company_id)]" options="{'no_create': True, 'no_open': True}" groups="l10n_in_multi_units.group_multi_operating_unit"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

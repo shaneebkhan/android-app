@@ -8,10 +8,13 @@
     'category': 'Localization',
     'depends': [
         'l10n_in',
-        'point_of_sale'
+        'point_of_sale',
+        'l10n_in_multi_units',
     ],
     'data': [
         'data/product_demo.xml',
+        'views/pos_order_view.xml',
+        'views/pos_config_view.xml',
     ],
     'auto_install': True,
 }

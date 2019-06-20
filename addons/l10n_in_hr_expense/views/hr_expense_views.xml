@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_expense_view_form_inherit_l10n_in_multi_unit" model="ir.ui.view">
+        <field name="name">hr.expense.view.form.inherit.l10n_in_multi_units</field>
+        <field name="model">hr.expense</field>
+        <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="unit_id" domain="[('company_unit_id', '=', company_id)]" options="{'no_create': True, 'no_open': True}" groups="l10n_in_multi_units.group_multi_operating_unit" required="1"/>
+            </field>
+        </field>
+    </record>
+    <record id="view_hr_expense_sheet_form_inherit_l10n_in_multi_unit" model="ir.ui.view">
+        <field name="name">hr.expense.sheet.form.inherit.l10n_in_multi_units</field>
+        <field name="model">hr.expense.sheet</field>
+        <field name="inherit_id" ref="hr_expense.view_hr_expense_sheet_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="unit_id" domain="[('company_unit_id', '=', company_id)]" options="{'no_create': True, 'no_open': True}" groups="l10n_in_multi_units.group_multi_operating_unit" required="1"/>
+            </field>
+        </field>
+    </record>
+</odoo>

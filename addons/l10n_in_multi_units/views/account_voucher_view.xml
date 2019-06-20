@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sale_receipt_form_inherit_l10n_in" model="ir.ui.view">
+        <field name="name">account.voucher.sale.form.inherit.l10n_in</field>
+        <field name="model">account.voucher</field>
+        <field name="inherit_id" ref="account_voucher.view_sale_receipt_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="unit_id" domain="[('company_unit_id', '=', company_id)]" options="{'no_create': True, 'no_open': True}" groups="l10n_in_multi_units.group_multi_operating_unit" required="1"/>
+            </field>
+        </field>
+    </record>
+    <record id="view_purchase_receipt_form_inherit_l10n_in" model="ir.ui.view">
+        <field name="name">account.voucher.purchase.form.inherit.l10n_in</field>
+        <field name="model">account.voucher</field>
+        <field name="inherit_id" ref="account_voucher.view_purchase_receipt_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="unit_id" domain="[('company_unit_id', '=', company_id)]" options="{'no_create': True, 'no_open': True}" groups="l10n_in_multi_units.group_multi_operating_unit" required="1"/>
+            </field>
+        </field>
+    </record>
+</odoo>

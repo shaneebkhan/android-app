@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_multi_operating_unit" model="res.groups">
+        <field name="name">Manage Multiple Operating Units</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+</odoo>

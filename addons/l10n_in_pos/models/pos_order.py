@@ -7,6 +7,21 @@ from odoo import api, fields, models
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
+    def _create_account_move(self):
+        move = super(PosOrder, self)._create_account_move()
+        move['unit_id'] = self.unit_id.id
+        return move
+
+    def _prepare_invoice(self):
+        inv_vals = super(PosOrder, self)._prepare_invoice()
+        inv_vals['unit_id'] = self.unit_id.id
+        return inv_vals
+
+    def _default_unit(self):
+        return self._default_session().config_id.unit_id
+
+    unit_id = fields.Many2one('res.partner', string="Operating Unit", ondelete="restrict", readonly=True, default=_default_unit)
+
     @api.model
     def _get_account_move_line_group_data_type_key(self, data_type, values, options={}):
         res = super(PosOrder, self)._get_account_move_line_group_data_type_key(data_type, values, options)
