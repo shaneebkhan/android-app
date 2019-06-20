@@ -31,16 +31,16 @@ $bronze: #eea91e;
     }
 
     .vote {
-        min-width: 38px;
-        margin-right: 12px;
         .vote_count {
-            font-weight: bold;
-            line-height: 12px;
-            font-size: 160%;
+            line-height: 13px;
+            font-size: 120%;
+            min-width: 2.5em; // handle 3digits numbers
         }
-        .vote_down,
-        .vote_up {
+
+        .vote_down, .vote_up {
+            @include o-hover-opacity();
             font-size: 130%;
+            line-height: 1.7;
         }
     }
 

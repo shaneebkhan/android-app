@@ -196,46 +196,58 @@
 
 <!-- Display a post -->
 <template id="display_post_question_block">
-    <div t-if="question.has_validated_answer" class="validate_answer">
+
+    <!-- TO REFACTOR -->
+    <div t-if="question.has_validated_answer" class="validate_answer d-none">
         <div class="bg-success"></div>
         <span title="Question has accepted answer" role="img" aria-label="Question has accepted answer"><i class="fa fa-check-circle text-success bg-white"/></span>
     </div>
-    <div class="col">
-        <div class="row">
-            <div class="col-12">
-                <t t-foreach="question.tag_ids" t-as="question_tag">
-                    <a t-attf-href="/forum/#{ slug(question_tag.forum_id) }/tag/#{slug(question_tag)}/questions">
-                        <span t-attf-class="float-right mb-1 mr-1 badge #{tag and tag.name == question_tag.name and 'badge-primary' or 'badge-secondary'}" t-field="question_tag.name"/>
-                    </a>
-                </t>
-            </div>
-            <div class="col">
+
+    <!-- <div class="col-auto pl-3">
+        <div class="bg-200 rounded p-5" style="width: 125px"></div>
+    </div> -->
+
+    <div class="col pl-3">
+        <div class="row align-items-center">
+            <div class="col-12 col-lg-auto flex-grow-1">
                 <div class="question-name">
                     <a t-attf-href="/forum/#{ slug(question.forum_id) }/question/#{ slug(question) }">
-                        <h4 t-field="question.name" class="d-inline"/>
+                        <h5 t-field="question.name" class="d-inline"/>
                     </a>
                     <span t-if="not question.active and question.state!='offensive'"><b> [Deleted]</b></span>
                     <span t-if="not question.active and question.state=='offensive'"><b> [Offensive]</b></span>
                     <span t-if="not question.active and question.state=='offensive' and question.closed_reason_id"><b> [<t t-esc="question.closed_reason_id.name[0].upper() + question.closed_reason_id.name[1:]"/>]</b></span>
                     <span t-if="question.state == 'close'"><b> [Closed]</b></span>
                 </div>
+                <div class="d-lg-none">
+                </div>
+                <div class="row">
+                    <div class="col-12 col-lg text-lg-right order-lg-2">
+                        <t t-foreach="question.tag_ids" t-as="question_tag">
+                            <a t-attf-href="/forum/#{ slug(question_tag.forum_id) }/tag/#{slug(question_tag)}/questions"
+                                t-attf-class="mr-1 badge #{tag and tag.name == question_tag.name and 'badge-primary' or 'badge-secondary'}"
+                                t-field="question_tag.name"/>
+                            </t>
+                        </div>
+                    <div class="col-12 col-lg-auto">
+                        <div class="text-muted d-flex">
+                            <span t-field="question.write_date" t-options='{"format": "d MMMM y"}'/>
+                            , by <a t-attf-href="/forum/#{slug(forum)}/partner/#{question.create_uid.id}" t-field="question.create_uid" t-options='{"widget": "contact", "fields": ["name"]}' class="d-inline ml-1"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!--  Display post content in moderation mode-->
                 <div><t t-raw="post_content"/></div>
+
                 <small class="text-muted">
-                    <i t-attf-class="fa fa-question-circle" role="img" aria-label="Question" />
-                    <span>By </span><span t-field="question.create_uid" t-options='{"widget": "contact", "country_image": True, "fields": ["name", "country_id"]}' class="d-inline-block"/>
-                    <span class="ml-4 mr-1 fa fa-calendar"></span><span t-field="question.write_date" t-options='{"format":"short"}'/>
-                    <span class="ml-4 mr-1 fa fa-eye"></span><span t-field="question.views" /> <t t-if="question.views&lt;=1">View</t><t t-else="">Views</t>
-                    <a t-attf-href="/forum/#{ slug(question.forum_id) }/question/#{ slug(question) }">
-                        <i class="ml-4 mr-1 fa fa-comments"/><t t-esc="question.child_count"/>
-                        <t t-if="question.child_count&lt;=1">Answer</t>
-                        <t t-else="">Answers</t>
-                    </a>
-                    <a t-attf-href="/forum/#{ slug(question.forum_id) }/question/#{ slug(question) }">
-                        <span class="ml-4 mr-1 fa fa-star"></span><span t-field="question.favourite_count"/> <t t-if="question.views&lt;=1">Favorite</t><t t-else="">Favorites</t>
-                    </a>
+                    <span t-field="question.views" /> <t t-if="question.views&lt;=1">View</t><t t-else="">Views</t> |
+                    <t t-esc="question.child_count"/>
+                    <t t-if="question.child_count&lt;=1">Answer</t>
+                    <t t-else="">Answers</t> |
+                    <span t-field="question.favourite_count"/> <t t-if="question.views&lt;=1">Favorite</t><t t-else="">Favorites</t>
                     <t t-if="question.state == 'flagged'" class="text-black">
-                        <i class="fa fa-flag ml-4 mr4"/>
-                        Flagged
+                        | Flagged
                     </t>
                 </small>
             </div>
@@ -244,17 +256,13 @@
 </template>
 
 <template id="display_post">
-    <div class="card">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-1">
-                    <t t-call="website_forum.vote">
-                        <t t-set="post" t-value="question"/>
-                    </t>
-                </div>
-                <t t-call="website_forum.display_post_question_block"/>
-            </div>
+    <div class="o_wforum_index_entry row no-gutters align-items-center mt-2 mb-3">
+        <div class="col flex-grow-0">
+            <t t-call="website_forum.vote">
+                <t t-set="post" t-value="question"/>
+            </t>
         </div>
+        <t t-call="website_forum.display_post_question_block"/>
     </div>
 </template>
 
@@ -428,7 +436,7 @@
 <!-- Specific Forum Layout -->
 <template id="forum_index" name="Forum">
     <t t-call="website_forum.header">
-        <div class="o_forum_index_header d-flex flex-wrap justify-content-between align-items-end mb-3">
+        <div class="o_forum_index_header d-flex flex-wrap justify-content-between align-items-end pb-2 mb-3">
             <div class="d-flex flex-column-reverse flex-md-row order-md-3 w-100 w-md-auto mb-3 mb-md-0 align-items-end">
                 <a t-if="not header.get('is_guidelines')" t-attf-href="/forum/#{slug(forum)}/faq" class="btn btn-link btn-sm mr-md-2">Read Guidelines</a>
                 <a role="button" type="button" class="btn btn-primary btn-block o_forum_ask_btn" t-attf-href="/forum/#{slug(forum)}/ask">Ask a Question</a>
@@ -471,9 +479,9 @@
                 </span>
             </div>
         </div>
-        <div t-foreach="question_ids" t-as="question" class="mb-2">
+        <t t-foreach="question_ids" t-as="question">
             <t t-call="website_forum.display_post"/>
-        </div>
+        </t>
         <t t-call="website.pager"/>
     </t>
 </template>
@@ -665,12 +673,12 @@
     <t t-set="karma_down" t-value="forum.karma_downvote"/>
     <t t-set="can_upvote" t-value="post.can_upvote"/>
     <t t-set="can_downvote" t-value="post.can_downvote"/>
-    <div class="vote text-center">
+    <div class="vote text-center d-flex flex-column">
         <a t-attf-class="vote_up fa fa-caret-up no-decoration #{own_vote == 1 and 'text-success' or ''} #{((own_vote == 1 and not can_downvote) or not can_upvote) and 'karma_required' or ''}"
             t-attf-data-karma="#{own_vote == 1 and karma_down or karma_up}"
             aria-label="Positive vote" title="Positive vote"
             t-attf-data-href="/forum/#{slug(forum)}/post/#{slug(post)}/upvote"/>
-        <div class="vote_count text-muted" t-esc="post.vote_count"/>
+        <b class="vote_count text-muted" t-esc="post.vote_count"/>
         <a t-attf-class="vote_down fa fa-caret-down no-decoration #{own_vote == -1 and 'text-warning' or ''} #{((own_vote == -1 and not can_upvote) or not can_downvote) and 'karma_required' or ''}"
             t-attf-data-karma="#{own_vote == -1 and karma_up or karma_down}"
             aria-label="Negative vote" title="Negative vote"
