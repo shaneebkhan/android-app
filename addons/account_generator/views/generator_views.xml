@@ -23,8 +23,11 @@
                         </group>
                         <group string="Reference Pool">
                             <field name="partner_ids" widget="many2many_tags"/>
+                            <field name="partner_excluded_ids" widget="many2many_tags"/>
                             <field name="account_ids" widget="many2many_tags"/>
+                            <field name="account_excluded_ids" widget="many2many_tags"/>
                             <field name="journal_ids" widget="many2many_tags"/>
+                            <field name="journal_excluded_ids" widget="many2many_tags"/>
                         </group>
                         <group string="Journal Entry Options" attrs="{'invisible': [('generator', 'not in', ('aml', 'invoice'))]}">
                             <field name="post"/>

@@ -27,23 +27,26 @@ class AccountGenerator(models.TransientModel):
     supplier = fields.Boolean(default=True)
     company_type = fields.Selection([('person', 'Person'), ('company', 'Company')], default='person')
     post = fields.Boolean()
-    end_date = fields.Date(default=fields.Date.today() + datetime.timedelta(days=30*3))
-    start_date = fields.Date(default=fields.Date.today() + datetime.timedelta(days=-365*3))
+    end_date = fields.Date(default=fields.Date.today() + datetime.timedelta(days=30 * 3))
+    start_date = fields.Date(default=fields.Date.today() + datetime.timedelta(days=-365 * 3))
 
-    partner_ids = fields.Many2many('res.partner')
-    account_ids = fields.Many2many('account.account')
-    journal_ids = fields.Many2many('account.journal')
+    partner_ids = fields.Many2many('res.partner', relation="generator_partner_pool")
+    account_ids = fields.Many2many('account.account', relation="generator_account_pool")
+    journal_ids = fields.Many2many('account.journal', relation="generator_journal_pool")
+    partner_excluded_ids = fields.Many2many('res.partner', relation="generator_excluded_partner")
+    account_excluded_ids = fields.Many2many('account.account', relation="generator_excluded_account")
+    journal_excluded_ids = fields.Many2many('account.journal', relation="generator_excluded_journal")
 
     def generate_amls(self):
         def generate_line(amount=None):
             amount = amount or random.uniform(-10000, 10000)
             return (0, 0, {'debit': amount > 0 and amount or 0, 'credit': amount < 0 and -amount or 0, 'account_id': random.choice(account_ids).id, 'partner_id': random.choice(partner_ids).id})
 
-        company_id = self.env.company_id
+        company_id = self.env.company
         create_vals = []
-        partner_ids = self.partner_ids or self.env['res.partner'].search([])
-        account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id)])
-        journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id)])
+        partner_ids = self.partner_ids or self.env['res.partner'].search([('id', 'not in', self.partner_excluded_ids.ids)])
+        account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id), ('id', 'not in', self.account_excluded_ids.ids)])
+        journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id), ('id', 'not in', self.journal_excluded_ids.ids)])
         for i in range(self.number_to_generate):
             date = fake.date_time_between_dates(datetime_start=self.start_date, datetime_end=self.end_date)
             create_vals.append({
@@ -80,17 +83,17 @@ class AccountGenerator(models.TransientModel):
             account_id = random.choice(rev_account_ids).id if type == 'out_invoice' else random.choice(exp_account_ids).id
             return (0, 0, {'name': fake.bs(), 'account_id': account_id, 'quantity': random.randint(1, 50), 'price_unit': random.uniform(1, 10000)})
 
-        company_id = self.env.company_id
-        partner_ids = self.partner_ids or self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier)])
+        company_id = self.env.company
+        partner_ids = self.partner_ids or self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier), ('id', 'not in', self.partner_excluded_ids.ids)])
         if not partner_ids:
             raise UserError(_('No partner found'))
-        exp_account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id), ('user_type_id', '=', self.env.ref('account.data_account_type_expenses').id)])
-        rev_account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id), ('user_type_id', '=', self.env.ref('account.data_account_type_revenue').id)])
+        exp_account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id), ('user_type_id', '=', self.env.ref('account.data_account_type_expenses').id), ('id', 'not in', self.account_excluded_ids.ids)])
+        rev_account_ids = self.account_ids or self.env['account.account'].search([('company_id', '=', company_id.id), ('user_type_id', '=', self.env.ref('account.data_account_type_revenue').id), ('id', 'not in', self.account_excluded_ids.ids)])
         account_ids = exp_account_ids + rev_account_ids
         if not account_ids:
             raise UserError(_('No account found'))
-        rec_journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id), ('type', '=', 'sale')])
-        pay_journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id), ('type', '=', 'purchase')])
+        rec_journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id), ('type', '=', 'sale'), ('id', 'not in', self.journal_excluded_ids.ids)])
+        pay_journal_ids = self.journal_ids or self.env['account.journal'].search([('company_id', '=', company_id.id), ('type', '=', 'purchase'), ('id', 'not in', self.journal_excluded_ids.ids)])
         journal_ids = rec_journal_ids + pay_journal_ids
         if not journal_ids:
             raise UserError(_('No journal found'))
@@ -117,11 +120,11 @@ class AccountGenerator(models.TransientModel):
         def generate_line():
             return (0, 0, {'date': fake.date_between_dates(date_start=self.start_date, date_end=self.end_date), 'name': fake.bs(), 'partner_id': random.choice(partner_ids).id, 'amount': random.uniform(-10000, 10000)})
 
-        company_id = self.env.company_id
-        journal_ids = self.journal_ids or self.env['account.journal'].search([('type', '=', 'bank')])
+        company_id = self.env.company
+        journal_ids = self.journal_ids or self.env['account.journal'].search([('type', '=', 'bank'), ('id', 'not in', self.journal_excluded_ids.ids)])
         if not journal_ids:
             raise UserError(_('No journal found'))
-        partner_ids = self.partner_ids or self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier)])
+        partner_ids = self.partner_ids or self.env['res.partner'].search([('customer', '=', self.customer), ('supplier', '=', self.supplier), ('id', 'not in', self.partner_excluded_ids.ids)])
         if not partner_ids:
             raise UserError(_('No partner found'))
 
