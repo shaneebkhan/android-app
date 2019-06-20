@@ -923,8 +923,8 @@ class GroupsImplied(models.Model):
         return groups
 
     @api.multi
-    def _write(self, values):
-        res = super(GroupsImplied, self)._write(values)
+    def write(self, values):
+        res = super(GroupsImplied, self).write(values)
         if values.get('users') or values.get('implied_ids'):
             # add all implied groups (to all users of each group)
             for group in self:
