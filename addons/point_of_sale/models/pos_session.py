@@ -419,20 +419,29 @@ class PosSession(models.Model):
 
     @api.model
     def _get_exchange_rate_line(self, account_move, session, line_args):
+        """
+        if debit (receivable) than credit (sales):
+            exchange rate difference -> gain
+                Basically, more is gained than sales
+                This also means that the difference has to be credited
+        else:
+            exchange rate difference -> loss
+        """
         diff = sum(map(lambda line: line['debit'], line_args)) - sum(map(lambda line: line['credit'], line_args))
         if float_is_zero(diff, precision_rounding=session.currency_id.rounding):
             return []
-
         counter_amount = -session.currency_id.round(diff)
-        exchange_account = account_move.company_id.income_currency_exchange_account_id
+        gain_exchange_account = account_move.company_id.income_currency_exchange_account_id
+        loss_exchange_account = account_move.company_id.expense_currency_exchange_account_id
+        exchange_account, message = (gain_exchange_account, 'gain') if counter_amount < 0.0 else (loss_exchange_account, 'loss')
         return [{
             'account_id': exchange_account.id,
             'move_id': account_move.id,
-            'name': "Exchange rate",
+            'name': "Currency conversion %s" % message,
             'amount_currency': 0.0,
             'currency_id': session.currency_id.id,
-            'debit': 0.0 if counter_amount < 0.0 else counter_amount,
-            'credit': 0.0 if counter_amount > 0.0 else -counter_amount,
+            'debit': counter_amount if counter_amount > 0.0 else 0.0,
+            'credit': -counter_amount if counter_amount < 0.0 else 0.0,
         }]
 
     @api.model
