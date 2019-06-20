@@ -11,20 +11,23 @@ var GraphRenderer = require('web.GraphRenderer');
 var createActionManager = testUtils.createActionManager;
 var createView = testUtils.createView;
 
-async function _wait_graph(user_action) {
-    var prom = new Promise(function (resolve, reject) {
-        testUtils.mock.patch(GraphRenderer, {
-            _render: function () {
-                var self = this;
-                this._super.apply(this, arguments).then(function () {
-                    if (self.isInDOM) {
-                        resolve();
-                    }
-                });
-            }
-        });
+async function cp_switch_graph(element_click) {
+    var resolver;
+    testUtils.mock.patch(GraphRenderer, {
+        _render: function () {
+            var self = this;
+            this._super.apply(this, arguments).then(function () {
+                if (self.isInDOM) {
+                    resolver();
+                }
+            });
+        }
     });
-    if (user_action) await user_action()
+
+    var prom = new Promise(function (resolve, reject) {
+        resolver = resolve.bind(this);
+    });
+    await testUtils.dom.click(element_click);
     return prom.then(function () {
         testUtils.mock.unpatch(GraphRenderer);
     });
@@ -1762,9 +1765,7 @@ QUnit.module('Views', {
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_kanban_view');
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
-        await _wait_graph(async function () {
-            await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
-        });
+        await cp_switch_graph(actionManager.$('.o_cp_switch_graph'));
         assert.containsOnce(actionManager, '.o_content .o_graph_renderer');
         assert.containsNone(actionManager, '.o_content .o_search_panel');
 
@@ -1804,9 +1805,7 @@ QUnit.module('Views', {
         assert.containsOnce(actionManager, '.o_content .o_list_view');
         assert.containsNone(actionManager, '.o_content .o_search_panel');
 
-        await _wait_graph(async function () {
-            await testUtils.dom.click(actionManager.$('.o_cp_switch_graph'));
-        });
+        await cp_switch_graph(actionManager.$('.o_cp_switch_graph'));
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_graph_renderer');
         assert.containsOnce(actionManager, '.o_content.o_controller_with_searchpanel .o_search_panel');
 
