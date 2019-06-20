@@ -116,8 +116,8 @@
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group name="account_details">
-                            <field domain="[('company_id', '=', company_id)]" name="account_id" options="{'no_create': True}" groups="account.group_account_user"/>
-                            <field domain="[('company_id', '=', company_id)]" name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
+                            <field name="account_id" options="{'no_create': True}" groups="account.group_account_user"/>
+                            <field name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                             <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"/>
                             <field name="company_id" groups="base.group_multi_company" readonly="1"/>
                         </group>
@@ -156,7 +156,7 @@
                         <field name="name"/>
                         <field name="sequence"/>
                         <field name="account_id" options="{'no_create': True}" groups="account.group_account_user"/>
-                        <field name="account_analytic_id" domain="[('company_id', '=', parent.company_id)]" groups="analytic.group_analytic_accounting"/>
+                        <field name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                         <field name="manual"/>
                         <field name="amount_total" string="Amount"/>
                         <field name="base"/>
@@ -349,9 +349,8 @@
                                     <field name="name"/>
                                     <field name="company_id" invisible="1"/>
                                     <field name="account_id" options="{'no_create': True}" groups="account.group_account_user"
-                                        domain="[('company_id', '=', parent.company_id), ('internal_type', '=', 'other'), ('deprecated', '=', False)]"/>
+                                        domain="[('internal_type', '=', 'other'), ('deprecated', '=', False)]"/>
                                     <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
-                                        domain="[('company_id', '=', parent.company_id)]"
                                         context="{'default_partner_id': parent.partner_id}"
                                         optional="show"/>
                                     <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}" optional="show"/>
@@ -360,7 +359,7 @@
                                     <field name="price_unit"/>
                                     <field name="discount" string="Disc.%" optional="hide"/>
                                     <field name="invoice_line_tax_ids" widget="many2many_tags" options="{'no_create': True}" context="{'type':parent.type, 'tree_view_ref': 'account.account_tax_view_tree', 'search_view_ref': 'account.account_tax_view_search'}"
-                                        domain="[('type_tax_use','=','purchase'),('company_id', '=', parent.company_id)]"/>
+                                        domain="[('type_tax_use','=','purchase')]"/>
                                     <field name="price_subtotal" string="Amount"/>
                                     <field name="currency_id" invisible="1"/>
                                 </tree>
@@ -377,7 +376,7 @@
                                                 <field name="sequence" invisible="1"/>
                                                 <field name="manual" invisible="1"/>
                                                 <field name="account_id" groups="account.group_account_user"/>
-                                                <field name="account_analytic_id" domain="[('company_id', '=', parent.company_id)]" groups="analytic.group_analytic_accounting"/>
+                                                <field name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                                                 <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"/>
                                                 <field name="amount"/>
                                                 <field name="amount_rounding" invisible="1"/>
@@ -527,11 +526,10 @@
                                         name="account_id"
                                         options="{'no_create': True}"
                                         groups="account.group_account_user"
-                                        domain="[('company_id', '=', parent.company_id), ('internal_type', '=', 'other'), ('deprecated', '=', False)]"
+                                        domain="[('internal_type', '=', 'other'), ('deprecated', '=', False)]"
                                         attrs="{'required': [('display_type', '=', False)]}"
                                     />
                                     <field name="account_analytic_id" groups="analytic.group_analytic_accounting"
-                                        domain="[('company_id', '=', parent.company_id)]"
                                         context="{'default_partner_id': parent.partner_id}"
                                         optional="show"/>
                                     <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"
@@ -541,7 +539,7 @@
                                     <field name="price_unit" string="Price"/>
                                     <field name="discount" string="Disc.%" optional="hide"/>
                                     <field name="invoice_line_tax_ids" widget="many2many_tags" options="{'no_create': True}" context="{'type':parent.type, 'tree_view_ref': 'account.account_tax_view_tree', 'search_view_ref': 'account.account_tax_view_search'}"
-                                        domain="[('type_tax_use','=','sale'),('company_id', '=', parent.company_id)]"/>
+                                        domain="[('type_tax_use','=','sale')]"/>
                                     <field name="price_subtotal" string="Subtotal" groups="account.group_show_line_subtotals_tax_excluded"/>
                                     <field name="price_total" string="Total" groups="account.group_show_line_subtotals_tax_included"/>
                                     <field name="currency_id" invisible="1"/>
@@ -649,7 +647,7 @@
                                     <field name="manual" invisible="1"/>
                                     <field name="account_id" groups="account.group_account_user"/>
                                     <field name="amount" invisible="1"/>
-                                    <field name="account_analytic_id" domain="[('company_id', '=', parent.company_id)]" groups="analytic.group_analytic_accounting"/>
+                                    <field name="account_analytic_id" groups="analytic.group_analytic_accounting"/>
                                     <field name="analytic_tag_ids" groups="analytic.group_analytic_tags" widget="many2many_tags" options="{'color_field': 'color'}"/>
                                     <field name="amount_rounding" invisible="1"/>
                                     <field name="amount_total"/>

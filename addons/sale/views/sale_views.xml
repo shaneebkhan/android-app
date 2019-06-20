@@ -353,7 +353,7 @@
                                                 <field name="qty_invoiced" attrs="{'invisible': [('parent.state', 'not in', ['sale', 'done'])]}"/>
                                             </div>
                                             <field name="price_unit"/>
-                                            <field name="tax_id" widget="many2many_tags" options="{'no_create': True}" context="{'search_view_ref': 'account.account_tax_view_search'}" domain="[('type_tax_use','=','sale'),('company_id','=',parent.company_id)]"
+                                            <field name="tax_id" widget="many2many_tags" options="{'no_create': True}" context="{'search_view_ref': 'account.account_tax_view_search'}" domain="[('type_tax_use','=','sale')]"
                                                 attrs="{'readonly': [('qty_invoiced', '&gt;', 0)]}"/>
                                             <label for="discount" groups="sale.group_discount_per_so_line"/>
                                             <div name="discount" groups="sale.group_discount_per_so_line">
@@ -495,7 +495,7 @@
                                         name="tax_id"
                                         widget="many2many_tags"
                                         options="{'no_create': True}"
-                                        domain="[('type_tax_use','=','sale'),('company_id','=',parent.company_id)]"
+                                        domain="[('type_tax_use','=','sale')]"
                                         attrs="{'readonly': [('qty_invoiced', '&gt;', 0)]}"
                                         optional="show"
                                     />

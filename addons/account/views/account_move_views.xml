@@ -443,7 +443,7 @@
                               context="{'line_ids': line_ids, 'journal_id': journal_id }">
                                 <tree editable="bottom" string="Journal Items">
                                     <field name="tax_line_id" invisible="1"/>
-                                    <field name="account_id" options="{'no_create': True}" domain="[('company_id', '=', parent.company_id), ('deprecated', '=', False)]"/>
+                                    <field name="account_id" options="{'no_create': True}" domain="[('deprecated', '=', False)]"/>
                                     <field name="partner_id"
                                         domain="['|', ('parent_id', '=', False), ('is_company', '=', True)]"/>
                                     <field name="name"/>
