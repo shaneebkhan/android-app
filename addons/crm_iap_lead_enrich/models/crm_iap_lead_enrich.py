@@ -30,14 +30,14 @@ class Lead(models.Model):
             except InsufficientCreditError:
                 data = {
                     'message_title': _("Lead enriched based on email address"),
-                    'url' : self.env['iap.account'].get_account_url(),
+                    'url' : self.env['iap.account'].get_credits_url('reveal'),
                 }
                 self.notify_no_more_credit('reveal', self._name, 'lead_enrich.already_notified')
                 self.message_post_with_view('crm_iap_lead_enrich.lead_enrich_message_no_credit', values=data, subtype_id=self.env.ref('mail.mt_note').id)
     
     @api.model
     def enrich_with_cron(self):
-        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False),('won_status','=','pending')])
+        leads = self.search([('enriched_lead', '=', False),('reveal_id', '=', False),('probability','!=','0'),('probability','!=','100')])
         leads.lead_enrich_mail()
 
     @api.model
