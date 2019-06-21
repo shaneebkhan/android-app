@@ -696,7 +696,25 @@ registry.backgroundVideo = publicWidget.Widget.extend({
        var $element = $(qweb.render('website.background.video', {
            bgvideosrc: this.$target.attr('bgVideoSrc'),
        }));
+       this.$('.o_bg_video_container').remove();
        $element.prependTo(this.$target);
+       // TODO below code must be improve :D
+       var wrapperWidth = this.$target.width();
+       var wrapperHeight = this.$target.height();
+       var width;
+       var height;
+       if (wrapperWidth < wrapperHeight) {
+           width = (wrapperHeight * 16) / 9;
+           height = '100%';
+       } else {
+           width = '100%';
+           height = (wrapperWidth * 9) / 16;
+       }
+       $('iframe').css({
+           height: height,
+           width: width,
+           flex: '0 0 ' + width + 'px',
+       });
    },
 });
 
