@@ -130,6 +130,21 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
     //--------------------------------------------------------------------------
 
     /**
+     * Prepares the domain to pass to the search panel
+     * Builds the aggregation (AND) of domains passed
+     * Can be usefull as a hook to inject domain parts
+     *
+     * @private
+     * @params {Array} list of domains
+     * @returns {Array}
+     */
+    _buildDomainForSearchPanel: function (domains) {
+        if (domains === undefined) {
+            domains = [];
+        }
+        return Array.prototype.concat.apply(this.controlPanelDomain.slice(), domains)
+    },
+    /**
      * @override
      */
     canBeRemoved: function () {
@@ -166,8 +181,7 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
             state.cpState = this._controlPanel.exportState();
         }
         if (this._searchPanel) {
-            state.spState = {};
-            state.spState.searchDomain = this._searchPanel.getDomain();
+            state.spState = this._searchPanel.exportState();
         }
         return state;
     },
@@ -252,16 +266,35 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         var shouldReload = (options && 'reload' in options) ? options.reload : true;
         var searchPanelDef;
         if (this._searchPanel) {
+            // First step: handle changes on the Control Panel
             if (params.domain) {
                this.controlPanelDomain = params.domain;
             }
-            params.domain = this.controlPanelDomain.concat(this.searchPanelDomain);
+
+            // Second step: handle Search Panel changes
+            // A) handle switch Views
+            var newSpState = {};
+            if (params.controllerState && params.controllerState.spState) {
+                _.extend(newSpState, params.controllerState.spState);
+                var spDomain =  newSpState.searchPanelDomain;
+                this.searchPanelDomain = spDomain && spDomain.length ? spDomain : this.searchPanelDomain;
+            }
+
+            // B) handle changes on the Search Panel itself
+            if (params.searchPanelDomain) {
+                this.searchPanelDomain = params.searchPanelDomain;
+            }
+            // Third step: build domains across all domain-makers
+            // Get a synced domain to pass to the model
+            params.domain = this.controlPanelDomain.concat(this.searchPanelDomain);;
+            newSpState.searchDomain =  this._buildDomainForSearchPanel();
+
+            // Final step: update the Search panel with a synced domain
             // do not re-render the view as soon as records have been fetched,  but
             // wait for the searchPanel to be ready as well, such that the view
             // isn't re-rendered before the searchPanel
             params.noRender = true;
-            var state = params.controllerState && params.controllerState.spState || {};
-            searchPanelDef = this._updateSearchPanel(state);
+            searchPanelDef = this._searchPanel.importState(newSpState);
         }
 
         var def = shouldReload ? this.model.reload(this.handle, params) : Promise.resolve();
@@ -469,14 +502,6 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         this._pushState();
         return this._renderBanner();
     },
-    /**
-     * @private
-     * @returns {Promise}
-     */
-    _updateSearchPanel: function (state) {
-        state.searchDomain = state.searchDomain ? state.searchDomain : this.controlPanelDomain;
-        return this._searchPanel.update(state);
-    },
 
     //--------------------------------------------------------------------------
     // Handlers
@@ -614,8 +639,11 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
      * @param {Array[]} ev.data.domain the current domain of the searchPanel
      */
     _onSearchPanelDomainUpdated: function (ev) {
-        this.searchPanelDomain = ev.data.domain;
-        this.reload({offset: 0});
+        var reloadParams = {
+            offset: 0,
+            searchPanelDomain: ev.data.domain,
+        }
+        this.reload(reloadParams);
     },
     /**
      * Intercepts the 'switch_view' event to add the controllerID into the data,

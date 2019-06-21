@@ -52,6 +52,18 @@ var LunchKanbanController = KanbanController.extend({
     // Private
     //--------------------------------------------------------------------------
 
+    /**
+     * Override to add the location domain (coming from the lunchKanbanWidget)
+     * to the searchDomain (coming from the controlPanel).
+     *
+     * @override
+     * @private
+     */
+    _buildDomainForSearchPanel: function (domains) {
+        var locationId = this.model.getCurrentLocationId();
+        return this._super().concat([['is_available_at', 'in', [locationId]]]);
+    },
+
     _fetchPaymentInfo: function () {
         return this._rpc({
             route: '/lunch/payment_message',
@@ -108,18 +120,6 @@ var LunchKanbanController = KanbanController.extend({
     _update: function () {
         var def = this._fetchWidgetData().then(this._renderLunchKanbanWidget.bind(this));
         return Promise.all([def, this._super.apply(this, arguments)]);
-    },
-    /**
-     * Override to add the location domain (coming from the lunchKanbanWidget)
-     * to the searchDomain (coming from the controlPanel).
-     *
-     * @override
-     * @private
-     */
-    _updateSearchPanel: function () {
-        var locationId = this.model.getCurrentLocationId();
-        var domain = this.controlPanelDomain.concat([['is_available_at', 'in', [locationId]]]);
-        return this._searchPanel.update({searchDomain: domain});
     },
 
     //--------------------------------------------------------------------------

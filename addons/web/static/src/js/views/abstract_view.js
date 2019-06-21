@@ -299,7 +299,9 @@ var AbstractView = Factory.extend({
             defaultValues: defaultValues,
             fields: this.fields,
             model: this.loadParams.modelName,
-            searchDomain: searchPanelParams.state ? searchPanelParams.state.searchDomain : controlPanelDomain,
+            searchDomain: controlPanelDomain,
+            searchCategories: searchPanelParams.state && searchPanelParams.state.searchCategories,
+            searchFilters: searchPanelParams.state && searchPanelParams.state.searchFilters,
             sections: searchPanelParams.sections,
         });
         this.controllerParams.searchPanel = searchPanel;

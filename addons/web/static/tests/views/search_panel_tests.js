@@ -1819,12 +1819,14 @@ QUnit.module('Views', {
             actions: this.actions,
             archs: this.archs,
             data: this.data,
+            services: this.services,
             mockRPC: function (route, args) {
                 if (route === '/web/dataset/search_read') {
                     assert.step(JSON.stringify(args.domain));
                 }
                 return this._super.apply(this, arguments);
             },
+
         });
 
         await actionManager.doAction(1);
@@ -1835,11 +1837,11 @@ QUnit.module('Views', {
         assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
-        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+        assert.containsN(actionManager, '.o_data_row', 2);
 
         // select 'agrolait' company
         await testUtils.dom.click(actionManager.$('.o_search_panel_category_value:nth(2) header'));
-        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);
+        assert.containsN(actionManager, '.o_data_row', 2);
 
         await testUtils.dom.click(actionManager.$('.o_cp_switch_kanban'));
         assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 2);

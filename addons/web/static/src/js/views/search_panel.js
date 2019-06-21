@@ -38,10 +38,10 @@ var SearchPanel = Widget.extend({
     init: function (parent, params) {
         this._super.apply(this, arguments);
 
-        this.categories = _.pick(params.sections, function (section) {
+        this.categories = params.searchCategories || _.pick(params.sections, function (section) {
             return section.type === 'category';
         });
-        this.filters = _.pick(params.sections, function (section) {
+        this.filters = params.searchFilters || _.pick(params.sections, function (section) {
             return section.type === 'filter';
         });
 
@@ -72,12 +72,28 @@ var SearchPanel = Widget.extend({
     // Public
     //--------------------------------------------------------------------------
 
+    exportState: function () {
+        return {
+            searchPanelDomain: this.getDomain(),
+            searchCategories: _.extend({}, this.categories),
+            searchFilters: _.extend({}, this.filters),
+        }
+    },
     /**
      * @returns {Array[]} the current searchPanel domain based on active
      *   categories and checked filters
      */
     getDomain: function () {
         return this._getCategoryDomain().concat(this._getFilterDomain());
+    },
+    importState: function (state) {
+        if (state.searchCategories && Object.keys(state.searchCategories)) {
+            this.categories = state.searchCategories;
+        }
+        if (state.searchFilters && Object.keys(state.searchFilters)) {
+            this.filters = state.searchFilters;
+        }
+        return this.update(state);
     },
     /**
      * Reload the filters and re-render. Note that we only reload the filters if
