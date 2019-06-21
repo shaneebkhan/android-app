@@ -25,7 +25,6 @@ class PosPaymentMethod(models.Model):
     split_transactions = fields.Boolean(
         string='Split Transactions',
         default=False,
-        groups='base.group_no_one',
         help='Determine whether payment made with this method will generate separate receivable journal items.')
     session_ids = fields.Many2many('pos.session', string='Pos Sessions', help='Pos sessions that are using this payment method.')
 

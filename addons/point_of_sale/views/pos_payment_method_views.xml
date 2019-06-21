@@ -33,7 +33,7 @@
                 <field name="name" />
                 <field name="receivable_account_id" />
                 <field name="is_cash_count" />
-                <field name="split_transactions" />
+                <field name="split_transactions" groups="base.group_no_one" />
             </tree>
         </field>
     </record>

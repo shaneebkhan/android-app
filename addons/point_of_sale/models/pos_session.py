@@ -375,10 +375,9 @@ class PosSession(models.Model):
         all_orders = invoiced_orders | not_invoiced_orders
         receivable_pos_line_args = self._get_pos_receivable_lines(session, account_move, all_orders.mapped('pos_payment_ids'), is_using_company_currency)
         invoiced_receivable_lines_args = self._get_invoiced_receivable_lines(account_move, invoiced_orders, is_using_company_currency)
-        sales_lines_args = self._get_sales_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
-        tax_lines_args = self._get_tax_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
+        sales_taxes_lines_args = self._get_sales_taxes_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
         anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders, is_using_company_currency)
-        line_args = invoiced_receivable_lines_args + sales_lines_args + tax_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
+        line_args = invoiced_receivable_lines_args + sales_taxes_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
         exchange_rate_line_args = [] if is_using_company_currency else self._get_exchange_rate_line(account_move, session, line_args)
         return self.env['account.move.line'].create(line_args+exchange_rate_line_args)
 
@@ -535,7 +534,7 @@ class PosSession(models.Model):
         return [generate_line_args(payment) for payment in split_payments]
 
     @api.model
-    def _get_sales_lines_data(self, account_move, order_lines, is_using_company_currency):
+    def _get_sales_taxes_lines_data(self, account_move, order_lines, is_using_company_currency):
         if not order_lines:
             return []
 
@@ -543,8 +542,7 @@ class PosSession(models.Model):
         session_currency = order_lines[0].order_id.currency_id
         company_currency = company.currency_id
 
-        def generate_move_line_vals(income_account_id, amount, amount_converted):
-            partial_args = {'account_id': income_account_id, 'move_id': account_move.id}
+        def credit_amount(partial_args, amount, amount_converted):
             return self._credit_amount(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
 
         def get_income_account(order_line):
@@ -557,63 +555,60 @@ class PosSession(models.Model):
                                 'account for this product: "%s" (id:%d).')
                                 % (order_line.product_id.name, order_line.product_id.id))
 
-        def compute_total_amounts(order_lines):
-            amount_converter = lambda line: session_currency._convert(line.price_subtotal, company_currency, company, line.order_id.date_order)
-            total_amount = sum(line.price_subtotal for line in order_lines)
-            total_amount_converted = 0.0 if is_using_company_currency else sum(amount_converter(line) for line in order_lines)
-            return total_amount, total_amount_converted
-
-        grouped_order_lines = groupby(order_lines, key=get_income_account)
-        account_amounts = [(account_id, *compute_total_amounts(lines)) for account_id, lines in grouped_order_lines]
-        return [generate_move_line_vals(account_id, amount, amount_converted) for account_id, amount, amount_converted in account_amounts]
-
-    @api.model
-    def _get_tax_lines_data(self, account_move, all_order_lines, is_using_company_currency):
-        if not all_order_lines:
-            return []
-
-        company = all_order_lines[0].order_id.company_id
-        session_currency = all_order_lines[0].order_id.currency_id
-        company_currency = all_order_lines[0].order_id.company_id.currency_id
-
-        def generate_move_line_vals(account_id, tax_id, amount, amount_converted):
-            tax = self.env['account.tax'].browse(tax_id)
-            partial_args = {
-                'name': 'Total tax from %s' % tax.name,
-                'account_id': account_id,
-                'move_id': account_move.id,
-            }
-            return self._credit_amount(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
-
-        def compute_tax(order_line):
+        def prepare_line(order_line):
             tax_ids = order_line.tax_ids_after_fiscal_position\
                         .filtered(lambda t: t.company_id.id == order_line.order_id.company_id.id)
             price = order_line.price_unit * (1 - (order_line.discount or 0.0) / 100.0)
             taxes = tax_ids.compute_all(price_unit=price, quantity=order_line.qty, currency=session_currency).get('taxes', [])
-            # add the date_order field in each tax calculation result for currency conversion
-            # date_order is needed in the conversion of currency
-            return [{'date_order': order_line.order_id.date_order, **tax} for tax in taxes]
+            date_order = order_line.order_id.date_order
+            taxes = [{'date_order': date_order, **tax} for tax in taxes]
+            return {
+                'date_order': order_line.order_id.date_order,
+                'income_account_id': get_income_account(order_line),
+                'amount': order_line.price_subtotal,
+                'taxes': sorted(taxes, key=lambda tax: tax['id'])
+            }
 
-        def compute_total_amounts(taxes):
-            total_amount = sum(tax['amount'] for tax in taxes)
-            total_amount_converted = (
-                0.0
-                if is_using_company_currency
-                else sum(session_currency._convert(tax['amount'], company_currency, company, tax['date_order']) for tax in taxes)
+        def group_key(line):
+            return (
+                line['income_account_id'],
+                tuple(
+                    (tax['id'], tax['account_id'], tax['tax_repartition_line_id'])
+                    for tax in line['taxes']
+                )
             )
-            return total_amount, total_amount_converted
 
-        line_taxes = [compute_tax(line) for line in all_order_lines]
+        def compute_sale_line_val(key, lines):
+            tax_ids = [tax[0] for tax in key[1]]
+            applied_taxes = self.env['account.tax'].browse(tax_ids)
+            name = '' if not applied_taxes else 'Sales group: %s' % ', '.join([tax.name for tax in applied_taxes])
+            partial_args = {'account_id': key[0], 'move_id': account_move.id, 'tax_ids': [(6, 0, tax_ids)], 'name': name}
+            amount = sum(line['amount'] for line in lines)
+            amount_converted = (not is_using_company_currency) and sum(
+                session_currency._convert(line['amount'], company_currency, company, line['date_order'])
+                for line in lines
+            )
+            return credit_amount(partial_args, amount, amount_converted)
 
-        # combine list of taxes into a single list
-        # e.g. [[tax_a1, tax_a3], [tax_b2], [], [tax_c1, tax_c2, tax_c3]]
-        #      -> [tax_a1, tax_a3, tax_b2, tax_c1, tax_c2, tax_c3]
-        flat_line_taxes = chain.from_iterable(line_taxes)
+        def compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, taxes):
+            tax = self.env['account.tax'].browse(tax_id)
+            partial_args = {'account_id': account_id, 'move_id': account_move.id, 'tax_repartition_line_id': tax_repartition_line_id, 'name': tax.name}
+            amount = sum(tax['amount'] for tax in taxes)
+            amount_converted = (not is_using_company_currency) and sum(
+                session_currency._convert(tax['amount'], company_currency, company, tax['date_order'])
+                for tax in taxes
+            )
+            return credit_amount(partial_args, amount, amount_converted)
 
-        # group the taxes by account_id and tax id
-        grouped_line_taxes = groupby(flat_line_taxes, key=lambda tax: (tax['account_id'], tax['id']))
-        account_tax_amounts = ((account_id, tax_id, *compute_total_amounts(taxes)) for (account_id, tax_id), taxes in grouped_line_taxes)
-        return [generate_move_line_vals(*values) for values in account_tax_amounts]
+        def compute_tax_line_vals(key, lines):
+            flat_taxes = chain.from_iterable(line['taxes'] for line in lines)
+            grouped_taxes = groupby(flat_taxes, key=lambda tax: (tax['id'], tax['account_id'], tax['tax_repartition_line_id']))
+            return [compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, taxes) for (tax_id, account_id, tax_repartition_line_id), taxes in grouped_taxes]
+
+        grouped_order_lines = groupby(map(prepare_line, order_lines), key=group_key)
+        sales_lines = [compute_sale_line_val(key, lines) for key, lines in grouped_order_lines]
+        taxes_lines = list(chain.from_iterable(compute_tax_line_vals(key, lines) for key, lines in grouped_order_lines))
+        return sales_lines + taxes_lines
 
     @api.model
     def _get_anglo_saxon_lines(self, account_move, not_invoiced_orders, is_using_company_currency):
