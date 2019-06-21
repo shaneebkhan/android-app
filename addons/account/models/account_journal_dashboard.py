@@ -256,6 +256,8 @@ class account_journal(models.Model):
         difference = currency.round(last_balance-account_sum) + 0.0
 
         is_sample_data = self.kanban_dashboard_graph and any(data.get('is_sample_data', False) for data in json.loads(self.kanban_dashboard_graph))
+        check_deposit = self.env['account.payment'].search(self._get_domain_check_deposit())
+        number_check_deposit = len(check_deposit)
 
         return {
             'number_to_check': number_to_check,
@@ -274,7 +276,16 @@ class account_journal(models.Model):
             'bank_statements_source': self.bank_statements_source,
             'title': title,
             'is_sample_data': is_sample_data,
+            'number_check_deposit': number_check_deposit,
+            # 'check_deposit': check_deposit.mapped,
         }
+
+    def _get_domain_check_deposit(self):
+        return [
+            ('journal_id', '=', self.id),
+            ('payment_method_code', '=', 'batch_payment'),
+            ('state', '=','posted'),
+        ]
 
     def _get_open_bills_to_pay_query(self):
         """
@@ -475,6 +486,20 @@ class account_journal(models.Model):
             new_help = self.env['account.invoice'].with_context(ctx).complete_empty_list_help()
             action.update({'help': (action.get('help') or '') + new_help})
         return action
+
+    @api.multi
+    def open_check_deposit(self):
+        return {
+            'name': _('Check to deposit'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment',
+            'domain': self._get_domain_check_deposit(),
+            # 'view_id': self.env.ref('account.view_account_payment_tree').id,
+            'views': [[self.env.ref('account.view_account_payment_tree').id, 'tree'], [False, 'form']],
+            'context': {**self.env.context, 'quick_action_deposit': True},
+            # 'view_mode': 'tree,form',
+            'view_type': 'form',
+        }
 
     @api.multi
     def open_spend_money(self):

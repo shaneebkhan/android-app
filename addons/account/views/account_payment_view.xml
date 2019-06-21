@@ -6,7 +6,7 @@
             <field name="name">account.payment.tree</field>
             <field name="model">account.payment</field>
             <field name="arch" type="xml">
-                <tree decoration-info="state == 'draft'" decoration-muted="state in ['reconciled', 'cancelled']" edit="false">
+                <tree decoration-info="state == 'draft'" decoration-muted="state in ['reconciled', 'cancelled']" edit="false" js_class="account_payment_tree">
                     <field name="payment_date"/>
                     <field name="name"/>
                     <field name="journal_id"/>
@@ -147,8 +147,9 @@
                             <field name="invoice_ids" invisible="1"/>
                             <group name="partner_group" invisible="context.get('active_model') == 'account.invoice'">
                                 <field name="payment_type" widget="radio"/>
-                                <field name="partner_type" widget="selection" attrs="{'required': [('state', '=', 'draft'), ('payment_type', 'in', ('inbound', 'outbound'))], 'invisible': [('payment_type', 'not in', ('inbound', 'outbound'))]}"/>
-                                <field name="partner_id" attrs="{'required': [('state', '=', 'draft'), ('payment_type', 'in', ('inbound', 'outbound'))], 'invisible': [('payment_type', 'not in', ('inbound', 'outbound'))]}" context="{'default_is_company': True, 'default_supplier': payment_type == 'outbound', 'default_customer': payment_type == 'inbound'}"/>
+                                <field name="partner_type" invisible="1"/>
+                                <field name="partner_id" string="Customer" attrs="{'required': [('state', '=', 'draft'), ('payment_type', 'in', ('inbound', 'outbound'))], 'invisible': ['|', ('partner_type', '!=', 'customer'),('payment_type', 'not in', ('inbound', 'outbound'))]}" context="{'default_is_company': True, 'default_supplier': payment_type == 'outbound', 'default_customer': payment_type == 'inbound'}"/>
+                                <field name="partner_id" string="Vendor" attrs="{'required': [('state', '=', 'draft'), ('payment_type', 'in', ('inbound', 'outbound'))], 'invisible': ['|', ('partner_type', '!=', 'supplier'),('payment_type', 'not in', ('inbound', 'outbound'))]}" context="{'default_is_company': True, 'default_supplier': payment_type == 'outbound', 'default_customer': payment_type == 'inbound'}"/>
                             </group>
                             <group name="right_column">
                                 <field name="communication"/>
@@ -274,6 +275,32 @@
                   Register a payment
                 </p><p>
                   Payments are used to register liquidity movements. You can process those payments by your own means or by using installed facilities.
+                </p>
+            </field>
+        </record>
+
+        <!-- <record id="view_account_payment_check_to_deposit" model="ir.ui.view">
+            <field name="name">Check to deposit</field>
+            <field name="model">account.payment</field>
+            <field name="inherit_id" ref="account.view_account_payment_tree"/>
+            <field name="mode">primary</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_type']" position="after">
+                    <field name="sdd_mandate_id"/>
+                </xpath>
+            </field>
+        </record> -->
+        <record id="action_account_payment_check_to_deposit" model="ir.actions.act_window">
+            <field name="name">Check to deposit</field>
+            <field name="res_model">account.payment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="account.view_account_payment_tree"/>
+            <!-- <field name="domain">[('payment_method_code','=','batch_payment'), ('state', '=', 'posted')]</field> -->
+            <!-- <field name="domain">[('payment_method_code','=','batch_payment'), ('state', '=', 'posted')]</field> -->
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    to write
                 </p>
             </field>
         </record>

@@ -29,6 +29,7 @@
             <script type="text/javascript" src="/account/static/src/js/tours/account.js"></script>
 
             <script type="text/javascript" src="/account/static/src/js/bills_tree_upload.js"/>
+            <script type="text/javascript" src="/account/static/src/js/payment_tree_button.js"/>
         </xpath>
     </template>
 

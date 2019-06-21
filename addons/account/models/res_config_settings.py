@@ -75,6 +75,11 @@ class ResConfigSettings(models.TransientModel):
     module_snailmail_account = fields.Boolean(string="Snailmail")
     tax_exigibility = fields.Boolean(string='Cash Basis', related='company_id.tax_exigibility', readonly=False)
     tax_cash_basis_journal_id = fields.Many2one('account.journal', related='company_id.tax_cash_basis_journal_id', string="Tax Cash Basis Journal", readonly=False)
+    # TODO: move to proper module
+    check_journal_id = fields.Many2one('account.journal', related='company_id.check_journal_id', string="Check Journal", domain=[('type', '=', 'bank')], readonly=False)
+    deposit_journal_id = fields.Many2one('account.journal', related='company_id.deposit_journal_id', string="Deposit Journal", domain=[('type', '=', 'bank')], readonly=False)
+    credit_transfer_journal_id = fields.Many2one('account.journal', related='company_id.credit_transfer_journal_id', string="Credit Transfer Journal", domain=[('type', '=', 'bank')], readonly=False)
+    direct_debit_journal_id = fields.Many2one('account.journal', related='company_id.direct_debit_journal_id', string="Direct Debit Journal", domain=[('type', '=', 'bank')], readonly=False)
     account_bank_reconciliation_start = fields.Date(string="Bank Reconciliation Threshold",
         related='company_id.account_bank_reconciliation_start', readonly=False,
         help="""The bank reconciliation widget won't ask to reconcile payments older than this date.
@@ -93,7 +98,11 @@ class ResConfigSettings(models.TransientModel):
 
     @api.multi
     def set_values(self):
+        # check_journal_id = self.check_journal_id
+        # import pudb; pudb.set_trace()
         super(ResConfigSettings, self).set_values()
+        # check_journal_id = self.check_journal_id
+        # import pudb; pudb.set_trace()
         if self.group_multi_currency:
             self.env.ref('base.group_user').write({'implied_ids': [(4, self.env.ref('product.group_sale_pricelist').id)]})
         """ install a chart of accounts for the given company (if required) """
@@ -151,12 +160,40 @@ class ResConfigSettings(models.TransientModel):
 
     @api.model
     def create(self, values):
-        # Optimisation purpose, saving a res_config even without changing any values will trigger the write of all
-        # related values, including the currency_id field on res_company. This in turn will trigger the recomputation
-        # of account_move_line related field company_currency_id which can be slow depending on the number of entries
-        # in the database. Thus, if we do not explicitly change the currency_id, we should not write it on the company
-        if ('company_id' in values and 'currency_id' in values):
+        if 'company_id' in values:
             company = self.env['res.company'].browse(values.get('company_id'))
-            if company.currency_id.id == values.get('currency_id'):
+            # Optimisation purpose, saving a res_config even without changing any values will trigger the write of all
+            # related values, including the currency_id field on res_company. This in turn will trigger the recomputation
+            # of account_move_line related field company_currency_id which can be slow depending on the number of entries
+            # in the database. Thus, if we do not explicitly change the currency_id, we should not write it on the company
+            if 'currency_id' in values and company.currency_id.id == values.get('currency_id'):
                 values.pop('currency_id')
+
+            if 'deposit_journal_id' in values:
+                if company.deposit_journal_id:
+                  company.deposit_journal_id.inbound_payment_method_ids -= self.env.ref('account_batch_payment.account_payment_method_batch_deposit')
+                new_journal = self.env['account.journal'].browse(values['deposit_journal_id'])
+                if new_journal:
+                    new_journal.inbound_payment_method_ids |= self.env.ref('account_batch_payment.account_payment_method_batch_deposit')
+            if 'credit_transfer_journal_id' in values:
+                if company.credit_transfer_journal_id:
+                  company.credit_transfer_journal_id.inbound_payment_method_ids -= self.env.ref('account_sepa.account_payment_method_sepa_ct')
+                new_journal = self.env['account.journal'].browse(values['credit_transfer_journal_id'])
+                if new_journal:
+                    new_journal.outbound_payment_method_ids |= self.env.ref('account_sepa.account_payment_method_sepa_ct')
+            if 'check_journal_id' in values:
+                if company.check_journal_id:
+                  company.check_journal_id.outbound_payment_method_ids -= self.env.ref('account_check_printing.account_payment_method_check')
+                new_journal = self.env['account.journal'].browse(values['check_journal_id'])
+                if new_journal:
+                    new_journal.outbound_payment_method_ids |= self.env.ref('account_check_printing.account_payment_method_check')
+            if 'direct_debit_journal_id' in values:
+                if company.direct_debit_journal_id:
+                  company.direct_debit_journal_id.inbound_payment_method_ids -= self.env.ref('account_sepa_direct_debit.payment_method_sdd')
+                new_journal = self.env['account.journal'].browse(values['direct_debit_journal_id'])
+                if new_journal:
+                    new_journal.inbound_payment_method_ids |= self.env.ref('account_sepa_direct_debit.payment_method_sdd')
+
+        # check_journal_id = self.env.company.check_journal_id
+        # import pudb; pudb.set_trace()
         return super(ResConfigSettings, self).create(values)

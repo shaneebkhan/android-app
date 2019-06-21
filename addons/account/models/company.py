@@ -47,6 +47,10 @@ class ResCompany(models.Model):
     account_sale_tax_id = fields.Many2one('account.tax', string="Default Sale Tax")
     account_purchase_tax_id = fields.Many2one('account.tax', string="Default Purchase Tax")
     tax_cash_basis_journal_id = fields.Many2one('account.journal', string="Cash Basis Journal")
+    check_journal_id = fields.Many2one('account.journal', string="Check Journal")
+    deposit_journal_id = fields.Many2one('account.journal', string="Deposit Journal")
+    credit_transfer_journal_id = fields.Many2one('account.journal', string="Credit Transfer Journal")
+    direct_debit_journal_id = fields.Many2one('account.journal', string="Direct Debit Journal")
     tax_calculation_rounding_method = fields.Selection([
         ('round_per_line', 'Round per Line'),
         ('round_globally', 'Round Globally'),

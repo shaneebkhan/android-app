@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+    <t t-name="PaymentListView.create_button">
+        <button type="button" class="btn btn-primary o_button_create_batch_payment">
+            Create Batch Deposit
+        </button>
+    </t>
+
+    <t t-extend="ListView.buttons" t-name="PaymentListView.buttons">
+        <t t-jquery="button.o_list_button_add" t-operation="after">
+            <t t-js="ctx">
+                if (window.odoo._modules.indexOf("base_import") >= 0) {
+                    r.push(context.engine.tools.call(context, 'ImportView.import_button', dict));
+                };
+            </t>
+            <t t-call="PaymentListView.create_button"/>
+        </t>
+    </t>
+</templates>

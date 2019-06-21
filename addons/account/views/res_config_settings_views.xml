@@ -285,6 +285,22 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Payment Journals</span>
+                                    <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." aria-label="Values set here are company-specific." groups="base.group_multi_company" role="img"/>
+                                    <div class="text-muted">
+                                        Text to define
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <label for="payment_journal_id" class="col-lg-3 o_light_label"/>
+                                            <field name="payment_journal_id" options="{'no_create_edit': True, 'no_open': True}" context="{'active_test': False}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
                         </div>
                         <h2>Customer Payments</h2>
                         <div class="row mt16 o_settings_container">
@@ -319,9 +335,9 @@
                                     <field name="module_account_batch_payment" widget="upgrade_boolean"/>
                                 </div>
                                 <div class="o_setting_right_pane">
-                                    <label for="module_account_batch_deposit" string="Batch Payments"/>
+                                    <label for="module_account_batch_deposit" string="Batch Deposits"/>
                                     <div class="text-muted">
-                                        Group payments into a single batch to ease the reconciliation process
+                                        Receive payments by check and make batch deposits
                                     </div>
                                 </div>
                             </div>
@@ -351,6 +367,58 @@
                                     <span class="fa fa-lg fa-building-o" title="Values set here are company-specific." aria-label="Values set here are company-specific." groups="base.group_multi_company" role="img"/>
                                     <div class="text-muted">
                                         Add a payment QR code to your invoices
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- TODO: move to proper module -->
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Send a check</span>
+                                    <div class="text-muted">
+                                        Activate the Check payment method on the following journal.
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="check_journal_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- TODO: move to proper module -->
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Check to deposit</span>
+                                    <div class="text-muted">
+                                        Activate the Deposit payment method on the following journal.
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="deposit_journal_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- TODO: move to proper module -->
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Credit Transfer</span>
+                                    <div class="text-muted">
+                                        Activate the Credit Transfer payment method on the following journal.
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="credit_transfer_journal_id"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- TODO: move to proper module -->
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Sepa Direct Debit</span>
+                                    <div class="text-muted">
+                                        Activate the Sepa Direct Debit payment method on the following journal.
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="direct_debit_journal_id"/>
                                     </div>
                                 </div>
                             </div>
