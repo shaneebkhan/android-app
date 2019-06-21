@@ -277,19 +277,25 @@ class StockQuant(models.Model):
 
     @api.onchange('location_id', 'product_id', 'lot_id', 'package_id', 'owner_id')
     def _onchange_location_or_product_id(self):
-        if self.lot_id and self.tracking == 'none':
-            self.lot_id = None
+        values_to_update = {}
+        if self.lot_id:
+            if self.tracking == 'none' or self.product_id != self.lot_id.product_id:
+                values_to_update.update({'lot_id': None})
+            elif self.tracking == 'serial':
+                values_to_update.update({'inventory_quantity': 1})
         if self.product_id and self.location_id:
             quants = self._gather(self.product_id, self.location_id, lot_id=self.lot_id, package_id=self.package_id, owner_id=self.owner_id, strict=True)
             quantity_on_hand = sum(quants.mapped('quantity'))
             reserved_quantity = sum(quants.mapped('reserved_quantity'))
-            values_to_update = {
-                'quantity': quantity_on_hand,
-                'reserved_quantity': reserved_quantity
-            }
-            # We update 'inventory_quantity' only if user didn't modify it
-            if self.inventory_quantity == self.quantity:
-                values_to_update['inventory_quantity'] = quantity_on_hand
+            values_to_update.update({'reserved_quantity': reserved_quantity})
+            if 'inventory_quantity' not in values_to_update or quants:
+                # We update 'inventory_quantity' only if user didn't modify it
+                if self.inventory_quantity == self.quantity:
+                    values_to_update.update({
+                        'quantity': quantity_on_hand,
+                        'inventory_quantity': quantity_on_hand
+                    })
+        if values_to_update:
             self.update(values_to_update)
 
     @api.model
