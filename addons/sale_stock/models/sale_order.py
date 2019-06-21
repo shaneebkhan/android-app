@@ -195,6 +195,7 @@ class SaleOrderLine(models.Model):
     product_packaging = fields.Many2one('product.packaging', string='Package', default=False)
     route_id = fields.Many2one('stock.location.route', string='Route', domain=[('sale_selectable', '=', True)], ondelete='restrict')
     move_ids = fields.One2many('stock.move', 'sale_line_id', string='Stock Moves')
+    is_storable = fields.Boolean(compute='_compute_is_storable')
 
     @api.multi
     @api.depends('product_id')
@@ -254,6 +255,11 @@ class SaleOrderLine(models.Model):
                 super(SaleOrderLine, line)._compute_product_updatable()
             else:
                 line.product_updatable = False
+
+    @api.depends('product_id')
+    def _compute_is_storable(self):
+        for rec in self:
+            rec.is_storable = rec.product_id.type == 'product'
 
     @api.onchange('product_id')
     def _onchange_product_id_set_customer_lead(self):
@@ -481,3 +487,20 @@ class SaleOrderLine(models.Model):
             raise UserError(_('You cannot decrease the ordered quantity below the delivered quantity.\n'
                               'Create a return first.'))
         super(SaleOrderLine, self)._update_line_quantity(values)
+
+    def action_open_stock_details(self):
+        if not self.product_uom or (self.product_id.uom_id.category_id.id != self.product_uom.category_id.id):
+            self.product_uom = self.product_id.uom_id
+
+        if not self.product_id or not self.product_uom_qty or not self.product_uom:
+            self.product_packaging = False
+            return {}
+
+        return {
+            'name': 'Stock Details',
+            'res_model': 'sale.order.line.wizard',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'view_id': self.env.ref('sale_stock.storable_product_qty_wizard').id,
+            'target': 'new',
+        }

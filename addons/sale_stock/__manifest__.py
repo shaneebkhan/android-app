@@ -33,6 +33,7 @@ Preferences
         'report/stock_report_deliveryslip.xml',
         'data/sale_stock_data.xml',
         'wizard/stock_rules_report_views.xml',
+        'wizard/storable_product_qty_wizard.xml',
     ],
     'demo': ['data/sale_order_demo.xml'],
     'installable': True,

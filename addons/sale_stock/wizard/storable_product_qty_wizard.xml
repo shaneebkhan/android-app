@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+     <record id="storable_product_qty_wizard" model="ir.ui.view">
+        <field name="name">sale.order.line.wizard</field>
+        <field name="model">sale.order.line.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Quantity">
+                <group class="oe_inline">
+                    <div class="o_row">
+                        <field name="on_hand_at_date" decoration-danger="on_hand_at_date &lt; 0" readonly="True"/>
+                        <field name="product_uom_id" readonly="1" groups="uom.group_uom"/>
+                    </div>
+                    <div class="o_row">
+                        <field name="on_hand" readonly="True"/>
+                        <field name="product_uom_id" readonly="1" groups="uom.group_uom"/>
+                    </div>
+                </group>
+                <group>
+                    <button string="Go To Forecasted stock" class="btn btn-link" name="_action_open_forcasted"/>
+                </group>
+                <footer>
+                    <button string="OK" class="btn-primary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
