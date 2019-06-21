@@ -9,6 +9,7 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.translate import html_translate
 
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
 
 _logger = logging.getLogger(__name__)
 
@@ -293,6 +294,21 @@ class EventEvent(models.Model):
 
     @api.model
     def create(self, vals):
+        vals['date_tz'] = vals.get('date_tz', self.env.user.tz)
+        offset = datetime.now(pytz.timezone(vals.get('date_tz')))
+        diff = offset.utcoffset().total_seconds()/60/60
+        if vals.get('date_begin'):
+            date_begin = vals.get('date_begin')
+            date_b = fields.Datetime.from_string(date_begin) - timedelta(hours=(diff))
+            date_begin = fields.Datetime.context_timestamp(self, date_b)
+            vals['date_begin'] = fields.Datetime.to_string(date_begin)
+
+        if vals.get('date_end'):
+            date_end = vals.get('date_end')
+            date_e = fields.Datetime.from_string(date_end) - timedelta(hours=(diff))
+            date_end = fields.Datetime.context_timestamp(self, date_e)
+            vals['date_end'] = fields.Datetime.to_string(date_end)
+
         res = super(EventEvent, self).create(vals)
         if res.organizer_id:
             res.message_subscribe([res.organizer_id.id])
@@ -302,10 +318,79 @@ class EventEvent(models.Model):
 
     @api.multi
     def write(self, vals):
+        if (not vals.get('date_begin') or not vals.get('date_end')) and vals.get('date_tz'):
+            offset_db = datetime.now(pytz.timezone(self.date_tz))
+            diff_db = offset_db.utcoffset().total_seconds()/60/60
+            offset_val = datetime.now(pytz.timezone(vals.get('date_tz')))
+            diff_val = offset_val.utcoffset().total_seconds()/60/60
+            if (not vals.get('date_begin')):
+                date_begin = self.date_begin + timedelta(hours=diff_db)
+                date_begin = date_begin - timedelta(hours=diff_val)
+                vals['date_begin'] = date_begin
+            if (not vals.get('date_end')):
+                date_end = self.date_end + timedelta(hours=diff_db)
+                date_end = date_end - timedelta(hours=diff_val)
+                vals['date_end'] = date_end
+
+        elif (vals.get('date_begin') or vals.get('date_end')) and vals.get('date_tz'):
+            offset = datetime.now(pytz.timezone(vals.get('date_tz')))
+            diff = offset.utcoffset().total_seconds()/60/60
+            if vals.get('date_begin'):
+                date_begin = vals.get('date_begin')
+                date_b = fields.Datetime.from_string(date_begin) - timedelta(hours=(diff))
+                date_begin = fields.Datetime.context_timestamp(self, date_b)
+                vals['date_begin'] = fields.Datetime.to_string(date_begin)
+            if vals.get('date_end'):
+                date_end = vals.get('date_end')
+                date_e = fields.Datetime.from_string(date_end) - timedelta(hours=(diff))
+                date_end = fields.Datetime.context_timestamp(self, date_e)
+                vals['date_end'] = fields.Datetime.to_string(date_end)
+
+        elif (vals.get('date_begin') or vals.get('date_end')) and not vals.get('date_tz'):
+            offset = datetime.now(pytz.timezone(self.date_tz))
+            diff = offset.utcoffset().total_seconds()/60/60
+            if vals.get('date_begin'):
+                date_begin = vals.get('date_begin')
+                date_b = fields.Datetime.from_string(date_begin) - timedelta(hours=(diff))
+                date_begin = fields.Datetime.context_timestamp(self, date_b)
+                vals['date_begin'] = fields.Datetime.to_string(date_begin)
+            if vals.get('date_end'):
+                date_end = vals.get('date_end')
+                date_e = fields.Datetime.from_string(date_end) - timedelta(hours=(diff))
+                date_end = fields.Datetime.context_timestamp(self, date_e)
+                vals['date_end'] = fields.Datetime.to_string(date_end)
+
+        else:
+            vals['date_begin'] = self.date_begin
+            vals['date_end'] = self.date_end
+
         res = super(EventEvent, self).write(vals)
         if vals.get('organizer_id'):
             self.message_subscribe([vals['organizer_id']])
         return res
+
+    @api.multi
+    def read(self, fields, load='_classic_read'):
+        if self.check_access_rights('read', raise_exception=False):
+            result = super(EventEvent, self).read(fields, load=load)
+            user_tz = self._context.get('tz') or self.env.user.tz
+            user_tz_offset = datetime.now(pytz.timezone(user_tz))
+            user_tz_diff = user_tz_offset.utcoffset().total_seconds()/60/60
+            for values in result:
+                if (values.get('date_begin') and values.get('date_end')):
+                    if values.get('date_tz'):
+                        event_tz_offset = datetime.now(pytz.timezone(values.get('date_tz')))
+                        event_diff = event_tz_offset.utcoffset().total_seconds()/60/60
+                    else:
+                        event_diff = user_tz_diff
+                    hours = user_tz_diff - event_diff
+                    value_date_begin = values.get('date_begin') - timedelta(hours=(hours))
+                    values['date_begin'] = value_date_begin
+                    value_date_end = values.get('date_end') - timedelta(hours=(hours))
+                    values['date_end'] = value_date_end
+            return result
+
+        return self.env['event.event'].browse(self.ids).read(fields, load=load)
 
     @api.multi
     @api.returns('self', lambda value: value.id)
