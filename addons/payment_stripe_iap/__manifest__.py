@@ -7,6 +7,9 @@
     'version': '1.0',
     'description': """Create a stripe standard account""",
     'depends': ['iap'],
-    'data': [],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/stripe_connect_views.xml',
+    ],
     'installable': True,
 }

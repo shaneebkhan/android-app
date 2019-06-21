@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="stripe_connect_view_tree" model="ir.ui.view">
+        <field name="name">stripe.connect.view.tree</field>
+        <field name="model">stripe.connect</field>
+        <field name="arch" type="xml">
+            <tree string="Stripe Connect Service" editable="top">
+                <field name="client_id"/>
+                <field name="client_secret"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="stripe_connect_action" model="ir.actions.act_window">
+        <field name="name">Stripe Connect Service</field>
+        <field name="res_model">stripe.connect</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="stripe_connect_service_menu_root" name="Stripe Connect Service"/>
+    <menuitem id="stripe_connect_service_menu" name="Stripe Connect" parent="stripe_connect_service_menu_root" action="stripe_connect_action"/>
+</odoo>

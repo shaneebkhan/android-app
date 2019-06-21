@@ -10,12 +10,11 @@ class StripeController(http.Controller):
 
     @http.route('/payment/stripe/create_account/<model("payment.acquirer"):acquirer>', auth='user')
     def create_stripe_account(self, acquirer):
-        get_param = request.env['ir.config_parameter'].sudo().get_param
-        client_id = get_param('payment_stripe_%s_client_id' % acquirer.environment)
         company = request.env.user.company_id
-        redirect_uri = get_param('web.base.url') + "/stripe/account_done"
+        redirect_uri = request.env['ir.config_parameter'].sudo().get_param('web.base.url') + "/stripe/account_done"
+        stripe_platform = request.env['stripe.connect'].search([], limit=1)
 
-        return werkzeug.utils.redirect('https://connect.stripe.com/oauth/authorize?response_type=code&client_id='+client_id+'&scope=read_write&redirect_uri='+redirect_uri+
+        return werkzeug.utils.redirect('https://connect.stripe.com/oauth/authorize?response_type=code&client_id='+stripe_platform.client_id+'&scope=read_write&redirect_uri='+redirect_uri+
             '&stripe_user[country]='+company.country_id.code+
             '&stripe_user[street_address]='+company.street+
             '&stripe_user[zip]='+company.zip+
@@ -25,9 +24,8 @@ class StripeController(http.Controller):
     @http.route('/stripe/account_done', auth='user')
     def stripe_account_done(self, **post):
         acquirer = request.env['payment.acquirer'].search([('provider', '=', 'stripe')], limit=1)
-        get_param = request.env['ir.config_parameter'].sudo().get_param
         data = {
-            'client_secret': get_param('payment_stripe_%s_client_secret' % acquirer.environment),
+            'client_secret': request.env['stripe.connect'].search([], limit=1).client_secret,
             'code': post.get('code'),
             'grant_type': 'authorization_code'
         }
