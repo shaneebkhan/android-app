@@ -165,6 +165,6 @@
         report_type="qweb-pdf"
         name="l10n_it_ddt.report_ddt_view"
         file="report_ddt"
-        print_report_name="'DDT'"
+        print_report_name="(object.report_name())"
     />
 </odoo>
