@@ -1,0 +1,110 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_component_DiscussSidebar {
+    display: flex;
+    flex-flow: column;
+    width: $o-mail-chat-sidebar-width;
+
+    @include media-breakpoint-up(xl) {
+        width: $o-mail-chat-sidebar-width + 50px;
+    }
+}
+
+.o_mail_component_DiscussSidebar__group {
+    display: flex;
+    flex-flow: column;
+    flex: 0 0 auto;
+}
+
+.o_mail_component_DiscussSidebar__groupHeader {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.o_mail_component_DiscussSidebar__groupHeaderItem {
+    margin-left: 3px;
+    margin-right: 3px;
+
+    &:first-child {
+        margin-left: $o-mail-discuss-sidebar-active-indicator-margin-right;
+    }
+
+    &:last-child {
+        margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+    }
+}
+
+.o_mail_component_DiscussSidebar__itemNew {
+    display: flex;
+    justify-content: center;
+}
+
+.o_mail_component_DiscussSidebar__itemNewInput {
+    flex: 1 1 auto;
+    margin-left: $o-mail-discuss-sidebar-active-indicator-margin-right + 3px;
+    margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+}
+
+.o_mail_component_DiscussSidebar__quickSearch {
+    border-radius: 10px;
+    margin: 0 $o-mail-discuss-sidebar-scrollbar-width 10px;
+    padding: 3px 10px;
+}
+
+.o_mail_component_DiscussSidebar__separator {
+    width: 100%;
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_DiscussSidebar {
+    background-color: gray('900');
+    color: gray('300');
+}
+
+.o_mail_component_DiscussSidebar__groupHeader {
+    font-size: $font-size-sm;
+    text-transform: uppercase;
+    font-weight: bolder;
+}
+
+.o_mail_component_DiscussSidebar__groupHeaderItemAdd {
+    cursor: pointer;
+
+    &:not(:hover) {
+        color: gray('600');
+    }
+}
+
+.o_mail_component_DiscussSidebar__groupTitle {
+
+    &:not(.o_clickable) {
+        color: gray('600');
+    }
+
+    &.o_clickable {
+        cursor: pointer;
+
+        &:not(:hover) {
+            color: gray('600');
+        }
+    }
+}
+
+.o_mail_component_DiscussSidebar__itemNewInput {
+    outline: none;
+}
+
+.o_mail_component_DiscussSidebar__quickSearch {
+    border: none;
+    outline: none;
+}
+
+.o_mail_component_DiscussSidebar__separator {
+    background-color: gray('600');
+}

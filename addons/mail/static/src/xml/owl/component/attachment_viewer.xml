@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_attachment_viewer"
+        owl="1"
+        tabindex="0"
+        t-att-data-dialog-id="props.dialogID"
+        t-name="mail.component.AttachmentViewer"
+        t-on-click="_onClick"
+        t-on-keydown="_onKeydown">
+        <div
+            class="o_header"
+            t-on-click="_onClickHeader">
+            <div
+                class="o_item o_icon"
+                t-if="props.attachment.fileType"
+                t-key="'icon'">
+                <i
+                    aria-label="Image"
+                    class="
+                        fa
+                        fa-picture-o"
+                    role="img"
+                    title="Image"
+                    t-if="props.attachment.fileType === 'image'"/>
+                <i
+                    aria-label="PDF file"
+                    class="
+                        fa
+                        fa-file-text"
+                    role="img"
+                    title="PDF file"
+                    t-if="props.attachment.fileType === 'application/pdf'"/>
+                <i
+                    aria-label="Text file"
+                    class="
+                        fa
+                        fa-file-text"
+                    role="img"
+                    title="Text file"
+                    t-if="props.attachment.isTextFile"/>
+                <i
+                    aria-label="Video"
+                    class="
+                        fa
+                        fa-video-camera"
+                    role="img"
+                    title="Video"
+                    t-if="props.attachment.fileType === 'video'"/>
+            </div>
+            <div
+                class="
+                    o_item
+                    o_name">
+                <t t-esc="props.attachment.displayName"/>
+            </div>
+            <div
+                class="
+                    o_item
+                    o_download"
+                role="button"
+                title="Download"
+                t-on-click.stop="_onClickDownload">
+                <i
+                    aria-label="Download"
+                    class="
+                        fa
+                        fa-download
+                        fa-fw"
+                    role="img"/>
+            </div>
+            <div
+                class="o_autogrow"/>
+            <div
+                aria-label="Close"
+                class="
+                    o_item
+                    o_close"
+                role="button"
+                title="Close (Esc)"
+                t-on-click="_onClickClose">
+                <i
+                    aria-label="Close"
+                    class="
+                        fa
+                        fa-fw
+                        fa-times"
+                    role="img"/>
+            </div>
+        </div>
+        <div
+            class="o_viewer"
+            t-att-class="{
+                o_with_img: props.attachment.fileType === 'image',
+            }"
+            t-on-mousemove="_onMousemoveView">
+            <div
+                class="o_zoomer"
+                t-if="props.attachment.fileType === 'image'"
+                t-ref="zoomer">
+                <div
+                    class="o_owl_loading"
+                    t-if="state.imageLoading">
+                    <i
+                        aria-label="Loading"
+                        class="
+                            fa
+                            fa-3x
+                            fa-circle-o-notch
+                            fa-fw
+                            fa-spin"
+                        role="img"
+                        title="Loading"/>
+                </div>
+                <img
+                    alt="Viewer"
+                    class="o_img"
+                    draggable="false"
+                    t-att-src="props.attachment.defaultSource"
+                    t-att-style="imageStyle"
+                    t-on-click="_onClickImage"
+                    t-on-mousedown="_onMousedownImage"
+                    t-on-wheel.stop="_onWheelImage"
+                    t-key="props.info.attachmentLocalID"
+                    t-ref="image"/>
+            </div>
+            <iframe
+                class="o_pdf"
+                t-att-src="props.attachment.defaultSource"
+                t-if="props.attachment.fileType === 'application/pdf'"
+                t-key="props.info.attachmentLocalID"/>
+            <iframe
+                class="o_text"
+                t-att-src="props.attachment.defaultSource"
+                t-if="props.attachment.isTextFile"
+                t-key="props.info.attachmentLocalID"/>
+            <iframe
+                allow="autoplay; encrypted-media"
+                class="o_youtube"
+                height="315"
+                t-att-src="props.attachment.defaultSource"
+                t-if="props.attachment.fileType === 'youtu'"
+                t-key="props.info.attachmentLocalID"
+                width="560"/>
+            <video
+                class="o_video"
+                controls="controls"
+                t-if="props.attachment.fileType === 'video'"
+                t-key="props.info.attachmentLocalID"
+                t-on-click="_onClickVideo">
+                <source
+                    t-att-data-type="props.attachment.mimetype"
+                    t-att-src="props.attachment.defaultSource"/>
+            </video>
+        </div>
+        <div
+            class="o_toolbar"
+            role="toolbar"
+            t-if="props.attachment.fileType === 'image'"
+            t-key="'toolbar'">
+            <div
+                class="
+                    o_item
+                    o_zoom_in"
+                role="button"
+                title="Zoom In (+)"
+                t-on-click.stop="_onClickZoomIn">
+                <i
+                    aria-label="Zoom In"
+                    class="
+                        fa
+                        fa-fw
+                        fa-plus"
+                    role="img"/>
+            </div>
+            <div
+                class="o_item o_zoom_reset"
+                role="button"
+                t-att-class="{
+                    o_disabled: state.scale === 1,
+                }"
+                t-on-click.stop="_onClickZoomReset"
+                title="Reset Zoom (0)">
+                <i
+                    aria-label="Reset Zoom"
+                    class="
+                        fa
+                        fa-fw
+                        fa-search"
+                    role="img"/>
+            </div>
+            <div
+                class="
+                    o_item
+                    o_zoom_out"
+                role="button"
+                title="Zoom Out (-)"
+                t-att-class="{
+                    o_disabled: state.scale === MIN_SCALE,
+                }"
+                t-on-click.stop="_onClickZoomOut">
+                <i
+                    aria-label="Zoom Out"
+                    class="
+                        fa
+                        fa-fw
+                        fa-minus"
+                    role="img"/>
+            </div>
+            <div
+                class="
+                    o_item
+                    o_rotate"
+                role="button"
+                title="Rotate (r)"
+                t-on-click.stop="_onClickRotate">
+                <i
+                    aria-label="Rotate"
+                    class="
+                        fa
+                        fa-fw
+                        fa-repeat"
+                    role="img"/>
+            </div>
+            <div
+                class="
+                    o_item
+                    o_print"
+                role="button"
+                title="Print"
+                t-on-click.stop="_onClickPrint">
+                <i
+                    aria-label="Print"
+                    class="
+                        fa
+                        fa-fw
+                        fa-print"
+                    role="img"/>
+            </div>
+            <div
+                class="
+                    o_download
+                    o_item"
+                role="button"
+                title="Download"
+                t-on-click.stop="_onClickDownload">
+                <i
+                    aria-label="Download"
+                    class="
+                        fa
+                        fa-download
+                        fa-fw"
+                    role="img"/>
+            </div>
+        </div>
+        <t t-if="props.info.attachmentLocalIDs.length > 1">
+            <div
+                class="o_previous"
+                role="button"
+                title="Previous (Left-Arrow)"
+                t-key="'previous'"
+                t-on-click.stop="_onClickPrevious">
+                <span
+                    aria-label="Previous"
+                    class="
+                        fa
+                        fa-chevron-left"
+                    role="img"/>
+            </div>
+            <div
+                class="o_next"
+                role="button"
+                title="Next (Right-Arrow)"
+                t-key="'next'"
+                t-on-click.stop="_onClickNext">
+                <span
+                    aria-label="Next"
+                    class="
+                        fa
+                        fa-chevron-right"
+                    role="img"/>
+            </div>
+        </t>
+    </div>
+
+</templates>

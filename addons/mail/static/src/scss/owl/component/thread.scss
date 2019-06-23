@@ -1,0 +1,46 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_component_thread {
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+}
+
+.o_mail_component_thread__composer {
+    flex: 0 0 auto;
+}
+
+.o_mail_component_thread__loading {
+    display: flex;
+    align-self: center;
+    flex: 1 1 auto;
+    align-items: center;
+}
+
+.o_mail_component_thread__message_list {
+    flex: 1 1 auto;
+}
+
+.o_mail_component_thread__no_message {
+    flex: 1 1 auto;
+    height: 100%;
+    align-self: center;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_thread {
+    background-color: gray('100');
+
+}
+
+.o_mail_component_thread__loading_icon {
+    margin-right: 3px;
+}

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_message"
+        owl="1"
+        t-att-data-message-local-id="props.messageLocalID"
+        t-att-class="{
+            o_discussion: props.message.is_discussion or props.message.is_notification,
+            o_notification: props.message.message_type === 'notification',
+            o_squashed: options.squashed,
+            o_starred: starred,
+            o_toggled_click: state.toggledClick,
+        }"
+        t-name="mail.component.Message"
+        t-on-click="_onClick">
+        <div
+            class="o_mail_component_message__sidebar"
+            t-att-class="{
+                o_squashed: options.squashed,
+            }">
+            <img
+                alt=""
+                class="
+                    o_mail_component_message__author_avatar
+                    o_mail_component_message__sidebar_item
+                    rounded-circle"
+                t-att-class="{
+                    o_mail_component_message__author_redirect: redirectAuthor,
+                    o_redirect: redirectAuthor,
+                }"
+                t-att-src="avatar"
+                t-if="!options.squashed"
+                t-on-click="_onClickAuthor"/>
+            <t t-else="">
+                <div
+                    class="
+                        o_mail_component_message__date
+                        o_mail_component_message__squashed_sidebar_item
+                        o_mail_component_message__sidebar_item">
+                    <t t-esc="shortTime"/>
+                </div>
+                <div
+                    class="
+                        o_mail_component_message__commands
+                        o_mail_component_message__squashed_sidebar_item
+                        o_mail_component_message__sidebar_item">
+                    <div
+                        class="
+                            fa
+                            o_mail_component_message__command
+                            o_mail_component_message__star_command"
+                        t-att-class="{
+                            o_starred: starred,
+                            fa-star: starred,
+                            fa-star-o: !starred,
+                        }"
+                        t-if="props.message.message_type !== 'notification'"
+                        t-on-click.stop="_onClickStar"/>
+                </div>
+            </t>
+        </div>
+        <div class="o_mail_component_message__core">
+            <div
+                class="o_mail_component_message__header"
+                t-if="!options.squashed">
+                <div
+                    class="o_mail_component_message__author_name"
+                    t-att-class="{
+                        o_mail_component_message__author_redirect: redirectAuthor,
+                        o_redirect: redirectAuthor,
+                    }"
+                    t-on-click="_onClickAuthor">
+                    <t t-esc="displayedAuthorName"/>
+                </div>
+                <div
+                    class="
+                        o_mail_component_message__date
+                        o_mail_component_message__header_date"
+                    t-att-title="datetime">
+                    - <t t-esc="timeElapsed"/>
+                </div>
+                <div
+                    class="o_mail_component_message__origin_thread"
+                    t-if="hasDifferentOriginThread">
+                    <t t-if="props.originThread._model === 'mail.channel'">
+                        (from <a href="#"
+                                 t-on-click="_onClickOriginThread">#<t t-esc="props.originThread.name"/></a>)
+                    </t>
+                    <t t-else="">
+                        on <a href="#"
+                              t-on-click="_onClickOriginThread"><t t-esc="props.originThread.name"/></a>
+                    </t>
+                </div>
+                <div
+                    class="
+                        o_mail_component_message__commands
+                        o_mail_component_message__header_commands">
+                    <div
+                        class="
+                            fa
+                            o_mail_component_message__command
+                            o_mail_component_message__star_command"
+                        t-att-class="{
+                            o_starred: starred,
+                            fa-star: starred,
+                            fa-star-o: !starred,
+                        }"
+                        t-if="props.message.message_type !== 'notification'"
+                        t-on-click="_onClickStar"/>
+                </div>
+            </div>
+            <div class="o_mail_component_message__content">
+                <t t-raw="props.message.bodyWithLinks"/>
+            </div>
+            <div
+                class="o_mail_component_message__footer"
+                t-if="props.attachmentLocalIDs and props.attachmentLocalIDs.length > 0">
+                <AttachmentList
+                   attachmentLocalIDs="props.message.attachmentLocalIDs"
+                   class="o_mail_component_message__attachment_preview_list"
+                   options="attachmentOptions"
+                   t-on-view.stop="_onViewAttachment"/>
+            </div>
+        </div>
+    </div>
+
+</templates>

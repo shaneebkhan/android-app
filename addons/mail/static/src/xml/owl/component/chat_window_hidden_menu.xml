@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_hidden_menu dropup"
+        owl="1"
+        t-att-data-id="id"
+        t-name="mail.component.ChatWindowHiddenMenu">
+        <div
+            class="dropdown-toggle"
+            t-att-class="{
+                show: state.toggleShow,
+            }"
+            t-on-click.stop="_onClickToggle">
+            <div
+                class="o_item o_icon fa fa-comments-o"/>
+            <div
+                class="o_item o_window_counter">
+                <t t-esc="props.items.length"/>
+            </div>
+        </div>
+        <ul
+            class="o_list dropdown-menu dropdown-menu-right"
+            role="menu"
+            t-att-class="{
+                show: state.toggleShow,
+            }"
+            t-ref="list">
+            <t t-foreach="props.items" t-as="item">
+                <li
+                    class="o_item"
+                    role="menuitem"
+                    t-key="'li_' + item">
+                    <ChatWindowHeader
+                        class="o_chat_window_header"
+                        options="itemOptions"
+                        item="item"
+                        t-key="'item_' + item"
+                        t-on-clicked="_onClickedItem"
+                        t-on-close="_onCloseItem"/>
+                </li>
+            </t>
+        </ul>
+        <div
+            class="o_unread_counter badge badge-pill"
+            t-if="unreadCounter > 0"
+            t-key="'unread_counter'">
+            <t t-esc="unreadCounter"/>
+        </div>
+    </div>
+
+</templates>

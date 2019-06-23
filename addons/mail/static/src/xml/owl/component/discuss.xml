@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_discuss"
+        owl="1"
+        t-att-class="{
+            o_fullscreen: props.threadLocalID and props.isMobile and props.thread._model !== 'mail.box',
+            o_mobile: props.isMobile,
+        }"
+        t-name="mail.component.Discuss">
+        <t t-if="props.isMobile">
+            <!-- mobile layout -->
+            <t t-if="!props.threadLocalID or props.thread._model === 'mail.box'">
+                <!-- no thread or mailbox selection -->
+                <MobileMailboxSelection
+                    class="o_mail_component_discuss__mobile_mailbox_selection"
+                    threadLocalID="props.threadLocalID"
+                    t-if="state.mobileNavbarTab === 'mailbox'"
+                    t-on-select-thread="_onSelectThread"/>
+                <t t-if="state.mobileNavbarTab === 'mailbox'">
+                    <Thread
+                        class="o_mail_component_discuss__thread"
+                        options="threadOptions"
+                        threadLocalID="props.threadLocalID"
+                        t-if="props.threadLocalID"
+                        t-on-redirect="_onRedirect"
+                        t-ref="thread"/>
+                    <div
+                        class="o_mail_component_discuss__no_thread"
+                        t-else="">No conversation.</div>
+                </t>
+                <t t-elif="!props.threadLocalID">
+                   <ThreadPreviewList
+                       class="o_mail_component_discuss__thread_preview_list"
+                       options="threadPreviewListOptions"
+                       t-on-select-thread="_onSelectThread"/>
+                </t>
+                <MobileNavbar
+                    active="state.mobileNavbarTab"
+                    class="o_mail_component_discuss__mobile_navbar"
+                    t-on-select.stop="_onSelectMobileNavbarTab"/>
+            </t>
+            <div
+                class="o_mail_component_discuss__content"
+                t-else="">
+                <!-- chat/channel selection (mobile) -->
+                <Thread
+                    class="o_mail_component_discuss__thread"
+                    options="threadOptions"
+                    threadLocalID="props.threadLocalID"
+                    t-on-redirect="_onRedirect"
+                    t-on-rendered="_onThreadRendered"
+                    t-ref="thread"/>
+            </div>
+        </t>
+        <t t-else="">
+            <!-- desktop layout -->
+            <Sidebar
+                class="o_mail_component_discuss__sidebar"
+                threadLocalID="props.threadLocalID"
+                t-on-select-thread="_onSelectThread"/>
+            <div
+                class="o_mail_component_discuss__content">
+                <t t-if="props.threadLocalID">
+                    <Thread
+                        class="o_mail_component_discuss__thread"
+                        options="threadOptions"
+                        threadLocalID="props.threadLocalID"
+                        t-key="props.threadLocalID"
+                        t-on-redirect="_onRedirect"
+                        t-on-rendered="_onThreadRendered"
+                        t-ref="thread"/>
+                </t>
+            </div>
+        </t>
+    </div>
+
+</templates>

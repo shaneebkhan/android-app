@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_thread"
+        owl="1"
+        t-att-data-thread-local-id="props.threadLocalID"
+        t-name="mail.component.Thread">
+        <div
+            class="o_mail_component_thread__loading"
+            t-if="loading">
+            <span><i
+                aria-label="Loading..."
+                class="
+                    fa
+                    fa-spinner
+                    fa-spin
+                    o_mail_component_thread__loading_icon"
+                role="img"
+                title="Loading..."/>Loading messages...</span>
+        </div>
+        <div
+            class="o_mail_component_thread__no_message"
+            t-elif="!hasMessages">
+            There are no messages in this conversation.
+        </div>
+        <MessageList
+           class="o_mail_component_thread__message_list"
+           options="options"
+           t-else=""
+           t-ref="messageList"
+           threadCacheLocalID="props.threadCacheLocalID"
+           threadLocalID="props.threadLocalID"/>
+        <Composer
+           class="o_mail_component_thread__composer"
+           options="composerOptions"
+           t-if="options.showComposer"
+           t-ref="composer"
+           threadLocalID="props.threadLocalID"/>
+    </div>
+
+</templates>

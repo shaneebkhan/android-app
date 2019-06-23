@@ -202,9 +202,9 @@
             }&quot;"/>
         </record>
 
-    <record id="action_wip_discuss" model="ir.actions.client">
-        <field name="name">(wip)Discuss</field>
-        <field name="tag">mail.wip.discuss</field>
+    <record id="action_owl_discuss" model="ir.actions.client">
+        <field name="name">(owl)Discuss</field>
+        <field name="tag">mail.widget.discuss</field>
         <field name="res_model">mail.channel</field>
         <field name="params" eval="&quot;{
             'default_active_id': 'mail.box_inbox'
@@ -220,9 +220,9 @@
         sequence="1"/>
 
     <menuitem
-        id="mail.menu_root_wip_discuss"
-        name="(wip)Discuss"
-        action="action_wip_discuss"
+        id="mail.menu_discuss"
+        name="(owl)Discuss"
+        action="action_owl_discuss"
         web_icon="mail,static/description/icon.png"
         groups="base.group_user"
         sequence="1"/>

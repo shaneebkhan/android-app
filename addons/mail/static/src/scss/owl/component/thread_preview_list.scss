@@ -1,0 +1,23 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+ .o_mail_component_thread_preview_list {
+    display: flex;
+    flex-flow: column;
+
+    > .o_no_conversation {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 50px;
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_thread_preview_list > div:not(:last-of-type) {
+    border-bottom: 1px solid gray('400');
+}

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <!--
+        The preview template is used by the discuss in mobile, and by the systray
+        menu in order to show preview of threads.
+    -->
+    <div
+        class="o_preview"
+        owl="1"
+        t-att-class="{
+            o_unread: props.thread.message_unread_counter > 0,
+        }"
+        t-att-data-thread-local-id="props.threadLocalID"
+        t-name="mail.component.ThreadPreview"
+        t-on-click="_onClick">
+        <div
+            class="o_sidebar">
+            <img
+                alt="Preview"
+                class="rounded-circle"
+                t-att-src="image"/>
+        </div>
+        <div
+            class="o_content">
+            <div
+                class="o_header">
+                <span
+                    class="o_name">
+                    <t t-esc="props.threadName"/>
+                </span>
+                <span
+                    class="o_counter"
+                    t-if="props.thread.message_unread_counter > 0">
+                    (<t t-esc="props.thread.message_unread_counter"/>)
+                </span>
+                <span
+                    class="o_mail_component_autogrow"/>
+                <span
+                    class="o_date"
+                    t-if="props.lastMessage">
+                    <t t-esc="props.lastMessage.dateMoment.fromNow()"/>
+                </span>
+            </div>
+            <div
+                class="o_core">
+                <span
+                    class="o_inline_text">
+                    <t t-if="props.lastMessageAuthor">
+                        <t t-if="isMyselfLastMessageAuthor">
+                            <i class="fa fa-mail-reply"/>You:
+                        </t>
+                        <t t-else="">
+                            <t t-esc="props.lastMessageAuthor.displayName"/>:
+                        </t>
+                    </t>
+                    <t t-raw="inlineLastMessageBody"/>
+                </span>
+                <span
+                    class="o_mail_component_autogrow"/>
+                <span
+                    class="o_mark_as_read fa fa-check"
+                    t-if="props.thread.message_unread_counter > 0"
+                    t-on-click.stop="_onClickMarkAsRead"
+                    title="Mark as Read"/>
+            </div>
+        </div>
+    </div>
+
+</templates>

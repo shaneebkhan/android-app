@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_composer"
+        owl="1"
+        t-att-data-id="id"
+        t-att-class="{
+            o_chatter_composer: options.chatter,
+            o_with_avatar: options.avatar,
+        }"
+        t-name="mail.component.Composer">
+        <div
+            class="o_mail_component_composer__sidebar"
+            t-if="options.avatar">
+            <img
+                alt=""
+                class="
+                    o_mail_component_composer__avatar
+                    rounded-circle"
+                t-att-src="userAvatar"/>
+        </div>
+        <div
+            class="o_mail_component_composer__core">
+            <!-- New message composer -->
+            <t t-if="options.chatter and !options.isLog">
+                <!-- Text for followers -->
+                <small
+                    class="o_mail_component_composer__followers">
+                    <b
+                        class="text-muted">To: </b>
+                    <em
+                        class="text-muted">Followers of </em>
+                    <b>
+                        <t t-if="options.recordName">
+                            &#32;&quot;<t t-esc="options.recordName"/>&quot;
+                        </t>
+                        <t t-if="!options.recordName">
+                            this document
+                        </t>
+                    </b>
+                </small>
+                <!-- List of followers -->
+                <div
+                    class="o_mail_component_composer__suggested_partners"
+                    t-if="props.suggestedRecipients">
+                    <div
+                        t-attf-title="Add as recipient and follower (reason: {{ recipient.reason }})"
+                        t-as="recipient"
+                        t-foreach="state.showAllSuggestedRecipients ? props.suggestedRecipients : props.suggestedRecipients.slice(0, 2)">
+                        <div
+                            class="custom-control custom-checkbox">
+                            <input
+                                class="custom-control-input"
+                                t-att-checked="recipient.checked ? 'checked' : undefined"
+                                t-att-data-fullname="recipient.full_name"
+                                t-attf-id="_suggested_partners_{{ recipient_index }}"
+                                type="checkbox"/>
+                            <label
+                                class="custom-control-label"
+                                t-attf-for="_suggested_partners_{{ recipient_index }}">
+                                <t t-esc="recipient.name"/><t t-if="recipient.email_address"> (<t t-esc="recipient.email_address"/>)</t>
+                            </label>
+                        </div>
+                    </div>
+                    <t t-if='props.suggestedRecipients.length > 3'>
+                        <a
+                            href="#"
+                            t-if="state.showAllSuggestedRecipients"
+                            t-on-click="_onShowLessSuggestedRecipients">
+                            Show <t t-esc="props.suggestedRecipients.length - 3"/> less
+                        </a>
+                        <a
+                            href="#"
+                            t-else=""
+                            t-on-click="_onShowMoreSuggestedRecipients">
+                            Show <t t-esc="props.suggestedRecipients.length - 3"/> more
+                        </a>
+                    </t>
+                </div>
+            </t>
+            <div
+                class="o_mail_component_composer__main">
+                <Input
+                   class="o_mail_component_composer__input"
+                   t-on-post-message.stop="_onPostMessageInput"
+                   t-ref="input"/>
+                <div
+                    class="o_mail_component_composer__commands">
+                    <EmojisButton
+                        class="
+                            o_emojis
+                            o_mail_component_composer__command"
+                        t-on-emoji-selection.stop="_onEmojiSelection"/>
+                    <button
+                        aria-label="Add attachment"
+                        class="
+                            btn
+                            btn-secondary
+                            fa
+                            fa-paperclip
+                            o_attachment_btn
+                            o_mail_component_composer__command"
+                        t-on-click="_onClickAddAttachment"
+                        title="Add attachment"
+                        type="button"/>
+                    <button
+                        class="
+                            btn
+                            btn-primary
+                            o_mail_component_composer__command
+                            o_send"
+                        t-if="options.sendButton"
+                        t-on-click="_onClickSend"
+                        type="button">
+                        <t t-if="options.isLog">Log</t><t t-else="">Send</t>
+                    </button>
+                </div>
+            </div>
+            <div
+                class="o_mail_component_composer__footer"
+                t-if="showFooter">
+                <AttachmentList
+                   attachmentLocalIDs="state.attachmentLocalIDs"
+                   class="o_mail_component_composer__attachment_list"
+                   options="attachmentOptions"
+                   t-if="state.attachmentLocalIDs.length > 0"
+                   t-on-unlink.stop="_onUnlinkAttachment"
+                   t-on-view.stop="_onViewAttachment"/>
+            </div>
+            <input
+                class="
+                    d-none
+                    o_file_input"
+                multiple="true"
+                t-key="'fileInput'"
+                t-on-change="_onChangeAttachment"
+                t-ref="fileInput"
+                type="file"/>
+        </div>
+    </div>
+
+</templates>

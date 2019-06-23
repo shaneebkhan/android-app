@@ -2987,9 +2987,20 @@
                 }
                 let eventsCode = events
                     .map(function ([eventName, mods, handlerName, extraArgs]) {
-                    let params = extraArgs
-                        ? `owner, ${ctx.formatExpression(extraArgs)}`
-                        : "owner";
+                    let params = "owner";
+                    if (extraArgs) {
+                        if (ctx.inLoop) {
+                            let argId = ctx.generateID();
+                            // we need to evaluate the arguments now, because the handler will
+                            // be set asynchronously later when the widget is ready, and the
+                            // context might be different.
+                            ctx.addLine(`let arg${argId} = ${ctx.formatExpression(extraArgs)};`);
+                            params = `owner, arg${argId}`;
+                        }
+                        else {
+                            params = `owner, ${ctx.formatExpression(extraArgs)}`;
+                        }
+                    }
                     let handler;
                     if (mods.length > 0) {
                         handler = `function (e) {`;
@@ -3063,7 +3074,9 @@
             ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}, hook: {insert(vn) {let nvn=w${componentID}._mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeComponentCode}}}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;w${componentID}.__owl__.pvnode = pvnode;});`);
             ctx.addElse();
             // need to update component
-            const patchQueueCode = async ? `patchQueue${componentID}` : "extra.patchQueue";
+            const patchQueueCode = async
+                ? `patchQueue${componentID}`
+                : "extra.patchQueue";
             ctx.addLine(`def${defID} = def${defID} || w${componentID}._updateProps(props${componentID}, extra.forceUpdate, ${patchQueueCode});`);
             let keepAliveCode = "";
             if (keepAlive) {
@@ -3500,8 +3513,8 @@
     exports.utils = utils;
 
     exports.__info__.version = '0.15.0';
-    exports.__info__.date = '2019-06-20T10:48:15.254Z';
-    exports.__info__.hash = '9f8b67f';
+    exports.__info__.date = '2019-06-23T23:23:31.328Z';
+    exports.__info__.hash = 'bd5111e';
     exports.__info__.url = 'https://github.com/odoo/owl';
 
 }(this.owl = this.owl || {}));

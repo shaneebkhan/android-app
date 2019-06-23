@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <div
+        class="o_mail_component_DiscussSidebarItem"
+        owl="1"
+        t-att-data-thread-local-id="props.threadLocalID"
+        t-att-odoo-id="id"
+        t-att-class="{
+            o_starred_box: props.threadLocalID === 'mail.box_starred',
+        }"
+        t-name="mail.component.DiscussSidebarItem"
+        t-on-click="_onClick">
+        <div
+            class="o_mail_component_DiscussSidebarItem__active_indicator"
+            t-att-class="{
+                o_active: props.isActive,
+            }"/>
+        <Icon
+           threadLocalID="props.threadLocalID"/>
+        <div
+            class="
+                o_editable
+                o_mail_component_DiscussSidebarItem__name"
+            t-if="props.thread.channel_type === 'chat' and state.renaming">
+            <EditableText
+               class="o_mail_component_DiscussSidebarItem__input"
+               placeholder="props.directPartner.name"
+               value="props.threadName"
+               t-on-cancel="_onCancelRenaming"
+               t-on-clicked="_onClickedEditableText"
+               t-on-validate.stop="_onRename"/>
+        </div>
+        <div
+            class="o_mail_component_DiscussSidebarItem__name"
+            t-att-class="{
+                o_unread: props.thread.message_unread_counter > 0,
+            }"
+            t-else="">
+            <t t-esc="props.threadName"/>
+        </div>
+        <div class="o_autogrow"/>
+        <div
+            class="o_mail_component_DiscussSidebarItem__commands"
+            t-if="props.thread._model !== 'mail.box'">
+            <t t-if="props.thread.channel_type === 'channel'">
+                <div
+                    aria-label="Channel settings"
+                    class="
+                        fa
+                        fa-cog
+                        o_mail_component_DiscussSidebarItem__command
+                        o_mail_component_DiscussSidebarItem__command_settings"
+                    role="img"
+                    t-on-click.stop="_onClickSettings"
+                    title="Channel settings"/>
+                <div
+                    aria-label="Leave this channel"
+                    class="
+                        fa
+                        fa-times
+                        o_mail_component_DiscussSidebarItem__command
+                        o_mail_component_DiscussSidebarItem__command_leave"
+                    role="img"
+                    t-if="!props.thread.message_needaction_counter and !props.thread.group_based_subscription"
+                    t-on-click.stop="_onClickLeave"
+                    title="Leave this channel"/>
+            </t>
+            <t t-elif="props.thread.channel_type === 'chat'">
+                <div
+                    aria-label="Rename conversation"
+                    class="
+                        fa
+                        fa-cog
+                        o_mail_component_DiscussSidebarItemm__command
+                        o_mail_component_DiscussSidebarItem__command_rename"
+                    role="img"
+                    t-on-click.stop="_onClickRename"
+                    title="Rename conversation"/>
+                <div
+                    aria-label="Unpin conversation"
+                    class="
+                        fa
+                        fa-times
+                        o_mail_component_DiscussSidebarItem__command
+                        o_mail_component_DiscussSidebarItem__command_unpin"
+                    role="img"
+                    t-if="!props.thread.message_unread_counter"
+                    t-on-click.stop="_onClickUnpin"
+                    title="Unpin conversation"/>
+            </t>
+        </div>
+        <div
+            class="
+                badge
+                badge-pill
+                o_mail_component_DiscussSidebarItem__counter"
+            t-if="counter > 0">
+            <t t-esc="counter"/>
+        </div>
+    </div>
+
+</templates>

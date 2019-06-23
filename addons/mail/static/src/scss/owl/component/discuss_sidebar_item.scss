@@ -1,0 +1,107 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_component_DiscussSidebarItem {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+
+    &:hover .o_mail_component_DiscussSidebarItem__commands {
+        display: flex;
+    }
+
+    > div {
+        margin-left: 3px;
+        margin-right: 3px;
+
+        &:first-of-type {
+            margin-left: 0px;
+            margin-right: $o-mail-discuss-sidebar-active-indicator-margin-right;
+        }
+
+        &:last-of-type {
+            margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+        }
+    }
+}
+
+.o_mail_component_DiscussSidebarItem__active_indicator {
+    width: $o-mail-discuss-sidebar-active-indicator-width;
+    align-self: stretch;
+}
+
+.o_mail_component_DiscussSidebarItem__command {
+    margin-left: 3px;
+    margin-right: 3px;
+
+    &:first-child {
+        margin-left: 0px;
+    }
+
+    &:last-child {
+        margin-right: 0px;
+    }
+}
+
+.o_mail_component_DiscussSidebarItem__commands {
+    display: none;
+}
+
+.o_mail_component_DiscussSidebarItem__input {
+    width: 100%;
+}
+
+.o_mail_component_DiscussSidebarItem__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.o_editable {
+        margin-left: $o-mail-discuss-sidebar-active-indicator-width + $o-mail-discuss-sidebar-active-indicator-margin-right;
+        margin-right: $o-mail-discuss-sidebar-scrollbar-width;
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_DiscussSidebarItem {
+    cursor: pointer;
+
+    &.o_starred_box {
+        .o_mail_component_DiscussSidebarItem__counter {
+            border: none;
+            background-color: gray('600');
+        }
+    }
+
+    &:not(.o_active):hover {
+        background-color: darken(gray('900'), 2%);
+    }
+}
+
+.o_mail_component_DiscussSidebarItem__active_indicator.o_active {
+    background-color: $o-brand-primary;
+}
+
+.o_mail_component_DiscussSidebarItem__command:not(:hover) {
+    color: gray('600');
+}
+
+.o_mail_component_DiscussSidebarItem__counter {
+    background-color: $o-brand-primary;
+}
+
+.o_mail_component_DiscussSidebarItem__input {
+    outline: none;
+    border: none;
+    border-radius: 2px;
+}
+
+.o_mail_component_DiscussSidebarItem__name {
+
+    &.o_unread {
+        font-weight: bold;
+    }
+}

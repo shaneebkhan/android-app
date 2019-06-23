@@ -1,0 +1,78 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+ .o_mail_component_message_list {
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+}
+
+.o_mail_component_message_list__date_separator {
+    padding: 5px 0;
+}
+
+.o_mail_component_message_list__load_more,
+.o_mail_component_message_list__loading_more {
+    align-self: center;
+}
+
+.o_mail_component_message_list__loading_more_icon {
+    margin-right: 3px;
+}
+
+.o_mail_component_message_list__new_messages_separator {
+    // bug with safari: container does not auto-grow from child size
+    padding: 0 0;
+}
+
+.o_mail_component_message_list__separator {
+    display: flex;
+    align-items: center;
+    padding: 0 0;
+    flex: 0 0 auto;
+
+}
+
+.o_mail_component_message_list__separator_label {
+    padding: 0 10px;
+}
+
+.o_mail_component_message_list__separator_line {
+    flex: 1 1 auto;
+    width: auto;
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_message_list {
+    background-color: white;
+}
+
+.o_mail_component_message_list__load_more {
+    cursor: pointer;
+}
+
+.o_mail_component_message_list__new_messages_separator {
+    color: lighten($o-brand-odoo, 15%);
+
+}
+
+.o_mail_component_message_list__new_messages_separator_line {
+    border-color: lighten($o-brand-odoo, 15%);
+}
+
+.o_mail_component_message_list__separator {
+    font-weight: bold;
+
+}
+
+.o_mail_component_message_list__separator_line {
+    border-color: gray('400');
+}
+
+.o_mail_component_message_list__separator_label {
+    background-color: white;
+}

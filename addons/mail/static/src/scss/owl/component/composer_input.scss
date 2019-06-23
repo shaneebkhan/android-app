@@ -1,0 +1,66 @@
+// ------------------------------------------------------------------
+// Layout
+// ------------------------------------------------------------------
+
+.o_mail_component_composer_input {
+    min-width: 0;
+
+    > .note-editor.note-frame {
+
+        > .note-editing-area > .note-editable {
+            max-height: 200px;
+            min-height: 39px;
+            padding: 10px;
+
+            .o_mention {
+                display: inline-block;
+                line-height: 1;
+            }
+
+            > p {
+                margin-bottom: 0;
+            }
+        }
+
+        > .note-statusbar {
+            display: none;
+        }
+    }
+}
+
+.o_mail_component_composer_input__mention_item {
+    white-space: nowrap;
+    overflow: hidden;
+
+    > .o_extra {
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
+
+// ------------------------------------------------------------------
+// Style
+// ------------------------------------------------------------------
+
+.o_mail_component_composer_input > .note-editor.note-frame {
+    background-color: white;
+    border: none;
+
+    > .note-editing-area > .note-editable .o_mention {
+        color: $o-brand-primary;
+    }
+
+    > .note-resizebar {
+        display: none;
+    }
+}
+
+.o_mail_component_composer_input__mention_item {
+    text-overflow: ellipsis;
+
+    > .o_extra {
+        text-overflow: ellipsis;
+        font-style: italic;
+        color: gray('500');
+    }
+}

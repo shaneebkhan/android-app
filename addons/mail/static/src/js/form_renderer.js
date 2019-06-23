@@ -2,8 +2,8 @@ odoo.define('mail.form_renderer', function (require) {
 "use strict";
 
 var Chatter = require('mail.Chatter');
-const ChatterWIP = require('mail.wip.component.Chatter');
-const EnvMixin = require('mail.wip.old_widget.EnvMixin');
+const ChatterWIP = require('mail.component.Chatter');
+const EnvMixin = require('mail.widget.EnvMixin');
 
 var FormRenderer = require('web.FormRenderer');
 
@@ -32,10 +32,10 @@ FormRenderer.include({
     on_attach_callback: function () {
         this._super.apply(this, arguments);
 
-        if (this.chatterWIP) {
-            this.chatterWIP.mount(this.$temporaryChatterDiv[0]).then(() => {
-                $(this.chatterWIP.el).unwrap();
-                this._handleAttributes($(this.chatterWIP.el), this._chatterNode);
+        if (this.chatterOwl) {
+            this.chatterOwl.mount(this.$temporaryChatterDiv[0]).then(() => {
+                $(this.chatterOwl.el).unwrap();
+                this._handleAttributes($(this.chatterOwl.el), this._chatterNode);
             });
         }
     },
@@ -55,7 +55,7 @@ FormRenderer.include({
             var updatedMailFields = _.intersection(fields, chatterFields);
             if (updatedMailFields.length) {
                 this.chatter.update(state, updatedMailFields);
-                this.chatterWIP._updateProps({
+                this.chatterOwl._updateProps({
                     mailFields: this.mailFields,
                     parent: this,
                     record: state,
@@ -108,12 +108,12 @@ FormRenderer.include({
                 return $temporaryParentDiv.add(this.$temporaryChatterDiv);
             } else {
                 this.chatter.update(this.state);
-                this.chatterWIP._updateProps({
+                this.chatterOwl._updateProps({
                     mailFields: this.mailFields,
                     parent: this,
                     record: this.state,
                 });
-                return this.chatter.$el.add($(this.chatterWIP.el));
+                return this.chatter.$el.add($(this.chatterOwl.el));
             }
         } else {
             return this._super.apply(this, arguments);
