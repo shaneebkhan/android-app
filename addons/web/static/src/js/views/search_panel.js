@@ -41,7 +41,7 @@ var SearchPanel = Widget.extend({
         this.categories = _.pick(params.sections, function (section) {
             return section.type === 'category';
         });
-        this.filters = _.pick(params.sections, function (section) {
+        this.filters = params.searchPanelFilters || _.pick(params.sections, function (section) {
             return section.type === 'filter';
         });
 
@@ -83,6 +83,7 @@ var SearchPanel = Widget.extend({
     exportState: function () {
         return {
             searchPanelDomain: this.getDomain(),
+            searchPanelFilters: this.filters,
         }
     },
     /**
@@ -101,6 +102,9 @@ var SearchPanel = Widget.extend({
      * @returns {Promise}
      */
     importState: function (state) {
+        if (state.searchPanelFilters) {
+            this.filters = state.searchPanelFilters;
+        }
         return this.update(state);
     },
     /**
