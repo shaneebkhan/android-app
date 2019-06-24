@@ -378,7 +378,7 @@ actual arch.
                     # A <data> element is a wrapper for multiple root nodes
                     view_docs = view_docs[0]
                 for view_arch in view_docs:
-                    check = valid_view(view_arch)
+                    check = valid_view(view_arch, env=self.env)
                     if not check:
                         raise ValidationError(_('Invalid view %s definition in %s') % (view.name, view.arch_fs))
                     if check == "Warning":
@@ -1074,6 +1074,17 @@ actual arch.
                 field = model._fields.get(node.get('name'))
                 if field:
                     editable = editable and self._field_is_editable(field, node)
+                    parent = node.getparent()
+                    if parent is not None and parent.tag == 'searchpanel':
+                        select = node.get('select', 'one')
+                        if select == 'multi' and field.type not in ('selection', 'many2one', 'many2many'):
+                            raise ValidationError(
+                                _('Wrong field type in search panel. "multi" only applies to m2o, m2m and selection. Field: "%s"') % field.name
+                            )
+                        elif field.type not in ('selection', 'many2one'):
+                            raise ValidationError(
+                                _('Wrong field type in search panel. "one" only applies to x2m and selection. Field: "%s"') % field.name
+                            )
 
             for key, val in node.items():
                 if not val:
@@ -1132,7 +1143,10 @@ actual arch.
         attrs_fields = []
         if self.env.context.get('check_field_names'):
             editable = self.env.context.get('view_is_editable', True)
-            attrs_fields = self.get_attrs_field_names(node, Model, editable)
+            try:
+                attrs_fields = self.get_attrs_field_names(node, Model, editable)
+            except ValidationError as err:
+                self.raise_view_error(str(err), view_id)
 
         fields_def = self.postprocess(model, node, view_id, False, fields)
         self._postprocess_access_rights(model, node)

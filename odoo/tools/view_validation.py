@@ -13,9 +13,12 @@ _logger = logging.getLogger(__name__)
 _validators = collections.defaultdict(list)
 _relaxng_cache = {}
 
-def valid_view(arch):
+def valid_view(arch, **kwargs):
     for pred in _validators[arch.tag]:
-        check = pred(arch)
+        try:
+            check = pred(arch, **kwargs)
+        except TypeError:
+            check = pred(arch)
         if not check:
             _logger.error("Invalid XML: %s", pred.__doc__)
             return False
@@ -360,4 +363,22 @@ def valid_alerts(arch):
     xpath += '[not(@role="status")]'
     if arch.xpath(xpath):
         return "Warning"
+    return True
+
+
+@validate('search')
+def valid_search_panel_view_types(arch, env):
+    searchpanel = arch.findall('searchpanel')
+    if len(searchpanel) == 0:
+        return True
+    elif len(searchpanel) > 1:
+        return False
+    else:
+        coded_types = searchpanel[0].get('view_types')
+        if coded_types:
+            coded_types = set(coded_types.split(','))
+            forbidden_view_types = set(['search', 'form', 'qweb', 'activity', 'map'])
+            allowed_view_types = set([f[0] for f in env['ir.ui.view']._fields['type'].selection if f[0] not in forbidden_view_types] + ['list'])
+            if not coded_types.issubset(allowed_view_types):
+                return False
     return True
