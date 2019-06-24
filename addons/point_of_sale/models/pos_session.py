@@ -373,11 +373,12 @@ class PosSession(models.Model):
     @api.model
     def _create_account_move_lines(self, session, account_move, invoiced_orders, not_invoiced_orders, is_using_company_currency):
         all_orders = invoiced_orders | not_invoiced_orders
-        receivable_pos_line_args = self._get_pos_receivable_lines(session, account_move, all_orders.mapped('pos_payment_ids'), is_using_company_currency)
-        invoiced_receivable_lines_args = self._get_invoiced_receivable_lines(account_move, invoiced_orders, is_using_company_currency)
-        sales_taxes_lines_args = self._get_sales_taxes_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
-        anglo_saxon_lines_args = self._get_anglo_saxon_lines(account_move, not_invoiced_orders, is_using_company_currency)
-        line_args = invoiced_receivable_lines_args + sales_taxes_lines_args + anglo_saxon_lines_args + receivable_pos_line_args
+        receivable_pos_line_vals = self._get_pos_receivable_lines(session, account_move, all_orders.mapped('pos_payment_ids'), is_using_company_currency)
+        invoiced_receivable_lines_vals = self._get_invoiced_receivable_lines(account_move, invoiced_orders, is_using_company_currency)
+        sales_taxes_lines_vals = self._get_sales_taxes_lines_data(account_move, not_invoiced_orders.mapped('lines'), is_using_company_currency)
+        anglo_saxon_lines_vals = self._get_anglo_saxon_lines(account_move, not_invoiced_orders, is_using_company_currency)
+        line_args = invoiced_receivable_lines_vals + sales_taxes_lines_vals + anglo_saxon_lines_vals + receivable_pos_line_vals
+        # TODO jcb: this is a conversion error. maybe exchange rate account is not the right account to register it
         exchange_rate_line_args = [] if is_using_company_currency else self._get_exchange_rate_line(account_move, session, line_args)
         return self.env['account.move.line'].create(line_args+exchange_rate_line_args)
 
@@ -401,12 +402,12 @@ class PosSession(models.Model):
         company = session.company_id
         def create_vals(payment_method):
             # create statement line for each payment method
-            method_payments = statement_payments.filtered(lambda p: p.payment_method_id == payment_method)
-            method_currency = payment_method.cash_journal_id.currency_id or company.currency_id
-            amount_converter = lambda payment: session_currency._convert(payment.amount, method_currency, company, payment.pos_order_id.date_order)
+            payments = statement_payments.filtered(lambda p: p.payment_method_id == payment_method)
+            currency = payment_method.cash_journal_id.currency_id or company.currency_id
+            amount_converter = lambda payment: session_currency._convert(payment.amount, currency, company, payment.pos_order_id.date_order)
             return {
                 'date': fields.Date.context_today(self),
-                'amount': sum(method_payments.mapped(amount_converter)),
+                'amount': sum(payments.mapped(amount_converter)),
                 'name': session.name,
                 'statement_id': statement.id,
                 'account_id': payment_method.receivable_account_id.id,
@@ -415,33 +416,6 @@ class PosSession(models.Model):
         cash_payment_methods = [pm for pm in session.payment_method_ids if pm.is_cash_count and (pm.cash_journal_id == statement.journal_id)]
         statement_lines_args = [create_vals(pm) for pm in cash_payment_methods]
         return self.env['account.bank.statement.line'].create([args for args in statement_lines_args if args.get('amount')])
-
-    @api.model
-    def _get_exchange_rate_line(self, account_move, session, line_args):
-        """
-        if debit (receivable) than credit (sales):
-            exchange rate difference -> gain
-                Basically, more is gained than sales
-                This also means that the difference has to be credited
-        else:
-            exchange rate difference -> loss
-        """
-        diff = sum(map(lambda line: line['debit'], line_args)) - sum(map(lambda line: line['credit'], line_args))
-        if float_is_zero(diff, precision_rounding=session.currency_id.rounding):
-            return []
-        counter_amount = -session.currency_id.round(diff)
-        gain_exchange_account = account_move.company_id.income_currency_exchange_account_id
-        loss_exchange_account = account_move.company_id.expense_currency_exchange_account_id
-        exchange_account, message = (gain_exchange_account, 'gain') if counter_amount < 0.0 else (loss_exchange_account, 'loss')
-        return [{
-            'account_id': exchange_account.id,
-            'move_id': account_move.id,
-            'name': "Currency conversion %s" % message,
-            'amount_currency': 0.0,
-            'currency_id': session.currency_id.id,
-            'debit': counter_amount if counter_amount > 0.0 else 0.0,
-            'credit': -counter_amount if counter_amount < 0.0 else 0.0,
-        }]
 
     @api.model
     def _get_invoiced_receivable_lines(self, account_move, invoiced_orders, is_using_company_currency):
@@ -454,14 +428,14 @@ class PosSession(models.Model):
 
         def generate_move_line_vals(account_id, amount, amount_converted):
             partial_args = {'account_id': account_id, 'move_id': account_move.id}
-            return self._credit_amount(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
+            return self._credit_amounts(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
 
         def compute_total_amounts(orders):
             # Use `amount_total` (w/c includes tax) field since this will be
             # reconciled with receivable item in an invoice move which counts taxes.
             amount_converter = lambda order: session_currency._convert(order.amount_total, company_currency, company, order.date_order)
             total_amount = sum(order.amount_total for order in orders)
-            total_amount_converted = 0 if is_using_company_currency else sum(amount_converter(order) for order in orders)
+            total_amount_converted = (not is_using_company_currency) and sum(amount_converter(order) for order in orders)
             return total_amount, total_amount_converted
 
         grouped_invoiced_orders = groupby(invoiced_orders, key=attrgetter('invoice_id.account_id.id'))
@@ -496,14 +470,14 @@ class PosSession(models.Model):
                 'move_id': account_move.id,
                 'name': '%s - %s' % (session.name, pm.name)
             }
-            return self._debit_amount(data, amount, amount_converted, session_currency, is_using_company_currency)
+            return self._debit_amounts(data, amount, amount_converted, session_currency, is_using_company_currency)
 
         def compute_amount_sum(payments):
             if not payments:
                 return (0.0, 0.0)
             amount_converter = lambda payment: session_currency._convert(payment.amount, company_currency, company, payment.pos_order_id.date_order)
             amount = sum(payments.mapped('amount'))
-            amount_converted = 0.0 if is_using_company_currency else sum(payments.mapped(amount_converter))
+            amount_converted = (not is_using_company_currency) and sum(payments.mapped(amount_converter))
             return amount, amount_converted
 
         # Total amount grouped by payment method
@@ -522,14 +496,14 @@ class PosSession(models.Model):
         company_currency = company.currency_id
 
         def generate_line_args(payment):
-            amount_converted = session_currency._convert(payment.amount, company_currency, company, payment.pos_order_id.date_order)
+            amount_converted = (not is_using_company_currency) and session_currency._convert(payment.amount, company_currency, company, payment.pos_order_id.date_order)
             partial_args = {
                 'account_id': payment.payment_method_id.receivable_account_id.id,
                 'move_id': account_move.id,
                 'partner_id': self.env["res.partner"]._find_accounting_partner(payment.partner_id).id,
                 'name': '%s - %s' % (session.name, payment.payment_method_id.name),
             }
-            return self._debit_amount(partial_args, payment.amount, amount_converted, session_currency, is_using_company_currency)
+            return self._debit_amounts(partial_args, payment.amount, amount_converted, session_currency, is_using_company_currency)
 
         return [generate_line_args(payment) for payment in split_payments]
 
@@ -543,7 +517,7 @@ class PosSession(models.Model):
         company_currency = company.currency_id
 
         def credit_amount(partial_args, amount, amount_converted):
-            return self._credit_amount(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
+            return self._credit_amounts(partial_args, amount, amount_converted, session_currency, is_using_company_currency)
 
         def get_income_account(order_line):
             if order_line.product_id.property_account_income_id.id:
@@ -551,9 +525,36 @@ class PosSession(models.Model):
             elif order_line.product_id.categ_id.property_account_income_categ_id.id:
                 return order_line.product_id.categ_id.property_account_income_categ_id.id
             else:
-                raise UserError(_('Please define income '
-                                'account for this product: "%s" (id:%d).')
+                raise UserError(_('Please define income account for this product: "%s" (id:%d).')
                                 % (order_line.product_id.name, order_line.product_id.id))
+
+        def compute_sale_line_val(key, order_line_group):
+            tax_ids = [tax[0] for tax in key[1]]
+            applied_taxes = self.env['account.tax'].browse(tax_ids)
+            name = '' if not applied_taxes else 'Sales group: %s' % ', '.join([tax.name for tax in applied_taxes])
+            partial_args = {'account_id': key[0], 'move_id': account_move.id, 'tax_ids': [(6, 0, tax_ids)], 'name': name}
+            amount = sum(line['amount'] for line in order_line_group)
+            amount_converted = (not is_using_company_currency) and sum(
+                session_currency._convert(line['amount'], company_currency, company, line['date_order'])
+                for line in order_line_group
+            )
+            return credit_amount(partial_args, amount, amount_converted)
+
+        def compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, tax_group):
+            tax = self.env['account.tax'].browse(tax_id)
+            partial_args = {'account_id': account_id, 'move_id': account_move.id, 'tax_repartition_line_id': tax_repartition_line_id, 'name': tax.name}
+            amount = sum(tax['amount'] for tax in tax_group)
+            amount_converted = (not is_using_company_currency) and sum(
+                session_currency._convert(tax['amount'], company_currency, company, tax['date_order'])
+                for tax in tax_group
+            )
+            tax_base_amount = sum(tax['base'] for tax in tax_group)
+            return credit_amount({'tax_base_amount': tax_base_amount, **partial_args}, amount, amount_converted)
+
+        def compute_tax_line_vals(key, order_line_group):
+            flat_taxes = chain.from_iterable(line['taxes'] for line in order_line_group)
+            grouped_taxes = groupby(flat_taxes, key=lambda tax: (tax['id'], tax['account_id'], tax['tax_repartition_line_id']))
+            return [compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, tax_group) for (tax_id, account_id, tax_repartition_line_id), tax_group in grouped_taxes]
 
         def prepare_line(order_line):
             tax_ids = order_line.tax_ids_after_fiscal_position\
@@ -578,36 +579,9 @@ class PosSession(models.Model):
                 )
             )
 
-        def compute_sale_line_val(key, lines):
-            tax_ids = [tax[0] for tax in key[1]]
-            applied_taxes = self.env['account.tax'].browse(tax_ids)
-            name = '' if not applied_taxes else 'Sales group: %s' % ', '.join([tax.name for tax in applied_taxes])
-            partial_args = {'account_id': key[0], 'move_id': account_move.id, 'tax_ids': [(6, 0, tax_ids)], 'name': name}
-            amount = sum(line['amount'] for line in lines)
-            amount_converted = (not is_using_company_currency) and sum(
-                session_currency._convert(line['amount'], company_currency, company, line['date_order'])
-                for line in lines
-            )
-            return credit_amount(partial_args, amount, amount_converted)
-
-        def compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, taxes):
-            tax = self.env['account.tax'].browse(tax_id)
-            partial_args = {'account_id': account_id, 'move_id': account_move.id, 'tax_repartition_line_id': tax_repartition_line_id, 'name': tax.name}
-            amount = sum(tax['amount'] for tax in taxes)
-            amount_converted = (not is_using_company_currency) and sum(
-                session_currency._convert(tax['amount'], company_currency, company, tax['date_order'])
-                for tax in taxes
-            )
-            return credit_amount(partial_args, amount, amount_converted)
-
-        def compute_tax_line_vals(key, lines):
-            flat_taxes = chain.from_iterable(line['taxes'] for line in lines)
-            grouped_taxes = groupby(flat_taxes, key=lambda tax: (tax['id'], tax['account_id'], tax['tax_repartition_line_id']))
-            return [compute_tax_line_val(tax_id, account_id, tax_repartition_line_id, taxes) for (tax_id, account_id, tax_repartition_line_id), taxes in grouped_taxes]
-
         grouped_order_lines = groupby(map(prepare_line, order_lines), key=group_key)
-        sales_lines = [compute_sale_line_val(key, lines) for key, lines in grouped_order_lines]
-        taxes_lines = list(chain.from_iterable(compute_tax_line_vals(key, lines) for key, lines in grouped_order_lines))
+        sales_lines = [compute_sale_line_val(key, order_line_group) for key, order_line_group in grouped_order_lines]
+        taxes_lines = list(chain.from_iterable(compute_tax_line_vals(key, order_line_group) for key, order_line_group in grouped_order_lines))
         return sales_lines + taxes_lines
 
     @api.model
@@ -654,12 +628,39 @@ class PosSession(models.Model):
                 debit_amounts[exp_account]['amount_converted'] += amount_converted
                 credit_amounts[out_account]['amount_converted'] += amount_converted
 
-        credit_lines = [generate_move_line_vals('_credit_amount', account, **amounts) for account, amounts in credit_amounts.items()]
-        debit_lines = [generate_move_line_vals('_debit_amount', account, **amounts) for account, amounts in debit_amounts.items()]
+        credit_lines = [generate_move_line_vals('_credit_amounts', account, **amounts) for account, amounts in credit_amounts.items()]
+        debit_lines = [generate_move_line_vals('_debit_amounts', account, **amounts) for account, amounts in debit_amounts.items()]
         return credit_lines + debit_lines
 
     @api.model
-    def _credit_amount(self, partial_move_line_vals, amount_pos, amount_converted, session_currency, is_using_company_currency):
+    def _get_exchange_rate_line(self, account_move, session, line_args):
+        """
+        if debit (receivable) than credit (sales):
+            exchange rate difference -> gain
+                Basically, more is gained than sales
+                This also means that the difference has to be credited
+        else:
+            exchange rate difference -> loss
+        """
+        diff = sum(map(lambda line: line['debit'], line_args)) - sum(map(lambda line: line['credit'], line_args))
+        if float_is_zero(diff, precision_rounding=session.currency_id.rounding):
+            return []
+        counter_amount = -session.currency_id.round(diff)
+        gain_exchange_account = account_move.company_id.income_currency_exchange_account_id
+        loss_exchange_account = account_move.company_id.expense_currency_exchange_account_id
+        exchange_account, message = (gain_exchange_account, 'gain') if counter_amount < 0.0 else (loss_exchange_account, 'loss')
+        return [{
+            'account_id': exchange_account.id,
+            'move_id': account_move.id,
+            'name': "Currency conversion %s" % message,
+            'amount_currency': 0.0,
+            'currency_id': session.currency_id.id,
+            'debit': counter_amount if counter_amount > 0.0 else 0.0,
+            'credit': -counter_amount if counter_amount < 0.0 else 0.0,
+        }]
+
+    @api.model
+    def _credit_amounts(self, partial_move_line_vals, amount, amount_converted, session_currency, is_using_company_currency):
         """ `partial_move_line_vals` is completed by `credit`ing the given amounts.
 
         NOTE In pos, all passed amounts are in the currency of journal_id in the session.config_id.
@@ -669,10 +670,10 @@ class PosSession(models.Model):
 
         :param partial_move_line_vals dict:
             initial values in creating account.move.line
-        :param amount_pos float:
+        :param amount float:
             amount derived from pos.payment, pos.order, or pos.order.line records
         :param amount_converted float:
-            converted value of `amount_pos` from the given `session_currency` to company currency
+            converted value of `amount` from the given `session_currency` to company currency
         :param session_currency 'res.currency':
             currency of the session (based on config_id)
         :param is_using_company_currency bool:
@@ -681,39 +682,39 @@ class PosSession(models.Model):
         :return dict: complete values for creating 'amount.move.line' record
         """
         if is_using_company_currency:
-            if amount_pos > 0:
-                return {'credit': amount_pos, 'debit': 0.0, **partial_move_line_vals}
+            if amount > 0:
+                return {'credit': amount, 'debit': 0.0, **partial_move_line_vals}
             else:
-                return {'credit': 0.0, 'debit': abs(amount_pos), **partial_move_line_vals}
+                return {'credit': 0.0, 'debit': abs(amount), **partial_move_line_vals}
         else:
             if amount_converted > 0:
                 init_vals = {'credit': amount_converted, 'debit': 0.0, **partial_move_line_vals}
             else:
                 init_vals = {'credit': 0.0, 'debit': abs(amount_converted), **partial_move_line_vals}
             return {
-                'amount_currency': -amount_pos if amount_converted > 0 else amount_pos,
+                'amount_currency': -amount if amount_converted > 0 else amount,
                 'currency_id': session_currency.id,
                 **init_vals
             }
 
     @api.model
-    def _debit_amount(self, partial_move_line_vals, amount_pos, amount_converted, session_currency, is_using_company_currency):
+    def _debit_amounts(self, partial_move_line_vals, amount, amount_converted, session_currency, is_using_company_currency):
         """ `partial_move_line_vals` is completed by `debit`ing the given amounts.
 
-        See _credit_amount docs for more details.
+        See _credit_amounts docs for more details.
         """
         if is_using_company_currency:
-            if amount_pos > 0:
-                return {'credit': 0.0, 'debit': amount_pos, **partial_move_line_vals}
+            if amount > 0:
+                return {'credit': 0.0, 'debit': amount, **partial_move_line_vals}
             else:
-                return {'credit': abs(amount_pos), 'debit': 0.0, **partial_move_line_vals}
+                return {'credit': abs(amount), 'debit': 0.0, **partial_move_line_vals}
         else:
             if amount_converted > 0:
                 init_vals = {'credit': 0.0, 'debit': amount_converted, **partial_move_line_vals}
             else:
                 init_vals = {'credit': abs(amount_converted), 'debit': 0.0, **partial_move_line_vals}
             return {
-                'amount_currency': amount_pos if amount_converted > 0 else -amount_pos,
+                'amount_currency': amount if amount_converted > 0 else -amount,
                 'currency_id': session_currency.id,
                 **init_vals
             }
