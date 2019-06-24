@@ -50,6 +50,9 @@ var Dialog = Widget.extend({
      * @param {boolean} [options.technical=true]
      *        If set to false, the modal will have the standard frontend style
      *        (use this for non-editor frontend features)
+     * @param {Function} [options.onForceClose]
+     *        Callback that triggers when the modal is closed by other means than with the buttons
+     *        Function must return a promise or undefined
      */
     init: function (parent, options) {
         var self = this;
@@ -65,6 +68,7 @@ var Dialog = Widget.extend({
             $content: false,
             buttons: [{text: _t("Ok"), close: true}],
             technical: true,
+            onForceClose: false,
         });
 
         this.$content = options.$content;
@@ -75,6 +79,7 @@ var Dialog = Widget.extend({
         this.size = options.size;
         this.buttons = options.buttons;
         this.technical = options.technical;
+        this.onForceClose = options.onForceClose;
     },
     /**
      * Wait for XML dependencies and instantiate the modal structure (except
@@ -126,6 +131,9 @@ var Dialog = Widget.extend({
      */
     set_buttons: function (buttons) {
         var self = this;
+        var defaultButtonOptions = {
+            closedBy: 'button',
+        };
         this.$footer.empty();
         _.each(buttons, function (buttonData) {
             var $button = dom.renderButton({
@@ -142,7 +150,7 @@ var Dialog = Widget.extend({
                     def = buttonData.click.call(self, e);
                 }
                 if (buttonData.close) {
-                    Promise.resolve(def).then(self.close.bind(self)).guardedCatch(self.close.bind(self));
+                    Promise.resolve(def).then(self.close.bind(self, defaultButtonOptions)).guardedCatch(self.close.bind(self, defaultButtonOptions));
                 }
             });
             if (self.technical) {
@@ -196,8 +204,8 @@ var Dialog = Widget.extend({
         return self;
     },
 
-    close: function () {
-        this.destroy();
+    close: function (options) {
+        this.destroy(options);
     },
 
     /**
@@ -220,6 +228,11 @@ var Dialog = Widget.extend({
 
         if (this.isDestroyed()) {
             return;
+        }
+
+        // Triggers the onForceClose event only if the modal is closed by other means than its own buttons
+        if (this.onForceClose && (!options || options.closedBy !== 'button')) {
+            this.onForceClose();
         }
         var isFocusSet = this._focusOnClose();
 
@@ -319,6 +332,7 @@ Dialog.alert = function (owner, message, options) {
             text: message,
         }),
         title: _t("Alert"),
+        onForceClose: options && (options.onForceClose || options.confirm_callback),
     }, options)).open({shouldFocusButtons:true});
 };
 
@@ -345,6 +359,7 @@ Dialog.confirm = function (owner, message, options) {
             text: message,
         }),
         title: _t("Confirmation"),
+        onForceClose: options && (options.onForceClose || options.cancel_callback),
     }, options)).open({shouldFocusButtons:true});
 };
 
@@ -395,6 +410,7 @@ Dialog.safeConfirm = function (owner, message, options) {
         buttons: buttons,
         $content: $content,
         title: _t("Confirmation"),
+        onForceClose: options && (options.onForceClose || options.cancel_callback),
     }, options));
     dialog.opened(function () {
         var $button = dialog.$footer.find('.o_safe_confirm_button');

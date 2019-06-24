@@ -48,7 +48,7 @@ var M2ODialog = Dialog.extend({
                 click: function () {
                     if (this.$("input").val() !== ''){
                         this.trigger_up('quick_create', { value: this.$('input').val() });
-                        this.close(true);
+                        this.close({ isSet: true });
                     } else {
                         this.$("input").focus();
                     }
@@ -75,10 +75,11 @@ var M2ODialog = Dialog.extend({
     },
     /**
      * @override
-     * @param {boolean} isSet
+     * @param {object} options
+     * @param {boolean} options.isSet
      */
-    close: function (isSet) {
-        this.isSet = isSet;
+    close: function (options) {
+        this.isSet = options && options.isSet;
         this._super.apply(this, arguments);
     },
     /**
