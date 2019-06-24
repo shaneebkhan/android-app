@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import common
+from odoo import _
 
 
 class TestPointOfSaleCommon(common.TransactionCase):
@@ -62,3 +63,9 @@ class TestPointOfSaleCommon(common.TransactionCase):
         # I assign those 5 percent taxes on the PCSC349 product as a sale taxes
         self.product4.write(
             {'taxes_id': [(6, 0, [account_tax_05_incl.id, account_tax_05_incl_chicago.id])]})
+
+        invoice_rep_lines = (account_tax_05_incl | account_tax_05_incl_chicago | account_tax_10_incl).mapped('invoice_repartition_line_ids')
+        refund_rep_lines = (account_tax_05_incl | account_tax_05_incl_chicago | account_tax_10_incl).mapped('refund_repartition_line_ids')
+
+        tax_received_account = self.env['account.account'].search([('name', '=', _('Tax Received'))])
+        (invoice_rep_lines | refund_rep_lines).write({'account_id': tax_received_account.id})

@@ -10,12 +10,6 @@ from odoo.addons.point_of_sale.tests.common import TestPointOfSaleCommon
 @odoo.tests.tagged('post_install', '-at_install')
 class TestPointOfSaleFlow(TestPointOfSaleCommon):
 
-    def test_register_open(self):
-        """
-            In order to test the Point of Sale module, I will open all cash registers through the wizard
-            """
-        # open all statements/cash registers
-        self.env['pos.open.statement'].create({}).open_statement()
 
     def test_order_refund(self):
         # I create a new PoS order with 2 lines
@@ -439,11 +433,9 @@ class TestPointOfSaleFlow(TestPointOfSaleCommon):
            'sequence_number': 2,
            'statement_ids': [[0,
              0,
-             {'account_id': self.env.user.partner_id.property_account_receivable_id.id,
-              'amount': untax + atax,
-              'journal_id': self.pos_config.journal_ids[0].id,
+             {'amount': untax + atax,
               'name': fields.Datetime.now(),
-              'statement_id': current_session.statement_ids[0].id}]],
+              'payment_method_id': current_session.payment_method_ids[0].id}]],
            'uid': '00042-003-0014',
            'user_id': self.env.uid},
           'id': '00042-003-0014',
@@ -475,11 +467,9 @@ class TestPointOfSaleFlow(TestPointOfSaleCommon):
            'sequence_number': self.pos_config.journal_id.id,
            'statement_ids': [[0,
              0,
-             {'account_id': self.env.user.partner_id.property_account_receivable_id.id,
-              'amount': untax + atax,
-              'journal_id': self.pos_config.journal_ids[0].id,
+             {'amount': untax + atax,
               'name': fields.Datetime.now(),
-              'statement_id': current_session.statement_ids[0].id}]],
+              'payment_method_id': current_session.payment_method_ids[0].id}]],
            'uid': '00043-003-0014',
            'user_id': self.env.uid},
           'id': '00043-003-0014',
@@ -511,11 +501,9 @@ class TestPointOfSaleFlow(TestPointOfSaleCommon):
            'sequence_number': self.pos_config.journal_id.id,
            'statement_ids': [[0,
              0,
-             {'account_id': self.env.user.partner_id.property_account_receivable_id.id,
-              'amount': untax + atax,
-              'journal_id': self.pos_config.journal_ids[0].id,
+             {'amount': untax + atax,
               'name': fields.Datetime.now(),
-              'statement_id': current_session.statement_ids[0].id}]],
+              'payment_method_id': current_session.payment_method_ids[0].id}]],
            'uid': '00044-003-0014',
            'user_id': self.env.uid},
           'id': '00044-003-0014',
