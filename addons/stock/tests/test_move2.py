@@ -2251,10 +2251,14 @@ class TestRoutes(TestStockCommon):
         p_zero_1 = self.env['product.product'].create({'name': 'Zero1', 'type': 'product'})
         p_zero_2 = self.env['product.product'].create({'name': 'Zero2', 'type': 'product'})
         wh = self.env['stock.warehouse'].search([('company_id', '=', self.env.user.id)], limit=1)
+        shelf_zqc = self.env['stock.location'].create({
+            'name': 'Shelf Zero Quantity Count',
+            'location_id': wh.lot_stock_id.id,
+        })
         partner_1 = self.env['res.partner'].create({'name': 'Partner 1'})
 
-        self.env['stock.quant']._update_available_quantity(p_zero_1, wh.lot_stock_id, 2)
-        self.env['stock.quant']._update_available_quantity(p_zero_2, wh.lot_stock_id, 2)
+        self.env['stock.quant']._update_available_quantity(p_zero_1, shelf_zqc, 2)
+        self.env['stock.quant']._update_available_quantity(p_zero_2, shelf_zqc, 2)
 
         delivery_order = self.env['stock.picking'].create({
             'picking_type_id': wh.out_type_id.id,
@@ -2299,8 +2303,7 @@ class TestRoutes(TestStockCommon):
         zqc_wizard = self.env[wiz_model].browse(wiz_id)
 
         # We check the wizard was correctly populated
-        self.assertEquals(zqc_wizard.location_id, wh.lot_stock_id)
-        self.assertEquals(zqc_wizard.product_ids, p_zero_1 + p_zero_2)
+        self.assertEquals(zqc_wizard.location_id, shelf_zqc)
 
         # We confirm the Zero Quantity Count Wizard
         res = zqc_wizard.confirm_zqc()
@@ -2321,10 +2324,14 @@ class TestRoutes(TestStockCommon):
         p_zero_1 = self.env['product.product'].create({'name': 'Zero1', 'type': 'product'})
         p_zero_2 = self.env['product.product'].create({'name': 'Zero2', 'type': 'product'})
         wh = self.env['stock.warehouse'].search([('company_id', '=', self.env.user.id)], limit=1)
+        shelf_zqc = self.env['stock.location'].create({
+            'name': 'Shelf Zero Quantity Count',
+            'location_id': wh.lot_stock_id.id,
+        })
         partner_1 = self.env['res.partner'].create({'name': 'Partner 1'})
 
-        self.env['stock.quant']._update_available_quantity(p_zero_1, wh.lot_stock_id, 2)
-        self.env['stock.quant']._update_available_quantity(p_zero_2, wh.lot_stock_id, 2)
+        self.env['stock.quant']._update_available_quantity(p_zero_1, shelf_zqc, 2)
+        self.env['stock.quant']._update_available_quantity(p_zero_2, shelf_zqc, 2)
 
         delivery_order = self.env['stock.picking'].create({
             'picking_type_id': wh.out_type_id.id,
@@ -2375,10 +2382,12 @@ class TestRoutes(TestStockCommon):
         self.assertEquals(wiz_model, 'stock.zero.quantity.count.inventory', 'A Wizard for a Zero Quantity Count Inventory should be raised')
         zqc_inventory_wizard = self.env[wiz_model].browse(wiz_id)
 
-        # We make an inventory adjustment for p_zero_2
+        # We make an inventory adjustment for p_zero_1
         self.assertEquals(zqc_inventory_wizard.src_wiz_id, zqc_wizard)
-        zqc_inventory_wizard.inventory_line_ids = zqc_inventory_wizard.inventory_line_ids.filtered(lambda il: il.product_id == p_zero_1)
-        zqc_inventory_wizard.inventory_line_ids.write({'product_qty': 2.0})
+        zqc_inventory_wizard.inventory_line_ids = self.env['stock.inventory.line'].create({
+            'product_id': p_zero_1.id,
+            'product_qty': 2,
+        })
         res = zqc_inventory_wizard.adjust_inventory()
 
         # An inventory should have been done and 2 quantities of p_zero_2 should be available
@@ -2386,4 +2395,4 @@ class TestRoutes(TestStockCommon):
         self.assertEquals(len(zqc_inventory_wizard.inventory_line_ids), 1)
         self.assertEquals(len(zqc_inventory_wizard.inventory_line_ids.inventory_id), 1)
         self.assertEquals(zqc_inventory_wizard.inventory_line_ids.mapped('inventory_id').state, 'done')
-        self.assertEquals(self.env['stock.quant']._get_available_quantity(p_zero_1, wh.lot_stock_id), 2)
+        self.assertEquals(self.env['stock.quant']._get_available_quantity(p_zero_1, shelf_zqc), 2)

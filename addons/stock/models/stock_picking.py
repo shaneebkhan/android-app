@@ -777,7 +777,7 @@ class Picking(models.Model):
         locations = self.mapped('move_lines.move_line_ids.location_id')
         empty_locations = self.env['stock.location']
         for loc in locations:
-            nb_remaings_quants = self.env['stock.quant'].search_count([('location_id', '=', loc.id)])
+            nb_remaings_quants = self.env['stock.quant'].search_count([('location_id', '=', loc.id), ('quantity', '!=', 0)])
             if not nb_remaings_quants:
                 empty_locations |= loc
 

@@ -58,6 +58,7 @@ class StockZeroQuantityCountInventory(models.TransientModel):
             'location_id': self.src_wiz_id.location_id.id,
             'line_ids': [(6, 0, self.inventory_line_ids.ids)]
         })
+        inventory._action_start()
         inventory.action_validate()
         return self._update_remaining_zqc_wizards()
 
