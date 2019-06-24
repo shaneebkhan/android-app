@@ -54,8 +54,8 @@
                         </group>
                         <notebook colspan="4">
                             <page string="Content">
-                                <field name="slide_ids" colspan="4" nolabel="1">
-                                     <tree decoration-bf="is_category">
+                                <field name="slide_ids" colspan="4" nolabel="1" widget="category_one2many">
+                                     <tree decoration-bf="is_category"  editable="bottom">
                                         <field name="sequence" widget="handle"/>
                                         <field name="name"/>
                                         <field name="slide_type" attrs="{'invisible': [('slide_type', '=', 'category')]}"/>

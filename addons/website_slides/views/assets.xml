@@ -22,6 +22,13 @@
             </xpath>
         </template>
 
+        <template id="assets_backend" name="survey assets" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" type="text/scss" href="/website_slides/static/src/scss/category_backend.scss" t-ignore="true"/>
+                <script type="text/javascript" src="/website_slides/static/src/js/category_fields_backend.js"/>
+            </xpath>
+        </template>
+
         <template id="assets_editor_inherit_website_slides" inherit_id="website.assets_editor" name="website_slides Assets Editor">
             <xpath expr="." position="inside">
                 <script type="text/javascript" src="/website_slides/static/src/js/website_slides.editor.js"/>
