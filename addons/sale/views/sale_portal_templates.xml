@@ -47,6 +47,7 @@
                 <thead>
                     <tr class="active">
                         <th>Quotation #</th>
+                        <th>Salesperson</th>
                         <th class="text-right">Order Date</th>
                         <th class="text-right">Valid Until</th>
                         <th class="text-center"/>
@@ -56,6 +57,7 @@
                 <t t-foreach="quotations" t-as="quotation">
                     <tr>
                         <td><a t-att-href="quotation.get_portal_url()"><t t-esc="quotation.name"/></a></td>
+                        <td><span t-field="quotation.user_id"/></td>
                         <td class="text-right"><span t-field="quotation.date_order"/></td>
                         <td class="text-right"><span t-field="quotation.validity_date"/></td>
                         <td class="text-center">
@@ -88,6 +90,7 @@
                             <span class='d-none d-md-inline'>Sales Order #</span>
                             <span class='d-block d-md-none'>Ref.</span>
                         </th>
+                        <th>Salesperson</th>
                         <th class="text-right">Order Date</th>
                         <th class="text-center"/>
                         <th class="text-right">Total</th>
@@ -96,6 +99,7 @@
                 <t t-foreach="orders" t-as="order">
                     <tr>
                         <td><a t-att-href="order.get_portal_url()"><t t-esc="order.name"/></a></td>
+                        <td><span t-field="order.user_id"/></td>
                         <td class="text-right">
                             <span t-field="order.date_order" t-options="{'widget': 'date'}"/>&amp;nbsp;
                             <span class='d-none d-md-inline' t-field="order.date_order" t-options="{'time_only': True}"/>
