@@ -36,7 +36,7 @@ class PortalAccount(CustomerPortal):
         searchbar_sortings = {
             'date': {'label': _('Invoice Date'), 'order': 'date_invoice desc'},
             'duedate': {'label': _('Due Date'), 'order': 'date_due desc'},
-            'name': {'label': _('Reference'), 'order': 'name desc'},
+            'name': {'label': _('Reference'), 'order': 'number'},
             'state': {'label': _('Status'), 'order': 'state'},
         }
         # default sort by order
