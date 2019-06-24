@@ -74,28 +74,40 @@ var dom = {
         var $fixedTextarea;
         var minHeight;
 
-        function resize() {
-            // always create clone of $textarea and append it in body as $textarea may have
-            // display none style and display none style component will not give actual height
-            // of element, so add it in body with visiblity:hidden and later remove it from dom
-            var $textareaClone = $textarea.clone();
-            $textareaClone.css({visibility:"hidden", display:"block", position:"absolute"});
-            $("body").append($textareaClone);
-            $fixedTextarea.insertAfter($textareaClone);
+        function computeHeight ($textareaElement, $fixedTextareaElement) {
             var heightOffset = 0;
-            var style = window.getComputedStyle($textareaClone[0], null);
+            var style = window.getComputedStyle($textareaElement[0], null);
             if (style.boxSizing === 'border-box') {
                 var paddingHeight = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
                 var borderHeight = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
                 heightOffset = borderHeight + paddingHeight;
             }
-            $fixedTextarea.width($textareaClone.width());
-            $fixedTextarea.val($textareaClone.val());
-            var height = $fixedTextarea[0].scrollHeight;
-            $textarea.css({height: Math.max(height + heightOffset, minHeight)});
-            $textareaClone.remove();
+            $fixedTextareaElement.width($textareaElement.width());
+            $fixedTextareaElement.val($textareaElement.val());
+            var height = $fixedTextareaElement[0].scrollHeight;
+            return Math.max(height + heightOffset, minHeight);
+        }
+
+        function resize() {
             $fixedTextarea.insertAfter($textarea);
-            $fixedTextarea.scrollHeight = height; // need to reassign scrollHeight as inserAfter removes it
+            // if textarea parent is hidden then create 'clone' of parent with visibility: hidden
+            // and append it after hidden parent as display none style component will not compute
+            // actual height of element, after computing height remove it from dom
+            var $hiddenParent = $textarea.parents(":hidden");
+            if ($hiddenParent.length) {
+                var $parentClone = $hiddenParent.clone();
+                $parentClone.css({display: 'block', visibility: 'hidden'});
+                $parentClone.insertAfter($hiddenParent);
+                var $textareaElement = $parentClone.find('textarea:first');
+                var $fixedTextareaElement = $parentClone.find('textarea:nth(1)');
+                var height = computeHeight($textareaElement, $fixedTextareaElement);
+                $textarea.css({height: height});
+                $fixedTextarea.replaceWith($fixedTextareaElement); // replace to have scrollHeight
+                $parentClone.remove();
+            } else {
+                var height = computeHeight($textarea, $fixedTextarea);
+                $textarea.css({height: height});
+            }
         }
 
         function removeVerticalResize() {
