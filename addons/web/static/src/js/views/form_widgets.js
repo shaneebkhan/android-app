@@ -1137,17 +1137,22 @@ var FieldBinary = common.AbstractField.extend(common.ReinitializeFieldMixin, {
             var c = crash_manager;
             var filename_fieldname = this.node.attrs.filename;
             var filename_field = this.view.fields && this.view.fields[filename_fieldname];
+            var data = {
+                'model': this.view.dataset.model,
+                'id': this.view.datarecord.id,
+                'field': this.name,
+                'filename_field': filename_fieldname,
+                'download': true,
+            }
+            if (filename_field && filename_field.get('value')) {
+                data['filename'] = filename_field.get('value');
+            }
+            if (!utils.is_bin_size(value)) {
+                data['data'] = value;
+            }
             this.session.get_file({
                 'url': '/web/content',
-                'data': {
-                    'model': this.view.dataset.model,
-                    'id': this.view.datarecord.id,
-                    'field': this.name,
-                    'filename_field': filename_fieldname,
-                    'filename': filename_field ? filename_field.get('value') : null,
-                    'download': true,
-                    'data': utils.is_bin_size(value) ? null : value,
-                },
+                'data': data,
                 'complete': framework.unblockUI,
                 'error': c.rpc_error.bind(c)
             });
