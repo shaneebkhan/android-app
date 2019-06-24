@@ -9,7 +9,7 @@ from odoo.http import request
 from odoo.addons.payment.controllers.portal import PaymentProcessing
 from odoo.addons.portal.controllers.mail import _message_post_helper
 from odoo.addons.portal.controllers.portal import CustomerPortal, pager as portal_pager, get_records_pager
-from odoo.osv import expression
+from odoo.osv.expression import OR, AND
 
 
 class CustomerPortal(CustomerPortal):
@@ -39,7 +39,7 @@ class CustomerPortal(CustomerPortal):
     #
 
     @http.route(['/my/quotes', '/my/quotes/page/<int:page>'], type='http', auth="user", website=True)
-    def portal_my_quotes(self, page=1, date_begin=None, date_end=None, sortby=None, **kw):
+    def portal_my_quotes(self, page=1, date_begin=None, date_end=None, search=None, search_in='content', sortby=None, **kw):
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
         SaleOrder = request.env['sale.order']
@@ -51,8 +51,16 @@ class CustomerPortal(CustomerPortal):
 
         searchbar_sortings = {
             'date': {'label': _('Order Date'), 'order': 'date_order desc'},
+            'salesperson': {'label': _('Reference'), 'order': 'user_id'},
             'name': {'label': _('Reference'), 'order': 'name'},
             'stage': {'label': _('Stage'), 'order': 'state'},
+        }
+        searchbar_inputs = {
+            'content': {'input': 'content', 'label': _('Search <span class="nolabel"> (in Content)</span>')},
+            'product': {'input': 'product', 'label': _('Search in Product')},
+            'salesperson': {'input': 'salesperson', 'label': _('Search in Salesperson')},
+            'message': {'input': 'message', 'label': _('Search in Message')},
+            'all': {'input': 'all', 'label': _('Search in All')},
         }
 
         # default sortby order
@@ -63,6 +71,19 @@ class CustomerPortal(CustomerPortal):
         archive_groups = self._get_archive_groups('sale.order', domain)
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
+
+        # search
+        if search and search_in:
+            search_domain = []
+            if search_in in ('content', 'all'):
+                search_domain = OR([search_domain, [('name', 'ilike', search)]])
+            if search_in in ('product', 'all'):
+                search_domain = OR([search_domain, [('order_line.product_id', 'ilike', search)]])
+            if search_in in ('salesperson', 'all'):
+                search_domain = OR([search_domain, [('user_id', 'ilike', search)]])
+            if search_in in ('message', 'all'):
+                search_domain = OR([search_domain, [('message_ids.body', 'ilike', search)]])
+            domain += search_domain
 
         # count for pager
         quotation_count = SaleOrder.search_count(domain)
@@ -86,12 +107,14 @@ class CustomerPortal(CustomerPortal):
             'archive_groups': archive_groups,
             'default_url': '/my/quotes',
             'searchbar_sortings': searchbar_sortings,
+            'searchbar_inputs': searchbar_inputs,
+            'search_in': search_in,
             'sortby': sortby,
         })
         return request.render("sale.portal_my_quotations", values)
 
     @http.route(['/my/orders', '/my/orders/page/<int:page>'], type='http', auth="user", website=True)
-    def portal_my_orders(self, page=1, date_begin=None, date_end=None, sortby=None, **kw):
+    def portal_my_orders(self, page=1, date_begin=None, date_end=None, search=None, search_in='content', sortby=None, **kw):
         values = self._prepare_portal_layout_values()
         partner = request.env.user.partner_id
         SaleOrder = request.env['sale.order']
@@ -103,8 +126,17 @@ class CustomerPortal(CustomerPortal):
 
         searchbar_sortings = {
             'date': {'label': _('Order Date'), 'order': 'date_order desc'},
+            'salesperson': {'label': _('Salesperson'), 'order': 'user_id'},
             'name': {'label': _('Reference'), 'order': 'name'},
             'stage': {'label': _('Stage'), 'order': 'state'},
+        }
+
+        searchbar_inputs = {
+            'content': {'input': 'content', 'label': _('Search <span class="nolabel"> (in Content)</span>')},
+            'product': {'input': 'product', 'label': _('Search in Product')},
+            'salesperson': {'input': 'salesperson', 'label': _('Search in Salesperson')},
+            'message': {'input': 'message', 'label': _('Search in Message')},
+            'all': {'input': 'all', 'label': _('Search in All')},
         }
         # default sortby order
         if not sortby:
@@ -114,6 +146,19 @@ class CustomerPortal(CustomerPortal):
         archive_groups = self._get_archive_groups('sale.order', domain)
         if date_begin and date_end:
             domain += [('create_date', '>', date_begin), ('create_date', '<=', date_end)]
+
+        # search
+        if search and search_in:
+            search_domain = []
+            if search_in in ('content', 'all'):
+                search_domain = OR([search_domain, [('name', 'ilike', search)]])
+            if search_in in ('product', 'all'):
+                search_domain = OR([search_domain, [('order_line.product_id', 'ilike', search)]])
+            if search_in in ('salesperson', 'all'):
+                search_domain = OR([search_domain, [('user_id', 'ilike', search)]])
+            if search_in in ('message', 'all'):
+                search_domain = OR([search_domain, [('message_ids.body', 'ilike', search)]])
+            domain += search_domain
 
         # count for pager
         order_count = SaleOrder.search_count(domain)
@@ -137,6 +182,8 @@ class CustomerPortal(CustomerPortal):
             'archive_groups': archive_groups,
             'default_url': '/my/orders',
             'searchbar_sortings': searchbar_sortings,
+            'searchbar_inputs': searchbar_inputs,
+            'search_in': search_in,
             'sortby': sortby,
         })
         return request.render("sale.portal_my_orders", values)
@@ -174,7 +221,7 @@ class CustomerPortal(CustomerPortal):
             values['res_company'] = order_sudo.company_id
 
         if order_sudo.has_to_be_paid():
-            domain = expression.AND([
+            domain = AND([
                 ['&', ('website_published', '=', True), ('company_id', '=', order_sudo.company_id.id)],
                 ['|', ('specific_countries', '=', False), ('country_ids', 'in', [order_sudo.partner_id.country_id.id])]
             ])
