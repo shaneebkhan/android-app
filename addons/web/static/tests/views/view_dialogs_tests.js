@@ -29,6 +29,7 @@ QUnit.module('Views', {
                 fields: {
                     name: {string: "name", type: "char"},
                     badassery: {string: 'level', type: 'many2many', relation: 'badassery', domain: [['level', '=', 'Awsome']]},
+                    sub_instrument: {string: 'Instruments', type: 'many2one', relation: 'instrument'},
                 },
             },
 
@@ -543,6 +544,62 @@ QUnit.module('Views', {
 
         assert.strictEqual($modal.find('.modal-footer button').text(), "Cancel",
             'Only the cancel button is present in modal');
+
+        form.destroy();
+    });
+
+    QUnit.module('SearchPanel')
+
+    QUnit.test('SearchPanel is not instanciated in a dialog', async function (assert) {
+        assert.expect(2);
+
+        this.data.instrument.records = [
+            {id: 1, name: 'Tromblon1'},
+            {id: 2, name: 'Tromblon2'},
+            {id: 3, name: 'Tromblon3'},
+            {id: 4, name: 'Tromblon4'},
+            {id: 5, name: 'Tromblon5'},
+            {id: 6, name: 'Tromblon6'},
+            {id: 7, name: 'Tromblon7'},
+            {id: 8, name: 'Tromblon8'},
+        ];
+
+        var form = await createView({
+            View: FormView,
+            model: 'partner',
+            data: this.data,
+            arch: '<form>' +
+                     '<field name="name"/>' +
+                     '<field name="instrument" />' +
+                  '</form>',
+            res_id: 1,
+            archs: {
+                'instrument,false,list': '<tree>'+
+                                                '<field name="name"/>'+
+                                            '</tree>',
+                'instrument,false,search': '<search>'+
+                                                '<field name="name"/>'+
+                                                '<searchpanel>' +
+                                                    '<field name="sub_instrument" />' +
+                                                '</searchpanel>' +
+                                            '</search>',
+            },
+            viewOptions: {
+                mode: 'edit',
+            },
+
+        });
+
+        await testUtils.dom.click(form.$('.o_field_widget[name="instrument"] .o_input'));
+
+        await testUtils.dom.triggerEvents($('.ui-autocomplete a:contains(Search More)'),
+            ['mouseenter', 'click']);
+
+        var $modal = $('.modal-dialog.modal-lg');
+
+        assert.strictEqual($modal.length, 1, 'Modal present');
+
+        assert.notOk($modal.find('.o_search_panel').length, 'SearchPanel is not instanciated while in modal');
 
         form.destroy();
     });
