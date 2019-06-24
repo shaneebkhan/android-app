@@ -492,6 +492,7 @@ def run_unit_tests(module_name, dbname, position='at_install'):
     mods = get_test_modules(module_name)
     threading.currentThread().testing = True
     config_tags = TagsSelector(tools.config['test_tags'])
+    _logger.info("TEST TAGS: %s", tools.config['test_tags'])
     position_tag = TagsSelector(position)
     r = True
     for m in mods:

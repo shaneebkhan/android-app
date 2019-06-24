@@ -315,6 +315,7 @@ class configmanager(object):
                     self.casts[option.dest] = option
 
         # generate default config
+        print('ARGS: %s' % sys.argv)
         self._parse_config()
 
     def parse_config(self, args=None):
