@@ -93,6 +93,11 @@ class HrEmployeeBase(models.AbstractModel):
         for employee in self:
             employee.allocation_used_count = employee.allocation_count - employee.remaining_leaves
 
+    def _compute_presence_state(self):
+        super()._compute_presence_state()
+        for employee in self.filtered('is_absent'):
+            employee.hr_presence_state = 'absent'
+
     @api.multi
     def _compute_leave_status(self):
         # Used SUPERUSER_ID to forcefully get status of other user's leave, to bypass record rule
@@ -115,7 +120,7 @@ class HrEmployeeBase(models.AbstractModel):
             employee.leave_date_to = leave_data.get(employee.id, {}).get('leave_date_to')
             employee.current_leave_state = leave_data.get(employee.id, {}).get('current_leave_state')
             employee.current_leave_id = leave_data.get(employee.id, {}).get('current_leave_id')
-            employee.is_absent = leave_data and leave_data.get(employee.id, {}).get('current_leave_state') not in ['cancel', 'refuse', 'draft']
+            employee.is_absent = leave_data.get(employee.id) and leave_data.get(employee.id, {}).get('current_leave_state') not in ['cancel', 'refuse', 'draft']
 
     @api.onchange('parent_id')
     def _onchange_parent_id(self):

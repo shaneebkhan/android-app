@@ -23,3 +23,26 @@ class HrEmployeeBase(models.AbstractModel):
     user_id = fields.Many2one('res.users')
     resource_id = fields.Many2one('resource.resource')
     resource_calendar_id = fields.Many2one('resource.calendar')
+    hr_presence_state = fields.Selection([
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('to_define', 'To Define')], compute='_compute_presence_state')
+    last_activity = fields.Date(compute="_compute_last_activity")
+
+    def _compute_presence_state(self):
+        # Check on login
+        if self.env['ir.config_parameter'].sudo().get_param('hr.hr_presence_control_login'):
+            for employee in self:
+                state = 'to_define'
+                if employee.user_id.im_status == 'online':
+                    state = 'present'
+                elif employee.user_id.im_status == 'offline':
+                    state = 'absent'
+                employee.hr_presence_state = state
+
+    def _compute_last_activity(self):
+        employees = self.filtered(lambda e: e.user_id)
+        presences = self.env['bus.presence'].search([('user_id', 'in', employees.mapped('user_id.id'))])
+
+        for presence in presences:
+            presence.user_id.employee_ids.last_activity = presence.last_presence.date()
