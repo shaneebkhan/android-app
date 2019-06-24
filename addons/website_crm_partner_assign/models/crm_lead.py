@@ -8,7 +8,8 @@ from odoo.exceptions import AccessDenied, AccessError
 
 
 class CrmLead(models.Model):
-    _inherit = "crm.lead"
+    _inherit = ['crm.lead', 'portal.mixin']
+    _name = 'crm.lead'
     partner_latitude = fields.Float('Geo Latitude', digits=(16, 5))
     partner_longitude = fields.Float('Geo Longitude', digits=(16, 5))
     partner_assigned_id = fields.Many2one('res.partner', 'Assigned Partner', tracking=True, help="Partner this case has been forwarded/assigned to.", index=True)
@@ -19,6 +20,11 @@ class CrmLead(models.Model):
         'partner_id',
         string='Partner not interested')
     date_assign = fields.Date('Partner Assignation Date', help="Last date this case was forwarded/assigned to a partner")
+
+    @api.multi
+    def _compute_access_url(self):
+        for lead in self:
+            lead.access_url = "/my/%s/%s" % (lead.type, lead.id)
 
     @api.multi
     def _merge_data(self, fields):
