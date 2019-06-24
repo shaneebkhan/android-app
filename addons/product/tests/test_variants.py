@@ -9,6 +9,7 @@ from . import common
 from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
 
+
 class TestVariantsSearch(TransactionCase):
 
     def setUp(self):
@@ -86,7 +87,7 @@ class TestVariants(common.TestProductCommon):
 
         # produced variants: one variant, because mono value
         self.assertEqual(len(test_template.product_variant_ids), 1)
-        self.assertEqual(test_template.product_variant_ids.attribute_value_ids, self.size_attr_value_s)
+        self.assertEqual(test_template.product_variant_ids.variant_product_template_attribute_value_ids.product_attribute_value_id, self.size_attr_value_s)
 
     def test_variants_creation_mono_double(self):
         test_template = self.env['product.template'].create({
@@ -104,7 +105,7 @@ class TestVariants(common.TestProductCommon):
 
         # produced variants: one variant, because only 1 combination is possible
         self.assertEqual(len(test_template.product_variant_ids), 1)
-        self.assertEqual(test_template.product_variant_ids.attribute_value_ids, self.size_attr_value_s + self.prod_attr1_v2)
+        self.assertEqual(test_template.product_variant_ids.variant_product_template_attribute_value_ids.product_attribute_value_id, self.size_attr_value_s + self.prod_attr1_v2)
 
     def test_variants_creation_mono_multi(self):
         test_template = self.env['product.template'].create({
@@ -119,14 +120,17 @@ class TestVariants(common.TestProductCommon):
                 'value_ids': [(4, self.size_attr_value_s.id), (4, self.size_attr_value_m.id)],
             })]
         })
+        sofa_attr1_v2 = test_template.attribute_line_ids[0].ptal_product_template_attribute_value_ids[0]
+        sofa_size_s = test_template.attribute_line_ids[1].ptal_product_template_attribute_value_ids[0]
+        sofa_size_m = test_template.attribute_line_ids[1].ptal_product_template_attribute_value_ids[1]
 
         # produced variants: two variants, simple matrix
         self.assertEqual(len(test_template.product_variant_ids), 2)
-        for value in self.size_attr_value_s + self.size_attr_value_m:
+        for ptav in sofa_size_s + sofa_size_m:
             products = self.env['product.product'].search([
                 ('product_tmpl_id', '=', test_template.id),
-                ('attribute_value_ids', 'in', value.id),
-                ('attribute_value_ids', 'in', self.prod_attr1_v2.id)
+                ('variant_product_template_attribute_value_ids', 'in', ptav.id),
+                ('variant_product_template_attribute_value_ids', 'in', sofa_attr1_v2.id)
             ])
             self.assertEqual(len(products), 1)
 
@@ -144,14 +148,20 @@ class TestVariants(common.TestProductCommon):
             })]
         })
 
+        sofa_attr1_v1 = test_template.attribute_line_ids[0].ptal_product_template_attribute_value_ids[0]
+        sofa_attr1_v2 = test_template.attribute_line_ids[0].ptal_product_template_attribute_value_ids[1]
+        sofa_size_s = test_template.attribute_line_ids[1].ptal_product_template_attribute_value_ids[0]
+        sofa_size_m = test_template.attribute_line_ids[1].ptal_product_template_attribute_value_ids[1]
+        sofa_size_l = test_template.attribute_line_ids[1].ptal_product_template_attribute_value_ids[2]
+
         # produced variants: value matrix : 2x3 values
         self.assertEqual(len(test_template.product_variant_ids), 6)
-        for value_1 in self.prod_attr1_v1 + self.prod_attr1_v2:
-            for value_2 in self.size_attr_value_m + self.size_attr_value_m + self.size_attr_value_l:
+        for value_1 in sofa_attr1_v1 + sofa_attr1_v2:
+            for value_2 in sofa_size_s + sofa_size_m + sofa_size_l:
                 products = self.env['product.product'].search([
                     ('product_tmpl_id', '=', test_template.id),
-                    ('attribute_value_ids', 'in', value_1.id),
-                    ('attribute_value_ids', 'in', value_2.id)
+                    ('variant_product_template_attribute_value_ids', 'in', value_1.id),
+                    ('variant_product_template_attribute_value_ids', 'in', value_2.id)
                 ])
                 self.assertEqual(len(products), 1)
 
@@ -201,7 +211,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
             })],
         })
         self.assertEqual(len(template.product_variant_ids), 1)
-        self.assertFalse(template.product_variant_ids.attribute_value_ids)
+        self.assertFalse(template.product_variant_ids.variant_product_template_attribute_value_ids)
 
     def test_update_mono(self):
         """ modify a product with a 'nocreate' attribute with a single value """
@@ -219,7 +229,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
             })],
         })
         self.assertEqual(len(template.product_variant_ids), 1)
-        self.assertFalse(template.product_variant_ids.attribute_value_ids)
+        self.assertFalse(template.product_variant_ids.variant_product_template_attribute_value_ids)
 
     def test_create_multi(self):
         """ create a product with a 'nocreate' attribute with several values """
@@ -233,7 +243,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
             })],
         })
         self.assertEqual(len(template.product_variant_ids), 1)
-        self.assertFalse(template.product_variant_ids.attribute_value_ids)
+        self.assertFalse(template.product_variant_ids.variant_product_template_attribute_value_ids)
 
     def test_update_multi(self):
         """ modify a product with a 'nocreate' attribute with several values """
@@ -251,7 +261,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
             })],
         })
         self.assertEqual(len(template.product_variant_ids), 1)
-        self.assertFalse(template.product_variant_ids.attribute_value_ids)
+        self.assertFalse(template.product_variant_ids.variant_product_template_attribute_value_ids)
 
     def test_create_mixed_mono(self):
         """ create a product with regular and 'nocreate' attributes """
@@ -272,7 +282,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
         })
         self.assertEqual(len(template.product_variant_ids), 2)
         self.assertEqual(
-            {variant.attribute_value_ids for variant in template.product_variant_ids},
+            {variant.variant_product_template_attribute_value_ids.product_attribute_value_id for variant in template.product_variant_ids},
             {self.prod_attr1_v1, self.prod_attr1_v2},
         )
 
@@ -299,7 +309,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
         })
         self.assertEqual(len(template.product_variant_ids), 2)
         self.assertEqual(
-            {variant.attribute_value_ids for variant in template.product_variant_ids},
+            {variant.variant_product_template_attribute_value_ids.product_attribute_value_id for variant in template.product_variant_ids},
             {self.prod_attr1_v1, self.prod_attr1_v2},
         )
 
@@ -322,7 +332,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
         })
         self.assertEqual(len(template.product_variant_ids), 2)
         self.assertEqual(
-            {variant.attribute_value_ids for variant in template.product_variant_ids},
+            {variant.variant_product_template_attribute_value_ids.product_attribute_value_id for variant in template.product_variant_ids},
             {self.prod_attr1_v1, self.prod_attr1_v2},
         )
 
@@ -349,7 +359,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
         })
         self.assertEqual(len(template.product_variant_ids), 2)
         self.assertEqual(
-            {variant.attribute_value_ids for variant in template.product_variant_ids},
+            {variant.variant_product_template_attribute_value_ids.product_attribute_value_id for variant in template.product_variant_ids},
             {self.prod_attr1_v1, self.prod_attr1_v2},
         )
 
@@ -373,7 +383,7 @@ class TestVariantsNoCreate(common.TestProductCommon):
         })]
         self.assertEqual(len(template.product_variant_ids), 1)
         # no_variant attribute should not appear on the variant
-        self.assertNotIn(self.size_S, template.product_variant_ids.attribute_value_ids)
+        self.assertNotIn(self.size_S, template.product_variant_ids.variant_product_template_attribute_value_ids.product_attribute_value_id)
 
 
 class TestVariantsManyAttributes(common.TestAttributesCommon):
@@ -488,13 +498,13 @@ class TestVariantsImages(common.TestProductCommon):
             'attribute_id': product_attribute.id,
         } for color in self.colors])
 
-        self.env['product.template.attribute.line'].create({
+        ptal = self.env['product.template.attribute.line'].create({
             'attribute_id': product_attribute.id,
             'product_tmpl_id': self.template.id,
             'value_ids': [(6, 0, color_values.ids)],
         })
 
-        for color, color_value in zip(self.colors, color_values):
+        for color, color_value in zip(self.colors, ptal.ptal_product_template_attribute_value_ids):
             f = io.BytesIO()
             Image.new('RGB', (800, 500), self.colors[color]).save(f, 'PNG')
             f.seek(0)
@@ -502,7 +512,7 @@ class TestVariantsImages(common.TestProductCommon):
 
             self.env['product.product'].create({
                 'image_raw_original': self.images[color],
-                'attribute_value_ids': [(6, 0, [color_value.id])],
+                'variant_product_template_attribute_value_ids': [(6, 0, [color_value.id])],
                 'product_tmpl_id': self.template.id,
             })
         # the first one has no image, no color

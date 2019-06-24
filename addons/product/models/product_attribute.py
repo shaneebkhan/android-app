@@ -97,10 +97,9 @@ class ProductAttribute(models.Model):
                 'attribute_line_ids',
                 'valid_product_template_attribute_line_ids',
                 'valid_product_template_attribute_line_wnva_ids',
+                'valid_product_template_attribute_value_wnva_ids',
                 'valid_product_attribute_value_ids',
-                'valid_product_attribute_value_wnva_ids',
                 'valid_product_attribute_ids',
-                'valid_product_attribute_wnva_ids',
             ], ids=to_invalidate.product_tmpl_ids.ids)
 
         return res
@@ -162,10 +161,6 @@ class ProductAttributeValue(models.Model):
         return [(value.id, "%s: %s" % (value.attribute_id.name, value.name)) for value in self]
 
     @api.multi
-    def _variant_name(self, variable_attributes):
-        return ", ".join([v.name for v in self if v.attribute_id in variable_attributes])
-
-    @api.multi
     def write(self, values):
         if 'attribute_id' in values:
             for pav in self:
@@ -184,7 +179,6 @@ class ProductAttributeValue(models.Model):
             ], ids=lines.ids)
             self.env['product.template'].invalidate_cache(fnames=[
                 'valid_product_attribute_value_ids',
-                'valid_product_attribute_value_wnva_ids',
             ], ids=lines.product_tmpl_id.ids)
 
         return res
@@ -210,7 +204,7 @@ class ProductTemplateAttributeLine(models.Model):
 
     _name = "product.template.attribute.line"
     _description = 'Product Template Attribute Line'
-    _order = 'attribute_id, id'
+    _order = 'product_tmpl_id, attribute_id, id'
 
     name = fields.Char("Attribute Name", related='attribute_id.name')
     product_tmpl_id = fields.Many2one('product.template', string='Product Template', ondelete='cascade', required=True, index=True,
@@ -261,6 +255,7 @@ class ProductTemplateAttributeLine(models.Model):
         res._update_product_template_attribute_values()
         return res
 
+    @api.multi
     def write(self, values):
         if 'product_tmpl_id' in values:
             for ptal in self:
@@ -282,6 +277,53 @@ class ProductTemplateAttributeLine(models.Model):
         self._update_product_template_attribute_values()
         return res
 
+    @api.multi
+    def unlink(self):
+        product_templates = self.env['product.template']
+        for ptal in self:
+            product_templates |= ptal._clean_up_variants(ptav_to_remove=ptal.ptal_product_template_attribute_value_ids)
+        # Now we can safely delete the values.
+        self.ptal_product_template_attribute_value_ids.unlink()
+        res = super(ProductTemplateAttributeLine, self).unlink()
+        # In the case where variants have been archived or deleted, the correct
+        # variants now have to be recreated.
+        product_templates.create_variant_ids()
+        return res
+
+    @api.multi
+    def _clean_up_variants(self, ptav_to_remove):
+        """Clean up the variants that use any of the `ptav_to_remove` and return
+        the product templates that need their variants recreated.
+
+        This will remove the value from the variant, and unlink or archive the
+        variant if the value belonged to an attribute line with more than one
+        value.
+
+        :param ptav_to_remove: the ptav that will be removed
+        :type ptav_to_remove: recordset of `product.template.attribute.value`
+
+        :return: the product templates that need their variants recreated
+        :rtype: recordset of `product.template`
+        """
+        self.ensure_one()
+        product_templates = self.env['product.template']
+        variants = ptav_to_remove.ptav_product_variant_ids
+        if len(self.ptal_product_template_attribute_value_ids) > 1:
+            # In this case we cannot remove the value from the products
+            # directly because it would lead to multiple active products
+            # having the same combination, which is not allowed. So we have
+            # to archive the products first.
+            product_templates = variants.product_tmpl_id
+            variants._unlink_or_archive()
+        for ptav in self.ptal_product_template_attribute_value_ids:
+            # Write on product instead of relying on cascade, in order to
+            # properly trigger `_compute_combination_indices`.
+            variants.exists().write({
+                'variant_product_template_attribute_value_ids': (3, ptav.id)
+            })
+        return product_templates
+
+    @api.multi
     def _update_product_template_attribute_values(self):
         """Create or unlink product.template.attribute.value based on the
         attribute lines.
@@ -299,6 +341,7 @@ class ProductTemplateAttributeLine(models.Model):
         Note: if an attribute line is removed, product.template.attribute.value
         will be automatically removed with the cascade.
         """
+        product_templates = self.env['product.template']
         product_template_attribute_values_to_create = []
         product_template_attribute_values_to_remove = self.env['product.template.attribute.value']
 
@@ -319,19 +362,26 @@ class ProductTemplateAttributeLine(models.Model):
                         'product_template_attribute_line_id': ptal.id
                     })
 
+            product_templates |= ptal._clean_up_variants(ptav_to_remove=product_template_attribute_values_to_remove)
+
         # unlink and create in batch for performance
         product_template_attribute_values_to_remove.unlink()
+
         self.env['product.template.attribute.value'].create(product_template_attribute_values_to_create)
 
         self.env['product.template'].invalidate_cache(fnames=[
             'attribute_line_ids',
             'valid_product_template_attribute_line_ids',
             'valid_product_template_attribute_line_wnva_ids',
+            'valid_product_template_attribute_value_ids',
+            'valid_product_template_attribute_value_wnva_ids',
             'valid_product_attribute_value_ids',
-            'valid_product_attribute_value_wnva_ids',
             'valid_product_attribute_ids',
-            'valid_product_attribute_wnva_ids',
         ], ids=self.product_tmpl_id.ids)
+
+        # In the case where variants have been archived or deleted, the correct
+        # variants now have to be recreated.
+        product_templates.create_variant_ids()
 
     @api.model
     def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
@@ -356,7 +406,7 @@ class ProductTemplateAttributeValue(models.Model):
 
     _name = "product.template.attribute.value"
     _description = "Product Template Attribute Value"
-    _order = 'product_attribute_value_id, id'
+    _order = 'product_template_attribute_line_id, product_attribute_value_id, id'
 
     name = fields.Char('Value', related="product_attribute_value_id.name")
 
@@ -364,7 +414,8 @@ class ProductTemplateAttributeValue(models.Model):
     product_attribute_value_id = fields.Many2one(
         'product.attribute.value', string='Attribute Value',
         required=True, ondelete='restrict', index=True)
-    product_template_attribute_line_id = fields.Many2one('product.template.attribute.line', required=True, ondelete='cascade', index=True)
+    # ondelete='restrict' to ensure unlink is always called
+    product_template_attribute_line_id = fields.Many2one('product.template.attribute.line', required=True, ondelete='restrict', index=True)
 
     # configuration fields: the price_extra and the exclusion rules
     price_extra = fields.Float(
@@ -384,6 +435,9 @@ class ProductTemplateAttributeValue(models.Model):
     # related fields: product template and product attribute
     product_tmpl_id = fields.Many2one('product.template', string='Product Template', related='product_template_attribute_line_id.product_tmpl_id', store=True, index=True)
     attribute_id = fields.Many2one('product.attribute', string="Attribute", related='product_template_attribute_line_id.attribute_id', store=True, index=True)
+    # The `product_variant_combination` relation should only be written from the
+    # product model to properly trigger `_compute_combination_indices`.
+    ptav_product_variant_ids = fields.Many2many('product.product', relation='product_variant_combination', string="Product Variants", readonly=True)
 
     _sql_constraints = [
         ('attribute_value_unique', 'unique(product_template_attribute_line_id, product_attribute_value_id)', "Each value should be defined only once per attribute per product."),
@@ -419,6 +473,16 @@ class ProductTemplateAttributeValue(models.Model):
         return super(ProductTemplateAttributeValue, self).write(values)
 
     @api.multi
+    def unlink(self):
+        for ptav in self:
+            if len(ptav.ptav_product_variant_ids) > 1:
+                raise UserError(
+                    _("You cannot delete the attribute value %s because it is still used on at least one product:\n%s") %
+                    (ptav.name, ", ".join([variant.display_name for variant in ptav.ptav_product_variant_ids]))
+                )
+        return super(ProductTemplateAttributeValue, self).unlink()
+
+    @api.multi
     def name_get(self):
         if not self._context.get('show_attribute', True):  # TDE FIXME: not used
             return super(ProductTemplateAttributeValue, self).name_get()
@@ -427,6 +491,10 @@ class ProductTemplateAttributeValue(models.Model):
     @api.multi
     def _without_no_variant_attributes(self):
         return self.filtered(lambda ptav: ptav.attribute_id.create_variant != 'no_variant')
+
+    @api.multi
+    def _ids2str(self):
+        return ','.join([str(i) for i in sorted(self.ids)])
 
 
 class ProductTemplateAttributeExclusion(models.Model):

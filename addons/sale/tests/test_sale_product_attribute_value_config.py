@@ -97,6 +97,9 @@ class TestSaleProductAttributeValueConfig(TestSaleProductAttributeValueSetup):
             variant = self.computer._get_variant_for_combination(computer_ssd_256 + computer_ram_8 + computer_hdd_1)
             variant2 = self.computer._get_variant_for_combination(computer_ssd_256 + computer_ram_8 + computer_hdd_2)
 
+            self.assertTrue(variant)
+            self.assertTrue(variant2)
+
             # Create a dummy SO to prevent the variant from being deleted by
             # create_variant_ids() because the variant is a related field that
             # is required on the SO line
@@ -128,8 +131,6 @@ class TestSaleProductAttributeValueConfig(TestSaleProductAttributeValueSetup):
             self.hdd_attribute.create_variant = 'no_variant'
             self._add_hdd_attribute_line()
             self.computer.create_variant_ids()
-            computer_ssd_256 = self._get_product_template_attribute_value(self.ssd_256)
-            computer_ram_8 = self._get_product_template_attribute_value(self.ram_8)
             computer_hdd_1 = self._get_product_template_attribute_value(self.hdd_1)
             computer_hdd_2 = self._get_product_template_attribute_value(self.hdd_2)
 
@@ -242,6 +243,8 @@ class TestSaleProductAttributeValueConfig(TestSaleProductAttributeValueSetup):
         combination = computer_ssd_256 + computer_ram_8 + computer_hdd_1
 
         computer_variant_new = self.computer._get_variant_for_combination(combination)
+        self.assertTrue(computer_variant_new)
+
         res = self.computer._get_combination_info(combination, add_qty=2, pricelist=pricelist)
         self.assertEqual(res['product_template_id'], self.computer.id)
         self.assertEqual(res['product_id'], computer_variant_new.id)
@@ -258,6 +261,9 @@ class TestSaleProductAttributeValueConfig(TestSaleProductAttributeValueSetup):
         computer_ram_8 = self._get_product_template_attribute_value(self.ram_8)
         computer_hdd_1 = self._get_product_template_attribute_value(self.hdd_1)
         combination = computer_ssd_256 + computer_ram_8 + computer_hdd_1
+
+        computer_variant_new = self.computer._create_product_variant(combination)
+        self.assertTrue(computer_variant_new)
 
         res = self.computer._get_combination_info(combination, add_qty=2, pricelist=pricelist)
         self.assertEqual(res['product_template_id'], self.computer.id)

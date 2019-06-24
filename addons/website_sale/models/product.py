@@ -268,9 +268,9 @@ class ProductTemplate(models.Model):
                     - second level sort: same as "product.attribute.value"._order
             """
             keys = []
-            for attribute in variant.attribute_value_ids.sorted(_sort_key_attribute_value):
+            for attribute in variant.variant_product_template_attribute_value_ids.sorted(_sort_key_attribute_value):
                 # if you change this order, keep it in sync with _order from `product.attribute.value`
-                keys.append(attribute.sequence)
+                keys.append(attribute.product_attribute_value_id.sequence)
                 keys.append(attribute.id)
             return keys
 
@@ -433,10 +433,10 @@ class Product(models.Model):
 
     website_url = fields.Char('Website URL', compute='_compute_product_website_url', help='The full URL to access the document through the website.')
 
-    @api.depends('product_tmpl_id.website_url', 'attribute_value_ids')
+    @api.depends('product_tmpl_id.website_url', 'variant_product_template_attribute_value_ids')
     def _compute_product_website_url(self):
         for product in self:
-            attributes = ','.join(str(x) for x in product.attribute_value_ids.ids)
+            attributes = ','.join(str(x) for x in product.variant_product_template_attribute_value_ids.ids)
             product.website_url = "%s#attr=%s" % (product.product_tmpl_id.website_url, attributes)
 
     @api.multi

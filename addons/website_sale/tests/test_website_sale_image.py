@@ -93,11 +93,13 @@ class TestWebsiteSaleImage(odoo.tests.HttpCase):
         })
 
         # set the color attribute and values on the template
-        self.env['product.template.attribute.line'].create([{
+        line = self.env['product.template.attribute.line'].create([{
             'attribute_id': product_attribute.id,
             'product_tmpl_id': template.id,
             'value_ids': [(6, 0, attr_values.ids)]
         }])
+        value_red = line.ptal_product_template_attribute_value_ids[0]
+        value_green = line.ptal_product_template_attribute_value_ids[1]
 
         # set a different price on the variants to differentiate them
         product_template_attribute_values = self.env['product.template.attribute.value'].search([('product_tmpl_id', '=', template.id)])
@@ -113,7 +115,7 @@ class TestWebsiteSaleImage(odoo.tests.HttpCase):
         product_red = self.env['product.product'].create({
             'product_tmpl_id': template.id,
             'image': blue_image,
-            'attribute_value_ids': [(6, 0, attr_values.filtered(lambda l: l.name == name_red).ids)],
+            'variant_product_template_attribute_value_ids': [(6, 0, value_red.ids)],
             'product_variant_image_ids': [(0, 0, {'name': 'image 2', 'image': image_bmp})],
         })
 
@@ -123,7 +125,7 @@ class TestWebsiteSaleImage(odoo.tests.HttpCase):
         product_green = self.env['product.product'].create({
             'image': green_image,
             'product_tmpl_id': template.id,
-            'attribute_value_ids': [(6, 0, attr_values.filtered(lambda l: l.name == name_green).ids)],
+            'variant_product_template_attribute_value_ids': [(6, 0, value_green.ids)],
             'product_variant_image_ids': [(0, 0, {'name': 'image 3', 'image': image_png})],
         })
 

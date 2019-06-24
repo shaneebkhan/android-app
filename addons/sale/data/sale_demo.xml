@@ -794,52 +794,44 @@ Thanks!</field>
             <field name="sequence">3</field>
         </record>
 
-        <record id="product.product_template_attribute_line_1" model="product.template.attribute.line">
+        <record id="product.product_4_attribute_1_product_template_attribute_line" model="product.template.attribute.line">
             <field name="value_ids" eval="[(4,ref('product_attribute_value_7'))]"/>
         </record>
+
+        <!--
+        Handle automatically created product.template.attribute.value.
+        Check "product.product_4_attribute_1_value_2" for more information about this
+        -->
+        <function model="ir.model.data" name="_update_xmlids">
+            <value model="base" eval="[{
+                'xml_id': 'sale.product_4_attribute_1_value_3',
+                'record': obj().env.ref('product.product_4_attribute_1_product_template_attribute_line').ptal_product_template_attribute_value_ids[2],
+                'noupdate': True,
+            }]"/>
+        </function>
 
         <record id="product_product_4e" model="product.product">
             <field name="default_code">DESK0005</field>
             <field name="weight">0.01</field>
             <field name="product_tmpl_id" ref="product.product_product_4_product_template"/>
-            <field name="attribute_value_ids" eval="[(6,0,[ref('product_attribute_value_7'), ref('product.product_attribute_value_3')])]"/>
+            <field name="variant_product_template_attribute_value_ids" eval="[(6,0,[ref('sale.product_4_attribute_1_value_3'), ref('product.product_4_attribute_2_value_1')])]"/>
         </record>
 
         <record id="product_product_4f" model="product.product">
             <field name="default_code">DESK0006</field>
             <field name="weight">0.01</field>
             <field name="product_tmpl_id" ref="product.product_product_4_product_template"/>
-            <field name="attribute_value_ids" eval="[(6,0,[ref('product_attribute_value_7'), ref('product.product_attribute_value_4')])]"/>
+            <field name="variant_product_template_attribute_value_ids" eval="[(6,0,[ref('sale.product_4_attribute_1_value_3'), ref('product.product_4_attribute_2_value_2')])]"/>
         </record>
-
-        <!--
-        Handle automatically created product.template.attribute.value.
-        Check "product.product_template_attribute_value_1" for more information about this
-        -->
-        <function model="ir.model.data" name="_update_xmlids">
-            <value model="base" eval="[{
-                'xml_id': 'sale.product_template_attribute_value_3',
-                'record': obj().env.ref('product.product_template_attribute_line_1').ptal_product_template_attribute_value_ids[0],
-                'noupdate': True,
-            }, {
-                'xml_id': 'sale.product_template_attribute_value_4',
-                'record': obj().env.ref('product.product_template_attribute_line_4').ptal_product_template_attribute_value_ids[0],
-                'noupdate': True,
-            }, {
-                'xml_id': 'sale.product_template_attribute_value_5',
-                'record': obj().env.ref('product.product_template_attribute_line_2').ptal_product_template_attribute_value_ids[1],
-                'noupdate': True,
-            }]"/>
-        </function>
 
         <record id="product_template_attribute_exclusion_1" model="product.template.attribute.exclusion">
             <field name="product_tmpl_id" ref="product.product_product_4_product_template" />
-            <field name="value_ids" eval="[(6,0,[ref('sale.product_template_attribute_value_5')])]"/>
+            <field name="value_ids" eval="[(6,0,[ref('product.product_4_attribute_2_value_2')])]"/>
         </record>
 
         <record id="product_template_attribute_exclusion_2" model="product.template.attribute.exclusion">
             <field name="product_tmpl_id" ref="product.product_product_11_product_template" />
-            <field name="value_ids" eval="[(6,0,[ref('sale.product_template_attribute_value_4')])]"/>
+            <field name="value_ids" eval="[(6,0,[ref('product.product_11_attribute_1_value_1')])]"/>
         </record>
 
         <!--
@@ -847,20 +839,20 @@ Thanks!</field>
         - The "Customizable Desk's Black" attribute
         - The "Office Chair's Steel" attribute
          -->
-        <record id="product.product_template_attribute_value_1" model="product.template.attribute.value">
+        <record id="product.product_4_attribute_1_value_2" model="product.template.attribute.value">
             <field name="exclude_for" eval="[(6,0,[ref('sale.product_template_attribute_exclusion_1') ,ref('sale.product_template_attribute_exclusion_2')])]" />
         </record>
 
         <record id="product_template_attribute_exclusion_3" model="product.template.attribute.exclusion">
             <field name="product_tmpl_id" ref="product.product_product_11_product_template" />
-            <field name="value_ids" eval="[(6,0,[ref('product.product_template_attribute_value_2')])]"/>
+            <field name="value_ids" eval="[(6,0,[ref('product.product_11_attribute_1_value_2')])]"/>
         </record>
 
         <!--
         The "Customizable Desk's Steel" attribute value will excude:
         - The "Office Chair's Aluminium" attribute
          -->
-        <record id="product_template_attribute_value_3" model="product.template.attribute.value">
+        <record id="product.product_4_attribute_1_value_1" model="product.template.attribute.value">
             <field name="exclude_for" eval="[(6,0,[ref('sale.product_template_attribute_exclusion_3')])]" />
         </record>
     </data>

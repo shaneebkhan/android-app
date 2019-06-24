@@ -97,10 +97,9 @@ class ProductProduct(models.Model):
     barcode = fields.Char(
         'Barcode', copy=False, oldname='ean13',
         help="International Article Number used for product identification.")
-    attribute_value_ids = fields.Many2many(
-        'product.attribute.value', string='Attribute Values', ondelete='restrict')
     variant_product_template_attribute_value_ids = fields.Many2many(
-        'product.template.attribute.value', string='Template Attribute Values', compute="_compute_product_template_attribute_value_ids")
+        'product.template.attribute.value', relation='product_variant_combination', string='Template Attribute Values')
+    combination_indices = fields.Char(compute='_compute_combination_indices', store=True, index=True)
     is_product_variant = fields.Boolean(compute='_compute_is_product_variant')
 
     standard_price = fields.Float(
@@ -238,12 +237,27 @@ class ProductProduct(models.Model):
         # image_original instead of the big-sized image.
         self.invalidate_cache()
 
+    @api.model_cr
+    def init(self):
+        """Ensure there is at most one active variant for each combination.
+
+        There could be no variant for a combination if using dynamic attributes.
+        """
+        self.env.cr.execute("CREATE UNIQUE INDEX IF NOT EXISTS product_product_combination_unique ON %s (product_tmpl_id, combination_indices) WHERE active is true"
+            % self._table)
+
     _sql_constraints = [
         ('barcode_uniq', 'unique(barcode)', "A barcode can only be assigned to one product !"),
     ]
 
     def _get_invoice_policy(self):
         return False
+
+    @api.multi
+    @api.depends('variant_product_template_attribute_value_ids')
+    def _compute_combination_indices(self):
+        for product in self:
+            product.combination_indices = product.variant_product_template_attribute_value_ids._ids2str()
 
     def _compute_is_product_variant(self):
         for product in self:
@@ -328,30 +342,6 @@ class ProductProduct(models.Model):
         else:
             self.partner_ref = self.display_name
 
-    @api.depends('product_tmpl_id', 'attribute_value_ids')
-    def _compute_variant_product_template_attribute_value_ids(self):
-        # Fetch and pre-map the values first for performance. It assumes there
-        # won't be too many values, but there might be a lot of products.
-        values = self.env['product.template.attribute.value'].search([
-            ('product_tmpl_id', 'in', self.mapped('product_tmpl_id').ids),
-            ('product_attribute_value_id', 'in', self.mapped('attribute_value_ids').ids),
-        ])
-
-        values_per_template = {}
-        for ptav in values:
-            pt_id = ptav.product_tmpl_id.id
-            if pt_id not in values_per_template:
-                values_per_template[pt_id] = {}
-            values_per_template[pt_id][ptav.product_attribute_value_id.id] = ptav
-
-        for product in self:
-            product.variant_product_template_attribute_value_ids = self.env['product.template.attribute.value']
-            for pav in product.attribute_value_ids:
-                if product.product_tmpl_id.id not in values_per_template or pav.id not in values_per_template[product.product_tmpl_id.id]:
-                    _logger.warning("A matching product.template.attribute.value was not found for the product.attribute.value #%s on the template #%s" % (pav.id, product.product_tmpl_id.id))
-                else:
-                    product.variant_product_template_attribute_value_ids += values_per_template[product.product_tmpl_id.id][pav.id]
-
     @api.one
     def _get_pricelist_items(self):
         self.pricelist_item_ids = self.env['product.pricelist.item'].search([
@@ -359,15 +349,14 @@ class ProductProduct(models.Model):
             ('product_id', '=', self.id),
             ('product_tmpl_id', '=', self.product_tmpl_id.id)]).ids
 
-    @api.constrains('attribute_value_ids')
-    def _check_attribute_value_ids(self):
+    @api.constrains('variant_product_template_attribute_value_ids')
+    def _check_variant_product_template_attribute_value_ids(self):
         for product in self:
-            attributes = self.env['product.attribute']
-            for value in product.attribute_value_ids:
-                if value.attribute_id in attributes:
-                    raise ValidationError(_('Error! It is not allowed to choose more than one value for a given attribute.'))
-                if value.attribute_id.create_variant == 'always':
-                    attributes |= value.attribute_id
+            if not product._has_valid_values():
+                raise ValidationError(_("You cannot create a variant for the product %s because the following combination of values is not valid:\n%s") % (
+                    product.name,
+                    ", ".join([ptav2.name for ptav2 in product.variant_product_template_attribute_value_ids])
+                ))
         return True
 
     @api.onchange('uom_id', 'uom_po_id')
@@ -404,7 +393,7 @@ class ProductProduct(models.Model):
         if pav_in_values or active_in_values:
             for product in self:
                 if pav_in_values:
-                    existing_attribute_value_ids.append(product.attribute_value_ids)
+                    existing_attribute_value_ids.append(product.variant_product_template_attribute_value_ids)
 
                 if active_in_values and product.active != values['active']:
                     to_invalidate += product
@@ -418,11 +407,10 @@ class ProductProduct(models.Model):
                 'product_variant_count',
             ], ids=to_invalidate.mapped('product_tmpl_id').ids)
 
-        if to_invalidate or any(attribute_value_ids != p.attribute_value_ids for attribute_value_ids, p in zip(existing_attribute_value_ids, self)):
+        if to_invalidate or any(attribute_value_ids != p.variant_product_template_attribute_value_ids for attribute_value_ids, p in zip(existing_attribute_value_ids, self)):
             # `_get_first_possible_variant_id` depends on variants active state
             # `_get_variant_id_for_combination` depends on `attribute_value_ids`
             self.clear_caches()
-        return res
 
         return res
 
@@ -451,6 +439,29 @@ class ProductProduct(models.Model):
         # `_get_variant_id_for_combination` depends on existing variants
         self.clear_caches()
         return res
+
+    @api.multi
+    def _unlink_or_archive(self):
+        """Unlink or archive products.
+
+        Try in batch as much as possible because it is much faster.
+        Use dichotomy when an exception occurs.
+        """
+        try:
+            with self.env.cr.savepoint(), tools.mute_logger('odoo.sql_db'):
+                self.unlink()
+        except Exception:
+            # We catch all kind of exceptions to be sure that the operation
+            # doesn't fail.
+            if len(self) > 1:
+                self[:len(self) // 2]._unlink_or_archive()
+                self[len(self) // 2:]._unlink_or_archive()
+            else:
+                if self.active:
+                    # Note: this can still fail if something is preventing
+                    # from archiving.
+                    # This is the case from existing stock reordering rules.
+                    self.write({'active': False})
 
     @api.multi
     @api.returns('self', lambda value: value.id)
@@ -500,7 +511,7 @@ class ProductProduct(models.Model):
 
         # Prefetch the fields used by the `name_get`, so `browse` doesn't fetch other fields
         # Use `load=False` to not call `name_get` for the `product_tmpl_id`
-        self.sudo().read(['name', 'default_code', 'product_tmpl_id', 'attribute_value_ids', 'attribute_line_ids'], load=False)
+        self.sudo().read(['name', 'default_code', 'product_tmpl_id', 'variant_product_template_attribute_value_ids'], load=False)
 
         product_template_ids = self.sudo().mapped('product_tmpl_id').ids
 
@@ -517,8 +528,8 @@ class ProductProduct(models.Model):
                 supplier_info_by_template.setdefault(r.product_tmpl_id, []).append(r)
         for product in self.sudo():
             # display only the attributes with multiple possible values on the template
-            variable_attributes = product.attribute_line_ids.filtered(lambda l: len(l.value_ids) > 1).mapped('attribute_id')
-            variant = product.attribute_value_ids._variant_name(variable_attributes)
+            variant = ", ".join([ptav.name for ptav in product.variant_product_template_attribute_value_ids.filtered(
+                lambda ptav: len(ptav.product_template_attribute_line_id.ptal_product_template_attribute_value_ids) > 1)])
 
             name = variant and "%s (%s)" % (product.name, variant) or product.name
             sellers = []
@@ -709,29 +720,30 @@ class ProductProduct(models.Model):
 
         return name
 
-    def _has_valid_attributes(self, valid_attributes, valid_values):
-        """ Check if a product has valid attributes. It is considered valid if:
-            - it uses ALL valid attributes
+    @api.multi
+    def _has_valid_values(self):
+        """ Check if a product has valid values. It is considered valid if:
+            - it uses ALL valid attribute lines once
             - it ONLY uses valid values
-            We must make sure that all attributes are used to take into account the case where
-            attributes would be added to the template.
+
+            We must make sure that all attributes are used to take into account
+            the case where attributes would be added to the template.
 
             This method does not check if the combination is possible, it just
             checks if it has valid attributes and values. A possible combination
             is always valid, but a valid combination is not always possible.
 
-            :param valid_attributes: a recordset of product.attribute
-            :param valid_values: a recordset of product.attribute.value
-            :return: True if the attibutes and values are correct, False instead
+            :return: True if the variant has valid values, False otherwise
         """
         self.ensure_one()
-        values = self.attribute_value_ids
-        attributes = values.mapped('attribute_id')
-        if attributes != valid_attributes:
-            return False
-        for value in values:
-            if value not in valid_values:
+        valid_values = self.product_tmpl_id.valid_product_template_attribute_value_wnva_ids
+        given_lines = self.env['product.template.attribute.line']
+        for ptav in self.variant_product_template_attribute_value_ids:
+            if ptav not in valid_values:
                 return False
+            given_lines += ptav.product_template_attribute_line_id
+        if given_lines != self.product_tmpl_id.valid_product_template_attribute_line_wnva_ids:
+            return False
         return True
 
     @api.multi

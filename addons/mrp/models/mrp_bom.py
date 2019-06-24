@@ -75,17 +75,25 @@ class MrpBom(models.Model):
     def onchange_product_id(self):
         if self.product_id:
             for line in self.bom_line_ids:
-                line.attribute_value_ids = False
+                line.bom_product_template_attribute_value_ids = False
 
     @api.constrains('product_id', 'product_tmpl_id', 'bom_line_ids')
-    def _check_product_recursion(self):
+    def _check_bom_lines(self):
         for bom in self:
-            if bom.product_id:
-                if bom.bom_line_ids.filtered(lambda x: x.product_id == bom.product_id):
-                    raise ValidationError(_('BoM line product %s should not be same as BoM product.') % bom.display_name)
-            else:
-                if bom.bom_line_ids.filtered(lambda x: x.product_id.product_tmpl_id == bom.product_tmpl_id):
-                    raise ValidationError(_('BoM line product %s should not be same as BoM product.') % bom.display_name)
+            for bom_line in bom.bom_line_ids:
+                if bom.product_id and bom_line.product_id == bom.product_id:
+                    raise ValidationError(_("BoM line product %s should not be the same as BoM product.") % bom.display_name)
+                if bom_line.product_tmpl_id == bom.product_tmpl_id:
+                    raise ValidationError(_("BoM line product %s should not be the same as BoM product.") % bom.display_name)
+                if bom.product_id and bom_line.bom_product_template_attribute_value_ids:
+                    raise ValidationError(_("BoM cannot concern product %s and have a line with attributes (%s) at the same time.")
+                        % (bom.product_id.display_name, ", ".join([ptav.display_name for ptav in bom_line.bom_product_template_attribute_value_ids])))
+                for ptav in bom_line.bom_product_template_attribute_value_ids:
+                    if ptav.product_tmpl_id != bom.product_tmpl_id:
+                        raise ValidationError(
+                            _("The attribute value %s set on product %s does not match the BoM product %s.") %
+                            (ptav.display_name, ptav.product_tmpl_id.display_name, bom_line.parent_product_tmpl_id.display_name)
+                        )
 
     @api.onchange('product_uom_id')
     def onchange_product_uom_id(self):
@@ -104,7 +112,7 @@ class MrpBom(models.Model):
             if self.product_id.product_tmpl_id != self.product_tmpl_id:
                 self.product_id = False
             for line in self.bom_line_ids:
-                line.attribute_value_ids = False
+                line.bom_product_template_attribute_value_ids = False
 
     @api.onchange('routing_id')
     def onchange_routing_id(self):
@@ -249,9 +257,10 @@ class MrpBomLine(models.Model):
         'mrp.bom', 'Parent BoM',
         index=True, ondelete='cascade', required=True)
     parent_product_tmpl_id = fields.Many2one('product.template', 'Parent Product Template', related='bom_id.product_tmpl_id')
-    valid_product_attribute_value_ids = fields.Many2many('product.attribute.value', related='bom_id.product_tmpl_id.valid_product_attribute_value_ids')
-    attribute_value_ids = fields.Many2many(
-        'product.attribute.value', string='Apply on Variants',
+    valid_product_template_attribute_value_wnva_ids = fields.Many2many('product.template.attribute.value', related='parent_product_tmpl_id.valid_product_template_attribute_value_wnva_ids')
+    bom_product_template_attribute_value_ids = fields.Many2many(
+        'product.template.attribute.value', string='Apply on Variants',
+        domain="[('id', 'in', valid_product_template_attribute_value_wnva_ids)]",
         help="BOM Product Variants needed form apply this line.")
     operation_id = fields.Many2one(
         'mrp.routing.workcenter', 'Consumed in Operation',
@@ -310,15 +319,6 @@ class MrpBomLine(models.Model):
         if self.product_id:
             self.product_uom_id = self.product_id.uom_id.id
 
-    @api.onchange('parent_product_tmpl_id')
-    def onchange_parent_product(self):
-        if not self.parent_product_tmpl_id:
-            return {}
-        return {'domain': {'attribute_value_ids': [
-            ('id', 'in', self.parent_product_tmpl_id.valid_product_attribute_value_ids.ids),
-            ('attribute_id.create_variant', '!=', 'no_variant')
-        ]}}
-
     @api.model_create_multi
     def create(self, vals_list):
         for values in vals_list:
@@ -329,11 +329,14 @@ class MrpBomLine(models.Model):
     def _skip_bom_line(self, product):
         """ Control if a BoM line should be produce, can be inherited for add
         custom control. It currently checks that all variant values are in the
-        product. """
-        if self.attribute_value_ids:
-            for att, att_values in groupby(self.attribute_value_ids, lambda l: l.attribute_id):
-                values = self.env['product.attribute.value'].concat(*list(att_values))
-                if not (product.attribute_value_ids & values):
+        product.
+
+        If multiple values are encoded for the same attribute line, only one of
+        them has to be found on the variant.
+        """
+        if self.bom_product_template_attribute_value_ids:
+            for ptal, iter_ptav in groupby(self.bom_product_template_attribute_value_ids.sorted('product_template_attribute_line_id'), lambda ptav: ptav.product_template_attribute_line_id):
+                if not any([ptav in product.variant_product_template_attribute_value_ids for ptav in iter_ptav]):
                     return True
         return False
 

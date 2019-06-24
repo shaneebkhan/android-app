@@ -26,7 +26,7 @@ class WebsiteSaleProductComparison(WebsiteSale):
                 if not var.attribute_id.create_variant:
                     continue
                 res.setdefault(cat_name, OrderedDict()).setdefault(att_name, [' - '] * len(products))
-                val = product.attribute_value_ids.filtered(lambda x: x.attribute_id == var.attribute_id)
+                val = product.variant_product_template_attribute_value_ids.product_attribute_value_id.filtered(lambda x: x.attribute_id == var.attribute_id)
                 if val:
                     res[cat_name][att_name][num] = val[0].name
         values['specs'] = res

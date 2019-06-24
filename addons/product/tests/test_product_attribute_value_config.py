@@ -206,15 +206,10 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
         # under defined variant
         combination = computer_ssd_256 + computer_ram_8
         variant = self.computer._get_variant_for_combination(combination)
-        self.assertEqual(len(variant), 0)
+        self.assertFalse(variant)
 
-        # also test _has_valid_attributes (case ok):
-        valid_value_ids = self.computer.valid_product_attribute_value_wnva_ids
-        valid_attribute_ids = self.computer.valid_product_attribute_wnva_ids
-        self.assertTrue(ok_variant._has_valid_attributes(valid_attribute_ids, valid_value_ids))
-
-        # also test _has_valid_attributes (case not ok):
-        self.assertFalse(ok_variant._has_valid_attributes(valid_attribute_ids, valid_value_ids - self.hdd_1))
+        # also test _has_valid_values
+        self.assertTrue(ok_variant._has_valid_values())
 
     def test_product_filtered_exclude_for(self):
         """
@@ -317,15 +312,15 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
 
         # CASE: if multiple variants exist for the same combination and at least
         # one of them is not archived, the combination is possible
-        values = self.ssd_256 + self.ram_8 + self.hdd_1
+        combination = computer_ssd_256 + computer_ram_8 + computer_hdd_1
         self.env['product.product'].create({
             'product_tmpl_id': self.computer.id,
-            'attribute_value_ids': [(6, 0, values.ids)],
+            'variant_product_template_attribute_value_ids': [(6, 0, combination.ids)],
             'active': False,
         })
         self.env['product.product'].create({
             'product_tmpl_id': self.computer.id,
-            'attribute_value_ids': [(6, 0, values.ids)],
+            'variant_product_template_attribute_value_ids': [(6, 0, combination.ids)],
             'active': True,
         })
         self.assertTrue(self.computer._is_combination_possible(computer_ssd_256 + computer_ram_8 + computer_hdd_1))
@@ -487,26 +482,29 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
     def test_clear_caches(self):
         """The goal of this test is to make sure the cache is invalidated when
         it should be."""
-        attribute_values = self.ssd_256 + self.ram_8 + self.hdd_1
+        computer_ssd_256 = self._get_product_template_attribute_value(self.ssd_256)
+        computer_ram_8 = self._get_product_template_attribute_value(self.ram_8)
+        computer_hdd_1 = self._get_product_template_attribute_value(self.hdd_1)
+        combination = computer_ssd_256 + computer_ram_8 + computer_hdd_1
 
-        # CASE: initial result of _get_variant_id_for_combination
-        variant_id = self.computer._get_variant_id_for_combination(attribute_values)
-        self.assertTrue(variant_id)
+        # CASE: initial result of _get_variant_for_combination
+        variant = self.computer._get_variant_for_combination(combination)
+        self.assertTrue(variant)
 
         # CASE: clear_caches in product.product unlink
-        self.env['product.product'].browse(variant_id).unlink()
-        self.assertFalse(self.computer._get_variant_id_for_combination(attribute_values))
+        variant.unlink()
+        self.assertFalse(self.computer._get_variant_for_combination(combination))
 
         # CASE: clear_caches in product.product create
         variant = self.env['product.product'].create({
             'product_tmpl_id': self.computer.id,
-            'attribute_value_ids': [(6, 0, attribute_values.ids)],
+            'variant_product_template_attribute_value_ids': [(6, 0, combination.ids)],
         })
-        self.assertEqual(variant.id, self.computer._get_variant_id_for_combination(attribute_values))
+        self.assertEqual(variant, self.computer._get_variant_for_combination(combination))
 
-        # CASE: clear_caches in product.product write
-        variant.attribute_value_ids = False
-        self.assertFalse(self.computer._get_variant_id_for_combination(attribute_values))
+        # CASE: product.product write
+        with self.assertRaises(ValidationError, msg="can't create a variant with wrong combination"):
+            variant.variant_product_template_attribute_value_ids = False
 
     def test_constraints(self):
         """The goal of this test is to make sure constraints are correct."""
@@ -548,19 +546,10 @@ class TestProductAttributeValueConfig(TestProductAttributeValueSetup):
         with self.assertRaises(UserError, msg="can't change the product of a product template attribute value"):
             self.computer_ram_attribute_lines.ptal_product_template_attribute_value_ids[0].product_tmpl_id = self.computer_case.id
 
-    def test_constraints_sql_1(self):
+    def test_constraints_sql(self):
         # different transaction needed since it will be aborted due to the error
         with mute_logger('odoo.sql_db'), self.assertRaises(IntegrityError, msg="can't have two attribute values with the same name for the same attribute"):
             self.env['product.attribute.value'].create({
                 'name': '32 GB',
                 'attribute_id': self.ram_attribute.id,
-            })
-
-    def test_constraints_sql_2(self):
-        # different transaction needed since it will be aborted due to the error
-        with mute_logger('odoo.sql_db'), self.assertRaises(IntegrityError, msg="can't have two attribute lines for the same attribute on the same product"):
-            self.env['product.template.attribute.line'].create({
-                'product_tmpl_id': self.computer.id,
-                'attribute_id': self.ram_attribute.id,
-                'value_ids': [(6, 0, [self.ram_8.id, self.ram_16.id, self.ram_32.id])],
             })

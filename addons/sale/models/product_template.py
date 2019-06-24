@@ -69,6 +69,8 @@ class ProductTemplate(models.Model):
 
         It is possible to create only if the template has dynamic attributes
         and the combination itself is possible.
+        If we are in this case and the variant already exists but it is
+        archived, it is activated instead of being created again.
 
         :param combination: the combination for which to get or create variant.
             The combination must contain all necessary attributes, including
@@ -89,6 +91,8 @@ class ProductTemplate(models.Model):
 
         product_variant = self._get_variant_for_combination(combination)
         if product_variant:
+            if not product_variant.active and self.has_dynamic_attributes() and self._is_combination_possible(combination):
+                product_variant.active = True
             return product_variant
 
         if not self.has_dynamic_attributes():
@@ -101,11 +105,9 @@ class ProductTemplate(models.Model):
                 _logger.warning('The user #%s tried to create an invalid variant for the product %s.' % (self.env.user.id, self.id))
             return Product
 
-        attribute_values = combination.mapped('product_attribute_value_id')._without_no_variant_attributes()
-
         return Product.sudo().create({
             'product_tmpl_id': self.id,
-            'attribute_value_ids': [(6, 0, attribute_values.ids)]
+            'variant_product_template_attribute_value_ids': [(6, 0, combination._without_no_variant_attributes().ids)]
         })
 
     @api.multi
