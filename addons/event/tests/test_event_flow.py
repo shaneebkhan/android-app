@@ -136,3 +136,18 @@ class TestEventFlow(TestEventCommon):
         self.assertEqual(self.event_0.registration_ids.get_date_range_str(), u'next month')
 
         self.patcher.stop()
+
+    def test_event_is_registrable(self):
+        self.patcher = patch('odoo.addons.event.models.event.fields.Datetime', wraps=Datetime)
+        self.mock_datetime = self.patcher.start()
+
+        self.event_0.date_begin = datetime.datetime(2019, 6, 8, 12, 0)
+        self.event_0.date_end = datetime.datetime(2019, 6, 12, 12, 0)
+
+        self.mock_datetime.now.return_value = datetime.datetime(2019, 6, 9, 12, 0)
+        self.assertEqual(self.event_0._is_event_registrable(), True)
+
+        self.mock_datetime.now.return_value = datetime.datetime(2019, 6, 13, 12, 0)
+        self.assertEqual(self.event_0._is_event_registrable(), False)
+
+        self.patcher.stop()
