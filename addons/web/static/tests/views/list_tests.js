@@ -6473,7 +6473,7 @@ QUnit.module('Views', {
         list.destroy();
     });
 
-    QUnit.test('change float field decimal precision base on digits on list view', async function (assert) {
+    QUnit.test('float field render with digits attribute on listview', async function (assert) {
         assert.expect(1);
 
         var list = await createView({
