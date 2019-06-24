@@ -2,7 +2,6 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
     'use strict';
 
     var tour = require("web_tour.tour");
-
     tour.register('shop_customize', {
         test: true,
         url: '/shop',
@@ -88,7 +87,7 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
             },
             {
                 content: "check price is 750",
-                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00)",
+                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00 $)",
                 run: function () {},
             },
             {
@@ -97,7 +96,7 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
             },
             {
                 content: "verify that price has changed when changing variant",
-                trigger: ".product_price .oe_price .oe_currency_value:containsExact(800.40)",
+                trigger: ".product_price .oe_price .oe_currency_value:containsExact(800.40 $)",
                 run: function () {},
             },
             {
@@ -115,7 +114,7 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
             },
             {
                 content: "check price is 750",
-                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00)",
+                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00 $)",
                 run: function () {},
             },
             {
@@ -124,7 +123,7 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
             },
             {
                 content: "verify that price has changed when changing variant",
-                trigger: ".product_price .oe_price .oe_currency_value:containsExact(800.40)",
+                trigger: ".product_price .oe_price .oe_currency_value:containsExact(800.40 $)",
                 run: function () {}, // it's a check
             },
             {
@@ -133,7 +132,7 @@ odoo.define('website_sale.tour_shop_customize', function (require) {
             },
             {
                 content: "check price is 750",
-                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00)",
+                trigger: ".product_price .oe_price .oe_currency_value:containsExact(750.00 $)",
                 run: function () {},
             },
             {
