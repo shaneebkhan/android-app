@@ -60,6 +60,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
                     <field name="is_storable" invisible="1"/>
+                    <field name="qty_at_date" invisible="0" decoration-danger="qty_at_date &lt; 0"/>
                     <button icon="fa-info-circle" class="enabled" title="Available Quantity" name="action_open_stock_details" type="object" attrs="{'invisible': [('is_storable', '=', False)]}"/>
                 </xpath>
             </field>

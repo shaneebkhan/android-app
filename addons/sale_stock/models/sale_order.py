@@ -196,6 +196,24 @@ class SaleOrderLine(models.Model):
     route_id = fields.Many2one('stock.location.route', string='Route', domain=[('sale_selectable', '=', True)], ondelete='restrict')
     move_ids = fields.One2many('stock.move', 'sale_line_id', string='Stock Moves')
     is_storable = fields.Boolean(compute='_compute_is_storable')
+    qty_at_date = fields.Float(compute='_compute_qty_at_date')
+
+    @api.depends('order_id.picking_ids', 'order_id.warehouse_id')
+    def _compute_qty_at_date(self):
+        """ Compute the quantity forecasted of product at delivery date. There are
+        two cases:
+         1. The quotation is confirmed, we take the maximum estimated date on picking_ids
+         2. The quotation is draft, we compute the estimated delivery date """
+        for line in self:
+            if line.product_id.type != 'product':
+                continue
+            if line.order_id.picking_ids:
+                estimated_date = max(line.order_id.picking_ids.mapped('scheduled_date'))
+            else:
+                route = line.order_id.warehouse_id.delivery_route_id
+                delay = sum(route.rule_ids.mapped('delay'))
+                estimated_date = datetime.now() + timedelta(days=delay)
+            line.qty_at_date = line.product_id.with_context(to_date=estimated_date).virtual_available
 
     @api.multi
     @api.depends('product_id')
@@ -258,8 +276,8 @@ class SaleOrderLine(models.Model):
 
     @api.depends('product_id')
     def _compute_is_storable(self):
-        for rec in self:
-            rec.is_storable = rec.product_id.type == 'product'
+        for line in self:
+            line.is_storable = line.product_id.type == 'product'
 
     @api.onchange('product_id')
     def _onchange_product_id_set_customer_lead(self):

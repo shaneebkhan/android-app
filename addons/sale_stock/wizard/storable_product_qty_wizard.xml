@@ -5,18 +5,20 @@
         <field name="model">sale.order.line.wizard</field>
         <field name="arch" type="xml">
             <form string="Quantity">
-                <group class="oe_inline">
+                <group class="col-4">
+                    <label for="on_hand_at_date" string="On Hand At Delivery Date" class="text-nowrap"/>
                     <div class="o_row">
                         <field name="on_hand_at_date" decoration-danger="on_hand_at_date &lt; 0" readonly="True"/>
                         <field name="product_uom_id" readonly="1" groups="uom.group_uom"/>
                     </div>
+                    <label for="on_hand" string="Available On Hand"/>
                     <div class="o_row">
-                        <field name="on_hand" readonly="True"/>
+                        <field name="on_hand" decoration-danger="on_hand &lt; 0"  readonly="True"/>
                         <field name="product_uom_id" readonly="1" groups="uom.group_uom"/>
                     </div>
                 </group>
                 <group>
-                    <button string="Go To Forecasted stock" class="btn btn-link" name="_action_open_forcasted"/>
+                    <button string="Go To Forecasted stock" class="btn btn-link" name="action_open_forcasted"/>
                 </group>
                 <footer>
                     <button string="OK" class="btn-primary" special="cancel"/>
