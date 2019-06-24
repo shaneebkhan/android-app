@@ -46,7 +46,12 @@ class PosConfig(models.Model):
         journal = self.env.ref('point_of_sale.pos_sale_journal', raise_if_not_found=False)
         if journal and journal.sudo().company_id == self.env.company:
             return journal
-        return self._default_invoice_journal()
+        return self.env['account.journal'].create({
+            'name': 'Point of Sale - %s' % self.env.company.name,
+            'code': 'POSS',
+            'type': 'sale',
+            'sequence': 20
+            })
 
     def _default_invoice_journal(self):
         return self.env['account.journal'].search([('type', '=', 'sale'), ('company_id', '=', self.env.company.id)], limit=1)
@@ -80,7 +85,7 @@ class PosConfig(models.Model):
         'account.journal', string='Sales Journal',
         domain=[('type', '=', 'sale')],
         help="Accounting journal used to post sales entries.",
-        default=_default_sale_journal)
+        default=_default_sale_journal, required=True)
     invoice_journal_id = fields.Many2one(
         'account.journal', string='Invoice Journal',
         domain=[('type', '=', 'sale')],

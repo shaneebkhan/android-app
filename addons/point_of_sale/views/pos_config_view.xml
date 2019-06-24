@@ -246,6 +246,34 @@
                     </div>
                     <h2>Pricing</h2>
                     <div class="row mt16 o_settings_container" id="pricing">
+                        <div class="col-12 col-lg-6 o_setting_box" id="default_pricelist_setting" title="Choose a pricelist for the Point Of Sale" groups="product.group_sale_pricelist">
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Default Pricelist</span>
+                                <div class="content-group mt16">
+                                    <field name="pricelist_id" domain="[('id', 'in', available_pricelist_ids)]" options="{'no_create': True}"/>
+                                </div>
+                                <div>
+                                    <button name="%(product.product_pricelist_action2)d" icon="fa-arrow-right" type="action" string="Pricelists" class="btn-link"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box" id="pricelist_setting" title="Choose a pricelist for the Point Of Sale" groups="product.group_sale_pricelist">
+                            <div class="o_setting_left_pane">
+                                <field name="use_pricelist"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="use_pricelist" string="Advanced Pricelists"/>
+                                <div class="text-muted">
+                                    Set shop-specific prices, seasonal discounts, etc.
+                                </div>
+                                <div class="content-group mt16" attrs="{'invisible': [('use_pricelist','=',False)], 'required' : [('use_pricelist', '=', True)]}">
+                                    <div class="row mt16">
+                                        <label string="Available Pricelists" for="available_pricelist_ids" class="col-lg-3 o_light_label"/>
+                                        <field name="available_pricelist_ids" widget="many2many_tags" domain="['|',('company_id', '=', company_id),('company_id', '=', False)]"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-xs-12 col-lg-6 o_setting_box" id="product_prices">
                             <div class="o_setting_right_pane">
                                 <label for="iface_tax_included" string="Product Prices"/>
@@ -272,30 +300,6 @@
                                 <div class="content-group " attrs="{'invisible':[('module_pos_discount','=',False)]}">
                                     <div class="mt16" id="btn_use_pos_discount">
                                         <button string="Save" type="object" name="execute" class="oe_highlight"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-lg-6 o_setting_box" id="pricelist_setting" title="Choose a pricelist for the Point Of Sale" groups="product.group_sale_pricelist">
-                            <div class="o_setting_left_pane">
-                                <field name="use_pricelist"/>
-                            </div>
-                            <div class="o_setting_right_pane">
-                                <label for="use_pricelist" string="Pricelist"/>
-                                <div class="text-muted">
-                                    Set shop-specific prices, seasonal discounts, etc.
-                                </div>
-                                <div class="content-group mt16" attrs="{'invisible': [('use_pricelist','=',False)], 'required' : [('use_pricelist', '=', True)]}">
-                                    <div class="row mt16">
-                                        <label string="Available Pricelists" for="available_pricelist_ids" class="col-lg-3 o_light_label"/>
-                                        <field name="available_pricelist_ids" widget="many2many_tags" domain="['|',('company_id', '=', company_id),('company_id', '=', False)]"/>
-                                    </div>
-                                    <div class="row">
-                                        <label string="Default Pricelist" for="pricelist_id" class="col-lg-3 o_light_label"/>
-                                        <field name="pricelist_id" domain="[('id', 'in', available_pricelist_ids)]" options="{'no_create': True}"/>
-                                    </div>
-                                    <div>
-                                        <button name="%(product.product_pricelist_action2)d" icon="fa-arrow-right" type="action" string="Pricelists" class="btn-link"/>
                                     </div>
                                 </div>
                             </div>
