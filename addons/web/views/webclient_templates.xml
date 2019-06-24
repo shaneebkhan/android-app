@@ -439,7 +439,7 @@
         </xpath>
         <xpath expr="//t[@t-raw='0']" position="replace">
             <div id="wrapwrap" t-attf-class="#{pageName or ''}">
-                <header t-if="not no_header" id="top" data-anchor="true">
+                <header t-if="not no_header" data-anchor="true">
                     <img class="img-responsive d-block mx-auto"
                         t-attf-src="/web/binary/company_logo"
                         alt="Logo"/>

@@ -1,10 +1,10 @@
 odoo.define('website_sale.utils', function (require) {
 'use strict';
 
-function animateClone($cart, $elem, offsetTop, offsetLeft) {
-    $cart.find('.o_animate_blink').addClass('o_red_highlight o_shadow_animation').delay(500).queue(function(){
+function animateClone($cart, $elem, offsetTop, offsetLeft, callback) {
+    $cart.find('.o_animate_blink').addClass('o_red_highlight o_shadow_animation').delay(500).queue(function () {
         $(this).removeClass("o_shadow_animation").dequeue();
-    }).delay(2000).queue(function(){
+    }).delay(2000).queue(function () {
         $(this).removeClass("o_red_highlight").dequeue();
     });
     var $imgtodrag = $elem.find('img').eq(0);
@@ -28,6 +28,9 @@ function animateClone($cart, $elem, offsetTop, offsetLeft) {
             height: 0,
         }, function () {
             $(this).detach();
+            if (callback) {
+                callback();
+            }
         });
     }
 }
