@@ -2,83 +2,84 @@
 // Layout
 // ------------------------------------------------------------------
 
- .o_mail_component_thread_preview_list > .o_preview {
+.o_mail_component_ThreadPreview {
     display: flex;
 
-    &:hover > .o_content > .o_core > span.o_mark_as_read {
+    &:hover .o_mail_component_ThreadPreview__markAsRead {
         display: flex;
     }
+}
 
-    > div {
-        margin: 3px 3px;
+.o_mail_component_ThreadPreview__content {
+    display: flex;
+    flex-flow: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 3px;
+}
+
+.o_mail_component_ThreadPreview__core {
+    display: flex;
+}
+
+.o_mail_component_ThreadPreview__coreItem {
+    margin: 0 3px;
+
+    &:first-of-type {
+        margin-left: 0px;
     }
 
-    > .o_content {
-        display: flex;
-        flex-flow: column;
-        flex: 1 1 auto;
-        min-width: 0;
-
-        > .o_core {
-            display: flex;
-
-            > span {
-                margin: 0 3px;
-
-                &:first-of-type {
-                    margin-left: 0px;
-                }
-
-                &:last-of-type {
-                    margin-right: 0px;
-                }
-
-                &.o_inline_text {
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-
-                    > i {
-                        margin-right: 3px;
-                    }
-                }
-
-                &.o_mark_as_read {
-                    display: none;
-                    flex: 0 0 auto;
-                }
-            }
-        }
-
-        > .o_header {
-            display: flex;
-
-            > .o_counter {
-                margin: 0 3px;
-            }
-
-            > .o_date {
-                flex: 0 0 auto;
-            }
-
-            > .o_name {
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-        }
+    &:last-of-type {
+        margin-right: 0px;
     }
+}
 
-    > .o_sidebar > img {
-        width: 40px;
-        height: 40px;
-    }
+.o_mail_component_ThreadPreview__counter {
+    margin: 0 3px;
+}
+
+.o_mail_component_ThreadPreview__date {
+    flex: 0 0 auto;
+}
+
+.o_mail_component_ThreadPreview__header {
+    display: flex;
+}
+
+.o_mail_component_ThreadPreview__image {
+    width: 40px;
+    height: 40px;
+}
+
+.o_mail_component_ThreadPreview__inlineText {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.o_mail_component_ThreadPreview__inlineTextPrefix {
+    margin-right: 3px;
+}
+
+.o_mail_component_ThreadPreview__markAsRead {
+    display: none;
+    flex: 0 0 auto;
+}
+
+.o_mail_component_ThreadPreview__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.o_mail_component_ThreadPreview__sidebar {
+    margin: 3px;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_thread_preview_list > .o_preview {
+.o_mail_component_ThreadPreview {
     background-color: white;
     cursor: pointer;
     user-select: none;
@@ -87,31 +88,32 @@
         background-color: gray('300');
     }
 
-    &.o_unread > .o_content > .o_header {
+    &.o_unread {
 
-        > .o_counter, .o_name {
+        .o_mail_component_ThreadPreview__counter,
+        .o_mail_component_ThreadPreview__name {
             font-weight: bold;
         }
     }
+}
 
-    > .o_content {
+.o_mail_component_ThreadPreview__core {
+    color: gray('500');
+}
 
-        > .o_core {
-            color: gray('500');
+.o_mail_component_ThreadPreview__date {
+    font-size: x-small;
+    color: gray('500');
+}
 
-            > span.o_mark_as_read:hover {
-                opacity: 1;
-                color: gray('600');
-            }
+.o_mail_component_ThreadPreview__markAsRead {
 
-            > span.o_mark_as_read:not(:hover) {
-                opacity: 0.8;
-            }
-        }
+    &:hover {
+        opacity: 1;
+        color: gray('600');
+    }
 
-        > .o_header > .o_date {
-            font-size: x-small;
-            color: gray('500');
-        }
+    &:not(:hover) {
+        opacity: 0.8;
     }
 }

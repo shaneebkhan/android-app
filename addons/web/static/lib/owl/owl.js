@@ -1053,6 +1053,71 @@
         return result;
     }
 
+    /**
+     * We define here a simple event bus: it can
+     * - emit events
+     * - add/remove listeners.
+     *
+     * This is a useful pattern of communication in many cases.  For OWL, each
+     * components and stores are event buses.
+     */
+    //------------------------------------------------------------------------------
+    // EventBus
+    //------------------------------------------------------------------------------
+    class EventBus {
+        constructor() {
+            this.subscriptions = {};
+        }
+        /**
+         * Add a listener for the 'eventType' events.
+         *
+         * Note that the 'owner' of this event can be anything, but will more likely
+         * be a component or a class. The idea is that the callback will be called with
+         * the proper owner bound.
+         *
+         * Also, the owner should be kind of unique. This will be used to remove the
+         * listener.
+         */
+        on(eventType, owner, callback) {
+            if (!callback) {
+                throw new Error("Missing callback");
+            }
+            if (!this.subscriptions[eventType]) {
+                this.subscriptions[eventType] = [];
+            }
+            this.subscriptions[eventType].push({
+                owner,
+                callback
+            });
+        }
+        /**
+         * Remove a listener
+         */
+        off(eventType, owner) {
+            const subs = this.subscriptions[eventType];
+            if (subs) {
+                this.subscriptions[eventType] = subs.filter(s => s.owner !== owner);
+            }
+        }
+        /**
+         * Emit an event of type 'eventType'.  Any extra arguments will be passed to
+         * the listeners callback.
+         */
+        trigger(eventType, ...args) {
+            const subs = this.subscriptions[eventType] || [];
+            for (let i = 0, iLen = subs.length; i < iLen; i++) {
+                const sub = subs[i];
+                sub.callback.call(sub.owner, ...args);
+            }
+        }
+        /**
+         * Remove all subscriptions.
+         */
+        clear() {
+            this.subscriptions = {};
+        }
+    }
+
     //------------------------------------------------------------------------------
     // Const/global stuff/helpers
     //------------------------------------------------------------------------------
@@ -1110,8 +1175,9 @@
     //------------------------------------------------------------------------------
     // QWeb rendering engine
     //------------------------------------------------------------------------------
-    class QWeb {
+    class QWeb extends EventBus {
         constructor(data) {
+            super();
             this.templates = {};
             this.utils = UTILS;
             // the id field is useful to be able to hash qweb instances.  The current
@@ -1144,7 +1210,10 @@
          * Add a template to the internal template map.  Note that it is not
          * immediately compiled.
          */
-        addTemplate(name, xmlString) {
+        addTemplate(name, xmlString, allowDuplicate) {
+            if (allowDuplicate && name in this.templates) {
+                return;
+            }
             const doc = parseXML(xmlString);
             if (!doc.firstChild) {
                 throw new Error("Invalid template (should not be empty)");
@@ -1232,9 +1301,15 @@
             }
             return template.fn.call(this, context, extra);
         }
-        _compile(name, elem) {
+        _compile(name, elem, parentNode) {
             const isDebug = elem.attributes.hasOwnProperty("t-debug");
             const ctx = new Context(name);
+            if (parentNode) {
+                ctx.nextID = parentNode + 1;
+                ctx.parentNode = parentNode;
+                ctx.allowMultipleRoots = true;
+                ctx.addLine(`let c${parentNode} = extra.parentNode;`);
+            }
             this._compileNode(elem, ctx);
             if (ctx.shouldProtectContext) {
                 ctx.code.unshift("    context = Object.create(context);");
@@ -1250,10 +1325,12 @@
             if (ctx.shouldDefineUtils) {
                 ctx.code.unshift("    let utils = this.utils;");
             }
-            if (!ctx.rootNode) {
-                throw new Error("A template should have one root node");
+            if (!parentNode) {
+                if (!ctx.rootNode) {
+                    throw new Error("A template should have one root node");
+                }
+                ctx.addLine(`return vn${ctx.rootNode};`);
             }
-            ctx.addLine(`return vn${ctx.rootNode};`);
             let template;
             try {
                 template = new Function("context", "extra", ctx.code.join("\n"));
@@ -1305,8 +1382,7 @@
             if (firstLetter === firstLetter.toUpperCase()) {
                 // this is a component, we modify in place the xml document to change
                 // <SomeComponent ... /> to <t t-component="SomeComponent" ... />
-                node.setAttribute('t-component', node.tagName);
-                node.nodeValue = 't';
+                node.setAttribute("t-component", node.tagName);
             }
             const attributes = node.attributes;
             const validDirectives = [];
@@ -1336,7 +1412,7 @@
                         fullName = name;
                         value = attributes[j].textContent;
                         validDirectives.push({ directive, value, fullName });
-                        if (directive.name === "on" || directive.name === 'model') {
+                        if (directive.name === "on" || directive.name === "model") {
                             withHandlers = true;
                         }
                     }
@@ -1563,6 +1639,7 @@
             this.shouldProtectContext = false;
             this.inLoop = false;
             this.inPreTag = false;
+            this.allowMultipleRoots = false;
             this.rootContext = this;
             this.templateName = name || "noname";
             this.addLine("var h = this.utils.h;");
@@ -1572,7 +1649,9 @@
             return id;
         }
         withParent(node) {
-            if (this === this.rootContext && (this.parentNode || this.parentTextNode)) {
+            if (!this.allowMultipleRoots &&
+                this === this.rootContext &&
+                (this.parentNode || this.parentTextNode)) {
                 throw new Error("A template should not have more than one root node");
             }
             if (!this.rootContext.rootNode) {
@@ -1674,10 +1753,10 @@
             this.refs = {};
             const defaultProps = this.constructor.defaultProps;
             if (defaultProps) {
-                props = this._applyDefaultProps(props, defaultProps);
+                props = this.__applyDefaultProps(props, defaultProps);
             }
             if (QWeb.dev) {
-                this._validateProps(props || {});
+                this.__validateProps(props || {});
             }
             // is this a good idea?
             //   Pro: if props is empty, we can create easily a component
@@ -1693,6 +1772,19 @@
             }
             else {
                 this.env = parent;
+                this.env.qweb.on("update", this, () => {
+                    if (this.__owl__.isMounted) {
+                        this.render(true);
+                    }
+                    if (this.__owl__.isDestroyed) {
+                        // this is unlikely to happen, but if a root widget is destroyed,
+                        // we want to remove our subscription.  The usual way to do that
+                        // would be to perform some check in the destroy method, but since
+                        // it is very performance sensitive, and since this is a rare event,
+                        // we simply do it lazily
+                        this.env.qweb.off("update", this);
+                    }
+                });
             }
             this.__owl__ = {
                 id: id,
@@ -1796,20 +1888,20 @@
          * created declaratively in templates are managed by the Owl system.
          */
         async mount(target) {
-            const vnode = await this._prepare();
+            const vnode = await this.__prepare();
             if (this.__owl__.isDestroyed) {
                 // component was destroyed before we get here...
                 return;
             }
-            this._patch(vnode);
+            this.__patch(vnode);
             target.appendChild(this.el);
             if (document.body.contains(target)) {
-                this._callMounted();
+                this.__callMounted();
             }
         }
         unmount() {
             if (this.__owl__.isMounted) {
-                this._callWillUnmount();
+                this.__callWillUnmount();
                 this.el.remove();
             }
         }
@@ -1822,13 +1914,13 @@
             if (shouldPatch) {
                 patchQueue = [];
             }
-            const renderVDom = this._render(force, patchQueue);
+            const renderVDom = this.__render(force, patchQueue);
             const renderId = __owl__.renderId;
             await renderVDom;
             if (shouldPatch && __owl__.isMounted && renderId === __owl__.renderId) {
                 // we only update the vnode and the actual DOM if no other rendering
                 // occurred between now and when the render method was initially called.
-                this._applyPatchQueue(patchQueue);
+                this.__applyPatchQueue(patchQueue);
             }
         }
         /**
@@ -1844,7 +1936,7 @@
             const __owl__ = this.__owl__;
             if (!__owl__.isDestroyed) {
                 const el = this.el;
-                this._destroy(__owl__.parent);
+                this.__destroy(__owl__.parent);
                 if (el) {
                     el.remove();
                 }
@@ -1896,7 +1988,7 @@
         //--------------------------------------------------------------------------
         // Private
         //--------------------------------------------------------------------------
-        _destroy(parent) {
+        __destroy(parent) {
             const __owl__ = this.__owl__;
             const isMounted = __owl__.isMounted;
             if (isMounted) {
@@ -1905,7 +1997,7 @@
             }
             const children = __owl__.children;
             for (let key in children) {
-                children[key]._destroy(this);
+                children[key].__destroy(this);
             }
             if (parent) {
                 let id = __owl__.id;
@@ -1915,13 +2007,13 @@
             __owl__.isDestroyed = true;
             delete __owl__.vnode;
         }
-        _callMounted() {
+        __callMounted() {
             const __owl__ = this.__owl__;
             const children = __owl__.children;
             for (let id in children) {
                 const comp = children[id];
                 if (!comp.__owl__.isMounted && this.el.contains(comp.el)) {
-                    comp._callMounted();
+                    comp.__callMounted();
                 }
             }
             __owl__.isMounted = true;
@@ -1931,7 +2023,7 @@
             }
             this.mounted();
         }
-        _callWillUnmount() {
+        __callWillUnmount() {
             this.willUnmount();
             const __owl__ = this.__owl__;
             __owl__.isMounted = false;
@@ -1939,38 +2031,38 @@
             for (let id in children) {
                 const comp = children[id];
                 if (comp.__owl__.isMounted) {
-                    comp._callWillUnmount();
+                    comp.__callWillUnmount();
                 }
             }
         }
-        async _updateProps(nextProps, forceUpdate = false, patchQueue) {
+        async __updateProps(nextProps, forceUpdate = false, patchQueue) {
             const shouldUpdate = forceUpdate || this.shouldUpdate(nextProps);
             if (shouldUpdate) {
                 const defaultProps = this.constructor.defaultProps;
                 if (defaultProps) {
-                    nextProps = this._applyDefaultProps(nextProps, defaultProps);
+                    nextProps = this.__applyDefaultProps(nextProps, defaultProps);
                 }
                 if (QWeb.dev) {
-                    this._validateProps(nextProps);
+                    this.__validateProps(nextProps);
                 }
                 await this.willUpdateProps(nextProps);
                 this.props = nextProps;
                 await this.render(forceUpdate, patchQueue);
             }
         }
-        _patch(vnode) {
+        __patch(vnode) {
             const __owl__ = this.__owl__;
             __owl__.renderPromise = null;
             const target = __owl__.vnode || document.createElement(vnode.sel);
             __owl__.vnode = patch(target, vnode);
         }
-        _prepare() {
+        __prepare() {
             const __owl__ = this.__owl__;
             __owl__.renderProps = this.props;
-            __owl__.renderPromise = this._prepareAndRender();
+            __owl__.renderPromise = this.__prepareAndRender();
             return __owl__.renderPromise;
         }
-        async _prepareAndRender() {
+        async __prepareAndRender() {
             await this.willStart();
             const __owl__ = this.__owl__;
             if (__owl__.isDestroyed) {
@@ -2005,10 +2097,10 @@
                 }
             }
             __owl__.render = qweb.render.bind(qweb, this.template);
-            this._observeState();
-            return this._render();
+            this.__observeState();
+            return this.__render();
         }
-        async _render(force = false, patchQueue = []) {
+        async __render(force = false, patchQueue = []) {
             const __owl__ = this.__owl__;
             __owl__.renderId++;
             const promises = [];
@@ -2043,25 +2135,25 @@
         /**
          * Only called by qweb t-component directive
          */
-        _mount(vnode, elm) {
+        __mount(vnode, elm) {
             const __owl__ = this.__owl__;
             __owl__.vnode = patch(elm, vnode);
             if (__owl__.parent.__owl__.isMounted && !__owl__.isMounted) {
-                this._callMounted();
+                this.__callMounted();
             }
             return __owl__.vnode;
         }
         /**
          * Only called by qweb t-component directive (when t-keepalive is set)
          */
-        _remount() {
+        __remount() {
             const __owl__ = this.__owl__;
             if (!__owl__.isMounted) {
                 __owl__.isMounted = true;
                 this.mounted();
             }
         }
-        _observeState() {
+        __observeState() {
             if (this.state) {
                 const __owl__ = this.__owl__;
                 __owl__.observer = new Observer();
@@ -2075,7 +2167,7 @@
          * Note that this method does not modify in place the props, it returns a new
          * prop object
          */
-        _applyDefaultProps(props, defaultProps) {
+        __applyDefaultProps(props, defaultProps) {
             props = props ? Object.create(props) : {};
             for (let propName in defaultProps) {
                 if (props[propName] === undefined) {
@@ -2088,10 +2180,10 @@
          * Apply the given patch queue. A patch is a pair [c, vn], where c is a
          * Component instance and vn a VNode.
          *   1) Call 'willPatch' on the component of each patch
-         *   2) Call '_patch' on the component of each patch
+         *   2) Call '__patch' on the component of each patch
          *   3) Call 'patched' on the component of each patch, in inverse order
          */
-        _applyPatchQueue(patchQueue) {
+        __applyPatchQueue(patchQueue) {
             const patchLen = patchQueue.length;
             for (let i = 0; i < patchLen; i++) {
                 const patch = patchQueue[i];
@@ -2099,7 +2191,7 @@
             }
             for (let i = 0; i < patchLen; i++) {
                 const patch = patchQueue[i];
-                patch[0]._patch(patch[1]);
+                patch[0].__patch(patch[1]);
             }
             for (let i = patchLen - 1; i >= 0; i--) {
                 const patch = patchQueue[i];
@@ -2112,7 +2204,7 @@
          * visit recursively the props and all the children to check if they are valid.
          * This is why it is only done in 'dev' mode.
          */
-        _validateProps(props) {
+        __validateProps(props) {
             const propsDef = this.constructor.props;
             if (propsDef instanceof Array) {
                 // list of strings (prop names)
@@ -2182,71 +2274,6 @@
             }
         }
         return result;
-    }
-
-    /**
-     * We define here a simple event bus: it can
-     * - emit events
-     * - add/remove listeners.
-     *
-     * This is a useful pattern of communication in many cases.  For OWL, each
-     * components and stores are event buses.
-     */
-    //------------------------------------------------------------------------------
-    // EventBus
-    //------------------------------------------------------------------------------
-    class EventBus {
-        constructor() {
-            this.subscriptions = {};
-        }
-        /**
-         * Add a listener for the 'eventType' events.
-         *
-         * Note that the 'owner' of this event can be anything, but will more likely
-         * be a component or a class. The idea is that the callback will be called with
-         * the proper owner bound.
-         *
-         * Also, the owner should be kind of unique. This will be used to remove the
-         * listener.
-         */
-        on(eventType, owner, callback) {
-            if (!callback) {
-                throw new Error("Missing callback");
-            }
-            if (!this.subscriptions[eventType]) {
-                this.subscriptions[eventType] = [];
-            }
-            this.subscriptions[eventType].push({
-                owner,
-                callback
-            });
-        }
-        /**
-         * Remove a listener
-         */
-        off(eventType, owner) {
-            const subs = this.subscriptions[eventType];
-            if (subs) {
-                this.subscriptions[eventType] = subs.filter(s => s.owner !== owner);
-            }
-        }
-        /**
-         * Emit an event of type 'eventType'.  Any extra arguments will be passed to
-         * the listeners callback.
-         */
-        trigger(eventType, ...args) {
-            const subs = this.subscriptions[eventType] || [];
-            for (let i = 0, iLen = subs.length; i < iLen; i++) {
-                const sub = subs[i];
-                sub.callback.call(sub.owner, ...args);
-            }
-        }
-        /**
-         * Remove all subscriptions.
-         */
-        clear() {
-            this.subscriptions = {};
-        }
     }
 
     /**
@@ -2799,9 +2826,9 @@
      *   // perspective.
      *   context.__owl__.cmap[key5] = w4.__owl__.id;
      *
-     *   // _prepare is called, to basically call willStart, then render the
+     *   // __prepare is called, to basically call willStart, then render the
      *   // component
-     *   def3 = w4._prepare();
+     *   def3 = w4.__prepare();
      *
      *   def3 = def3.then(vnode => {
      *     // we create here a virtual node for the parent (NOT the component). This
@@ -2815,11 +2842,11 @@
      *     // component at the proper time
      *     pvnode.data.hook = {
      *       insert(vn) {
-     *         // the _mount method will patch the component vdom into the elm vn.elm,
+     *         // the __mount method will patch the component vdom into the elm vn.elm,
      *         // then call the mounted hooks. However, suprisingly, the snabbdom
      *         // patch method actually replace the elm by a new elm, so we need
      *         // to synchronise the pvnode elm with the resulting elm
-     *         let nvn = w4._mount(vnode, vn.elm);
+     *         let nvn = w4.__mount(vnode, vn.elm);
      *         pvnode.elm = nvn.elm;
      *         // what follows is only present if there are animations on the component
      *         utils.transitionInsert(vn, "fade");
@@ -2847,10 +2874,10 @@
      *   });
      * } else {
      *   // this is the 'update' path of the directive.
-     *   // the call to _updateProps is the actual component update
+     *   // the call to __updateProps is the actual component update
      *   // Note that we only update the props if we cannot reuse the previous
      *   // rendering work (in the case it was rendered with the same props)
-     *   def3 = def3 || w4._updateProps(props4, extra.forceUpdate, extra.patchQueue);
+     *   def3 = def3 || w4.__updateProps(props4, extra.forceUpdate, extra.patchQueue);
      *   def3 = def3.then(() => {
      *     // if component was destroyed in the meantime, we do nothing (so, this
      *     // means that the parent's element children list will have a null in
@@ -2933,6 +2960,17 @@
                 : ctx.inLoop
                     ? `String(-${componentID} - i)`
                     : String(componentID);
+            if (ctx.allowMultipleRoots) {
+                // necessary to prevent collisions
+                if (!key && ctx.inLoop) {
+                    let id = ctx.generateID();
+                    ctx.addLine(`let template${id} = "_slot_" + String(-${componentID} - i)`);
+                    templateID = `template${id}`;
+                }
+                else {
+                    templateID = `"_slot_${templateID}"`;
+                }
+            }
             let ref = node.getAttribute("t-ref");
             let refExpr = "";
             let refKey = "";
@@ -2971,7 +3009,8 @@
                 if (classAttr) {
                     classCode =
                         classAttr
-                            .split(" ")
+                            .trim()
+                            .split(/\s+/)
                             .map(c => `vn.elm.classList.add('${c}')`)
                             .join(";") + ";";
                 }
@@ -3048,7 +3087,7 @@
             ctx.addLine(`w${componentID} = new W${componentID}(owner, props${componentID});`);
             ctx.addLine(`context.__owl__.cmap[${templateID}] = w${componentID}.__owl__.id;`);
             // SLOTS
-            if (node.childElementCount) {
+            if (node.childNodes.length) {
                 const clone = node.cloneNode(true);
                 const slotNodes = clone.querySelectorAll("[t-set]");
                 const slotId = qweb.nextSlotId++;
@@ -3059,33 +3098,36 @@
                         slotNode.parentElement.removeChild(slotNode);
                         const key = slotNode.getAttribute("t-set");
                         slotNode.removeAttribute("t-set");
-                        const slotFn = qweb._compile(`slot_${key}_template`, slotNode);
+                        const slotFn = qweb._compile(`slot_${key}_template`, slotNode, ctx.parentNode);
                         qweb.slots[`${slotId}_${key}`] = slotFn.bind(qweb);
                     }
                 }
-                if (clone.childElementCount) {
-                    const content = clone.children[0];
-                    const slotFn = qweb._compile(`slot_default_template`, content);
+                if (clone.childNodes.length) {
+                    const t = clone.ownerDocument.createElement("t");
+                    for (let child of Object.values(clone.childNodes)) {
+                        t.appendChild(child);
+                    }
+                    const slotFn = qweb._compile(`slot_default_template`, t, ctx.parentNode);
                     qweb.slots[`${slotId}_default`] = slotFn.bind(qweb);
                 }
             }
-            ctx.addLine(`def${defID} = w${componentID}._prepare();`);
+            ctx.addLine(`def${defID} = w${componentID}.__prepare();`);
             // hack: specify empty remove hook to prevent the node from being removed from the DOM
-            ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}, hook: {insert(vn) {let nvn=w${componentID}._mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeComponentCode}}}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;w${componentID}.__owl__.pvnode = pvnode;});`);
+            ctx.addLine(`def${defID} = def${defID}.then(vnode=>{${createHook}let pvnode=h(vnode.sel, {key: ${templateID}, hook: {insert(vn) {let nvn=w${componentID}.__mount(vnode, pvnode.elm);pvnode.elm=nvn.elm;${refExpr}${transitionsInsertCode}},remove() {},destroy(vn) {${finalizeComponentCode}}}});c${ctx.parentNode}[_${dummyID}_index]=pvnode;w${componentID}.__owl__.pvnode = pvnode;});`);
             ctx.addElse();
             // need to update component
             const patchQueueCode = async
                 ? `patchQueue${componentID}`
                 : "extra.patchQueue";
-            ctx.addLine(`def${defID} = def${defID} || w${componentID}._updateProps(props${componentID}, extra.forceUpdate, ${patchQueueCode});`);
+            ctx.addLine(`def${defID} = def${defID} || w${componentID}.__updateProps(props${componentID}, extra.forceUpdate, ${patchQueueCode});`);
             let keepAliveCode = "";
             if (keepAlive) {
-                keepAliveCode = `pvnode.data.hook.insert = vn => {vn.elm.parentNode.replaceChild(w${componentID}.el,vn.elm);vn.elm=w${componentID}.el;w${componentID}._remount();};`;
+                keepAliveCode = `pvnode.data.hook.insert = vn => {vn.elm.parentNode.replaceChild(w${componentID}.el,vn.elm);vn.elm=w${componentID}.el;w${componentID}.__remount();};`;
             }
             ctx.addLine(`def${defID} = def${defID}.then(()=>{if (w${componentID}.__owl__.isDestroyed) {return};${tattStyle ? `w${componentID}.el.style=${tattStyle};` : ""}${updateClassCode}let pvnode=w${componentID}.__owl__.pvnode;${keepAliveCode}c${ctx.parentNode}[_${dummyID}_index]=pvnode;});`);
             ctx.closeIf();
             if (async) {
-                ctx.addLine(`def${defID}.then(w${componentID}._applyPatchQueue.bind(w${componentID}, patchQueue${componentID}));`);
+                ctx.addLine(`def${defID}.then(w${componentID}.__applyPatchQueue.bind(w${componentID}, patchQueue${componentID}));`);
             }
             else {
                 ctx.addLine(`extra.promises.push(def${defID});`);
@@ -3134,7 +3176,9 @@
         atNodeEncounter({ ctx, value }) {
             const slotKey = ctx.generateID();
             ctx.addLine(`const slot${slotKey} = this.slots[context.__owl__.slotId + '_' + '${value}'];`);
-            ctx.addLine(`c${ctx.parentNode}.push(slot${slotKey}(context.__owl__.parent, extra));`);
+            ctx.addIf(`slot${slotKey}`);
+            ctx.addLine(`slot${slotKey}(context.__owl__.parent, Object.assign({}, extra, {parentNode: c${ctx.parentNode}}));`);
+            ctx.closeIf();
             return true;
         }
     });
@@ -3330,9 +3374,9 @@
              * updates to be called for the parents before the children.  However,
              * if we use the mounted hook, this will be done in the reverse order.
              */
-            _callMounted() {
+            __callMounted() {
                 this.__owl__.store.on("update", this, this._checkUpdate);
-                super._callMounted();
+                super.__callMounted();
             }
             willUnmount() {
                 this.__owl__.store.off("update", this);
@@ -3357,16 +3401,16 @@
                 }
                 if (didChange) {
                     this.__owl__.currentStoreProps = storeProps;
-                    this._updateProps(ownProps, false);
+                    this.__updateProps(ownProps, false);
                 }
             }
-            _updateProps(nextProps, forceUpdate, patchQueue) {
+            __updateProps(nextProps, forceUpdate, patchQueue) {
                 if (this.__owl__.ownProps !== nextProps) {
                     this.__owl__.currentStoreProps = mapStoreToProps(this.__owl__.store.state, nextProps, this.__owl__.store.getters);
                 }
                 this.__owl__.ownProps = nextProps;
                 const mergedProps = Object.assign({}, nextProps, this.__owl__.currentStoreProps);
-                return super._updateProps(mergedProps, forceUpdate, patchQueue);
+                return super.__updateProps(mergedProps, forceUpdate, patchQueue);
             }
         };
         // we assign here a unique name to the resulting anonymous class.
@@ -3513,8 +3557,8 @@
     exports.utils = utils;
 
     exports.__info__.version = '0.15.0';
-    exports.__info__.date = '2019-06-23T23:23:31.328Z';
-    exports.__info__.hash = 'bd5111e';
+    exports.__info__.date = '2019-06-25T11:16:28.718Z';
+    exports.__info__.hash = '60b0052';
     exports.__info__.url = 'https://github.com/odoo/owl';
 
 }(this.owl = this.owl || {}));

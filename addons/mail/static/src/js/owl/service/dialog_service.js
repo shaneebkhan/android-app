@@ -85,7 +85,7 @@ const DialogService = AbstractService.extend(EnvMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_mail_component_dialog_manager')) {
+        if (document.querySelector('.o_mail_component_DialogManager')) {
             return;
         }
         await this._mount();
@@ -94,7 +94,7 @@ const DialogService = AbstractService.extend(EnvMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_mail_component_dialog_manager')) {
+        if (document.querySelector('.o_mail_component_DialogManager')) {
             return;
         }
         await this._mount();

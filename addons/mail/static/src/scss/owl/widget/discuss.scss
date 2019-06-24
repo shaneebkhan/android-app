@@ -2,12 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-// Autogrow flex-item to have auto-space on left and right items in a horizontal flex container
-.o_mail_component_autogrow {
-    flex: 1 1 auto;
-}
-
-.o_mail_widget_discuss {
+.o_mail_widget_Discuss {
     display: flex;
     flex: 0 0 100%;
     flex-flow: column;

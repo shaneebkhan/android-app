@@ -2,22 +2,22 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_attachment_preview_list {
+.o_mail_component_attachmentList {
     display: flex;
     flex-flow: wrap;
+}
 
-    > .o_item {
-        margin-left: 3px;
-        margin-right: 3px;
-        margin-bottom: 6px;
+.o_mail_component_attachmentList__attachment {
+    margin-left: 3px;
+    margin-right: 3px;
+    margin-bottom: 6px;
 
-        &:first-child {
-            margin-left: 0;
-        }
+    &:first-child {
+        margin-left: 0;
+    }
 
-        &:last-child {
-            margin-right: 0;
-        }
+    &:last-child {
+        margin-right: 0;
     }
 }
 

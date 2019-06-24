@@ -2,28 +2,25 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_systray_messaging_menu {
+.o_mail_component_SystrayMessagingMenu__counter {
+    position: relative;
+    transform: translate(-5px, -5px);
+    margin-right: -10px; // "cancel" right padding of systray items
+}
 
-    > a > .o_counter {
-        position: relative;
-        transform: translate(-5px, -5px);
-        margin-right: -10px; // "cancel" right padding of systray items
-    }
+.o_mail_component_SystrayMessagingMenu__dropdownMenu {
+    display: flex;
+    flex-flow: column;
+    flex: 0 1 auto;
+    max-height: 400px;
+    width: 350px;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow-y: auto;
+}
 
-    > .dropdown-menu {
-        display: flex;
-        flex-flow: column;
-        flex: 0 1 auto;
-        max-height: 400px;
-        width: 350px;
-        padding-top: 0;
-        padding-bottom: 0;
-        overflow-y: auto;
-
-        > .o_header {
-            display: flex;
-        }
-    }
+.o_mail_component_SystrayMessagingMenu__dropdownMenuHeader {
+    display: flex;
 }
 
 
@@ -31,40 +28,40 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_systray_messaging_menu {
+.o_mail_component_SystrayMessagingMenu {
 
     &.show {
         background-color: rgba(black, 0.1);
     }
+}
 
-    > a {
+.o_mail_component_SystrayMessagingMenu__counter {
+    background-color: $o-brand-primary;
+}
 
-        > i {
-            font-size: larger
-        }
+.o_mail_component_SystrayMessagingMenu__dropdownMenuHeader {
+    border-bottom: 1px solid gray('400');
+    box-shadow: 0 0 2px gray('400');
+    z-index: 1;
+}
 
-        > .o_counter {
-            background-color: $o-brand-primary;
-        }
+.o_mail_component_SystrayMessagingMenu__filter {
+
+    &.o_active {
+        font-weight: bold;
     }
 
-    > .dropdown-menu > .o_header {
-        border-bottom: 1px solid gray('400');
-        box-shadow: 0 0 2px gray('400');
-        z-index: 1;
+    &:not(:hover) {
 
-        > .o_filter {
-
-            &.o_active {
-                font-weight: bold;
-            }
-
-            &:not(:hover) {
-
-                &:not(.o_active) {
-                    color: gray('500');
-                }
-            }
+        &:not(.o_active) {
+            color: gray('500');
         }
+    }
+}
+
+.o_mail_component_SystrayMessagingMenu__toggler {
+
+    > i {
+        font-size: larger
     }
 }

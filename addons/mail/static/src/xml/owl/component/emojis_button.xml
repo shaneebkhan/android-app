@@ -3,15 +3,20 @@
 
     <button
         aria-label="Emojis"
-        class="o_mail_component_emojis_button btn btn-secondary fa fa-smile-o"
+        class="
+            btn
+            btn-secondary
+            fa
+            fa-smile-o
+            o_mail_component_EmojisButton"
         data-selector="true"
         data-toggle="popover"
         owl="1"
+        title="Emojis"
+        type="button"
         t-att-class="{
             o_open: state.open,
         }"
-        t-name="mail.component.EmojisButton"
-        title="Emojis"
-        type="button"/>
+        t-name="mail.component.EmojisButton"/>
 
 </templates>

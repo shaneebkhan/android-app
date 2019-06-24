@@ -38,9 +38,18 @@ const Discuss = AbstractAction.extend(EnvMixin, {
         // render buttons in control panel
         this.$buttons = $(qweb.render('mail.widget.DiscussControlButtons'));
         this.$buttons.find('button').css({ display:'inline-block' });
-        this.$buttons.on('click', '.o_invite', ev => this._onClickInvite(ev));
-        this.$buttons.on('click', '.o_mark_all_read', ev => this._onClickMarkAllAsRead(ev));
-        this.$buttons.on('click', '.o_unstar_all', ev => this._onClickUnstarAll(ev));
+        this.$buttons.on(
+            'click',
+            '.o_invite',
+            ev => this._onClickInvite(ev));
+        this.$buttons.on(
+            'click',
+            '.o_mark_all_read',
+            ev => this._onClickMarkAllAsRead(ev));
+        this.$buttons.on(
+            'click',
+            '.o_unstar_all',
+            ev => this._onClickUnstarAll(ev));
 
         // control panel attributes
         this.action = action;

@@ -14,9 +14,9 @@
                 <SidebarItem
                    class="o_mail_component_DiscussSidebar__item"
                    isActive="props.threadLocalID === mailbox.localID"
+                   threadLocalID="mailbox.localID"
                    t-key="mailbox.localID"
-                   t-on-clicked="_onClickedItem"
-                   threadLocalID="mailbox.localID"/>
+                   t-on-clicked="_onClickedItem"/>
             </t>
         </div>
         <hr
@@ -51,8 +51,8 @@
                         fa-plus
                         o_mail_component_DiscussSidebar__groupHeaderItem
                         o_mail_component_DiscussSidebar__groupHeaderItemAdd"
-                    t-on-click.stop="_onClickChannelAdd"
-                    title="Add or join a channel"/>
+                    title="Add or join a channel"
+                    t-on-click.stop="_onClickChannelAdd"/>
             </div>
             <div
                 class="o_mail_component_DiscussSidebar__list">
@@ -74,9 +74,9 @@
                     <SidebarItem
                         class="o_mail_component_DiscussSidebar__item"
                         isActive="props.threadLocalID === channel.localID"
+                        threadLocalID="channel.localID"
                         t-on-clicked="_onClickedItem"
-                        t-key="channel.localID"
-                        threadLocalID="channel.localID"/>
+                        t-key="channel.localID"/>
                 </t>
             </div>
         </div>
@@ -101,8 +101,8 @@
                         fa-plus
                         o_mail_component_DiscussSidebar__groupHeaderItem
                         o_mail_component_DiscussSidebar__groupHeaderItemAdd"
-                    t-on-click.stop="_onClickChatAdd"
-                    title="Start a conversation"/>
+                    title="Start a conversation"
+                    t-on-click.stop="_onClickChatAdd"/>
             </div>
             <div
                 class="o_mail_component_DiscussSidebar__list">
@@ -122,9 +122,9 @@
                     <SidebarItem
                        class="o_mail_component_DiscussSidebar__item"
                        isActive="props.threadLocalID === chat.localID"
+                       threadLocalID="chat.localID"
                        t-on-clicked="_onClickedItem"
-                       t-key="chat.localID"
-                       threadLocalID="chat.localID"/>
+                       t-key="chat.localID"/>
                 </t>
             </div>
         </div>

@@ -2,58 +2,87 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_thread_icon"
+        class="o_mail_component_ThreadIcon"
         owl="1"
         t-name="mail.component.ThreadIcon">
         <t t-if="props.thread.channel_type === 'channel'">
             <div
-                class="fa fa-lock"
-                t-if="props.thread.public === 'private'"
-                title="Private channel"/>
+                class="
+                    fa
+                    fa-lock
+                    o_mail_component_ThreadIcon__channelPrivate"
+                title="Private channel"
+                t-if="props.thread.public === 'private'"/>
             <div
-                class="fa fa-hashtag"
-                t-else=""
-                title="Public channel"/>
+                class="
+                    fa
+                    fa-hashtag
+                    o_mail_component_ThreadIcon__channelPublic"
+                title="Public channel"
+                t-else=""/>
         </t>
         <t t-elif="props.thread.channel_type === 'chat'">
             <div
-                class="fa fa-circle o_online"
-                t-if="props.directPartner.im_status === 'online'"
-                title="Online"/>
+                class="
+                    fa
+                    fa-circle
+                    o_mail_component_ThreadIcon__online"
+                title="Online"
+                t-if="props.directPartner.im_status === 'online'"/>
             <div
-                class="fa fa-circle-o o_offline"
-                t-elif="props.directPartner.im_status === 'offline'"
-                title="Offline"/>
+                class="
+                    fa
+                    fa-circle-o
+                    o_mail_component_ThreadIcon__offline"
+                title="Offline"
+                t-elif="props.directPartner.im_status === 'offline'"/>
             <div
-                class="fa fa-circle o_away"
-                t-elif="props.directPartner.im_status === 'away'"
-                title="Away"/>
+                class="
+                    fa
+                    fa-circle
+                    o_mail_component_ThreadIcon__away"
+                title="Away"
+                t-elif="props.directPartner.im_status === 'away'"/>
             <div
-                class="o_typing"
-                t-elif="props.thread.typingMemberLocalIDs.includes(props.thread.directPartnerLocalID)"
-                title="Is typing...">
-                <span class="o_dot"/>
-                <span class="o_dot"/>
-                <span class="o_dot"/>
+                class="o_mail_component_ThreadIcon__typing"
+                title="Is typing..."
+                t-elif="props.thread.typingMemberLocalIDs.includes(props.thread.directPartnerLocalID)">
+                <span class="o_mail_component_ThreadIcon__typingDot"/>
+                <span class="o_mail_component_ThreadIcon__typingDot"/>
+                <span class="o_mail_component_ThreadIcon__typingDot"/>
             </div>
             <div
-                class="fa fa-heart o_online"
-                t-elif="props.directPartner.im_status === 'bot'"
-                title="Bot"/>
+                class="
+                    fa
+                    fa-heart
+                    o_mail_component_ThreadIcon__online"
+                title="Bot"
+                t-elif="props.directPartner.im_status === 'bot'"/>
             <div
-                class="fa fa-question-circle"
-                t-else=""
-                title="No IM status available"/>
+                class="
+                    fa
+                    fa-question-circle"
+                title="No IM status available"
+                t-else=""/>
         </t>
         <t t-elif="props.thread._model === 'mail.box'">
             <div
-                class="fa fa-inbox"
+                class="
+                    fa
+                    fa-inbox
+                    o_mail_component_ThreadIcon__mailboxInbox"
                 t-if="props.thread.localID === 'mail.box_inbox'"/>
             <div
-                class="fa fa-star-o"
+                class="
+                    fa
+                    fa-star-o
+                    o_mail_component_ThreadIcon__mailboxStarred"
                 t-elif="props.thread.localID === 'mail.box_starred'"/>
             <div
-                class="fa fa-envelope"
+                class="
+                    fa
+                    fa-envelope
+                    o_mail_component_ThreadIcon__mailboxModeration"
                 t-elif="props.thread.localID === 'mail.box_moderation'"/>
         </t>
     </div>

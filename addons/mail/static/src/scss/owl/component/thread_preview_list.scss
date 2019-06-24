@@ -2,22 +2,22 @@
 // Layout
 // ------------------------------------------------------------------
 
- .o_mail_component_thread_preview_list {
+ .o_mail_component_ThreadPreviewList {
     display: flex;
     flex-flow: column;
+}
 
-    > .o_no_conversation {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 50px;
-    }
+.o_mail_component_ThreadPreviewList__noConversation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_thread_preview_list > div:not(:last-of-type) {
+.o_mail_component_ThreadPreviewList__preview:not(:last-of-type) {
     border-bottom: 1px solid gray('400');
 }

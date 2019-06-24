@@ -77,7 +77,7 @@ class ChatWindowHeader extends Component {
             return;
         }
         if (['mail.channel', 'mail.box'].includes(this.props.thread._model)) {
-            this.env.do_action('mail.action_wip_discuss', {
+            this.env.do_action('mail.action_owl_discuss', {
                 clear_breadcrumbs: false,
                 active_id: this.props.thread.localID,
                 on_reverse_breadcrumb: () =>

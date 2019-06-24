@@ -2,38 +2,47 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_discuss_mobile_navbar"
+        class="o_mail_component_DiscussMobileNavbar"
         owl="1"
         t-name="mail.component.DiscussMobileNavbar">
         <div
-            class="o_tab"
+            class="o_mail_component_DiscussMobileNavbar__tab"
             data-tab="mailbox"
             t-att-class="{
                 o_active: active === 'mailbox',
             }"
             t-on-click="_onClick">
-            <span class="fa fa-inbox o_icon"/>
-            <span class="o_label">Mailboxes</span>
+            <span class="
+                fa
+                fa-inbox
+                o_mail_component_DiscussMobileNavbar__tabIcon"/>
+            <span class="o_mail_component_DiscussMobileNavbar__tabLabel">Mailboxes</span>
         </div>
         <div
-            class="o_tab"
+            class="o_mail_component_DiscussMobileNavbar__tab"
             data-tab="chat"
             t-att-class="{
                 o_active: active === 'chat',
             }"
             t-on-click="_onClick">
-            <span class="fa fa-user o_icon"/>
-            <span class="o_label">Chat</span>
+            <span class="
+                fa
+                fa-user
+                o_mail_component_DiscussMobileNavbar__tabIcon"/>
+            <span class="o_mail_component_DiscussMobileNavbar__tabLabel">Chat</span>
         </div>
         <div
-            class="o_tab"
+            class="o_mail_component_DiscussMobileNavbar__tab"
             data-tab="channel"
             t-att-class="{
                 o_active: active === 'channel',
             }"
             t-on-click="_onClick">
-            <span class="fa fa-users o_icon"/>
-            <span class="o_label">Channels</span>
+            <span class="
+                fa
+                fa-users
+                o_mail_component_DiscussMobileNavbar__tabIcon"/>
+            <span class="o_mail_component_DiscussMobileNavbar__tabLabel">Channels</span>
         </div>
     </div>
 

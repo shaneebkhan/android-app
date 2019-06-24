@@ -6,7 +6,7 @@
     -->
     <div
         t-name="mail.widget.Discuss"
-        class="o_mail_widget_discuss"/>
+        class="o_mail_widget_Discuss"/>
 
     <!-- @param {boolean} isMobile -->
     <div t-name="mail.widget.DiscussControlButtons">
@@ -16,16 +16,16 @@
                 btn-primary
                 o_hidden
                 o_invite
-            "
+                o_mail_widget_Discuss__controlPanelButtonInvite"
             title="Invite people"
             type="button">Invite</button>
         <button
             class="
                 btn
                 btn-secondary
-                o_mark_all_read
                 o_hidden
-            "
+                o_mail_widget_Discuss__controlPanelButtonMarkAllRead
+                o_mark_all_read"
             title="Mark all as read"
             type="button">Mark all read</button>
         <button
@@ -33,8 +33,8 @@
                 btn
                 btn-secondary
                 o_hidden
-                o_unstar_all
-            "
+                o_mail_widget_Discuss__controlPanelButtonUnstarAll
+                o_unstar_all"
             title="Unstar all messages"
             type="button">Unstar all</button>
         <button
@@ -42,8 +42,8 @@
                 btn
                 btn-secondary
                 o_hidden
-                o_new_message
-            "
+                o_mail_widget_Discuss__controlPanelButtonNewMessage
+                o_new_message"
             title="New Message"
             type="button">New Message</button>
         <button
@@ -51,8 +51,8 @@
                 btn
                 btn-secondary
                 o_hidden
-                o_new_channel
-            "
+                o_mail_widget_Discuss__controlPanelButtonNewChannel
+                o_new_channel"
             type="button"
             title="New Channel">New Channel</button>
     </div>

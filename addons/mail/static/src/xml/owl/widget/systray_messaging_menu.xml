@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <li t-name="mail.widget.SystrayMessagingMenu"
-        class="o_mail_widget_systray_messaging_item"/>
+    <li
+        class="o_mail_widget_SystrayMessagingItem"
+        t-name="mail.widget.SystrayMessagingMenu"/>
 
 </templates>

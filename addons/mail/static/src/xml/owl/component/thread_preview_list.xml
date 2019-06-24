@@ -2,21 +2,22 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_thread_preview_list"
+        class="o_mail_component_ThreadPreviewList"
         owl="1"
         t-name="mail.component.ThreadPreviewList">
         <div
-            class="o_no_conversation"
+            class="o_mail_component_ThreadPreviewList__noConversation"
             t-if="props.threadLocalIDs.length === 0">
             No conversation yet...
         </div>
         <t t-else="">
             <ThreadPreview
-               t-as="threadLocalID"
-               t-foreach="props.threadLocalIDs"
-               t-key="threadLocalID"
-               t-on-clicked="_onClickedPreview"
-               threadLocalID="threadLocalID"/>
+                class="o_mail_component_ThreadPreviewList__preview"
+                threadLocalID="threadLocalID"
+                t-as="threadLocalID"
+                t-foreach="props.threadLocalIDs"
+                t-key="threadLocalID"
+                t-on-clicked="_onClickedPreview"/>
         </t>
     </div>
 

@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_discuss"
+        class="o_mail_component_Discuss"
         owl="1"
         t-att-class="{
             o_fullscreen: props.threadLocalID and props.isMobile and props.thread._model !== 'mail.box',
@@ -14,39 +14,39 @@
             <t t-if="!props.threadLocalID or props.thread._model === 'mail.box'">
                 <!-- no thread or mailbox selection -->
                 <MobileMailboxSelection
-                    class="o_mail_component_discuss__mobile_mailbox_selection"
+                    class="o_mail_component_Discuss__mobileMailboxSelection"
                     threadLocalID="props.threadLocalID"
                     t-if="state.mobileNavbarTab === 'mailbox'"
                     t-on-select-thread="_onSelectThread"/>
                 <t t-if="state.mobileNavbarTab === 'mailbox'">
                     <Thread
-                        class="o_mail_component_discuss__thread"
+                        class="o_mail_component_Discuss__thread"
                         options="threadOptions"
                         threadLocalID="props.threadLocalID"
                         t-if="props.threadLocalID"
                         t-on-redirect="_onRedirect"
                         t-ref="thread"/>
                     <div
-                        class="o_mail_component_discuss__no_thread"
+                        class="o_mail_component_Discuss__noThread"
                         t-else="">No conversation.</div>
                 </t>
                 <t t-elif="!props.threadLocalID">
                    <ThreadPreviewList
-                       class="o_mail_component_discuss__thread_preview_list"
+                       class="o_mail_component_Discuss__threadPreviewList"
                        options="threadPreviewListOptions"
                        t-on-select-thread="_onSelectThread"/>
                 </t>
                 <MobileNavbar
                     active="state.mobileNavbarTab"
-                    class="o_mail_component_discuss__mobile_navbar"
+                    class="o_mail_component_Discuss__mobileNavbar"
                     t-on-select.stop="_onSelectMobileNavbarTab"/>
             </t>
             <div
-                class="o_mail_component_discuss__content"
+                class="o_mail_component_Discuss__content"
                 t-else="">
                 <!-- chat/channel selection (mobile) -->
                 <Thread
-                    class="o_mail_component_discuss__thread"
+                    class="o_mail_component_Discuss__thread"
                     options="threadOptions"
                     threadLocalID="props.threadLocalID"
                     t-on-redirect="_onRedirect"
@@ -57,14 +57,14 @@
         <t t-else="">
             <!-- desktop layout -->
             <Sidebar
-                class="o_mail_component_discuss__sidebar"
+                class="o_mail_component_Discuss__sidebar"
                 threadLocalID="props.threadLocalID"
                 t-on-select-thread="_onSelectThread"/>
             <div
-                class="o_mail_component_discuss__content">
+                class="o_mail_component_Discuss__content">
                 <t t-if="props.threadLocalID">
                     <Thread
-                        class="o_mail_component_discuss__thread"
+                        class="o_mail_component_Discuss__thread"
                         options="threadOptions"
                         threadLocalID="props.threadLocalID"
                         t-key="props.threadLocalID"

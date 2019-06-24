@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_composer {
+.o_mail_component_Composer {
     display: flex;
     flex: 0 0 auto;
     align-items: flex-start;
@@ -11,23 +11,23 @@
     &.o_with_avatar {
         padding: 10px 3px;
 
-        .o_mail_component_composer__core {
+        .o_mail_component_Composer__core {
             margin-right: 10px;
             margin-left: 3px;
         }
     }
 }
 
-.o_mail_component_composer__attachment_list {
+.o_mail_component_Composer__attachmentList {
     flex: 1 1 auto;
 }
 
-.o_mail_component_composer__avatar {
+.o_mail_component_Composer__avatar {
     width: 36px;
     height: 36px;
 }
 
-.o_mail_component_composer__commands {
+.o_mail_component_Composer__commands {
     display: flex;
     align-items: stretch;
     flex: 0 0 auto;
@@ -35,7 +35,7 @@
     height: 39px; // match minimal-height of input
 }
 
-.o_mail_component_composer__core {
+.o_mail_component_Composer__core {
     display: flex;
     align-items: flex-start;
     flex: 1 1 auto;
@@ -43,32 +43,32 @@
     min-width: 0;
 }
 
-.o_mail_component_composer__followers,
-.o_mail_component_composer__suggested_partners {
+.o_mail_component_Composer__followers,
+.o_mail_component_Composer__suggestedPartners {
     flex: 0 0 100%;
     margin-bottom: $o-mail-chatter-gap*0.5;
 }
 
-.o_mail_component_composer__footer {
+.o_mail_component_Composer__footer {
     display: flex;
     flex: 1 1 auto;
     width: 100%;
     margin-top: 10px;
 }
 
-.o_mail_component_composer__input {
+.o_mail_component_Composer__input {
     flex: 1 1 auto;
     align-self: stretch;
 }
 
-.o_mail_component_composer__main {
+.o_mail_component_Composer__main {
     display: flex;
     align-items: flex-start;
     flex: 1 1 auto;
     width: 100%;
 }
 
-.o_mail_component_composer__sidebar {
+.o_mail_component_Composer__sidebar {
     flex: 0 0 auto;
     margin-right: 3px;
     margin-left: 7px;
@@ -78,14 +78,14 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_composer {
+.o_mail_component_Composer {
     background-color: gray('200');
     border: 1px solid gray('300');
 
     &.o_with_avatar {
         border: 1px solid gray('300');
 
-        .o_mail_component_composer__input > .note-editor {
+        .o_mail_component_Composer__input > .note-editor {
             border-radius: 5px 0 0 5px;
 
             > .note-editing-area {
@@ -93,7 +93,7 @@
             }
         }
 
-        .o_mail_component_composer__command:last-child {
+        .o_mail_component_Composer__command:last-child {
             border-radius: 0 5px 5px 0;
         }
     }
@@ -103,12 +103,12 @@
     }
 }
 
-.o_mail_component_composer__input {
+.o_mail_component_Composer__input {
     outline: none;
     border: none;
 }
 
-.o_mail_component_composer__command {
+.o_mail_component_Composer__command {
 
     &:focus {
         box-shadow: none;

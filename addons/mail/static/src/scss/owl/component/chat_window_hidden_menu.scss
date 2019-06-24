@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_chat_window_manager > .o_hidden_menu {
+.o_mail_component_ChatWindowHiddenMenu {
     position: fixed;
     bottom: 0;
     display: flex;
@@ -10,86 +10,82 @@
     height: 28px;
     align-items: stretch;
     padding: 5px;
+}
 
-    > .dropdown-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex: 1 1 auto;
-        max-width: 100%;
+.o_mail_component_ChatWindowHiddenMenu__dropdownToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    max-width: 100%;
+}
 
-        > .o_item {
-            margin: 0 3px;
+.o_mail_component_ChatWindowHiddenMenu__dropdownToggleIcon {
+    margin-right: 1px;
+}
 
-            &.o_icon {
-                margin-right: 1px;
-            }
+.o_mail_component_ChatWindowHiddenMenu__dropdownToggleItem {
+    margin: 0 3px;
+}
 
-            &.o_window_counter {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                margin-left: 1px;
-            }
-        }
+.o_mail_component_ChatWindowHiddenMenu__list {
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.o_mail_component_ChatWindowHiddenMenu__listItem {
+
+    &:not(:last-child) {
+        margin-bottom: 1px;
     }
+}
 
-    > .o_unread_counter {
-        position: absolute;
-        right: 0;
-        top: 0;
-        transform: translate(50%, -50%);
-        z-index: 1001; // on top of bootstrap dropup menu
-    }
+.o_mail_component_ChatWindowHiddenMenu__listItemComponent {
+    max-width: 200px;
+}
 
-    > .o_list {
-        overflow: auto;
-        margin: 0;
-        padding: 0;
+.o_mail_component_ChatWindowHiddenMenu__unreadCounter {
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translate(50%, -50%);
+    z-index: 1001; // on top of bootstrap dropup menu
+}
 
-        > .o_item {
-
-            &:not(:last-child) {
-                margin-bottom: 1px;
-            }
-
-            > .o_chat_window_header {
-                max-width: 200px;
-            }
-
-        }
-    }
+.o_mail_component_ChatWindowHiddenMenu__windowCounter {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 1px;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_chat_window_manager > .o_hidden_menu {
+.o_mail_component_ChatWindowHiddenMenu {
     background-color: gray('900');
     border-radius: 6px 6px 0 0;
     color: white;
     cursor: pointer;
+}
 
-    > .dropdown-toggle {
+.o_mail_component_ChatWindowHiddenMenu__dropdownToggle.show {
+    opacity: 0.5;
+}
 
-        &.show {
-            opacity: 0.5;
-        }
+.o_mail_component_ChatWindowHiddenMenu__listItemComponent {
+    opacity: 0.95;
 
-        > .o_window_counter {
-            user-select: none;
-        }
+    &:hover {
+        opacity: 1;
     }
+}
 
-    > .o_unread_counter {
-        background-color: $o-brand-primary;
-    }
+.o_mail_component_ChatWindowHiddenMenu__unreadCounter {
+    background-color: $o-brand-primary;
+}
 
-    > .o_list > .o_item {
-        opacity: 0.95;
-
-        &:hover {
-            opacity: 1;
-        }
-    }
+.o_mail_component_ChatWindowHiddenMenu__windowCounter {
+    user-select: none;
 }

@@ -80,7 +80,7 @@ const ChatWindowService =  AbstractService.extend(EnvMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_mail_component_chat_window_manager')) {
+        if (document.querySelector('.o_mail_component_ChatWindowManager')) {
             return;
         }
         await this._mount();
@@ -89,7 +89,7 @@ const ChatWindowService =  AbstractService.extend(EnvMixin, {
         if (!this._webClientReady) {
             return;
         }
-        if (document.querySelector('.o_mail_component_chat_window_manager')) {
+        if (document.querySelector('.o_mail_component_ChatWindowManager')) {
             return;
         }
         await this._mount();

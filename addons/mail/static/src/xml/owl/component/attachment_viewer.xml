@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_attachment_viewer"
+        class="o_mail_component_AttachmentViewer"
         owl="1"
         tabindex="0"
         t-att-data-dialog-id="props.dialogID"
@@ -10,10 +10,12 @@
         t-on-click="_onClick"
         t-on-keydown="_onKeydown">
         <div
-            class="o_header"
+            class="o_mail_component_AttachmentViewer__header"
             t-on-click="_onClickHeader">
             <div
-                class="o_item o_icon"
+                class="
+                    o_mail_component_AttachmentViewer__headerItem
+                    o_mail_component_AttachmentViewer__icon"
                 t-if="props.attachment.fileType"
                 t-key="'icon'">
                 <i
@@ -51,14 +53,15 @@
             </div>
             <div
                 class="
-                    o_item
-                    o_name">
+                    o_mail_component_AttachmentViewer__headerItem
+                    o_mail_component_AttachmentViewer__name">
                 <t t-esc="props.attachment.displayName"/>
             </div>
             <div
                 class="
-                    o_item
-                    o_download"
+                    o_mail_component_AttachmentViewer__buttonDownload
+                    o_mail_component_AttachmentViewer__headerItem
+                    o_mail_component_AttachmentViewer__headerItemButton"
                 role="button"
                 title="Download"
                 t-on-click.stop="_onClickDownload">
@@ -75,8 +78,9 @@
             <div
                 aria-label="Close"
                 class="
-                    o_item
-                    o_close"
+                    o_mail_component_AttachmentViewer__headerItem
+                    o_mail_component_AttachmentViewer__headerItemButton
+                    o_mail_component_AttachmentViewer__headerItemButtonClose"
                 role="button"
                 title="Close (Esc)"
                 t-on-click="_onClickClose">
@@ -90,17 +94,17 @@
             </div>
         </div>
         <div
-            class="o_viewer"
+            class="o_mail_component_AttachmentViewer__main"
             t-att-class="{
                 o_with_img: props.attachment.fileType === 'image',
             }"
             t-on-mousemove="_onMousemoveView">
             <div
-                class="o_zoomer"
+                class="o_mail_component_AttachmentViewer__zoomer"
                 t-if="props.attachment.fileType === 'image'"
                 t-ref="zoomer">
                 <div
-                    class="o_owl_loading"
+                    class="o_mail_component_AttachmentViewer__loading"
                     t-if="state.imageLoading">
                     <i
                         aria-label="Loading"
@@ -115,7 +119,9 @@
                 </div>
                 <img
                     alt="Viewer"
-                    class="o_img"
+                    class="
+                        o_mail_component_AttachmentViewer__view
+                        o_mail_component_AttachmentViewer__viewImage"
                     draggable="false"
                     t-att-src="props.attachment.defaultSource"
                     t-att-style="imageStyle"
@@ -126,25 +132,35 @@
                     t-ref="image"/>
             </div>
             <iframe
-                class="o_pdf"
+                class="
+                    o_mail_component_AttachmentViewer__view
+                    o_mail_component_AttachmentViewer__viewPdf"
                 t-att-src="props.attachment.defaultSource"
                 t-if="props.attachment.fileType === 'application/pdf'"
                 t-key="props.info.attachmentLocalID"/>
             <iframe
-                class="o_text"
+                class="
+                    o_mail_component_AttachmentViewer__view
+                    o_mail_component_AttachmentViewer__viewIframe
+                    o_text"
                 t-att-src="props.attachment.defaultSource"
                 t-if="props.attachment.isTextFile"
                 t-key="props.info.attachmentLocalID"/>
             <iframe
                 allow="autoplay; encrypted-media"
-                class="o_youtube"
+                class="
+                    o_mail_component_AttachmentViewer__youtube
+                    o_mail_component_AttachmentViewer__view
+                    o_mail_component_AttachmentViewer__viewIframe"
                 height="315"
                 t-att-src="props.attachment.defaultSource"
                 t-if="props.attachment.fileType === 'youtu'"
                 t-key="props.info.attachmentLocalID"
                 width="560"/>
             <video
-                class="o_video"
+                class="
+                    o_mail_component_AttachmentViewer__view
+                    o_mail_component_AttachmentViewer__viewVideo"
                 controls="controls"
                 t-if="props.attachment.fileType === 'video'"
                 t-key="props.info.attachmentLocalID"
@@ -155,14 +171,12 @@
             </video>
         </div>
         <div
-            class="o_toolbar"
+            class="o_mail_component_AttachmentViewer__toolbar"
             role="toolbar"
             t-if="props.attachment.fileType === 'image'"
             t-key="'toolbar'">
             <div
-                class="
-                    o_item
-                    o_zoom_in"
+                class="o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
                 title="Zoom In (+)"
                 t-on-click.stop="_onClickZoomIn">
@@ -175,13 +189,13 @@
                     role="img"/>
             </div>
             <div
-                class="o_item o_zoom_reset"
+                class="o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
+                title="Reset Zoom (0)"
                 t-att-class="{
                     o_disabled: state.scale === 1,
                 }"
-                t-on-click.stop="_onClickZoomReset"
-                title="Reset Zoom (0)">
+                t-on-click.stop="_onClickZoomReset">
                 <i
                     aria-label="Reset Zoom"
                     class="
@@ -191,9 +205,7 @@
                     role="img"/>
             </div>
             <div
-                class="
-                    o_item
-                    o_zoom_out"
+                class="o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
                 title="Zoom Out (-)"
                 t-att-class="{
@@ -209,9 +221,7 @@
                     role="img"/>
             </div>
             <div
-                class="
-                    o_item
-                    o_rotate"
+                class="o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
                 title="Rotate (r)"
                 t-on-click.stop="_onClickRotate">
@@ -224,9 +234,7 @@
                     role="img"/>
             </div>
             <div
-                class="
-                    o_item
-                    o_print"
+                class="o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
                 title="Print"
                 t-on-click.stop="_onClickPrint">
@@ -240,8 +248,8 @@
             </div>
             <div
                 class="
-                    o_download
-                    o_item"
+                    o_mail_component_AttachmentViewer__buttonDownload
+                    o_mail_component_AttachmentViewer__toolbarButton"
                 role="button"
                 title="Download"
                 t-on-click.stop="_onClickDownload">
@@ -256,7 +264,9 @@
         </div>
         <t t-if="props.info.attachmentLocalIDs.length > 1">
             <div
-                class="o_previous"
+                class="
+                    o_mail_component_AttachmentViewer__buttonNavigation
+                    o_mail_component_AttachmentViewer__buttonNavigationPrevious"
                 role="button"
                 title="Previous (Left-Arrow)"
                 t-key="'previous'"
@@ -269,7 +279,9 @@
                     role="img"/>
             </div>
             <div
-                class="o_next"
+                class="
+                    o_mail_component_AttachmentViewer__buttonNavigation
+                    o_mail_component_AttachmentViewer__buttonNavigationNext"
                 role="button"
                 title="Next (Right-Arrow)"
                 t-key="'next'"

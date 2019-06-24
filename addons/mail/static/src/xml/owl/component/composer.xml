@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_composer"
+        class="o_mail_component_Composer"
         owl="1"
         t-att-data-id="id"
         t-att-class="{
@@ -11,22 +11,22 @@
         }"
         t-name="mail.component.Composer">
         <div
-            class="o_mail_component_composer__sidebar"
+            class="o_mail_component_Composer__sidebar"
             t-if="options.avatar">
             <img
                 alt=""
                 class="
-                    o_mail_component_composer__avatar
+                    o_mail_component_Composer__avatar
                     rounded-circle"
                 t-att-src="userAvatar"/>
         </div>
         <div
-            class="o_mail_component_composer__core">
+            class="o_mail_component_Composer__core">
             <!-- New message composer -->
             <t t-if="options.chatter and !options.isLog">
                 <!-- Text for followers -->
                 <small
-                    class="o_mail_component_composer__followers">
+                    class="o_mail_component_Composer__followers">
                     <b
                         class="text-muted">To: </b>
                     <em
@@ -42,7 +42,7 @@
                 </small>
                 <!-- List of followers -->
                 <div
-                    class="o_mail_component_composer__suggested_partners"
+                    class="o_mail_component_Composer__suggestedPartners"
                     t-if="props.suggestedRecipients">
                     <div
                         t-attf-title="Add as recipient and follower (reason: {{ recipient.reason }})"
@@ -52,10 +52,10 @@
                             class="custom-control custom-checkbox">
                             <input
                                 class="custom-control-input"
+                                type="checkbox"
                                 t-att-checked="recipient.checked ? 'checked' : undefined"
                                 t-att-data-fullname="recipient.full_name"
-                                t-attf-id="_suggested_partners_{{ recipient_index }}"
-                                type="checkbox"/>
+                                t-attf-id="_suggested_partners_{{ recipient_index }}"/>
                             <label
                                 class="custom-control-label"
                                 t-attf-for="_suggested_partners_{{ recipient_index }}">
@@ -80,17 +80,17 @@
                 </div>
             </t>
             <div
-                class="o_mail_component_composer__main">
+                class="o_mail_component_Composer__main">
                 <Input
-                   class="o_mail_component_composer__input"
+                   class="o_mail_component_Composer__input"
                    t-on-post-message.stop="_onPostMessageInput"
                    t-ref="input"/>
                 <div
-                    class="o_mail_component_composer__commands">
+                    class="o_mail_component_Composer__commands">
                     <EmojisButton
                         class="
-                            o_emojis
-                            o_mail_component_composer__command"
+                            o_mail_component_Composer__command
+                            o_mail_component_Composer__commandEmojis"
                         t-on-emoji-selection.stop="_onEmojiSelection"/>
                     <button
                         aria-label="Add attachment"
@@ -99,30 +99,30 @@
                             btn-secondary
                             fa
                             fa-paperclip
-                            o_attachment_btn
-                            o_mail_component_composer__command"
-                        t-on-click="_onClickAddAttachment"
+                            o_mail_component_Composer__command
+                            o_mail_component_Composer__commandAttachment"
                         title="Add attachment"
-                        type="button"/>
+                        type="button"
+                        t-on-click="_onClickAddAttachment"/>
                     <button
                         class="
                             btn
                             btn-primary
-                            o_mail_component_composer__command
-                            o_send"
+                            o_mail_component_Composer__command
+                            o_mail_component_Composer__commandSend"
+                        type="button"
                         t-if="options.sendButton"
-                        t-on-click="_onClickSend"
-                        type="button">
+                        t-on-click="_onClickSend">
                         <t t-if="options.isLog">Log</t><t t-else="">Send</t>
                     </button>
                 </div>
             </div>
             <div
-                class="o_mail_component_composer__footer"
+                class="o_mail_component_Composer__footer"
                 t-if="showFooter">
                 <AttachmentList
                    attachmentLocalIDs="state.attachmentLocalIDs"
-                   class="o_mail_component_composer__attachment_list"
+                   class="o_mail_component_Composer__attachmentList"
                    options="attachmentOptions"
                    t-if="state.attachmentLocalIDs.length > 0"
                    t-on-unlink.stop="_onUnlinkAttachment"
@@ -131,12 +131,12 @@
             <input
                 class="
                     d-none
-                    o_file_input"
+                    o_mail_component_Composer__fileInput"
                 multiple="true"
+                type="file"
                 t-key="'fileInput'"
                 t-on-change="_onChangeAttachment"
-                t-ref="fileInput"
-                type="file"/>
+                t-ref="fileInput"/>
         </div>
     </div>
 

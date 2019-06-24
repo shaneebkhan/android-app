@@ -2,22 +2,22 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_discuss_mobile_mailbox_selection"
+        class="o_mail_component_DiscussMobileMailboxSelection"
         owl="1"
         t-name="mail.component.DiscussMobileMailboxSelection">
         <t t-foreach="props.mailboxes" t-as="mailbox">
             <button
                 class="
                     btn
-                    o_mail_component_discuss_mobile_mailbox_selection__button"
+                    o_mail_component_DiscussMobileMailboxSelection__button"
+                type="button"
                 t-att-class="{
-                    btn-primary: active(mailbox),
-                    btn-secondary: !active(mailbox),
+                    'btn-primary': active(mailbox),
+                    'btn-secondary': !active(mailbox),
                 }"
                 t-att-data-mailbox-local-id="mailbox.localID"
                 t-key="mailbox.localID"
-                t-on-click="_onClick"
-                type="button">
+                t-on-click="_onClick">
                 <t t-esc="mailbox.name"/>
             </button>
         </t>

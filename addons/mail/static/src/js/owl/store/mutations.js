@@ -7,7 +7,6 @@ const mailUtils = require('mail.utils');
 const AttachmentViewer = require('mail.component.AttachmentViewer');
 
 const core = require('web.core');
-const session = require('web.session');
 const time = require('web.time');
 
 const _t = core._t;
@@ -134,6 +133,7 @@ function _computeMessageBodyWithLinks(body) {
  * @private
  * @param {Object} param0
  * @param {integer[]} [param0.channel_ids=[]]
+ * @param {integer} param0.currentPartnerID
  * @param {string} [param0.model]
  * @param {integer[]} [param0.needaction_partner_ids=[]]
  * @param {integer} [param0.res_id]
@@ -142,16 +142,17 @@ function _computeMessageBodyWithLinks(body) {
  */
 function _computeMessageThreadLocalIDs({
     channel_ids=[],
+    currentPartnerID,
     model,
     needaction_partner_ids=[],
     res_id,
     starred_partner_ids=[],
 }) {
     let threadLocalIDs = channel_ids.map(id => `mail.channel_${id}`);
-    if (needaction_partner_ids.includes(session.partner_id)) {
+    if (needaction_partner_ids.includes(currentPartnerID)) {
         threadLocalIDs.push('mail.box_inbox');
     }
-    if (starred_partner_ids.includes(session.partner_id)) {
+    if (starred_partner_ids.includes(currentPartnerID)) {
         threadLocalIDs.push('mail.box_starred');
     }
     if (model && res_id) {
@@ -576,11 +577,10 @@ const mutations = {
         const message = commit('insertMessage', { ...data });
         state.threads['mail.box_inbox'].counter++;
         for (const threadLocalID of message.threadLocalIDs) {
-            const currentPartnerID = session.partner_id;
             const thread = state.threads[threadLocalID];
             if (
                 thread.channel_type === 'channel' &&
-                message.needaction_partner_ids.includes(currentPartnerID)
+                message.needaction_partner_ids.includes(state.currentPartnerID)
             ) {
                 commit('updateThread', {
                     threadLocalID,
@@ -634,12 +634,13 @@ const mutations = {
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} param1
+     * @param {integer} param1.currentPartnerID
      * @param {integer[]} param1.message_ids
      * @param {boolean} param1.starred
      */
     handleNotificationPartnerToggleStar(
         { commit, state },
-        { message_ids=[], starred }
+        { currentPartnerID, message_ids=[], starred }
     ) {
         const starredBoxLocalID = 'mail.box_starred';
         const starredBox = state.threads[starredBoxLocalID];
@@ -664,7 +665,10 @@ const mutations = {
                     },
                 });
             } else {
-                commit('_unsetMessageStar', { messageLocalID });
+                commit('_unsetMessageStar', {
+                    currentPartnerID,
+                    messageLocalID,
+                });
                 commit('updateThread', {
                     threadLocalID: starredBoxLocalID,
                     changes: {
@@ -727,6 +731,7 @@ const mutations = {
      * @param {Object} param1
      * @param {Object} param1.channel_slots
      * @param {Array} [param1.commands=[]]
+     * @param {integer} param1.currentPartnerID
      * @param {boolean} [param1.is_moderator=false]
      * @param {Object[]} [param1.mail_failures=[]]
      * @param {Object[]} [param1.mention_partner_suggestions=[]]
@@ -741,6 +746,7 @@ const mutations = {
         {
             channel_slots,
             commands=[],
+            currentPartnerID,
             is_moderator=false,
             mail_failures=[],
             mention_partner_suggestions=[],
@@ -752,7 +758,7 @@ const mutations = {
             starred_counter=0
         }
     ) {
-        commit('_initMessagingOdoobot');
+        commit('_initMessagingPartners', currentPartnerID);
         commit('_initMessagingCommands', commands); // required for channels, hence before
         commit('_initMessagingChannels', channel_slots);
         commit('_initMessagingMailboxes', {
@@ -1381,10 +1387,11 @@ const mutations = {
     },
     /**
      * @private
-     * @param {Object} unused
+     * @param {Object} param0
+     * @param {Object} param0.state
      * @param {mail.store.model.Message} message
      */
-    _computeMessage(unused, message) {
+    _computeMessage({ state }, message) {
         const {
             attachment_ids,
             author_id,
@@ -1409,6 +1416,7 @@ const mutations = {
             originThreadLocalID: res_id && model ? `${model}_${res_id}` : undefined,
             threadLocalIDs: _computeMessageThreadLocalIDs({
                 channel_ids,
+                currentPartnerID: state.currentPartnerID,
                 model,
                 needaction_partner_ids,
                 res_id,
@@ -1685,12 +1693,18 @@ const mutations = {
      * @private
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {Object} param0.state
+     * @param {integer} currentPartnerID
      */
-    _initMessagingOdoobot({ commit }) {
+    _initMessagingPartners({ commit, state }, currentPartnerID) {
         commit('_createPartner', {
             id: 'odoobot',
             name: _t("OdooBot"),
         });
+        commit('_createPartner', {
+            id: currentPartnerID,
+        });
+        state.currentPartnerID = currentPartnerID;
     },
     /**
      * @private
@@ -1819,7 +1833,7 @@ const mutations = {
      * @return {string} unique id of the newly open dialog
      */
     _openDialog({ state }, { Component, info }) {
-        const id = _.uniqueId('o_mail_component_dialog');
+        const id = _.uniqueId('o_mail_component_Dialog');
         state.dialogManager.dialogs.push({
             Component,
             id,
@@ -1850,7 +1864,7 @@ const mutations = {
      */
     _setMessageStar({ commit, state }, { messageLocalID }) {
         const message = state.messages[messageLocalID];
-        const currentPartnerID = session.partner_id;
+        const currentPartnerID = state.currentPartnerID;
         if (message.starred_partner_ids.includes(currentPartnerID)) {
             return;
         }
@@ -1917,11 +1931,11 @@ const mutations = {
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} param1
+     * @param {integer} param1.currentPartnerID
      * @param {string} param1.messageLocalID
      */
-    _unsetMessageStar({ commit, state }, { messageLocalID }) {
+    _unsetMessageStar({ commit, state }, { currentPartnerID, messageLocalID }) {
         const message = state.messages[messageLocalID];
-        const currentPartnerID = session.partner_id;
         if (!message.starred_partner_ids.includes(currentPartnerID)) {
             return;
         }

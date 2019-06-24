@@ -191,7 +191,7 @@ class ComposerInput extends Component {
         const collectionItem = {
             lookup: 'name',
             menuItemTemplate(item) {
-                return `<div class="o_mail_composer_input__mention_item">${item.string}</div>`;
+                return `<div class="o_mail_component_ComposerInput__mentionItem">${item.string}</div>`;
             },
             selectTemplate(item) {
                 if (!item) {
@@ -225,7 +225,7 @@ class ComposerInput extends Component {
         const collectionItem = {
             lookup: 'name',
             menuItemTemplate(item) {
-                return `<div class="o_mail_composer_input__mention_item"
+                return `<div class="o_mail_component_ComposerInput__mention"
                              title="${
                                  item.original.displayNname
                              }${

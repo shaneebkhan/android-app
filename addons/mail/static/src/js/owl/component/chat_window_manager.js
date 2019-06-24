@@ -18,8 +18,8 @@ class ChatWindowManager extends Component {
         this.template = 'mail.component.ChatWindowManager';
         // others
         this.TEXT_DIRECTION = this.env._t.database.parameters.direction;
-        this._lastAutofocusedItem = undefined;
         this._lastAutofocusedCounter = 0;
+        this._lastAutofocusedItem = undefined;
         if (this.DEBUG) {
             window.chat_window_manager = this;
         }
@@ -159,12 +159,27 @@ class ChatWindowManager extends Component {
                     channelID: id,
                     chatWindowOpenMode: 'last_visible',
                 });
-            } else {
-                this.env.store.commit('openChatWindow', { item: threadLocalID });
+                return;
             }
-        } else if (model === 'res.partner') {
+            this.env.store.commit('openChatWindow', { item: threadLocalID });
+            return;
+        }
+        if (model === 'res.partner') {
+            if (id === this.env.session.partner_id) {
+                this.env.do_action({
+                    type: 'ir.actions.act_window',
+                    res_model: 'res.partner',
+                    views: [[false, 'form']],
+                    res_id: id,
+                });
+                return;
+            }
             const partnerLocalID = `res.partner_${id}`;
-            const partner = this.env.store.state.partners[partnerLocalID];
+            let partner = this.env.store.state.partners[partnerLocalID];
+            if (!partner) {
+                this.env.store.commit('insertPartner', { id });
+                partner = this.env.store.state.partners[partnerLocalID];
+            }
             if (partner.userID === undefined) {
                 // rpc to check that
                 await this.env.store.dispatch('checkPartnerIsUser', { partnerLocalID });
@@ -190,9 +205,9 @@ class ChatWindowManager extends Component {
                     partnerID: id,
                     type: 'chat',
                 });
-            } else {
-                this.env.store.commit('openChatWindow', { item: chat.localID });
+                return;
             }
+            this.env.store.commit('openChatWindow', { item: chat.localID });
         }
     }
 

@@ -2,57 +2,78 @@
 <templates xml:space="preserve">
 
     <aside
-        class="o_chatter o_wip_owl"
+        class="
+            o_chatter
+            o_mail_component_Chatter"
         owl="1"
         t-name="mail.component.Chatter">
         <div
-            class="o_chatter_topbar">
+            class="
+                o_chatter_topbar
+                o_mail_component_Chatter__topbar">
             <button
-                class="btn btn-link o_chatter_button_new_message"
+                class="
+                    btn
+                    btn-link
+                    o_chatter_button_new_message
+                    o_mail_component_Chatter__buttonNewMessage"
+                title="Send a message"
+                type="button"
                 t-att-class="{
                     o_active: state.composerMode === 'send',
                 }"
-                t-on-click="_onClickSend"
-                title="Send a message"
-                type="button">
+                t-on-click="_onClickSend">
                 Send message
             </button>
             <button
-                class="btn btn-link o_chatter_button_log_note"
+                class="
+                    btn
+                    btn-link
+                    o_mail_component_Chatter__buttonLogNote"
+                title="Log a note. Followers will not be notified."
                 t-att-class="{
                     o_active: state.composerMode === 'log',
                 }"
-                t-on-click="_onClickLog"
-                title="Log a note. Followers will not be notified.">
+                t-on-click="_onClickLog">
                 Log note
             </button>
             <button
-                class="btn btn-link o_chatter_button_schedule_activity"
+                class="
+                    btn
+                    btn-link
+                    o_chatter_button_schedule_activity
+                    o_mail_component_Chatter__buttonScheduleActivity"
+                title="Log or schedule an activity"
                 t-if="props.mailFields.mail_activity"
-                t-on-click="_onClickScheduleActivity"
-                title="Log or schedule an activity">
+                t-on-click="_onClickScheduleActivity">
                 <i
                     aria-label="Dates"
-                    class="fa fa-clock-o"
+                    class="
+                        fa
+                        fa-clock-o"
                     role="img"
                     title="Dates"/> Schedule activity
             </button>
             <div
-                class="o_topbar_right_area"
+                class="
+                    o_topbar_right_area
+                    o_mail_component_Chatter__topbarRightArea"
                 t-ref="topbarRight"/>
         </div>
         <Composer
-           options="composerOptions"
-           suggestedRecipients="props.suggestedRecipients"
-           t-if="state.composerMode"
-           threadLocalID="props.threadLocalID"/>
+            class="o_mail_component_Chatter__composer"
+            options="composerOptions"
+            suggestedRecipients="props.suggestedRecipients"
+            threadLocalID="props.threadLocalID"
+            t-if="state.composerMode"/>
         <div
             t-if="props.mailFields.mail_activity"
             t-ref="activity"/>
         <Thread
+            class="o_mail_component_Chatter__thread"
             options="threadOptions"
-            t-if="props.thread"
-            threadLocalID="props.threadLocalID"/>
+            threadLocalID="props.threadLocalID"
+            t-if="props.thread"/>
     </aside>
 
 </templates>

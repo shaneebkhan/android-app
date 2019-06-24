@@ -2,12 +2,12 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_message_list"
+        class="o_mail_component_MessageList"
         owl="1"
         t-name="mail.component.MessageList"
         t-on-scroll="_onScroll">
         <div
-            class="o_mail_component_message_list__loading_more"
+            class="o_mail_component_MessageList__loadingMore"
             t-if="loadingMore"
             t-key="'loading'">
             <i
@@ -15,10 +15,10 @@
                     fa
                     fa-spin
                     fa-spinner
-                    o_mail_component_message_list__loading_more_icon"/>Loading...
+                    o_mail_component_MessageList__loadingMoreIcon"/>Loading...
         </div>
         <a
-            class="o_mail_component_message_list__load_more"
+            class="o_mail_component_MessageList__loadMore"
             href="#"
             t-elif="!props.threadCache.allHistoryLoaded"
             t-key="'load_more'"
@@ -30,29 +30,29 @@
         <t t-set="prev_message" t-value="0"/>
         <div
             class="
-                o_mail_component_message_list__new_messages_separator
-                o_mail_component_message_list__separator"
+                o_mail_component_MessageList__separator
+                o_mail_component_MessageList__separatorNewMessages"
             t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and !props.thread.seen_message_id"
             t-key="'new_message_separator'">
             <hr class="
-                o_mail_component_message_list__new_messages_separator_line
-                o_mail_component_message_list__separator_line"
+                o_mail_component_MessageList__separatorLine
+                o_mail_component_MessageList__separatorLineNewMessages"
             /><span class="
-                o_mail_component_message_list__new_messages_separator_label
-                o_mail_component_message_list__separator_label">New messages</span>
+                o_mail_component_MessageList__separatorLabel
+                o_mail_component_MessageList__separatorLabelNewMessages">New messages</span>
         </div>
         <t t-foreach="messages" t-as="message">
             <t t-set="message_day" t-value="getDateDay(message)"/>
             <div
                 class="
-                    o_mail_component_message_list__date_separator
-                    o_mail_component_message_list__separator"
+                    o_mail_component_MessageList__separator
+                    o_mail_component_MessageList__separatorDate"
                 t-if="current_day !== message_day"
                 t-key="'date_separator' + message_day">
-                <hr class="o_mail_component_message_list__separator_line"
+                <hr class="o_mail_component_MessageList__separatorLine"
                 /><span class="
-                    o_mail_component_message_list__date_separator_label
-                    o_mail_component_message_list__separator_label"><t t-esc="message_day"/></span><hr class="o_mail_component_message_list__separator_line"/>
+                    o_mail_component_MessageList__separatorLabel
+                    o_mail_component_MessageList__separatorLabelDate"><t t-esc="message_day"/></span><hr class="o_mail_component_MessageList__separatorLine"/>
                 <t t-set="current_day" t-value="message_day"/>
                 <t t-set="squashed" t-value="false"/>
             </div>
@@ -60,25 +60,25 @@
                 <t t-set="squashed" t-value="shouldSquash(prev_message, message)"/>
             </t>
             <Message
-               class="o_mail_component_message_list__message"
+               class="o_mail_component_MessageList__message"
                messageLocalID="message.localID"
                options="messageOptions(squashed)"
+               threadLocalID="props.threadLocalID"
                t-key="message.localID"
-               t-ref="{{ message.localID }}"
-               threadLocalID="props.threadLocalID"/>
+               t-ref="{{ message.localID }}"/>
             <t t-set="prev_message" t-value="message"/>
             <div
                 class="
-                    o_mail_component_message_list__new_messages_separator
-                    o_mail_component_message_list__separator"
+                    o_mail_component_MessageList__separator
+                    o_mail_component_MessageList__separatorNewMessages"
                 t-key="'new_message_separator'"
                 t-if="props.thread._model === 'mail.channel' and props.thread.message_unread_counter > 0 and props.thread.seen_message_id === message.id">
                 <hr class="
-                    o_mail_component_message_list__new_messages_separator_line
-                    o_mail_component_message_list__separator_line"
+                    o_mail_component_MessageList__separatorLine
+                    o_mail_component_MessageList__separatorLineNewMessages"
                 /><span class="
-                    o_mail_component_message_list__new_messages_separator_label
-                    o_mail_component_message_list__separator_label">New messages</span>
+                    o_mail_component_MessageList__separatorLabel
+                    o_mail_component_MessageList__separatorLabelNewMessages">New messages</span>
             </div>
         </t>
     </div>

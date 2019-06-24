@@ -2,28 +2,31 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_message {
+.o_mail_component_Message {
     display: flex;
     flex: 0 0 auto;
     padding: 5px;
 }
 
-.o_mail_component_message__author_avatar {
+.o_mail_component_Message__authorAvatar {
     width: 36px;
     height: 36px;
 }
 
-.o_mail_component_message__author_name {
+.o_mail_component_Message__authorName {
     margin-right: 3px;
 }
 
-.o_mail_component_message__commands {
-    display: flex;
-    align-items: center;
-
+.o_mail_component_Message__commandStar {
+    font-size: 1.3rem;
 }
 
-.o_mail_component_message__content {
+.o_mail_component_Message__commands {
+    display: flex;
+    align-items: center;
+}
+
+.o_mail_component_Message__content {
     flex: 1 1 auto;
     min-width: 0;
     max-width: 100%;
@@ -35,33 +38,33 @@
     }
 }
 
-.o_mail_component_message__core {
+.o_mail_component_Message__core {
     margin-right: 10px;
     overflow: auto;
 }
 
-.o_mail_component_message__footer {
+.o_mail_component_Message__footer {
     display: flex;
 }
 
-.o_mail_component_message__header {
+.o_mail_component_Message__header {
     display: flex;
     flex-flow: row wrap;
     align-items: center;
 }
 
-.o_mail_component_message__header_commands {
+.o_mail_component_Message__headerCommands {
     margin-left: 3px;
     margin-right: 3px;
 }
 
-.o_mail_component_message__header_date {
+.o_mail_component_Message__headerDate {
     margin-left: 3px;
     margin-right: 3px;
     font-size: 0.9rem;
 }
 
-.o_mail_component_message__sidebar {
+.o_mail_component_Message__sidebar {
     flex: 0 0 50px;
     max-width: 50px;
     display: flex;
@@ -71,51 +74,47 @@
 
     &.o_squashed {
         align-items: flex-start;
-
-        .o_mail_component_message__squashed_sidebar_item {
-            display: flex;
-        }
     }
 }
 
-.o_mail_component_message__squashed_sidebar_item {
+.o_mail_component_Message__sidebarItem {
     margin-left: 3px;
     margin-right: 3px;
-}
 
-.o_mail_component_message__star_command {
-    font-size: 1.3rem;
+    &.o_squashed {
+        display: flex;
+    }
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_message {
+.o_mail_component_Message {
     background-color: white;
 
     &:hover, &.o_toggled_click {
 
-        .o_mail_component_message__command {
+        .o_mail_component_Message__command {
             opacity: 1;
         }
 
-        .o_mail_component_message__commands {
+        .o_mail_component_Message__commands {
             opacity: 1;
         }
 
-        .o_mail_component_message__squashed_sidebar_item {
+        .o_mail_component_Message__sidebarItem.o_squashed {
             opacity: 1;
         }
     }
 
     &.o_starred {
 
-        .o_mail_component_message__commands {
+        .o_mail_component_Message__commandStar {
             opacity: 1;
         }
 
-        .o_mail_component_message__star_command {
+        .o_mail_component_Message__commands {
             opacity: 1;
         }
     }
@@ -126,15 +125,15 @@
     }
 }
 
-.o_mail_component_message__author_name {
+.o_mail_component_Message__authorName {
     font-weight: bold;
 }
 
-.o_mail_component_message__author_redirect {
+.o_mail_component_Message__authorRedirect {
     cursor: pointer;
 }
 
-.o_mail_component_message__command {
+.o_mail_component_Message__command {
     cursor: pointer;
     opacity: 0;
 
@@ -143,28 +142,7 @@
     }
 }
 
-.o_mail_component_message__commands {
-    opacity: 0;
-}
-
-.o_mail_component_message__content .o_mention {
-    color: $o-brand-primary;
-    cursor: pointer;
-
-    &:hover {
-        color: darken($o-brand-primary, 15%);
-    }
-}
-
-.o_mail_component_message__date {
-    color: gray('500');
-}
-
-.o_mail_component_message__squashed_sidebar_item {
-    opacity: 0;
-}
-
-.o_mail_component_message__star_command {
+.o_mail_component_Message__commandStar {
 
     &:hover {
         filter: brightness(0.9);
@@ -177,4 +155,25 @@
     &.o_starred {
         color: gold;
     }
+}
+
+.o_mail_component_Message__commands {
+    opacity: 0;
+}
+
+.o_mail_component_Message__content .o_mention {
+    color: $o-brand-primary;
+    cursor: pointer;
+
+    &:hover {
+        color: darken($o-brand-primary, 15%);
+    }
+}
+
+.o_mail_component_Message__date {
+    color: gray('500');
+}
+
+.o_mail_component_Message__sidebarItem.o_squashed {
+    opacity: 0;
 }

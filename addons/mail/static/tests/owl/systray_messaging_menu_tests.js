@@ -43,193 +43,141 @@ QUnit.test('basic rendering', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll('.o_mail_component_systray_messaging_menu')
+            .querySelectorAll('.o_mail_component_SystrayMessagingMenu')
             .length,
         1,
         "should have systray messaging menu");
     assert.notOk(
         document
-            .querySelector('.o_mail_component_systray_messaging_menu')
+            .querySelector('.o_mail_component_SystrayMessagingMenu')
             .classList
             .contains('show'),
         "should not mark systray messaging menu item as shown by default");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > a`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__toggler`)
             .length,
         1,
         "should have clickable element on systray messaging menu");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > a`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
             .classList
             .contains('show'),
         "should not mark systray messaging menu clickable item as shown by default");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > a
-                > i`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__icon`)
             .length,
         1,
         "should have icon on clickable element in systray messaging menu");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > a
-                > i`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__icon`)
             .classList
             .contains('fa-comments-o'),
         "should have 'comments' icon on clickable element in systray messaging menu");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__dropdownMenu`)
             .length,
         0,
         "should not display any systray messaging menu dropdown by default");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.ok(
         document
-            .querySelector('.o_mail_component_systray_messaging_menu')
+            .querySelector('.o_mail_component_SystrayMessagingMenu')
             .classList
             .contains('show'),
         "should mark systray messaging menu item as shown");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > a`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
             .classList
             .contains('show'),
         "should mark systray messaging menu clickable item as shown");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__dropdownMenu`)
             .length,
         1,
         "should display systray messaging menu dropdown after click");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__dropdownMenuHeader`)
             .length,
         1,
         "should have dropdown menu header");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenuHeader
+                .o_mail_component_SystrayMessagingMenu__filter`)
             .length,
         3,
         "should have 3 buttons to filter items in the header");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+                .o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .length,
         1,
         "1 filter should be 'All'");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+                .o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .length,
         1,
         "1 filter should be 'Chat'");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .length,
         1,
         "1 filter should be 'Channels'");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .classList
             .contains('o_active'),
         "'all' filter should be active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .classList
             .contains('o_active'),
         "'chat' filter should not be active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .classList
             .contains('o_active'),
         "'channel' filter should not be active");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_new_message`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__newMessage`)
             .length,
         1,
         "should have button to make a new message");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList`)
             .length,
         1,
         "should display thread preview list");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_no_conversation`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList__noConversation`)
             .length,
         1,
         "should display no conversation in thread preview list");
@@ -248,189 +196,115 @@ QUnit.test('switch tab', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .length,
         1,
         "1 filter should be 'All'");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .length,
         1,
         "1 filter should be 'Chat'");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .length,
         1,
         "1 filter should be 'Channels'");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .classList
             .contains('o_active'),
         "'all' filter should be active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .classList
             .contains('o_active'),
         "'chat' filter should not be active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .classList
             .contains('o_active'),
         "'channel' filter should not be active");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="chat"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .classList
             .contains('o_active'),
         "'all' filter should become inactive");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .classList
             .contains('o_active'),
         "'chat' filter should not become active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .classList
             .contains('o_active'),
         "'channel' filter should stay inactive");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="channel"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .classList
             .contains('o_active'),
         "'all' filter should stay active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .classList
             .contains('o_active'),
         "'chat' filter should become inactive");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .classList
             .contains('o_active'),
         "'channel' filter should become active");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="all"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="all"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
             .classList
             .contains('o_active'),
         "'all' filter should become active");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="chat"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
             .classList
             .contains('o_active'),
         "'chat' filter should stay inactive");
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_filter[data-filter="channel"]`)
+            .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
             .classList
             .contains('o_active'),
         "'channel' filter should become inactive");
@@ -449,42 +323,30 @@ QUnit.test('new message', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_new_message`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__newMessage`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open a chat window");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelector(`.o_mail_component_ChatWindow`)
             .classList
             .contains('o_new_message'),
         "chat window should be for new message");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelector(`.o_mail_component_ChatWindow`)
             .classList
             .contains('o_focused'),
         "chat window should be focused");
@@ -504,19 +366,13 @@ QUnit.test('no new message when discuss is open', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_new_message`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__newMessage`)
             .length,
         0,
         "should not have 'new message' when discuss is open");
@@ -526,11 +382,7 @@ QUnit.test('no new message when discuss is open', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_new_message`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__newMessage`)
             .length,
         1,
         "should have 'new message' when discuss is closed");
@@ -540,11 +392,7 @@ QUnit.test('no new message when discuss is open', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_header
-                > .o_new_message`)
+            .querySelectorAll(`.o_mail_component_SystrayMessagingMenu__newMessage`)
             .length,
         0,
         "should not have 'new message' when discuss is open again");
@@ -585,116 +433,91 @@ QUnit.test('channel preview: basic rendering', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview`)
             .length,
         1,
         "should have one preview");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_sidebar`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__sidebar`)
             .length,
         1,
         "preview should have a sidebar");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__content`)
             .length,
         1,
         "preview should have some content");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_header`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__header`)
             .length,
         1,
         "preview should have header in content");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_header
-                > .o_name`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__header
+                .o_mail_component_ThreadPreview__name`)
             .length,
         1,
         "preview should have name in header of content");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_header
-                > .o_name`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__name`)
             .textContent,
         "General", "preview should have name of channel");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_core`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__content
+                .o_mail_component_ThreadPreview__core`)
             .length,
         1,
         "preview should have core in content");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_core
-                > .o_inline_text`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__core
+                .o_mail_component_ThreadPreview__inlineText`)
             .length,
         1,
         "preview should have inline text in core of content");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview
-                > .o_content
-                > .o_core
-                > .o_inline_text`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview__core
+                .o_mail_component_ThreadPreview__inlineText`)
             .textContent
             .trim(),
         "Demo: test",
@@ -754,159 +577,133 @@ QUnit.test('filtered previews', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview`)
             .length,
         2,
         "should have 2 previews");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_10"]`)
             .length,
         1,
         "should have preview of chat");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_20"]`)
             .length,
         1,
         "should have preview of channel");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="chat"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="chat"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview`)
             .length,
         1,
         "should have one preview");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_10"]`)
             .length,
         1,
         "should have preview of chat");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_20"]`)
             .length,
         0,
         "should not have preview of channel");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="channel"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="channel"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview`)
             .length,
         1,
         "should have one preview");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_10"]`)
             .length,
         0,
         "should not have preview of chat");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_20"]`)
             .length,
         1,
         "should have preview of channel");
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_filter[data-filter="all"]`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__filter[data-filter="all"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview`)
             .length,
         2,
         "should have 2 previews");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_10"]`)
             .length,
         1,
         "should have preview of chat");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_systray_messaging_menu
-                > .dropdown-menu
-                > .o_mail_component_thread_preview_list
-                > .o_preview[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_SystrayMessagingMenu__dropdownMenu
+                .o_mail_component_ThreadPreviewList
+                .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_20"]`)
             .length,
         1,
         "should have preview of channel");
@@ -935,25 +732,20 @@ QUnit.test('open chat window from preview', async function (assert) {
     });
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > a`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open a chat window");

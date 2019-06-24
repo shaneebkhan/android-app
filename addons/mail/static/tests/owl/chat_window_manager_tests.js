@@ -37,7 +37,7 @@ QUnit.test('initial mount', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll('.o_mail_component_chat_window_manager')
+            .querySelectorAll('.o_mail_component_ChatWindowManager')
             .length,
         1,
         "should have chat window manager");
@@ -57,114 +57,87 @@ QUnit.test('chat window new message: basic rendering', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_new_message`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__newMessage`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open a chat window");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader`)
             .length,
         1,
         "should have a header");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_name`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__name`)
             .length,
         1,
         "should have name part in header");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_name`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__name`)
             .textContent,
         "New message",
         "should display 'new message' in the header");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_commands`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__commands`)
             .length,
         1,
         "should have commands in header");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_commands
-                > .o_close`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__commandClose`)
             .length,
         1,
         "should have command to close chat window");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_selection`)
+            .querySelectorAll(`.o_mail_component_ChatWindow__newMessageForm`)
             .length,
         1,
-        "should have a part for selection");
+        "should have a new message chat window container");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_selection
-                > .o_label`)
+            .querySelectorAll(`.o_mail_component_ChatWindow__newMessageFormLabel`)
             .length,
         1,
         "should have a part in selection with label");
     assert.strictEqual(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_selection
-                > .o_label`)
+            .querySelector(`.o_mail_component_ChatWindow__newMessageFormLabel`)
             .textContent
             .trim(),
         "To:",
         "should have label 'To:' in selection");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_selection
-                > input`)
+            .querySelectorAll(`.o_mail_component_ChatWindow__newMessageFormInput`)
             .length,
         1,
         "should have an input in selection");
@@ -184,35 +157,25 @@ QUnit.test('chat window new message: focused on open', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_new_message`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__newMessage`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelector(`.o_mail_component_ChatWindow`)
             .classList
             .contains('o_focused'),
         "chat window should be focused");
     assert.ok(
         document.activeElement,
-        document.querySelector(`
-            .o_mail_component_chat_window_manager
-            > .o_chat_window
-            > .o_selection
-            > input`),
+        document.querySelector(`.o_mail_component_ChatWindow__newMessageFormInput`),
         "chat window focused = selection input focused");
 });
 
@@ -230,35 +193,27 @@ QUnit.test('chat window new message: close', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_new_message`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__newMessage`)
         .click();
     await testUtils.nextTick(); // re-render
 
     document
         .querySelector(`
-            .o_mail_component_chat_window_manager
-            > .o_chat_window
-            > .o_mail_component_chat_window_header
-            > .o_commands
-            > .o_close`)
+            .o_mail_component_ChatWindow
+            .o_mail_component_ChatWindowHeader
+            .o_mail_component_ChatWindowHeader__commandClose`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         0,
         "chat window should be closed");
@@ -278,59 +233,49 @@ QUnit.test('chat window new message: fold', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
 
     document
-        .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_header
-            > .o_new_message`)
+        .querySelector(`.o_mail_component_SystrayMessagingMenu__newMessage`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.notOk(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelector(`.o_mail_component_ChatWindow`)
             .classList
             .contains('o_folded'),
         "chat window should not be folded by default");
 
     document
         .querySelector(`
-            .o_mail_component_chat_window_manager
-            > .o_chat_window
-            > .o_mail_component_chat_window_header`)
+            .o_mail_component_ChatWindow
+            .o_mail_component_ChatWindowHeader`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.ok(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+                .o_mail_component_ChatWindow`)
             .classList
             .contains('o_folded'),
         "chat window should become folded");
 
     document
         .querySelector(`
-            .o_mail_component_chat_window_manager
-            > .o_chat_window
-            > .o_mail_component_chat_window_header`)
+            .o_mail_component_ChatWindow
+            .o_mail_component_ChatWindowHeader`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.notOk(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+                .o_mail_component_ChatWindow`)
             .classList
             .contains('o_folded'),
         "chat window should become unfolded");
@@ -371,32 +316,27 @@ QUnit.test('chat window: basic rendering', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList__preview
+            .o_mail_component_ThreadPreview`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open a chat window");
     assert.strictEqual(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelector(`.o_mail_component_ChatWindow`)
             .dataset
             .threadLocalId,
         'mail.channel_20',
@@ -404,91 +344,78 @@ QUnit.test('chat window: basic rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader`)
             .length,
         1,
         "should have header part");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_mail_component_thread_icon`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ThreadIcon`)
             .length,
         1,
         "should have thread icon in header part");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_name`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__name`)
             .length,
         1,
         "should have thread name in header part");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_name`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__name`)
             .textContent,
         "General",
         "should have correct thread name in header part");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_commands`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__commands`)
             .length,
         1,
         "should have commands in header part");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_commands
-                > .o_expand`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__commandExpand`)
             .length,
         1,
         "should have command to expand thread in discuss");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_mail_component_chat_window_header
-                > .o_commands
-                > .o_close`)
+                .o_mail_component_ChatWindow
+                .o_mail_component_ChatWindowHeader
+                .o_mail_component_ChatWindowHeader__commandClose`)
             .length,
         1,
         "should have command to close chat window");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_thread`)
+                .o_mail_component_ChatWindow__thread`)
             .length,
         1,
         "should have part to display thread content inside chat window");
     assert.ok(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window
-                > .o_thread`)
+                .o_mail_component_ChatWindow__thread`)
             .classList
-            .contains('o_mail_component_thread'),
+            .contains('o_mail_component_Thread'),
         "thread part should use component thread");
 });
 
@@ -559,96 +486,86 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview[data-thread-local-id="mail.channel_10"]`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_10"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+                .o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open a chat window");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_10"]`)
             .length,
         1,
         "chat window of chat should be open");
     assert.ok(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_10"]`)
             .classList
             .contains('o_focused'),
         "chat window of chat should have focus");
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview[data-thread-local-id="mail.channel_20"]`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_20"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+                .o_mail_component_ChatWindow`)
             .length,
         2,
         "should have open a new chat window");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_20"]`)
             .length,
         1,
         "chat window of channel should be open");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_10"]`)
             .length,
         1,
         "chat window of chat should still be open");
     assert.ok(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_20"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_20"]`)
             .classList
             .contains('o_focused'),
         "chat window of channel should have focus");
     assert.notOk(
         document
             .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_10"]`)
+                .o_mail_component_ChatWindow[data-thread-local-id="mail.channel_10"]`)
             .classList
             .contains('o_focused'),
         "chat window of chat should no longer have focus");
@@ -711,120 +628,99 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
     // open, from systray menu, chat windows of channels with ID 1, 2, then 3
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview[data-thread-local-id="mail.channel_1"]`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_1"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         1,
         "should have open 1 visible chat window");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_hidden_menu`)
+            .querySelectorAll(`.o_mail_component_ChatWindowManager__hiddenMenu`)
             .length,
         0,
         "should not have hidden menu");
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview[data-thread-local-id="mail.channel_2"]`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_2"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         2,
         "should have open 2 visible chat windows");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_hidden_menu`)
+            .querySelectorAll(`.o_mail_component_ChatWindowManager__hiddenMenu`)
             .length,
         0,
         "should not have hidden menu");
 
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
+            .o_mail_component_SystrayMessagingMenu
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
-            .o_mail_component_systray_messaging_menu
-            > .dropdown-menu
-            > .o_mail_component_thread_preview_list
-            > .o_preview[data-thread-local-id="mail.channel_3"]`)
+            .o_mail_component_SystrayMessagingMenu__dropdownMenu
+            .o_mail_component_ThreadPreviewList
+            .o_mail_component_ThreadPreview[data-thread-local-id="mail.channel_3"]`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window`)
+            .querySelectorAll(`.o_mail_component_ChatWindow`)
             .length,
         2,
         "should have open 2 visible chat windows");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_hidden_menu`)
+            .querySelectorAll(`.o_mail_component_ChatWindowManager__hiddenMenu`)
             .length,
         1,
         "should have hidden menu");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_1"]`)
+            .querySelectorAll(`.o_mail_component_ChatWindow[data-thread-local-id="mail.channel_1"]`)
             .length,
         1,
         "chat window of channel 1 should be open");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_3"]`)
+            .querySelectorAll(`.o_mail_component_ChatWindow[data-thread-local-id="mail.channel_3"]`)
             .length,
         1,
         "chat window of channel 3 should be open");
     assert.ok(
         document
-            .querySelector(`
-                .o_mail_component_chat_window_manager
-                > .o_chat_window[data-thread-local-id="mail.channel_3"]`)
+            .querySelector(`.o_mail_component_ChatWindow[data-thread-local-id="mail.channel_3"]`)
             .classList
             .contains('o_focused'),
         "chat window of channel 3 should have focus");

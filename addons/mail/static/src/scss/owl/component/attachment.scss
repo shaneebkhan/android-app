@@ -2,86 +2,86 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_attachment_preview {
+.o_mail_component_attachment {
     display: flex;
 
-    &:hover > .o_aside > .o_item.o_unlink {
+    &:hover .o_mail_component_attachment__asideItemUnlink {
         transform: translateX(0);
     }
+}
 
-    > .o_aside {
-        min-width: 50px;
-        position: relative;
-        overflow: hidden;
+.o_mail_component_attachment__aside {
+    min-width: 50px;
+    position: relative;
+    overflow: hidden;
+}
 
-        > .o_item {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-            justify-content: center;
+.o_mail_component_attachment__asideItem {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+}
 
-            &.o_unlink {
-                position: absolute;
-                top: 0;
-                transform: translateX(100%);
-            }
-        }
-    }
+.o_mail_component_attachment__asideItemUnlink {
+    position: absolute;
+    top: 0;
+    transform: translateX(100%);
+}
 
-    > .o_image {
-        margin: 3px;
-    }
+.o_mail_component_attachment__filename {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-    > .o_main {
-        width: 200px;
-        margin: 3px;
+.o_mail_component_attachment__image {
+    margin: 3px;
+}
 
-        > .o_filename {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-    }
+.o_mail_component_attachment__main {
+    width: 200px;
+    margin: 3px;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_attachment_preview {
+.o_mail_component_attachment {
 
     &.o_card_layout {
         background-color: gray('300');
         border-radius: 5px;
     }
+}
 
-    > .o_aside {
-        border-radius: 0 5px 5px 0;
+.o_mail_component_attachment__aside {
+    border-radius: 0 5px 5px 0;
+}
 
-        > .o_unlink {
-            background-color: $o-brand-primary;
-            color: white;
-            cursor: pointer;
+.o_mail_component_attachment__asideItemUploaded {
+    color: $o-brand-primary;
+}
 
-            &:hover {
-                background-color: darken($o-brand-primary, 10%);
-            }
-        }
+.o_mail_component_attachment__asideItemUnlink {
+    background-color: $o-brand-primary;
+    color: white;
+    cursor: pointer;
 
-        > .o_uploaded {
-            color: $o-brand-primary;
-        }
-    }
-
-    > .o_main > .o_extension {
-        text-transform: uppercase;
-        font-size: 80%;
-        font-weight: 400;
+    &:hover {
+        background-color: darken($o-brand-primary, 10%);
     }
 }
 
-.o_mail_component_attachment_preview__image.o_viewable {
+.o_mail_component_attachment__extension {
+    text-transform: uppercase;
+    font-size: 80%;
+    font-weight: 400;
+}
+
+.o_mail_component_attachment__image.o_viewable {
     cursor: zoom-in;
 
     &:hover {
@@ -93,6 +93,6 @@
 // Animation
 // ------------------------------------------------------------------
 
-.o_mail_component_attachment_preview > .o_aside > .o_unlink {
+.o_mail_component_attachment__asideItemUnlink {
     transition: transform 0.3s ease 0s;
 }

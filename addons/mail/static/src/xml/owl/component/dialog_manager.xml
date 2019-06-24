@@ -2,10 +2,11 @@
 <templates xml:space="preserve">
 
    <div
-      class="o_mail_component_dialog_manager"
+      class="o_mail_component_DialogManager"
       owl="1"
       t-name="mail.component.DialogManager">
       <Dialog
+         class="o_mail_component_DialogManager__dialog"
          Component="dialog.Component"
          id="dialog.id"
          info="dialog.info"

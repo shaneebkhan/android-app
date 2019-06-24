@@ -41,27 +41,27 @@ QUnit.test('basic rendering', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll('.o_mail_component_discuss__sidebar')
+            .querySelectorAll('.o_mail_component_Discuss__sidebar')
             .length,
         1,
         "should have a sidebar section");
     assert.strictEqual(
         document
-            .querySelectorAll('.o_mail_component_discuss__content')
+            .querySelectorAll('.o_mail_component_Discuss__content')
             .length,
         1,
         "should have content section");
     assert.strictEqual(
         document
-            .querySelectorAll('.o_mail_component_discuss__thread')
+            .querySelectorAll('.o_mail_component_Discuss__thread')
             .length,
         1,
         "should have thread section inside content");
     assert.ok(
         document
-            .querySelector('.o_mail_component_discuss__thread')
+            .querySelector('.o_mail_component_Discuss__thread')
             .classList
-            .contains('o_mail_component_thread'),
+            .contains('o_mail_component_Thread'),
         "thread section should use thread component");
 });
 
@@ -72,15 +72,13 @@ QUnit.test('basic rendering: sidebar', async function (assert) {
 
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_DiscussSidebar__group`)
+            .querySelectorAll(`.o_mail_component_DiscussSidebar__group`)
             .length,
         3,
         "should have 3 groups in sidebar");
     assert.strictEqual(
         document
-            .querySelectorAll(`
-                .o_mail_component_DiscussSidebar__groupMailbox`)
+            .querySelectorAll(`.o_mail_component_DiscussSidebar__groupMailbox`)
             .length,
         1,
         "should have group 'Mailbox' in sidebar");
@@ -119,7 +117,7 @@ QUnit.test('basic rendering: sidebar', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__sidebar
+                .o_mail_component_Discuss__sidebar
                 .o_mail_component_DiscussSidebar__separator`)
             .length,
         1,
@@ -237,7 +235,7 @@ QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
         inbox
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .length,
         1,
         "mailbox should have active indicator");
@@ -245,7 +243,7 @@ QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
         inbox
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon`)
+                .o_mail_component_ThreadIcon`)
             .length,
         1,
         "mailbox should have an icon");
@@ -253,8 +251,7 @@ QUnit.test('sidebar: basic mailbox rendering', async function (assert) {
         inbox
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon
-                > .fa.fa-inbox`)
+                .o_mail_component_ThreadIcon__mailboxInbox`)
             .length,
         1,
         "inbox should have 'inbox' icon");
@@ -298,7 +295,7 @@ QUnit.test('sidebar: default active inbox', async function (assert) {
         inbox
             .querySelector(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "inbox should be active by default");
@@ -313,7 +310,7 @@ QUnit.test('sidebar: change item', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_inbox"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "inbox should be active by default");
@@ -321,7 +318,7 @@ QUnit.test('sidebar: change item', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_starred"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "starred should be inactive by default");
@@ -334,7 +331,7 @@ QUnit.test('sidebar: change item', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_inbox"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "inbox mailbox should become inactive");
@@ -342,7 +339,7 @@ QUnit.test('sidebar: change item', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_starred"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "starred mailbox should become active");
@@ -449,7 +446,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .length,
         1,
         "should have active indicator");
@@ -457,7 +454,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__active_indicator.o_active`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator.o_active`)
             .length,
         0,
         "should not be active by default");
@@ -465,7 +462,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon`)
+                .o_mail_component_ThreadIcon`)
             .length,
         1,
         "should have an icon");
@@ -505,7 +502,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_settings`)
+                .o_mail_component_DiscussSidebarItem__commandSettings`)
             .length,
         1,
         "should have 'settings' command");
@@ -513,7 +510,7 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_leave`)
+                .o_mail_component_DiscussSidebarItem__commandLeave`)
             .length,
         1,
         "should have 'leave' command");
@@ -539,15 +536,15 @@ QUnit.test('sidebar: basic channel rendering', async function (assert) {
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__active_indicator.o_active`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator.o_active`)
             .length,
         1,
         "channel should become active");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__composer`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__composer`)
             .length,
         1,
         "should have composer section inside thread content (can post message in channel)");
@@ -601,7 +598,7 @@ QUnit.test('sidebar: channel rendering with needaction counter', async function 
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_settings`)
+                .o_mail_component_DiscussSidebarItem__commandSettings`)
             .length,
         1,
         "should have 'settings' command");
@@ -609,7 +606,7 @@ QUnit.test('sidebar: channel rendering with needaction counter', async function 
         channel
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_leave`)
+                .o_mail_component_DiscussSidebarItem__commandLeave`)
             .length,
         0,
         "should not have 'leave' command");
@@ -673,8 +670,7 @@ QUnit.test('sidebar: public/private channel rendering', async function (assert) 
         channel1
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon
-                > .fa.fa-hashtag`)
+                .o_mail_component_ThreadIcon__channelPublic`)
             .length,
         1,
         "channel1 (public) has hashtag icon");
@@ -682,8 +678,7 @@ QUnit.test('sidebar: public/private channel rendering', async function (assert) 
         channel2
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon
-                > .fa.fa-lock`)
+                .o_mail_component_ThreadIcon__channelPrivate`)
             .length,
         1,
         "channel2 (private) has lock icon");
@@ -730,7 +725,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .length,
         1,
         "should have active indicator");
@@ -738,7 +733,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
         chat
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon`)
+                .o_mail_component_ThreadIcon`)
             .length,
         1,
         "should have an icon");
@@ -778,7 +773,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_rename`)
+                .o_mail_component_DiscussSidebarItem__commandRename`)
             .length,
         1,
         "should have 'rename' command");
@@ -786,7 +781,7 @@ QUnit.test('sidebar: basic chat rendering', async function (assert) {
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__command_unpin`)
+                .o_mail_component_DiscussSidebarItem__commandUnpin`)
             .length,
         1,
         "should have 'unpin' command");
@@ -911,7 +906,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__sidebar
+                .o_mail_component_Discuss__sidebar
                 .o_mail_component_DiscussSidebar__groupChat
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_11"]`)
             .length,
@@ -920,7 +915,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__sidebar
+                .o_mail_component_Discuss__sidebar
                 .o_mail_component_DiscussSidebar__groupChat
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_12"]`)
             .length,
@@ -929,7 +924,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__sidebar
+                .o_mail_component_Discuss__sidebar
                 .o_mail_component_DiscussSidebar__groupChat
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_13"]`)
             .length,
@@ -950,8 +945,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
         chat1
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon
-                > .o_offline`)
+                > .o_mail_component_ThreadIcon__offline`)
             .length,
         1,
         "chat1 should have offline icon");
@@ -959,8 +953,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
         chat2
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_thread_icon
-                > .o_online`)
+                .o_mail_component_ThreadIcon__online`)
             .length,
         1,
         "chat2 should have online icon");
@@ -968,8 +961,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
         chat3
             .querySelectorAll(`
                 :scop
-                > .o_mail_component_thread_icon
-                > .o_away`)
+                .o_mail_component_ThreadIcon__away`)
             .length,
         1,
         "chat3 should have away icon");
@@ -1057,7 +1049,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
     await testUtils.dom.click(
         chat.querySelector(`
             :scope
-            .o_mail_component_DiscussSidebarItem__command_rename`),
+            .o_mail_component_DiscussSidebarItem__commandRename`),
         { allowInvisible: true });
 
     assert.ok(
@@ -1137,16 +1129,16 @@ QUnit.test('default thread rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__no_message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__noMessage`)
             .length,
         1,
         "should have empty thread");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__no_message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__noMessage`)
             .textContent
             .trim(),
         "There are no messages in this conversation.");
@@ -1187,7 +1179,7 @@ QUnit.test('default select thread in discuss params', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_starred"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "starred mailbox should become active");
@@ -1204,7 +1196,7 @@ QUnit.test('auto-select thread in discuss context', async function (assert) {
         document
             .querySelector(`
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.box_starred"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "starred mailbox should become active");
@@ -1258,44 +1250,44 @@ QUnit.test('load single message from channel initially', async function (assert)
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList`)
             .length,
         1,
         "should have list of messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorDate`)
             .length,
         1,
         "should have a single date separator"); // to check: may be client timezone dependent
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator_label`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorLabelDate`)
             .textContent,
         "April 20, 2019",
         "should display date day of messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         1,
         "should have a single message");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`)
             .length,
         1,
         "should have message with ID 100");
@@ -1335,15 +1327,15 @@ QUnit.test('basic rendering of message', async function (assert) {
     });
 
     const message = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`);
 
     assert.strictEqual(
             message
                 .querySelectorAll(`
                     :scope
-                    .o_mail_component_message__sidebar`)
+                    .o_mail_component_Message__sidebar`)
                 .length,
             1,
             "should have message sidebar of message");
@@ -1351,7 +1343,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .length,
         1,
@@ -1360,7 +1352,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelector(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .dataset
             .src,
@@ -1370,7 +1362,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__core`)
+                .o_mail_component_Message__core`)
             .length,
         1,
         "should have core part of message");
@@ -1378,7 +1370,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__header`)
+                .o_mail_component_Message__header`)
             .length,
         1,
         "should have header in core part of message");
@@ -1386,7 +1378,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__author_name`)
+                .o_mail_component_Message__authorName`)
             .length,
         1,
         "should have author name in header of message");
@@ -1394,7 +1386,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelector(`
                 :scope
-                .o_mail_component_message__author_name`)
+                .o_mail_component_Message__authorName`)
             .textContent,
         "Demo",
         "should have textually author name in header of message");
@@ -1402,8 +1394,8 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__header
-                .o_mail_component_message__date`)
+                .o_mail_component_Message__header
+                .o_mail_component_Message__date`)
             .length,
         1,
         "should have date in header of message");
@@ -1411,8 +1403,8 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__header
-                .o_mail_component_message__commands`)
+                .o_mail_component_Message__header
+                .o_mail_component_Message__commands`)
             .length,
         1,
         "should have commands in header of message");
@@ -1420,7 +1412,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__header
+                .o_mail_component_Message__header
                 .o_mail_component_DiscussSidebarItem__command`)
             .length,
         1,
@@ -1429,7 +1421,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__star_command`)
+                .o_mail_component_Message__commandStar`)
             .length,
         1,
         "should have command to star message");
@@ -1437,7 +1429,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__content`)
+                .o_mail_component_Message__content`)
             .length,
         1,
         "should have content in core part of message");
@@ -1445,7 +1437,7 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelector(`
                 :scope
-                .o_mail_component_message__content`)
+                .o_mail_component_Message__content`)
             .innerHTML
             .trim(),
         "<p>body</p>",
@@ -1501,21 +1493,21 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages");
 
     const message1 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`);
     const message2 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]`);
 
     assert.notOk(
         message1
@@ -1526,7 +1518,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message1
             .querySelector(`
                 :scope
-                .o_mail_component_message__sidebar`)
+                .o_mail_component_Message__sidebar`)
             .classList
             .contains('o_squashed'),
         "message 1 should not have squashed sidebar");
@@ -1539,7 +1531,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelector(`
                 :scope
-                .o_mail_component_message__sidebar`)
+                .o_mail_component_Message__sidebar`)
             .classList
             .contains('o_squashed'),
         "message 2 should not have squashed sidebar");
@@ -1547,8 +1539,8 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
-                .o_mail_component_message__date`)
+                .o_mail_component_Message__sidebar
+                .o_mail_component_Message__date`)
             .length,
         1,
         "message 2 should have date in sidebar");
@@ -1556,8 +1548,8 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
-                .o_mail_component_message__commands`)
+                .o_mail_component_Message__sidebar
+                .o_mail_component_Message__commands`)
             .length,
         1,
         "message 2 should have some commands in sidebar");
@@ -1565,7 +1557,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 .o_mail_component_DiscussSidebarItem__command`)
             .length,
         1,
@@ -1574,7 +1566,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__core`)
+                .o_mail_component_Message__core`)
             .length,
         1,
         "message 2 should have core part");
@@ -1582,7 +1574,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__header`)
+                .o_mail_component_Message__header`)
             .length,
         0,
         "message 2 should have a header in core part");
@@ -1590,7 +1582,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__content`)
+                .o_mail_component_Message__content`)
             .length,
         1,
         "message 2 should have some content in core part");
@@ -1598,7 +1590,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
         message2
             .querySelector(`
                 :scope
-                .o_mail_component_message__content`)
+                .o_mail_component_Message__content`)
             .innerHTML
             .trim(),
         "<p>body2</p>",
@@ -1646,21 +1638,21 @@ QUnit.test('inbox messages are never squashed', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages");
 
     const message1 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`);
     const message2 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]`);
 
     assert.notOk(
         message1
@@ -1720,36 +1712,36 @@ QUnit.test('load all messages from channel initially, less than fetch limit (29 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorDate`)
             .length,
         1,
         "should have a single date separator"); // to check: may be client timezone dependent
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator_label`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorLabelDate`)
             .textContent,
         "April 20, 2019",
         "should display date day of messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         29,
         "should have 29 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__load_more`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__loadMore`)
             .length,
         0,
         "should not have load more link");
@@ -1835,63 +1827,63 @@ QUnit.test('load more messages from channel', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorDate`)
             .length,
         1,
         "should have a single date separator"); // to check: may be client timezone dependent
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__date_separator_label`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorLabelDate`)
             .textContent,
         "April 20, 2019",
         "should display date day of messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         30,
         "should have 30 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__load_more`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__loadMore`)
             .length,
         1,
         "should have load more link");
 
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list
-            .o_mail_component_message_list__load_more`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList
+            .o_mail_component_MessageList__loadMore`)
         .click();
     await testUtils.nextTick(); // re-render
 
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         40,
         "should have 40 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__load_more`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__loadMore`)
             .length,
         0,
         "should not longer have load more link (all messages loaded)");
@@ -1942,16 +1934,16 @@ QUnit.test('auto-scroll to bottom of thread', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         25,
         "should have 25 messages");
 
     const messageList= document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList`);
 
     assert.strictEqual(
         messageList.scrollTop + messageList.clientHeight,
@@ -2031,9 +2023,9 @@ QUnit.test('load more messages from channel (auto-load on scroll)', async functi
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         30,
         "should have 30 messages");
@@ -2041,8 +2033,8 @@ QUnit.test('load more messages from channel (auto-load on scroll)', async functi
     const scrollProm = testUtils.makeTestPromise();
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .addEventListener(
             'scroll',
             () => scrollProm.resolve(),
@@ -2050,8 +2042,8 @@ QUnit.test('load more messages from channel (auto-load on scroll)', async functi
             { once: true });
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .scrollTop = 0;
     await scrollProm; // scroll time
     await testUtils.nextTick(); // re-render
@@ -2059,18 +2051,18 @@ QUnit.test('load more messages from channel (auto-load on scroll)', async functi
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         40,
         "should have 40 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__load_more`)
+                .o_mail_component_Dsiscuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__loadMore`)
             .length,
         0,
         "should not longer have load more link (all messages loaded)");
@@ -2133,18 +2125,18 @@ QUnit.test('new messages separator', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         25,
         "should have 25 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__new_messages_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorNewMessages`)
             .length,
         0,
         "should not display 'new messages' separator");
@@ -2152,8 +2144,8 @@ QUnit.test('new messages separator', async function (assert) {
     const scrollProm = testUtils.makeTestPromise();
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .addEventListener(
             'scroll',
             () => scrollProm.resolve(),
@@ -2161,8 +2153,8 @@ QUnit.test('new messages separator', async function (assert) {
             { once: true });
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .scrollTop = 0;
     await scrollProm; // scroll time
     // simulate receiving a new message
@@ -2184,18 +2176,18 @@ QUnit.test('new messages separator', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss___thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss___thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         26,
         "should have 26 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__new_messages_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorNewMessages`)
             .length,
         1,
         "should display 'new messages' separator");
@@ -2204,8 +2196,8 @@ QUnit.test('new messages separator', async function (assert) {
     const scrollProm2 = testUtils.makeTestPromise();
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .addEventListener(
             'scroll',
             () => scrollProm2.resolve(),
@@ -2213,13 +2205,13 @@ QUnit.test('new messages separator', async function (assert) {
             { once: true });
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .scrollTop =
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .scrollHeight;
     await scrollProm2; // scroll time
     await testUtils.nextTick(); // re-render
@@ -2227,9 +2219,9 @@ QUnit.test('new messages separator', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__new_messages_separator`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__separatorNewMessages`)
             .length,
         0,
         "should no longer display 'new messages' separator (message seen)");
@@ -2310,9 +2302,9 @@ QUnit.skip('restore thread scroll position', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         25,
         "should have 25 messages");
@@ -2321,8 +2313,8 @@ QUnit.skip('restore thread scroll position', async function (assert) {
     const scrollProm = testUtils.makeTestPromise();
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .addEventListener(
             'scroll',
             () => scrollProm.resolve(),
@@ -2330,16 +2322,16 @@ QUnit.skip('restore thread scroll position', async function (assert) {
             { once: true });
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list`)
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList`)
         .scrollTop = 0;
     await scrollProm; // scroll time
 
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList`)
             .scrollTop,
         0,
         "should have scrolled to top of thread");
@@ -2361,8 +2353,8 @@ QUnit.skip('restore thread scroll position', async function (assert) {
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList`)
             .scrollTop,
         0,
         "should have recovered scroll position of channel1 (scroll to top)");
@@ -2375,8 +2367,8 @@ QUnit.skip('restore thread scroll position', async function (assert) {
     await testUtils.nextTick(); // re-render
 
     const messageList = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList`);
 
     assert.strictEqual(
         messageList.scrollTop + messageList.clientHeight,
@@ -2446,60 +2438,60 @@ QUnit.test('message origin redirect to channel', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`)
             .length,
         1,
         "should have message1 (ID 100)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]`)
             .length,
         1,
         "should have message2 (ID 101)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .length,
         0,
         "message1 should not have origin part in channel1 (same origin as channel)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .length,
         1,
         "message2 should have origin part (origin is channel2 !== channel1)");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .textContent
             .trim(),
         "(from #channel2)",
@@ -2507,11 +2499,11 @@ QUnit.test('message origin redirect to channel', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread
                 > a`)
             .length,
         1,
@@ -2520,11 +2512,11 @@ QUnit.test('message origin redirect to channel', async function (assert) {
     // click on origin link of message2 (= channel2)
     document
         .querySelector(`
-            .o_mail_component_discuss__thread
-            .o_mail_component_thread__message_list
-            .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]
-            .o_mail_component_message__header
-            .o_mail_component_message__origin_thread
+            .o_mail_component_Discuss__thread
+            .o_mail_component_Thread__messageList
+            .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
+            .o_mail_component_Message__header
+            .o_mail_component_Message__originThread
             > a`)
         .click();
     await testUtils.nextTick(); // re-render
@@ -2534,67 +2526,67 @@ QUnit.test('message origin redirect to channel', async function (assert) {
             .querySelector(`
                 .o_mail_component_DiscussSidebar__groupChannel
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_2"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "channel2 should be active channel on redirect from discuss app");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`)
             .length,
         1,
         "should have message1 (ID 100)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]`)
             .length,
         1,
         "should have message2 (ID 101)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .length,
         1,
         "message1 should have origin thread part (= channel1 !== channel2)");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .length,
         0,
         "message2 should not have origin thread part in channel2 (same as current channel)");
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread`)
             .textContent
             .trim(),
         "(from #channel1)",
@@ -2602,11 +2594,11 @@ QUnit.test('message origin redirect to channel', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]
-                .o_mail_component_message__header
-                .o_mail_component_message__origin_thread
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]
+                .o_mail_component_Message__header
+                .o_mail_component_Message__originThread
                 > a`)
             .length,
         1,
@@ -2683,7 +2675,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
             .querySelector(`
                 .o_mail_component_DiscussSidebar__groupChannel
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_1"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "channel 'General' should be active");
@@ -2692,34 +2684,34 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
             .querySelector(`
                 .o_mail_component_DiscussSidebar__groupChat
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_10"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "DM 'Demo' should not be active");
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__thread
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss__thread
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages");
 
     const msg1 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_100"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]`);
     const msg2 = document.querySelector(`
-        .o_mail_component_discuss__thread
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message[data-message-local-id="mail.message_101"]`);
+        .o_mail_component_Discuss__thread
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]`);
 
     assert.strictEqual(
         msg1
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .length,
         1,
@@ -2728,7 +2720,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg1
             .querySelector(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .classList
             .contains('o_redirect'),
@@ -2737,7 +2729,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .length,
         1,
@@ -2746,7 +2738,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg2
             .querySelector(`
                 :scope
-                .o_mail_component_message__sidebar
+                .o_mail_component_Message__sidebar
                 > img`)
             .classList
             .contains('o_redirect'),
@@ -2755,7 +2747,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
     await testUtils.dom.click(
         msg1.querySelector(`
             :scope
-            .o_mail_component_message__sidebar
+            .o_mail_component_Message__sidebar
             > img`));
     await testUtils.nextTick(); // re-render
 
@@ -2764,7 +2756,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
             .querySelector(`
                 .o_mail_component_DiscussSidebar__groupChannel
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_1"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "channel 'General' should become inactive after author redirection");
@@ -2773,7 +2765,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
             .querySelector(`
                 .o_mail_component_DiscussSidebar__groupChat
                 .o_mail_component_DiscussSidebar__item[data-thread-local-id="mail.channel_10"]
-                .o_mail_component_DiscussSidebarItem__active_indicator`)
+                .o_mail_component_DiscussSidebarItem__activeIndicator`)
             .classList
             .contains('o_active'),
         "chat 'Demo' should become active after author redirection");
@@ -2811,14 +2803,14 @@ QUnit.test('sidebar quick search', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss__sidebar
+                .o_mail_component_Discuss__sidebar
                 input.o_mail_component_DiscussSidebar__quickSearch`)
             .length,
         1,
         "should have quick search in sidebar");
 
     const quickSearch = document.querySelector(`
-        .o_mail_component_discuss__sidebar
+        .o_mail_component_Discuss__sidebar
         input.o_mail_component_DiscussSidebar__quickSearch`);
 
     quickSearch.value = "1";
@@ -2891,21 +2883,14 @@ QUnit.test('basic control panel rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_widget_discuss
+                .o_mail_widget_Discuss
                 > .o_cp_controller
                 > .o_control_panel
                 > .breadcrumb`)
             .textContent,
         "Inbox",
         "display inbox in the breadcrumb");
-    const markAllReadButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_mark_all_read`);
+    const markAllReadButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonMarkAllRead`);
     assert.isVisible(
         markAllReadButton,
         "should have visible button 'Mark all read' in the control panel of inbox");
@@ -2920,21 +2905,14 @@ QUnit.test('basic control panel rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_widget_discuss
+                .o_mail_widget_Discuss
                 > .o_cp_controller
                 > .o_control_panel
                 > .breadcrumb`)
             .textContent,
         "Starred",
         "display starred in the breadcrumb");
-    const unstarAllButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_unstar_all`);
+    const unstarAllButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonUnstarAll`);
     assert.isVisible(
         unstarAllButton,
         "should have visible button 'Unstar all' in the control panel of starred");
@@ -2949,21 +2927,14 @@ QUnit.test('basic control panel rendering', async function (assert) {
     assert.strictEqual(
         document
             .querySelector(`
-                .o_mail_widget_discuss
+                .o_mail_widget_Discuss
                 > .o_cp_controller
                 > .o_control_panel
                 > .breadcrumb`)
             .textContent,
         "#General",
         "display general in the breadcrumb");
-    const inviteButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_invite`);
+    const inviteButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonInvite`);
     assert.isVisible(
         inviteButton,
         "should have visible button 'Invite' in the control panel of channel");
@@ -3050,20 +3021,13 @@ QUnit.test('inbox: mark all messages as read', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages in inbox");
-    let markAllReadButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_mark_all_read`);
+    let markAllReadButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonMarkAllRead`);
     assert.notOk(
         markAllReadButton.disabled,
         "should have enabled button 'Mark all read' in the control panel of inbox (has messages)");
@@ -3090,20 +3054,13 @@ QUnit.test('inbox: mark all messages as read', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         0,
         "should have no message in inbox");
-    markAllReadButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_mark_all_read`);
+    markAllReadButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonMarkAllRead`);
     assert.ok(
         markAllReadButton.disabled,
         "should have disabled button 'Mark all read' in the control panel of inbox (no messages)");
@@ -3174,20 +3131,13 @@ QUnit.test('starred: unstar all', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         2,
         "should have 2 messages in starred");
-    let unstarAllButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_unstar_all`);
+    let unstarAllButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonUnstarAll`);
     assert.notOk(
         unstarAllButton.disabled,
         "should have enabled button 'Unstar all' in the control panel of starred (has messages)");
@@ -3206,20 +3156,13 @@ QUnit.test('starred: unstar all', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         0,
         "should have no message in starred");
-    unstarAllButton = document.querySelector(`
-        .o_mail_widget_discuss
-        > .o_cp_controller
-        > .o_control_panel
-        > .o_cp_left
-        > .o_cp_buttons
-        > div
-        > button.o_unstar_all`);
+    unstarAllButton = document.querySelector(`.o_mail_widget_Discuss__controlPanelButtonUnstarAll`);
     assert.ok(
         unstarAllButton.disabled,
         "should have disabled button 'Unstar all' in the control panel of starred (no messages)");
@@ -3292,16 +3235,16 @@ QUnit.test('toggle_star message', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         1,
         "should have 1 message in channel");
     let message = document.querySelector(`
-        .o_mail_component_discuss
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message`);
+        .o_mail_component_Discuss
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message`);
     assert.notOk(
         message
             .classList
@@ -3311,7 +3254,7 @@ QUnit.test('toggle_star message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_message__star_command`)
+                .o_mail_component_Message__commandStar`)
             .length,
         1,
         "message should have star command");
@@ -3319,7 +3262,7 @@ QUnit.test('toggle_star message', async function (assert) {
     message
         .querySelector(`
             :scope
-            .o_mail_component_message__star_command`)
+            .o_mail_component_Message__commandStar`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -3335,16 +3278,16 @@ QUnit.test('toggle_star message', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         1,
         "should have kept 1 message in channel");
     message = document.querySelector(`
-        .o_mail_component_discuss
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message`);
+        .o_mail_component_Discuss
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message`);
     assert.ok(
         message
             .classList
@@ -3354,7 +3297,7 @@ QUnit.test('toggle_star message', async function (assert) {
     message
         .querySelector(`
             :scope
-            .o_mail_component_message__star_command`)
+            .o_mail_component_Message__commandStar`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -3370,16 +3313,16 @@ QUnit.test('toggle_star message', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_discuss
-                .o_mail_component_thread__message_list
-                .o_mail_component_message_list__message`)
+                .o_mail_component_Discuss
+                .o_mail_component_Thread__messageList
+                .o_mail_component_MessageList__message`)
             .length,
         1,
         "should still have 1 message in channel");
     message = document.querySelector(`
-        .o_mail_component_discuss
-        .o_mail_component_thread__message_list
-        .o_mail_component_message_list__message`);
+        .o_mail_component_Discuss
+        .o_mail_component_Thread__messageList
+        .o_mail_component_MessageList__message`);
     assert.notOk(
         message
             .classList

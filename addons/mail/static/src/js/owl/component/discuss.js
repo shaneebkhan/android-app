@@ -151,10 +151,21 @@ class Discuss extends Component {
                     autoselect: true,
                     channelID: id,
                 });
-            } else {
-                this.env.store.commit('updateDiscuss', { threadLocalID });
+                return;
             }
-        } else if (model === 'res.partner') {
+            this.env.store.commit('updateDiscuss', { threadLocalID });
+            return;
+        }
+        if (model === 'res.partner') {
+            if (id === this.env.session.partner_id) {
+                this.env.do_action({
+                    type: 'ir.actions.act_window',
+                    res_model: 'res.partner',
+                    views: [[false, 'form']],
+                    res_id: id,
+                });
+                return;
+            }
             const partnerLocalID = `res.partner_${id}`;
             const partner = this.env.store.state.partners[partnerLocalID];
             if (partner.userID === undefined) {
@@ -181,9 +192,9 @@ class Discuss extends Component {
                     partnerID: id,
                     type: 'chat',
                 });
-            } else {
-                this.env.store.commit('updateDiscuss', { threadLocalID: chat.localID });
+                return;
             }
+            this.env.store.commit('updateDiscuss', { threadLocalID: chat.localID });
         }
     }
 

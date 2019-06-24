@@ -2,20 +2,20 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_emojis_popover {
+.o_mail_component_EmojisPopover {
     display: flex;
     flex-flow: row wrap;
+}
 
-    > .o_emoji {
-        font-size: 1.1em;
-        margin: 3px;
-    }
+.o_mail_component_EmojisPopover__emoji {
+    font-size: 1.1em;
+    margin: 3px;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_emojis_popover > .o_emoji {
+.o_mail_component_EmojisPopover__emoji {
     cursor: pointer;
 }

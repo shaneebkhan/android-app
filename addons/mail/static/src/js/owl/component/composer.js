@@ -18,7 +18,7 @@ class Composer extends Component {
         super(...args);
         this.components = { AttachmentList, EmojisButton, Input };
         this.fileuploadID = _.uniqueId('o_composer_fileupload');
-        this.id = _.uniqueId('o_mail_component_composer');
+        this.id = _.uniqueId('o_mail_component_Composer');
         this.state = {
             attachmentLocalIDs: [],
             showAllSuggestedRecipients: false,

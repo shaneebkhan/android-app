@@ -6,16 +6,16 @@ const mailUtils = require('mail.utils');
 
 const config = require('web.config');
 const core = require('web.core');
-const session = require('web.session');
 const utils = require('web.utils');
 
 const _t = core._t;
 
 /**
+ * @private
  * @param {Object[]} notifications
  * @return {Object[]}
  */
-function filterNotificationsOnUnsubscribe(notifications) {
+function _filterNotificationsOnUnsubscribe(notifications) {
     const unsubscribedNotif = notifications.find(notif =>
         notif[1].info === 'unsubscribe');
     if (unsubscribedNotif) {
@@ -27,10 +27,11 @@ function filterNotificationsOnUnsubscribe(notifications) {
 }
 
 /**
+ * @private
  * @param {string} htmlString
  * @return {string}
  */
-function generateEmojisOnHtml(htmlString) {
+function _generateEmojisOnHtml(htmlString) {
     for (const emoji of emojis) {
         for (const source of emoji.sources) {
             const escapedSource = String(source).replace(
@@ -46,17 +47,38 @@ function generateEmojisOnHtml(htmlString) {
 }
 
 /**
+ * @private
+ * @param {string} content html content
+ * @return {integer[]} list of mentioned partner IDs (not duplicate)
+ */
+function _getMentionedPartnerIDs(content) {
+    const parser = new window.DOMParser();
+    const node = parser.parseFromString(content, 'text/html');
+    const mentions = [ ...node.querySelectorAll('.o_mention') ];
+    const allPartnerIDs = mentions
+        .filter(mention =>
+            (
+                mention.dataset.oeModel === 'res.partner' &&
+                !isNaN(Number(mention.dataset.oeId))
+            ))
+        .map(mention => Number(mention.dataset.oeId));
+    return [ ...new Set(allPartnerIDs) ];
+}
+
+/**
+ * @private
  * @param {Object} param0
+ * @param {Object} param0.env
  * @param {Object} param0.state
  * @param {Object} param1
  * @param {string} param1.threadLocalID
  * @return {Object}
  */
-function getThreadFetchMessagesKwargs({ state }, { threadLocalID }) {
+function _getThreadFetchMessagesKwargs({ env, state }, { threadLocalID }) {
     const thread = state.threads[threadLocalID];
     let kwargs = {
         limit: state.MESSAGE_FETCH_LIMIT,
-        context: session.user_context
+        context: env.session.user_context
     };
     if (thread.moderation) {
         // thread is a channel
@@ -125,7 +147,7 @@ const actions = {
             args: type === 'chat' ? [[partnerID]] : [name, publicStatus],
             kwargs: {
                 context: {
-                    ...session.user_content,
+                    ...env.session.user_content,
                     isMobile: config.device.isMobile
                 }
             }
@@ -190,16 +212,19 @@ const actions = {
         { commit, dispatch, env },
         { ready }
     ) {
-        await session.is_bound;
+        await env.session.is_bound;
         const context = {
             isMobile: config.device.isMobile,
-            ...session.user_context
+            ...env.session.user_context
         };
         const data = await env.rpc({
             route: '/mail/init_messaging',
             params: { context: context }
         });
-        commit('initMessaging', data);
+        commit('initMessaging', {
+            currentPartnerID: env.session.partner_id,
+            ...data
+        });
         env.call('bus_service', 'onNotification', null, notifs => dispatch('_handleNotifications', notifs));
         ready();
         env.call('bus_service', 'startPolling');
@@ -290,8 +315,8 @@ const actions = {
             model: 'mail.message',
             method: 'message_fetch',
             args: [domain],
-            kwargs: getThreadFetchMessagesKwargs(
-                { state },
+            kwargs: _getThreadFetchMessagesKwargs(
+                { env, state },
                 { threadLocalID })
         }, { shadow: true });
         commit('handleThreadLoaded', {
@@ -343,8 +368,8 @@ const actions = {
             model: 'mail.message',
             method: 'message_fetch',
             args: [domain],
-            kwargs: getThreadFetchMessagesKwargs(
-                { state },
+            kwargs: _getThreadFetchMessagesKwargs(
+                { env, state },
                 { threadLocalID }
             )
         }, { shadow: true });
@@ -460,7 +485,6 @@ const actions = {
      * @param {*} param1.data.command
      * @param {string} param1.data.content
      * @param {string} param1.data.message_type
-     * @param {integer[]} param1.data.partner_ids
      * @param {string} param1.data.subject
      * @param {string} [param1.data.subtype='mail.mt_comment']
      * @param {integer|undefined} [param1.data.subtype_id=undefined]
@@ -481,7 +505,6 @@ const actions = {
                 content,
                 context,
                 message_type,
-                partner_ids,
                 subject,
                 subtype='mail.mt_comment',
                 subtype_id,
@@ -502,7 +525,6 @@ const actions = {
                     content,
                     context,
                     message_type,
-                    partner_ids,
                     subject,
                     subtype,
                     subtype_id,
@@ -521,10 +543,12 @@ const actions = {
             content.trim(),
             mailUtils.addLink
         );
-        body = generateEmojisOnHtml(body);
+        body = _generateEmojisOnHtml(body);
         let postData = {
-            attachment_ids: attachmentLocalIDs.map(localID => state.attachments[localID].id),
+            attachment_ids: attachmentLocalIDs.map(localID =>
+                    state.attachments[localID].id),
             body,
+            partner_ids: _getMentionedPartnerIDs(body),
         };
         if (thread._model === 'mail.channel') {
             Object.assign(postData, {
@@ -539,7 +563,6 @@ const actions = {
             });
         } else {
             Object.assign(postData, {
-                partner_ids,
                 channel_ids: channel_ids.map(id => [4, id, false]),
                 canned_response_ids
             });
@@ -622,7 +645,7 @@ const actions = {
         for (const partner of Object.values(state.partners)) {
             if (partners.length < limit) {
                 if (
-                    partner.id !== session.partner_id &&
+                    partner.id !== state.currentParnerID &&
                     searchRegexp.test(partner.name)
                 ) {
                     partners.push(partner);
@@ -766,10 +789,16 @@ const actions = {
         }
     ) {
         if (channel_ids.length === 1) {
-            await dispatch('joinChannel', { channelID: channel_ids[0] });
+            await dispatch('joinChannel', {
+                channelID: channel_ids[0],
+            });
         }
-        commit('createMessage', { author_id, channel_ids, ...kwargs });
-        if (authorID === session.partner_id) {
+        commit('createMessage', {
+            author_id,
+            channel_ids,
+            ...kwargs
+        });
+        if (authorID === state.currentParnerID) {
             return;
         }
         const threadLocalID = `mail.channel_${channelID}`;
@@ -785,16 +814,17 @@ const actions = {
      * @private
      * @param {Object} param0
      * @param {function} param0.commit
+     * @param {Object} param0.state
      * @param {Object} param1
      * @param {integer} param1.channelID
      * @param {integer} param1.last_message_id
      * @param {integer} param1.partner_id
      */
     async _handleNotificationChannelSeen(
-        { commit },
+        { commit, state },
         { channelID, last_message_id, partner_id }
     ) {
-        if (session.partner_id !== partner_id) {
+        if (state.currentParnerID !== partner_id) {
             return;
         }
         commit('updateThread', {
@@ -810,13 +840,14 @@ const actions = {
      * @param {Object} param0
      * @param {function} param0.commit
      * @param {function} param0.dispatch
+     * @param {Object} param0.env
      * @param {Object} param1
      * @param {string|undefined} [param1.info=undefined]
      * @param {string|undefined} [param1.type=undefined]
      * @param {...Object} param1.kwargs
      */
     async _handleNotificationPartner(
-        { commit, dispatch },
+        { commit, dispatch, env },
         { info, type, ...kwargs }
     ) {
         if (type === 'activity_updated') {
@@ -959,7 +990,7 @@ const actions = {
         { commit, dispatch },
         notifs
     ) {
-        notifs = filterNotificationsOnUnsubscribe(notifs);
+        notifs = _filterNotificationsOnUnsubscribe(notifs);
         const proms = notifs.map(notif => {
             const model = notif[0][1];
             switch (model) {
@@ -1033,7 +1064,7 @@ const actions = {
             model: 'mail.message',
             method: 'message_format',
             args: [idsToLoad],
-            context: session.user_context
+            context: env.session.user_context
         });
         commit('handleThreadLoaded', {
             messagesData,
@@ -1058,7 +1089,7 @@ const actions = {
                 const message = state.messages[localID];
                 // If too many messages, not all are fetched,
                 // and some might not be found
-                return !message || message.needaction_partner_ids.includes(session.partner_id);
+                return !message || message.needaction_partner_ids.includes(state.currentParnerID);
             })
             .map(localID => state.messages[localID].id);
         if (!ids.length) {

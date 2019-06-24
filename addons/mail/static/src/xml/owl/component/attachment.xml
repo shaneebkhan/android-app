@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_attachment_preview"
+        class="o_mail_component_attachment"
         owl="1"
         t-att-class="{
             o_basic_layout: options.layout === 'basic',
@@ -15,7 +15,7 @@
         t-name="mail.component.Attachment">
         <t t-if="options.layout === 'basic'">
             <div
-                class="o_image o_mail_component_attachment_preview__image"
+                class="o_mail_component_attachment__image"
                 t-att-class="{
                     o_viewable: props.attachment.isViewable,
                 }"
@@ -24,7 +24,7 @@
                 t-if="props.attachment.fileType !== 'image'"
                 t-on-click="_onClickImage"/>
             <img
-                class="o_mail_component_attachment_preview__image"
+                class="o_mail_component_attachment__image"
                 t-att-class="{
                     o_viewable: props.attachment.isViewable,
                 }"
@@ -34,7 +34,7 @@
         </t>
         <t t-elif="options.layout === 'card'">
             <div
-                class="o_image o_mail_component_attachment_preview__image"
+                class="o_mail_component_attachment__image"
                 t-att-class="{
                     o_viewable: props.attachment.isViewable,
                 }"
@@ -43,42 +43,53 @@
                 t-att-style="props.attachment.fileType === 'image' ? 'background-image:url(/web/image/' + props.attachment.id + '/38x38/?crop=true' : ''"
                 t-on-click="_onClickImage"/>
             <div
-                class="o_main"
+                class="o_mail_component_attachment__main"
                 t-if="options.layoutCardLabel">
                 <div
-                    class="o_filename">
+                    class="o_mail_component_attachment__filename">
                     <t t-esc="props.attachment.displayFilename"/>
                 </div>
                 <div
-                    class="o_extension">
+                    class="o_mail_component_attachment__extension">
                     <t t-esc="props.attachment.extension"/>
                 </div>
             </div>
             <div
-                class="o_aside">
+                class="o_mail_component_attachment__aside">
                 <div
                     aria-label="Uploading"
-                    class="o_item o_uploading"
+                    class="
+                        o_mail_component_attachment__asideItem
+                        o_mail_component_attachment__asideItemUploading"
+                    title="Uploading"
                     t-if="props.attachment.uploading"
-                    t-key="'uploading'"
-                    title="Uploading">
+                    t-key="'uploading'">
                     <i
-                        class="fa fa-spinner fa-spin"/>
+                        class="
+                            fa
+                            fa-spin
+                            fa-spinner"/>
                 </div>
                 <t t-if="props.attachment.uploaded">
                     <div
                         aria-label="Uploaded"
-                        class="o_item o_uploaded"
-                        t-key="'uploaded'"
-                        title="Uploaded">
-                        <i class="fa fa-check"/>
+                        class="
+                            o_mail_component_attachment__asideItem
+                            o_mail_component_attachment__asideItemUploaded"
+                        title="Uploaded"
+                        t-key="'uploaded'">
+                        <i class="
+                            fa
+                            fa-check"/>
                     </div>
                     <div
                         aria-label="Remove"
-                        class="o_item o_unlink"
+                        class="
+                            o_mail_component_attachment__asideItem
+                            o_mail_component_attachment__asideItemUnlink"
+                        title="Remove"
                         t-key="'unlink'"
-                        t-on-click="_onClickUnlink"
-                        title="Remove">
+                        t-on-click="_onClickUnlink">
                         <i class="fa fa-times"/>
                     </div>
                 </t>

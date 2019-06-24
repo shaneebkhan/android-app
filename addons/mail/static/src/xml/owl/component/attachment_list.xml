@@ -2,12 +2,12 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_attachment_preview_list"
+        class="o_mail_component_attachmentList"
         owl="1"
         t-name="mail.component.AttachmentList">
         <Attachment
             attachmentLocalID="attachmentLocalID"
-            class="o_item"
+            class="o_mail_component_attachmentList__attachment"
             options="props.options"
             t-as="attachmentLocalID"
             t-foreach="props.attachmentLocalIDs"

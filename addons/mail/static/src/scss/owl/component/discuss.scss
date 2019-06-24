@@ -6,7 +6,7 @@
     flex: 1 1 auto;
 }
 
-.o_mail_component_discuss {
+.o_mail_component_Discuss {
     display: flex;
     height: 100%;
     min-height: 0;
@@ -17,35 +17,34 @@
     }
 }
 
-.o_mail_component_discuss__content {
+.o_mail_component_Discuss__content {
     height: 100%;
     overflow: auto;
     flex: 1 1 auto;
     display: flex;
     flex-flow: column;
-
 }
 
-.o_mail_component_discuss__mobile_mailbox_selection {
+.o_mail_component_Discuss__mobileMailboxSelection {
     width: 100%;
 }
 
-.o_mail_component_discuss__mobile_navbar {
+.o_mail_component_Discuss__mobileNavbar {
     width: 100%;
 }
 
-.o_mail_component_discuss__sidebar {
+.o_mail_component_Discuss__sidebar {
     height: 100%;
     overflow: auto;
     padding-top: 10px;
     flex: 0 0 auto;
 }
 
-.o_mail_component_discuss__thread {
+.o_mail_component_Discuss__thread {
     flex: 1 1 auto;
 }
 
-.o_mail_component_discuss__thread_preview_list {
+.o_mail_component_Discuss__threadPreviewList {
     width: 100%;
     flex: 1 1 auto;
 }

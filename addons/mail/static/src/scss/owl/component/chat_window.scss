@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_chat_window_manager > .o_chat_window {
+.o_mail_component_ChatWindow {
     position: fixed;
     bottom: 0;
     display: flex;
@@ -11,21 +11,6 @@
     max-width: 100%;
     max-height: 100%;
 
-    &.o_new_message > .o_selection {
-        padding: 3px;
-        display: flex;
-        align-items: center;
-
-        > input {
-            flex: 1 1 auto;
-        }
-
-        > .o_label {
-            margin-right: 5px;
-            flex: 0 0 auto;
-        }
-    }
-
     &.o_folded {
         height: $o-mail-chat-window-header-height;
     }
@@ -33,32 +18,39 @@
     &:not(.o_folded) {
         height: 400px;
     }
+}
 
-    > .o_mail_component_chat_window_header {
-        flex: 0 0 auto;
-    }
+.o_mail_component_ChatWindow__header {
+    flex: 0 0 auto;
+}
 
-    > .o_thread {
-        flex: 1 1 auto;
-    }
+.o_mail_component_ChatWindow__newMessageForm {
+    padding: 3px;
+    display: flex;
+    align-items: center;
+}
+
+.o_mail_component_ChatWindow__newMessageFormInput {
+    flex: 1 1 auto;
+}
+
+.o_mail_component_ChatWindow__newMessageFormLabel {
+    margin-right: 5px;
+    flex: 0 0 auto;
+}
+
+.o_mail_component_ChatWindow__thread {
+    flex: 1 1 auto;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_chat_window_manager > .o_chat_window {
+.o_mail_component_ChatWindow {
     background-color: $o-mail-thread-window-bg;
     border-radius: 6px 6px 0 0;
     box-shadow: -5px -5px 10px rgba(black, 0.18);
-
-    &.o_new_message > .o_selection {
-
-        > input {
-            outline: none;
-            border: 1px solid gray('300'); // cancel firefox border on input focus
-        }
-    }
 
     &:not(.o_focused) {
         opacity: 0.8;
@@ -67,16 +59,21 @@
     &.o_focused {
         box-shadow: -5px -5px 10px rgba(black, 0.36);
     }
+}
 
-    > .o_mail_component_chat_window_header {
-        border-radius: 3px 3px 0 0;
-    }
+.o_mail_component_ChatWindow__header {
+    border-radius: 3px 3px 0 0;
+}
+
+.o_mail_component_ChatWindow__newMessageFormInput {
+    outline: none;
+    border: 1px solid gray('300'); // cancel firefox border on input focus
 }
 
 // ------------------------------------------------------------------
 // Animation
 // ------------------------------------------------------------------
 
-.o_mail_component_chat_window_manager > .o_chat_window {
+.o_mail_component_ChatWindow {
     transition: height 0.3s;
 }

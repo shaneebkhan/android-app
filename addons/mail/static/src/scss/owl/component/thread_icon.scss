@@ -3,52 +3,49 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_thread_icon {
+.o_mail_component_ThreadIcon {
     display: flex;
     width: 13px;
     justify-content: center;
+}
 
-    > .o_typing {
-        display: flex;
-        flex: 1 1 auto;
-        justify-content: space-between;
-        align-items: center;
+.o_mail_component_ThreadIcon__typing {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        > .o_dot {
-            display: inline-block;
-            flex: 0 0 auto;
-        }
-    }
+.o_mail_component_ThreadIcon__typingDot {
+    display: inline-block;
+    flex: 0 0 auto;
 }
 
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_thread_icon {
+.o_mail_component_ThreadIcon__away {
+    color: theme-color('warning');
+}
 
-    > .o_online {
-        color: $o-enterprise-primary-color;
-    }
+.o_mail_component_ThreadIcon__online {
+    color: $o-enterprise-primary-color;
+}
 
-    > .o_away {
-        color: theme-color('warning');
-    }
-
-    > .o_typing > .o_dot {
-        width: 3px;
-        height: 3px;
-        border-radius: 50%;
-        background: gray('500');
-    }
+.o_mail_component_ThreadIcon__typingDot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: gray('500');
 }
 
 // ------------------------------------------------------------------
 // Animation
 // ------------------------------------------------------------------
 
-.o_mail_component_thread_icon > .o_typing > .o_dot {
-    animation: o_typing_dot 1.5s linear infinite;
+.o_mail_component_ThreadIcon__typingDot {
+    animation: o_mail_component_ThreadIcon__typingDotAnimation 1.5s linear infinite;
 
     &:nth-child(2) {
         animation-delay: -1.35s;
@@ -59,7 +56,7 @@
     }
 }
 
-@keyframes o_typing_dot {
+@keyframes o_mail_component_ThreadIcon__typingDotAnimation {
     0%, 40%, 100% {
         transform: initial;
     }

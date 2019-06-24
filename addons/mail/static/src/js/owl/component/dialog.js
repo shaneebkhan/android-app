@@ -47,7 +47,7 @@ class Dialog extends Component {
      * @param {MouseEvent} ev
      */
     _onClickGlobal(ev) {
-        if (ev.target.closest(`.o_dialog_component[data-dialog-id="${this.props.id}"]`)) {
+        if (ev.target.closest(`.o_mail_component_Dialog__component[data-dialog-id="${this.props.id}"]`)) {
             return;
         }
         if (!this.refs.component.isCloseable()) { return; }

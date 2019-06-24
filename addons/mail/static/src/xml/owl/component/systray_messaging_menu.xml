@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <li
-        class="o_mail_component_systray_messaging_menu"
+        class="o_mail_component_SystrayMessagingMenu"
         owl="1"
         t-att-class="{
             show: state.toggleShow,
@@ -11,55 +11,70 @@
         t-name="mail.component.SystrayMessagingMenu">
         <a
             aria-expanded="false"
-            class="o_toggler o-no-caret"
+            class="
+                o_mail_component_SystrayMessagingMenu__toggler
+                o-no-caret"
             data-toggle="dropdown"
             data-display="static"
             href="#"
             role="button"
+            title="Conversations"
             t-att-class="{
                 show: state.toggleShow,
             }"
-            t-on-click.stop="_onClickToggleShow"
-            title="Conversations">
+            t-on-click.stop="_onClickToggleShow">
             <i
                 aria-label="Messages"
-                class="fa fa-comments-o"
+                class="
+                    fa
+                    fa-comments-o
+                    o_mail_component_SystrayMessagingMenu__icon"
                 role="img"/>
             <span
-                class="o_counter badge badge-pill"
+                class="
+                    badge
+                    badge-pill
+                    o_mail_component_SystrayMessagingMenu__counter"
                 t-if="props.counter > 0">
                 <t t-esc="props.counter"/>
             </span>
         </a>
         <div
-            class="dropdown-menu dropdown-menu-right"
+            class="
+                dropdown-menu
+                dropdown-menu-right
+                o_mail_component_SystrayMessagingMenu__dropdownMenu"
             role="menu"
             t-if="state.toggleShow">
-            <div
-                class="o_header">
+            <div class="o_mail_component_SystrayMessagingMenu__dropdownMenuHeader">
                 <button
-                    class="btn btn-link o_filter"
+                    class="
+                        btn
+                        btn-link
+                        o_mail_component_SystrayMessagingMenu__filter"
                     role="tab"
-                    t-foreach="['all', 'chat', 'channel']"
+                    type="button"
                     t-as="filter"
                     t-att-data-filter="filter"
                     t-att-class="{
                         o_active: state.filter === filter,
                     }"
+                    t-foreach="['all', 'chat', 'channel']"
                     t-key="filter"
-                    t-on-click.stop="_onClickFilter"
-                    type="button">
+                    t-on-click.stop="_onClickFilter">
                     <t t-if="filter === 'all'">All</t>
                     <t t-elif="filter === 'chat'">Chat</t>
                     <t t-elif="filter === 'channel'">Channels</t>
                 </button>
-                <div
-                    class="o_mail_component_autogrow"/>
+                <div class="o_autogrow"/>
                 <button
-                    class="btn btn-link o_new_message"
+                    class="
+                        btn
+                        btn-link
+                        o_mail_component_SystrayMessagingMenu__newMessage"
+                    type="button"
                     t-if="!props.discussOpen"
-                    t-on-click.stop="_onClickNewMessage"
-                    type="button">
+                    t-on-click.stop="_onClickNewMessage">
                     New message
                 </button>
             </div>

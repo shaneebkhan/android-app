@@ -1,44 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-   <div
-      class="o_chat_window"
-      t-att-data-id="id"
-      t-att-class="{
-         o_focused: state.focused,
-         o_folded: folded,
-         o_new_message: props.item === 'new_message',
-      }"
-      t-attf-data-thread-local-id="{{ props.thread ? props.thread.localID : '' }}"
-      t-name="mail.component.ChatWindow" owl="1"
-      t-on-click.stop="_onClick">
-      <Header
-         item="props.item"
-         options="options"
-         t-on-clicked.stop="_onClickedHeader"
-         t-on-close="_onCloseHeader"
-         t-on-shift-left="_onShiftLeftHeader"
-         t-on-shift-right="_onShiftRightHeader"/>
-      <Thread
-         t-if="props.thread"
-         class="o_thread"
-         options="threadOptions"
-         t-on-focusin.stop="_onFocusinThread"
-         t-ref="thread"
-         threadLocalID="props.item"/>
-      <div
-         class="o_selection"
-         t-else=""
-         t-key="'selection'">
-         <span class="o_label">
-            To:
-         </span>
-         <AutocompleteInput
-            html="true"
-            select="_onAutocompleteSelect"
-            source="_onAutocompleteSource"
-            t-ref="input"/>
-      </div>
+    <div
+        class="o_mail_component_ChatWindow"
+        owl="1"
+        t-att-data-id="id"
+        t-att-class="{
+            o_focused: state.focused,
+            o_folded: folded,
+            o_new_message: props.item === 'new_message',
+        }"
+         t-attf-data-thread-local-id="{{ props.thread ? props.thread.localID : '' }}"
+        t-name="mail.component.ChatWindow"
+        t-on-click.stop="_onClick">
+        <Header
+            class="o_mail_component_ChatWindow__header"
+            item="props.item"
+            options="options"
+            t-on-clicked.stop="_onClickedHeader"
+            t-on-close="_onCloseHeader"
+            t-on-shift-left="_onShiftLeftHeader"
+            t-on-shift-right="_onShiftRightHeader"/>
+        <Thread
+            class="o_mail_component_ChatWindow__thread"
+            options="threadOptions"
+            threadLocalID="props.item"
+            t-if="props.thread"
+            t-on-focusin.stop="_onFocusinThread"
+            t-ref="thread"/>
+        <div
+            class="o_mail_component_ChatWindow__newMessageForm"
+            t-else=""
+            t-key="'newMessageContainer'">
+            <span class="o_mail_component_ChatWindow__newMessageFormLabel">
+                To:
+            </span>
+            <AutocompleteInput
+                class="o_mail_component_ChatWindow__newMessageFormInput"
+                html="true"
+                select="_onAutocompleteSelect"
+                source="_onAutocompleteSource"
+                t-ref="input"/>
+        </div>
     </div>
 
 </templates>

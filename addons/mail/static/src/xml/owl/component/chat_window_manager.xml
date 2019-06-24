@@ -2,11 +2,12 @@
 <templates xml:space="preserve">
 
    <div
-      class="o_mail_component_chat_window_manager"
+      class="o_mail_component_ChatWindowManager"
       owl="1"
       t-name="mail.component.ChatWindowManager">
       <!-- Note: DOM elements are ordered from left to right -->
       <HiddenMenu
+         class="o_mail_component_ChatWindowManager__hiddenMenu"
          direction="direction"
          items="props.computed.hidden.items"
          offset="props.computed.hidden.offset"

@@ -2,7 +2,7 @@
 // Layout
 // ------------------------------------------------------------------
 
-.o_mail_component_composer_input {
+.o_mail_component_ComposerInput {
     min-width: 0;
 
     > .note-editor.note-frame {
@@ -28,7 +28,7 @@
     }
 }
 
-.o_mail_component_composer_input__mention_item {
+.o_mail_component_ComposerInput__mention {
     white-space: nowrap;
     overflow: hidden;
 
@@ -42,7 +42,7 @@
 // Style
 // ------------------------------------------------------------------
 
-.o_mail_component_composer_input > .note-editor.note-frame {
+.o_mail_component_ComposerInput > .note-editor.note-frame {
     background-color: white;
     border: none;
 
@@ -55,7 +55,7 @@
     }
 }
 
-.o_mail_component_composer_input__mention_item {
+.o_mail_component_ComposerInput__mention {
     text-overflow: ellipsis;
 
     > .o_extra {

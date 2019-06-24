@@ -2,6 +2,7 @@
 <templates xml:space="preserve">
 
     <input
+        class="o_mail_component_AutocompleteInput"
         owl="1"
         t-name="mail.component.AutocompleteInput"
         t-on-blur="_onBlur"
