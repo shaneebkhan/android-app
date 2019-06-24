@@ -372,6 +372,8 @@ var DataImport = AbstractAction.extend({
         this.$form.addClass('oe_import_preview');
         this.$('input.oe_import_advanced_mode').prop('checked', result.advanced_mode);
         this.$('.oe_import_grid').html(QWeb.render('ImportView.preview', result));
+        // set maximum width of cell to 20% of total screen width
+        this.$('.o_text_ellipsis,.o_text_multiline_ellipsis').css({"max-width": screen.width*0.2});
 
         if (result.headers.length === 1) {
             this.$('.oe_import_options').show();
