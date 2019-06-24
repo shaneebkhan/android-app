@@ -202,7 +202,7 @@ we3.addPlugin('Media', class extends we3.AbstractPlugin {
      * Remove the current target media and hide its popover.
      */
     removeMedia (value, archNode) {
-        var mediaArchNode = range && archNode.ancestor('isMedia');
+        var mediaArchNode = archNode.ancestor('isMedia');
         if (mediaArchNode) {
             this.dependencies.Arch.remove(mediaArchNode.id);
         }
@@ -497,7 +497,7 @@ we3.addPlugin('Document', class extends we3.AbstractPlugin {
                 break;
             }
         }
-        img.setAttribute('src', this.options.xhrPath + 'img/mimetypes/' + mimetype + '.svg'); 
+        img.setAttribute('src', this.options.xhrPath + 'img/mimetypes/' + mimetype + '.svg');
         img.classList.add('we3-document-image');
         a.appendChild(img);
         return a;

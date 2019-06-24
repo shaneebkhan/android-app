@@ -6,6 +6,8 @@ var FormView = require('web.FormView');
 var testUtils = require('web.test_utils');
 var weTestUtils = require('web_editor.test_utils');
 var Wysiwyg = require('web_editor.wysiwyg');
+var AltDialog = require('wysiwyg.widgets.AltDialog');
+var CropDialog = require('wysiwyg.widgets.CropImageDialog');
 
 
 QUnit.module('web_editor', {
@@ -67,10 +69,45 @@ QUnit.module('web_editor', {
                 });
             }
         });
+
+        testUtils.mock.patch(AltDialog, {
+            init: function () {
+                this._super.apply(this, arguments);
+                altDialogOpened = this._opened;
+            },
+            save: function () {
+                altDialogSaved = this._super.apply(this, arguments);
+                return altDialogSaved;
+            },
+        });
+
+        testUtils.mock.patch(CropDialog, {
+            init: function () {
+                var self = this;
+                this._super.apply(this, arguments);
+                cropDialogOpened = new Promise(function (resolve) {
+                    self.opened(function () {
+                        var cropper = self.$cropperImage.data('cropper');
+                        cropper.clone();
+                        $.extend(cropper.image, {
+                            naturalWidth: imgWidth,
+                            naturalHeight: imgHeight,
+                            aspectRatio: imgWidth / imgHeight,
+                        });
+                        cropper.loaded = true;
+                        cropper.build();
+                        cropper.render();
+                        resolve();
+                    });
+                });
+            },
+        });
     },
     afterEach: function () {
         testUtils.mock.unpatch(Wysiwyg);
         testUtils.mock.unpatch(ajax);
+        testUtils.mock.unpatch(AltDialog);
+        testUtils.mock.unpatch(CropDialog);
     },
 }, function () {
 
@@ -100,6 +137,33 @@ QUnit.module('web_editor', {
             model: 'note.note',
             data: self.data,
             arch: '<form><field name="body" widget="html" style="height: 100px"/></form>',
+            mockRPC: function (route, args) {
+                if (route.indexOf('data:image/png;base64') === 0) {
+                    return Promise.resolve();
+                }
+                if (route.indexOf('youtube') !== -1) {
+                    return Promise.resolve();
+                }
+                if (route.indexOf('/web_editor/static/src/img/') === 0) {
+                    return Promise.resolve();
+                }
+                if (route === '/web_editor/attachment/add_url') {
+                    return Promise.resolve({
+                        id: 1,
+                        public: true,
+                        name: 'image',
+                        mimetype: 'image/png',
+                        checksum: false,
+                        url: '/web_editor/static/src/img/transparent.png',
+                        image_src: '/web_editor/static/src/img/transparent.png',
+                        type: 'url',
+                        res_id: 0,
+                        res_model: false,
+                        access_token: false,
+                    });
+                }
+                return this._super(route, args);
+            },
         });
         await promise;
         form.destroy();
@@ -273,6 +337,17 @@ QUnit.module('web_editor', {
                 TestKeyboardChar: true,
             }),
             toolbar: toolbarDropBlock,
+        };
+        await createFormAndTest(this);
+    });
+
+    QUnit.module('Media');
+
+    QUnit.test('Image', async function (assert) {
+        assert.expect(14);
+        this.testOptions = {
+            assert: assert,
+            plugins: Object.assign({}, testPlugins, { TestToolbarMedia: true }),
         };
         await createFormAndTest(this);
     });
