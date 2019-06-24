@@ -265,12 +265,13 @@ var AbstractController = mvc.Controller.extend(ActionMixin, {
         var self = this;
         var shouldReload = (options && 'reload' in options) ? options.reload : true;
         var searchPanelDef;
+
         if (this._searchPanel) {
             // First step: handle changes on the Control Panel
+            // its domain should be merged with searchPanel's eventually
             if (params.domain) {
                this.controlPanelDomain = params.domain;
             }
-
             // Second step: handle Search Panel changes
             // A) handle switch Views
             var newSpState = {};

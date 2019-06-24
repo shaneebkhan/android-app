@@ -202,24 +202,34 @@ var AbstractView = Factory.extend({
      */
     getController: function (parent) {
         var self = this;
-        var def;
-        if (this.withControlPanel) {
-            def = this._createControlPanel(parent);
+        var panelDef = this.withControlPanel && this._createControlPanel(parent);
+        if (this.withSearchPanel) {
+            var searchPanelSections = this.SearchPanelProto.computeSearchPanelParams(this.loadParams, this.controlPanelParams.viewInfo);
+            if (searchPanelSections) {
+                this.searchPanelParams.sections = searchPanelSections;
+                this.rendererParams.withSearchPanel = true;
+
+                panelDef = Promise.resolve(panelDef).then(function () {
+                    return self._createSearchPanel(parent, self.searchPanelParams);
+                });
+            }
         }
+
         var _super = this._super.bind(this);
-        return Promise.resolve(def).then(function (controlPanel) {
+        return Promise.resolve(panelDef).then(function () {
             // get the parent of the model if it already exists, as _super will
             // set the new controller as parent, which we don't want
             var modelParent = self.model && self.model.getParent();
             var prom =  _super(parent);
             prom.then(function (controller) {
+                var controlPanel = self.controllerParams.controlPanel;
                 if (controlPanel) {
                     controlPanel.setParent(controller);
-                    if (self.hasSearchPanel) {
-                        self.controllerParams.searchPanel.setParent(controller);
-                    }
                 }
-
+                var searchPanel = self.controllerParams.searchPanel;
+                if (searchPanel) {
+                    searchPanel.setParent(controller);
+                }
                 if (modelParent) {
                     // if we already add a model, restore its parent
                     self.model.setParent(modelParent);
@@ -258,7 +268,7 @@ var AbstractView = Factory.extend({
      *
      * @private
      * @param {Widget} parent
-     * @returns {ControlPanelController}
+     * @returns {Promise} resolved when the controlPanel is ready
      */
     _createControlPanel: function (parent) {
         var self = this;
@@ -267,22 +277,13 @@ var AbstractView = Factory.extend({
             self.controllerParams.controlPanel = controlPanel;
             return controlPanel.appendTo(document.createDocumentFragment()).then(function () {
                 self._updateMVCParams(controlPanel.getSearchQuery());
-                var searchPanelSections = self.withSearchPanel ? self.SearchPanelProto.computeSearchPanelParams(self.loadParams, self.controlPanelParams.viewInfo) : false;
-                if (searchPanelSections) {
-                    self.searchPanelParams.sections = searchPanelSections;
-                    self.hasSearchPanel = true;
-                    self.rendererParams.withSearchPanel = self.hasSearchPanel;
-                    return self._createSearchPanel(parent, self.searchPanelParams).then(function () {
-                        return controlPanel;
-                    });
-                }
-                return controlPanel;
             });
         });
     },
     /**
      * @private
      * @param {Widget} parent
+     * @param {Object} searchPanelParams params to init SearchPanel
      * @returns {Promise} resolved when the searchPanel is ready
      */
     _createSearchPanel: function (parent, searchPanelParams) {
@@ -300,8 +301,6 @@ var AbstractView = Factory.extend({
             fields: this.fields,
             model: this.loadParams.modelName,
             searchDomain: controlPanelDomain,
-            searchCategories: searchPanelParams.state && searchPanelParams.state.searchCategories,
-            searchFilters: searchPanelParams.state && searchPanelParams.state.searchFilters,
             sections: searchPanelParams.sections,
         });
         this.controllerParams.searchPanel = searchPanel;

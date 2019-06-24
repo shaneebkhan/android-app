@@ -1848,10 +1848,10 @@ QUnit.module('Views', {
 
         assert.verifySteps([
             '[]', // initial search_read
-            '[["company_id","=",3]]', // kanban, after selecting the first company
-            '[["company_id","=",3]]', // list
-            '[["company_id","=",5]]', // list, after selecting the other company
-            '[["company_id","=",5]]', // kanban
+            '[["company_id","child_of",3]]', // kanban, after selecting the first company
+            '[["company_id","child_of",3]]', // list
+            '[["company_id","child_of",5]]', // list, after selecting the other company
+            '[["company_id","child_of",5]]', // kanban
         ]);
 
         actionManager.destroy();

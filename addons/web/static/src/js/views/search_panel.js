@@ -38,10 +38,10 @@ var SearchPanel = Widget.extend({
     init: function (parent, params) {
         this._super.apply(this, arguments);
 
-        this.categories = params.searchCategories || _.pick(params.sections, function (section) {
+        this.categories = _.pick(params.sections, function (section) {
             return section.type === 'category';
         });
-        this.filters = params.searchFilters || _.pick(params.sections, function (section) {
+        this.filters = _.pick(params.sections, function (section) {
             return section.type === 'filter';
         });
 
@@ -72,11 +72,17 @@ var SearchPanel = Widget.extend({
     // Public
     //--------------------------------------------------------------------------
 
+    /**
+     * Imitating a controller's API
+     * exports the state (i.e. the domain) of the SearchPanel
+     *
+     * /!\ selected items are in the LocalStorage
+     * @returns {Object}
+     *  @key searchPanelDomain, @value: {Array} domain
+     */
     exportState: function () {
         return {
             searchPanelDomain: this.getDomain(),
-            searchCategories: _.extend({}, this.categories),
-            searchFilters: _.extend({}, this.filters),
         }
     },
     /**
@@ -86,13 +92,15 @@ var SearchPanel = Widget.extend({
     getDomain: function () {
         return this._getCategoryDomain().concat(this._getFilterDomain());
     },
+    /**
+     * Imitating a controller's API
+     * imports the state (i.e. the domain) of the SearchPanel
+     *
+     * /!\ selected items are in the LocalStorage
+     * @param {Object} state
+     * @returns {Promise}
+     */
     importState: function (state) {
-        if (state.searchCategories && Object.keys(state.searchCategories)) {
-            this.categories = state.searchCategories;
-        }
-        if (state.searchFilters && Object.keys(state.searchFilters)) {
-            this.filters = state.searchFilters;
-        }
         return this.update(state);
     },
     /**
