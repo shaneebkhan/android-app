@@ -3153,17 +3153,6 @@ Fields:
             if not (it or it.origin) or (it or it.origin) in valid_ids
         ])
 
-    @api.model
-    def _sort_values(self, vals):
-        # DLE P39
-        fields = [self._fields[f] for f in vals.keys() if f in self._fields]
-        depend_fields = set()
-        for field in fields:
-            if field.type == 'monetary' and field.currency_field in vals:
-                depend_fields.add(field.currency_field)
-        res = sorted(vals.items(), key=lambda kv: 0 if kv[0] in depend_fields else 1)
-        return res
-
     @api.multi
     def unlink(self):
         """ unlink()
@@ -3348,11 +3337,11 @@ Fields:
 
         # protect fields being written against recomputation
         with env.protecting(protected, self):
-            # DLE P39: for monetary field, their related currency field must be cached before the amount so it can be rounded correctly
-            # test `test_20_monetary`
-            for fname, value in self._sort_values(vals):
+            # for monetary field, their related currency field must be cached before the amount so it can be rounded correctly
+            for fname in sorted(vals, key=lambda x: self._fields[x].type=='monetary'):
                 if fname in bad_names:
                     continue
+                value = vals[fname]
                 field = self._fields.get(fname)
                 # DLE P59: `test_write_base_one2many` `test_performance.py`
                 # Write x2many inverses at the same time
