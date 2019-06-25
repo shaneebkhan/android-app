@@ -414,6 +414,7 @@ class AccountMove(models.Model):
         # Taxes will be computed, aggregated and added to the dictionary.
         for line in lines_map['base_lines']:
             if not line.tax_ids:
+                line.tag_ids = [(5, 0, 0)]
                 continue
 
             # Compute taxes amounts both in company currency / foreign currency as
@@ -426,6 +427,10 @@ class AccountMove(models.Model):
                 is_refund=self.type in ('out_refund', 'in_refund'),
                 handle_price_include=False,
             )
+
+            #Assign tags on base line
+            line.tag_ids = balance_taxes_res['base_tags']
+
             if line.currency_id:
                 # Multi-currencies mode: Taxes are computed both in company's currency / foreign currency.
                 amount_currency_taxes_res = line.tax_ids._origin.compute_all(
@@ -472,6 +477,7 @@ class AccountMove(models.Model):
                 taxes_map[key]['tax_base_amount'] += b_tax_res['base']
                 taxes_map[key]['alive'] = True
             line.tax_exigible = tax_exigible
+
 
         # Compute / update taxes lines.
         for grouping_key, values in taxes_map.items():
@@ -803,15 +809,6 @@ class AccountMove(models.Model):
             if line.recompute_tax_line:
                 recompute_all_taxes = True
                 line.recompute_tax_line = False
-                # Ensure the tags are correctly set.
-                if self.type in ('out_refund', 'in_refund'):
-                    tax_repartition_field = 'refund_repartition_line_ids'
-                else:
-                    tax_repartition_field = 'invoice_repartition_line_ids'
-                line.tag_ids = line.tax_ids\
-                    .mapped(tax_repartition_field)\
-                    .filtered(lambda line: line.repartition_type == 'base')\
-                    .mapped('tag_ids')
 
             if self._is_invoice() and line.is_rounding_line:
                 lines_map['rounding_lines'] += line
@@ -918,7 +915,7 @@ class AccountMove(models.Model):
                     FROM account_move move
                     JOIN account_move_line line ON line.move_id = move.id
                     JOIN account_partial_reconcile part ON part.debit_move_id = line.id OR part.credit_move_id = line.id
-                    JOIN account_move_line rec_line ON 
+                    JOIN account_move_line rec_line ON
                         (rec_line.id = part.credit_move_id AND line.id = part.debit_move_id)
                         OR
                         (rec_line.id = part.debit_move_id AND line.id = part.credit_move_id)
