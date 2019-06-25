@@ -288,26 +288,6 @@ class SaleOrderLine(models.Model):
         if self.product_packaging:
             return self._check_package()
 
-    @api.onchange('product_id')
-    def _onchange_product_id_uom_check_availability(self):
-        if not self.product_uom or (self.product_id.uom_id.category_id.id != self.product_uom.category_id.id):
-            self.product_uom = self.product_id.uom_id
-        self._onchange_product_id_check_availability()
-
-    @api.onchange('product_uom_qty', 'product_uom', 'route_id')
-    def _onchange_product_id_check_availability(self):
-        if not self.product_id or not self.product_uom_qty or not self.product_uom:
-            self.product_packaging = False
-            return {}
-        return self._check_availability(self.product_id)
-
-    def _check_availability(self, product_id):
-        """ The purpose of this method is only to be overriden if
-        'product_id' is a kit
-        """
-        product_qty = self.product_uom._compute_quantity(self.product_uom_qty, self.product_id.uom_id)
-        return self._check_availability_warning(product_id, product_qty)
-
     def _check_availability_warning(self, product_id, product_qty, ignore_warehouse=False):
         if product_id.type == 'product':
             precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')

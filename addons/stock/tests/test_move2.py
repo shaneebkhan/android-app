@@ -1908,7 +1908,7 @@ class TestRoutes(TestStockCommon):
 
         # create and get back the pick ship route
         self.wh.write({'delivery_steps': 'pick_ship'})
-        
+
         self.pick_ship_route = self.wh.route_ids.filtered(lambda r: '(pick + ship)' in r.name)
     def test_pick_ship_1(self):
         """ Enable the pick ship route, force a procurement group on the
@@ -2060,7 +2060,6 @@ class TestRoutes(TestStockCommon):
         self.env['stock.quant']._update_available_quantity(product_a, warehouse.wh_output_stock_loc_id, 4.0)
 
         # We set quantities in the stock location to avoid warnings
-        # triggered by '_onchange_product_id_check_availability'
         self.env['stock.quant']._update_available_quantity(product_a, warehouse.lot_stock_id, 4.0)
 
         # We alter one rule and we set it to 'mts_else_mto'
