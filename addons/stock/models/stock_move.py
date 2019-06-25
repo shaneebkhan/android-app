@@ -6,7 +6,7 @@ from dateutil import relativedelta
 from itertools import groupby
 from operator import itemgetter
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models, _, SUPERUSER_ID
 from odoo.addons import decimal_precision as dp
 from odoo.exceptions import UserError
 from odoo.osv import expression
@@ -417,15 +417,32 @@ class StockMove(models.Model):
 
         if propagated_date_field:
             #any propagation is (maybe) needed
+            docs_dest = dict()
             for move in self:
-                if move.move_dest_ids and move.propagate_date:
-                    new_date = vals.get(propagated_date_field)
-                    delta_days = (new_date - move.date_expected).total_seconds() / 86400
-                    if abs(delta_days) < move.propagate_date_minimum_delta:
+                doc_orig = move._get_upstream_documents_and_responsibles(None, lazy=True)[0][0]
+                new_date = vals.get(propagated_date_field)
+                delta_days = (new_date - move.date_expected).total_seconds() / 86400
+                for move_dest in move.move_dest_ids:
+                    if move_dest.state in ('done', 'cancel'):
                         continue
-                    for move_dest in move.move_dest_ids:
-                        if move_dest.state not in ('done', 'cancel'):
-                            move_dest.date_expected += relativedelta.relativedelta(days=delta_days)
+                    doc_dest = move_dest._get_upstream_documents_and_responsibles(None, lazy=True)[0][0]
+                    if doc_dest not in docs_dest:
+                        docs_dest[doc_dest] = _("The scheduled date should be updated due to a delay on <a href='#' data-oe-model='%s' data-oe-id='%s'>%s</a>.") % (doc_orig._name, doc_orig.id, doc_orig.name)
+                    if move.propagate_date and abs(delta_days) >= move.propagate_date_minimum_delta:
+                        # Propagate date and alert next picking
+                        move_dest.date_expected += relativedelta.relativedelta(days=delta_days)
+                        if move_dest.rule_id.delay_alert:
+                            docs_dest[doc_dest] = _("The scheduled date has been automatically updated due to a delay on <a href='#' data-oe-model='%s' data-oe-id='%s'>%s</a>.") % (doc_orig._name, doc_orig.id, doc_orig.name)
+            for doc, note in docs_dest.items():
+                if doc.activity_ids.filtered(lambda act: act.automated and act.activity_type_id == self.env.ref('mail.mail_activity_data_warning')):
+                    # Do not set a next activity if there is already one not done
+                    continue
+                doc.activity_schedule(
+                    'mail.mail_activity_data_warning',
+                    datetime.today().date(),
+                    note=note,
+                    user_id=doc.user_id.id or SUPERUSER_ID
+                )
         track_pickings = not self._context.get('mail_notrack') and any(field in vals for field in ['state', 'picking_id', 'partially_available'])
         if track_pickings:
             to_track_picking_ids = set([move.picking_id.id for move in self if move.picking_id])
