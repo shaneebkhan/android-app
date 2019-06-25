@@ -13,6 +13,7 @@ TYPE2FIELD = {
     'text': 'value_text',
     'binary': 'value_binary',
     'many2one': 'value_reference',
+    'many2many': 'value_reference',
     'date': 'value_datetime',
     'datetime': 'value_datetime',
     'selection': 'value_text',
@@ -52,6 +53,7 @@ class Property(models.Model):
                              ('text', 'Text'),
                              ('binary', 'Binary'),
                              ('many2one', 'Many2One'),
+                             ('many2many', 'Many2Many'),
                              ('date', 'Date'),
                              ('datetime', 'DateTime'),
                              ('selection', 'Selection'),
@@ -68,6 +70,8 @@ class Property(models.Model):
 
         prop = None
         type_ = values.get('type')
+        if type_ == 'many2many':
+            import pdb;pdb.set_trace()
         if not type_:
             if self:
                 prop = self[0]
@@ -84,7 +88,7 @@ class Property(models.Model):
                 value = False
             elif isinstance(value, models.BaseModel):
                 value = '%s,%d' % (value._name, value.id)
-            elif isinstance(value, int):
+            elif isinstance(value, int) or isinstance(value, str):
                 field_id = values.get('fields_id')
                 if not field_id:
                     if not prop:
@@ -92,11 +96,19 @@ class Property(models.Model):
                     field_id = prop.fields_id
                 else:
                     field_id = self.env['ir.model.fields'].browse(field_id)
-
+            if not isinstance(value, str):
                 value = '%s,%d' % (field_id.sudo().relation, value)
 
         values[field] = value
         return values
+
+
+    def _str_to_list(self, string):
+        #remove heading and trailing brackets and return a list of int.
+        string = string[1:-1]
+        if string:
+            return [int(x) for x in string.split(',')]
+        return []
 
     @api.multi
     def write(self, values):
@@ -156,6 +168,15 @@ class Property(models.Model):
                 return False
             model, resource_id = self.value_reference.split(',')
             return self.env[model].browse(int(resource_id)).exists()
+        elif self.type == 'many2many':
+            if not self.value_reference:
+                return False
+            model, resource_ids = self.value_reference.split(',')
+            ret = self.env['account.tax']
+            # import pdb; pdb.set_trace()
+            for res in self._str_to_list(resource_ids):
+                ret |= self.env[model].browse(int(res)).exists()
+            return ret
         elif self.type == 'datetime':
             return self.value_datetime
         elif self.type == 'date':

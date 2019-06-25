@@ -175,6 +175,8 @@ class AccountChartTemplate(models.Model):
         # If we don't have any chart of account on this company, install this chart of account
         if not company.chart_template_id and not self.existing_accounting(company):
             self.load_for_current_company(15.0, 15.0)
+        print(">>>>called and taxes:", self.env['account.tax'].search(
+            [('type_tax_use', '=', 'sale')], limit=1).ids)
 
     def load_for_current_company(self, sale_tax_rate, purchase_tax_rate):
         """ Installs this chart of accounts on the current company, replacing
