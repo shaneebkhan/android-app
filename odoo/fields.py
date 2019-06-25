@@ -2357,7 +2357,13 @@ class One2many(_RelationalMulti):
                         else:
                             data = {inverse: record}
                             data.update(act[2])
-                            comodel.new(data, origin=record._origin)
+                            newmod = comodel.new(data, origin=record._origin)
+                            try:
+                                cacheval = list(records.env.cache.get(record, field))
+                            except:
+                                cacheval = []
+                            cacheval.append(newmod.id)
+                            records.env.cache.set(record, self, tuple(cacheval))
                 elif act[0] == 1:
                     comodel.browse(act[1]).write(act[2])
                 elif act[0] == 2:
@@ -2557,7 +2563,6 @@ class Many2many(_RelationalMulti):
         value = values[self.name]
         if not value:
             return records.browse([])
-        print('Writing', value, records)
         if isinstance(value, BaseModel):
             value = [(6, 0, value.ids)]
 
