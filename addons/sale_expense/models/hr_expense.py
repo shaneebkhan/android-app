@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
 
 
 class Expense(models.Model):
     _inherit = "hr.expense"
 
-    sale_order_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)]}, domain=[('state', '=', 'sale')])
+    sale_order_id = fields.Many2one('sale.order', string='Sale Order', readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)]}, domain="[('state', '=', 'sale'), ('company_id', '=', company_id)]")
 
     @api.onchange('sale_order_id')
     def _onchange_sale_order(self):
         if self.sale_order_id:
             self.analytic_account_id = self.sale_order_id.analytic_account_id
+
+    @api.constrains('sale_order_id', 'company_id')
+    def _check_journal_company(self):
+        for expense in self:
+            if expense.sale_order_id and expense.company_id != expense.sale_order_id.company_id:
+                raise ValidationError(_('The sales order linked to the expense report must be in the same company.'))
 
     @api.multi
     def action_move_create(self):

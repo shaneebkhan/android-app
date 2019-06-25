@@ -17,6 +17,9 @@ class HrExpense(models.Model):
     _description = "Expense"
     _order = "date desc, id desc"
 
+    def _default_company_id(self):
+        return self.env.company
+
     @api.model
     def _default_employee_id(self):
         return self.env['hr.employee'].search([('user_id', '=', self.env.uid)], limit=1)
@@ -52,16 +55,16 @@ class HrExpense(models.Model):
     product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure', readonly=True, states={'draft': [('readonly', False)], 'refused': [('readonly', False)]}, default=_default_product_uom_id)
     unit_amount = fields.Float("Unit Price", readonly=True, required=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)], 'refused': [('readonly', False)]}, digits=dp.get_precision('Product Price'))
     quantity = fields.Float(required=True, readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)], 'refused': [('readonly', False)]}, digits=dp.get_precision('Product Unit of Measure'), default=1)
-    tax_ids = fields.Many2many('account.tax', 'expense_tax', 'expense_id', 'tax_id', string='Taxes', states={'done': [('readonly', True)], 'post': [('readonly', True)]})
+    tax_ids = fields.Many2many('account.tax', 'expense_tax', 'expense_id', 'tax_id', string='Taxes', states={'done': [('readonly', True)], 'post': [('readonly', True)]}, domain="[('type_tax_use', '=', 'purchase'), ('company_id', '=', company_id)]")
     untaxed_amount = fields.Float("Subtotal", store=True, compute='_compute_amount', digits=dp.get_precision('Account'))
     total_amount = fields.Monetary("Total", compute='_compute_amount', store=True, currency_field='currency_id', digits=dp.get_precision('Account'))
     total_amount_company = fields.Monetary("Total (Company Currency)", compute='_compute_total_amount_company', store=True, currency_field='company_currency_id', digits=dp.get_precision('Account'))
-    company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True, states={'draft': [('readonly', False)], 'refused': [('readonly', False)]}, default=lambda self: self.env.company)
+    company_id = fields.Many2one('res.company', string='Company', required=True, readonly=True, states={'draft': [('readonly', False)], 'refused': [('readonly', False)]}, default=_default_company_id)
     currency_id = fields.Many2one('res.currency', string='Currency', readonly=True, states={'draft': [('readonly', False)], 'refused': [('readonly', False)]}, default=lambda self: self.env.company.currency_id)
     company_currency_id = fields.Many2one('res.currency', string="Report Company Currency", related='sheet_id.currency_id', store=True, readonly=False)
     analytic_account_id = fields.Many2one('account.analytic.account', string='Analytic Account', states={'post': [('readonly', True)], 'done': [('readonly', True)]}, oldname='analytic_account')
     analytic_tag_ids = fields.Many2many('account.analytic.tag', string='Analytic Tags', states={'post': [('readonly', True)], 'done': [('readonly', True)]})
-    account_id = fields.Many2one('account.account', string='Account', states={'post': [('readonly', True)], 'done': [('readonly', True)]}, default=_default_account_id, help="An expense account is expected")
+    account_id = fields.Many2one('account.account', string='Account', states={'post': [('readonly', True)], 'done': [('readonly', True)]}, default=_default_account_id, domain="[('internal_type', '=', 'other'), ('company_id', '=', company_id)]", help="An expense account is expected")
     description = fields.Text('Notes...', readonly=True, states={'draft': [('readonly', False)], 'reported': [('readonly', False)], 'refused': [('readonly', False)]})
     payment_mode = fields.Selection([
         ("own_account", "Employee (to reimburse)"),
@@ -118,7 +121,7 @@ class HrExpense(models.Model):
         for expense in self:
             expense.attachment_number = attachment.get(expense.id, 0)
 
-    @api.onchange('product_id')
+    @api.onchange('product_id', 'company_id')
     def _onchange_product_id(self):
         if self.product_id:
             if not self.name:
@@ -194,6 +197,7 @@ class HrExpense(models.Model):
             'target': 'current',
             'context': {
                 'default_expense_line_ids': todo.ids,
+                'default_company_id': self.company_id.id,
                 'default_employee_id': self[0].employee_id.id,
                 'default_name': todo[0].name if len(todo) == 1 else ''
             }
@@ -584,14 +588,14 @@ class HrExpenseSheet(models.Model):
     @api.model
     def _default_journal_id(self):
         """ The journal is determining the company of the accounting entries generated from expense. We need to force journal company and expense sheet company to be the same. """
-        default_company = self._default_company_id()
-        journal = self.env['account.journal'].search([('type', '=', 'purchase'), ('company_id', '=', default_company.id)], limit=1)
+        default_company_id = self.default_get(['company_id'])['company_id']
+        journal = self.env['account.journal'].search([('type', '=', 'purchase'), ('company_id', '=', default_company_id)], limit=1)
         return journal.id
 
     @api.model
     def _default_bank_journal_id(self):
-        default_company = self._default_company_id()
-        return self.env['account.journal'].search([('type', 'in', ['cash', 'bank']), ('company_id', '=', default_company.id)], limit=1)
+        default_company_id = self.default_get(['company_id'])['company_id']
+        return self.env['account.journal'].search([('type', 'in', ['cash', 'bank']), ('company_id', '=', default_company_id)], limit=1)
 
     name = fields.Char('Expense Report Summary', required=True)
     expense_line_ids = fields.One2many('hr.expense', 'sheet_id', string='Expense Lines', states={'approve': [('readonly', True)], 'done': [('readonly', True)], 'post': [('readonly', True)]}, copy=False)
