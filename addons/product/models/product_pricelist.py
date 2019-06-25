@@ -8,6 +8,9 @@ from odoo.exceptions import UserError, ValidationError
 
 from odoo.addons import decimal_precision as dp
 
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class Pricelist(models.Model):
     _name = "product.pricelist"
@@ -526,6 +529,7 @@ class PricelistItem(models.Model):
 
     @api.multi
     def write(self, values):
+        _logger.info('PRICELIST WRITTEN: %s', values)
         res = super(PricelistItem, self).write(values)
         # When the pricelist changes we need the product.template price
         # to be invalided and recomputed.
