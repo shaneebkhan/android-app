@@ -57,8 +57,7 @@ QUnit.test('chat window new message: basic rendering', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
@@ -157,8 +156,7 @@ QUnit.test('chat window new message: focused on open', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -193,8 +191,7 @@ QUnit.test('chat window new message: close', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -233,8 +230,7 @@ QUnit.test('chat window new message: fold', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -316,15 +312,13 @@ QUnit.test('chat window: basic rendering', async function (assert) {
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
         .querySelector(`
             .o_mail_component_SystrayMessagingMenu__dropdownMenu
-            .o_mail_component_ThreadPreviewList__preview
-            .o_mail_component_ThreadPreview`)
+            .o_mail_component_ThreadPreviewList__preview`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -486,8 +480,7 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
@@ -522,8 +515,7 @@ QUnit.test('open 2 different chat windows: enough screen width', async function 
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
@@ -628,8 +620,7 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
     // open, from systray menu, chat windows of channels with ID 1, 2, then 3
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
@@ -655,8 +646,7 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document
@@ -682,8 +672,7 @@ QUnit.test('open 3 different chat windows: not enough screen width', async funct
 
     document
         .querySelector(`
-            .o_mail_component_SystrayMessagingMenu
-            > a`)
+            .o_mail_component_SystrayMessagingMenu__toggler`)
         .click();
     await testUtils.nextTick(); // re-render
     document

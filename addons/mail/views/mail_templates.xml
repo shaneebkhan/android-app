@@ -108,7 +108,7 @@
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/chat_window_manager.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/chatter.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/composer.js"></script>
-                <script type="text/javascript" src="/mail/static/src/js/owl/component/composer_input.js"></script>
+                <script type="text/javascript" src="/mail/static/src/js/owl/component/composer_text_input.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/dialog.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/dialog_manager.js"></script>
                 <script type="text/javascript" src="/mail/static/src/js/owl/component/discuss.js"></script>
@@ -149,7 +149,7 @@
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/chat_window_hidden_menu.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/chat_window_manager.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/composer.scss"/>
-                <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/composer_input.scss"/>
+                <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/composer_text_input.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/dialog.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/discuss.scss"/>
                 <link rel="stylesheet" type="text/scss" href="/mail/static/src/scss/owl/component/discuss_mobile_navbar.scss"/>

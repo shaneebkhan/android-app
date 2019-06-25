@@ -82,9 +82,9 @@
             <div
                 class="o_mail_component_Composer__main">
                 <Input
-                   class="o_mail_component_Composer__input"
-                   t-on-post-message.stop="_onPostMessageInput"
-                   t-ref="input"/>
+                   class="o_mail_component_Composer__textInput"
+                   t-on-post-message.stop="_onPostMessageTextInput"
+                   t-ref="textInput"/>
                 <div
                     class="o_mail_component_Composer__commands">
                     <EmojisButton

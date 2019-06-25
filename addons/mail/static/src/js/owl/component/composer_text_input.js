@@ -1,4 +1,4 @@
-odoo.define('mail.component.ComposerInput', function (require) {
+odoo.define('mail.component.ComposerTextInput', function (require) {
 'use strict';
 
 const ajax = require('web.ajax');
@@ -16,7 +16,7 @@ class ComposerInput extends Component {
         super(...args);
 
         this.MENTION_THROTTLE = 200;
-        this.template = 'mail.component.ComposerInput';
+        this.template = 'mail.component.ComposerTextInput';
         this._editable = undefined;
         this._summernoteContext = undefined;
         this._tribute = undefined; // list of tribute mentions (partner, canned responses, etc.)
@@ -191,7 +191,7 @@ class ComposerInput extends Component {
         const collectionItem = {
             lookup: 'name',
             menuItemTemplate(item) {
-                return `<div class="o_mail_component_ComposerInput__mentionItem">${item.string}</div>`;
+                return `<div class="o_mail_component_ComposerTextInput__mentionItem">${item.string}</div>`;
             },
             selectTemplate(item) {
                 if (!item) {
@@ -225,7 +225,7 @@ class ComposerInput extends Component {
         const collectionItem = {
             lookup: 'name',
             menuItemTemplate(item) {
-                return `<div class="o_mail_component_ComposerInput__mention"
+                return `<div class="o_mail_component_ComposerTextInput__mention"
                              title="${
                                  item.original.displayNname
                              }${

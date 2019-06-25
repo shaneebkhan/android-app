@@ -822,7 +822,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__counter`)
+                .o_mail_component_DiscussSidebarItem__counter`)
             .length,
         1,
         "should have a counter when different from 0");
@@ -830,7 +830,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         chat
             .querySelector(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__counter`)
+                .o_mail_component_DiscussSidebarItem__counter`)
             .textContent,
         "100",
         "should have counter value");
@@ -838,7 +838,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__command`)
+                .o_mail_component_DiscussSidebarItem__command`)
             .length,
         1,
         "should have single command");
@@ -846,7 +846,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__command_rename`)
+                .o_mail_component_DiscussSidebarItem__commandRename`)
             .length,
         1,
         "should have 'rename' command");
@@ -854,7 +854,7 @@ QUnit.test('sidebar: chat rendering with unread counter', async function (assert
         chat
             .querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__command_unpin`)
+                .o_mail_component_DiscussSidebarItem__commandUnpin`)
             .length,
         0,
         "should not have 'unpin' command");
@@ -945,7 +945,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
         chat1
             .querySelectorAll(`
                 :scope
-                > .o_mail_component_ThreadIcon__offline`)
+                .o_mail_component_ThreadIcon__offline`)
             .length,
         1,
         "chat1 should have offline icon");
@@ -960,7 +960,7 @@ QUnit.test('sidebar: chat im_status rendering', async function (assert) {
     assert.strictEqual(
         chat3
             .querySelectorAll(`
-                :scop
+                :scope
                 .o_mail_component_ThreadIcon__away`)
             .length,
         1,
@@ -1033,7 +1033,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
         chat
             .querySelector(`
                 :scope
-                .o_mail_component_DiscussSidebar_item__name`)
+                .o_mail_component_DiscussSidebarItem__name`)
             .textContent,
         "Marc",
         "chat should have custom name as name");
@@ -1064,8 +1064,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
         chat.
             querySelectorAll(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__name
-                > input`)
+                .o_mail_component_DiscussSidebarItem__nameInput`)
             .length,
         1,
         "chat should have editable name input");
@@ -1073,8 +1072,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
         chat
             .querySelector(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__name
-                > input`)
+                .o_mail_component_DiscussSidebarItem__nameInput`)
             .value,
         "Marc",
         "editable name input should have custom chat name as value by default");
@@ -1082,8 +1080,7 @@ QUnit.test('sidebar: rename chat', async function (assert) {
         chat
             .querySelector(`
                 :scope
-                .o_mail_component_DiscussSidebarItem__name
-                > input`)
+                .o_mail_component_DiscussSidebarItem__nameInput`)
             .placeholder,
         "Marc Demo",
         "editable name input should have partner name as placeholder");
@@ -1091,15 +1088,13 @@ QUnit.test('sidebar: rename chat', async function (assert) {
     chat
         .querySelector(`
             :scope
-            .o_mail_component_DiscussSidebarItem__name
-            > input`)
+            .o_mail_component_DiscussSidebarItem__nameInput`)
         .value = "Demo";
     const kevt = new window.KeyboardEvent('keydown', { key: "Enter" });
     chat
         .querySelector(`
             :scope
-            .o_mail_component_DiscussSidebarItem__name
-            > input`)
+            .o_mail_component_DiscussSidebarItem__nameInput`)
         .dispatchEvent(kevt);
     await testUtils.nextTick(); // re-render
 
@@ -1343,21 +1338,19 @@ QUnit.test('basic rendering of message', async function (assert) {
         message
             .querySelectorAll(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .length,
         1,
-        "should have image in sidebar of message");
+        "should have author avatar in sidebar of message");
     assert.strictEqual(
         message
             .querySelector(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .dataset
             .src,
         "/web/image/res.partner/11/image_small",
-        "should have url of message in img sidebar");
+        "should have url of message in author avatar sidebar");
     assert.strictEqual(
         message
             .querySelectorAll(`
@@ -1413,7 +1406,7 @@ QUnit.test('basic rendering of message', async function (assert) {
             .querySelectorAll(`
                 :scope
                 .o_mail_component_Message__header
-                .o_mail_component_DiscussSidebarItem__command`)
+                .o_mail_component_Message__command`)
             .length,
         1,
         "should have a single command in header of message");
@@ -1558,7 +1551,7 @@ QUnit.test('basic rendering of squashed message', async function (assert) {
             .querySelectorAll(`
                 :scope
                 .o_mail_component_Message__sidebar
-                .o_mail_component_DiscussSidebarItem__command`)
+                .o_mail_component_Message__commandStar`)
             .length,
         1,
         "message 2 should have star command in sidebar");
@@ -2176,7 +2169,7 @@ QUnit.test('new messages separator', async function (assert) {
     assert.strictEqual(
         document
             .querySelectorAll(`
-                .o_mail_component_Discuss___thread
+                .o_mail_component_Discuss__thread
                 .o_mail_component_Thread__messageList
                 .o_mail_component_MessageList__message`)
             .length,
@@ -2227,8 +2220,7 @@ QUnit.test('new messages separator', async function (assert) {
         "should no longer display 'new messages' separator (message seen)");
 });
 
-QUnit.skip('restore thread scroll position', async function (assert) {
-    // issue with refs...
+QUnit.test('restore thread scroll position', async function (assert) {
     assert.expect(4);
 
     let step = 0;
@@ -2503,8 +2495,7 @@ QUnit.test('message origin redirect to channel', async function (assert) {
                 .o_mail_component_Thread__messageList
                 .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
                 .o_mail_component_Message__header
-                .o_mail_component_Message__originThread
-                > a`)
+                .o_mail_component_Message__originThreadLink`)
             .length,
         1,
         "message2 should have link to redirect to origin");
@@ -2516,8 +2507,7 @@ QUnit.test('message origin redirect to channel', async function (assert) {
             .o_mail_component_Thread__messageList
             .o_mail_component_MessageList__message[data-message-local-id="mail.message_101"]
             .o_mail_component_Message__header
-            .o_mail_component_Message__originThread
-            > a`)
+            .o_mail_component_Message__originThreadLink`)
         .click();
     await testUtils.nextTick(); // re-render
 
@@ -2598,8 +2588,7 @@ QUnit.test('message origin redirect to channel', async function (assert) {
                 .o_mail_component_Thread__messageList
                 .o_mail_component_MessageList__message[data-message-local-id="mail.message_100"]
                 .o_mail_component_Message__header
-                .o_mail_component_Message__originThread
-                > a`)
+                .o_mail_component_Message__originThreadLink`)
             .length,
         1,
         "message1 should have link to redirect to origin channel");
@@ -2711,8 +2700,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg1
             .querySelectorAll(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .length,
         1,
         "message1 should have author image");
@@ -2720,8 +2708,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg1
             .querySelector(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .classList
             .contains('o_redirect'),
         "message1 should have redirect to author");
@@ -2729,8 +2716,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg2
             .querySelectorAll(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .length,
         1,
         "message2 should have author image");
@@ -2738,8 +2724,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
         msg2
             .querySelector(`
                 :scope
-                .o_mail_component_Message__sidebar
-                > img`)
+                .o_mail_component_Message__authorAvatar`)
             .classList
             .contains('o_redirect'),
         "message2 should not have redirect to author (self-author)");
@@ -2747,8 +2732,7 @@ QUnit.test('redirect to author (open chat)', async function (assert) {
     await testUtils.dom.click(
         msg1.querySelector(`
             :scope
-            .o_mail_component_Message__sidebar
-            > img`));
+            .o_mail_component_Message__authorAvatar`));
     await testUtils.nextTick(); // re-render
 
     assert.notOk(
@@ -3328,6 +3312,242 @@ QUnit.test('toggle_star message', async function (assert) {
             .classList
             .contains('o_starred'),
         "message should no longer be starred");
+});
+
+QUnit.test('composer text input: basic rendering', async function (assert) {
+    assert.expect(8);
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                name: "General",
+            }],
+        },
+    });
+
+    await this.create({
+        mockRPC(route, args) {
+            if (args.method === 'message_fetch') {
+                return Promise.resolve([]);
+            }
+            return this._super.apply(this, arguments);
+        },
+        params: { default_active_id: 'mail.channel_20' },
+    });
+
+    assert.strictEqual(
+        document
+            .querySelectorAll(`.o_mail_component_Composer`)
+            .length,
+        1,
+        "should have composer in discuss thread");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`.o_mail_component_Composer__textInput`)
+            .length,
+        1,
+        "should have text input inside discuss thread composer");
+    assert.ok(
+        document
+            .querySelector(`.o_mail_component_Composer__textInput`)
+            .classList
+            .contains('o_mail_component_ComposerTextInput'),
+        "should composer text input of composer be a ComposerTextInput component");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+                .o_mail_component_ComposerTextInput
+                > .note-editor`)
+            .length,
+        1,
+        "should have note editor inside composer text input");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+                .o_mail_component_ComposerTextInput
+                > .note-editor
+                > .note-editing-area`)
+            .length,
+        1,
+        "should have note editing area inside note editor of composer text input");
+    assert.strictEqual(
+        document
+            .querySelector(`
+                .o_mail_component_ComposerTextInput
+                > .note-editor
+                > .note-editing-area`)
+            .textContent,
+        "Write something...",
+        "should have placeholder in note editing area of composer text input");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`
+                .o_mail_component_ComposerTextInput
+                > .note-editor
+                > .note-editing-area
+                > .note-editable`)
+            .length,
+        1,
+        "should have note editable inside note editing area of composer text input");
+    assert.ok(
+        document
+            .querySelector(`
+                .o_mail_component_ComposerTextInput
+                > .note-editor
+                > .note-editing-area
+                > .note-editable`)
+            .isContentEditable,
+        "should have note editable as an HTML editor");
+});
+
+QUnit.test('post a simple message', async function (assert) {
+    assert.expect(16);
+
+    var self = this;
+
+    Object.assign(this.data.initMessaging, {
+        channel_slots: {
+            channel_channel: [{
+                channel_type: "channel",
+                id: 20,
+                name: "General",
+            }],
+        },
+    });
+
+    let messagesData = [];
+
+    await this.create({
+        mockRPC(route, args) {
+            if (args.method === 'message_fetch') {
+                return Promise.resolve(messagesData);
+            }
+            if (args.method === 'message_post') {
+                assert.step('message_post');
+                assert.strictEqual(
+                    args.args[0],
+                    20,
+                    "should post message to channel ID 20");
+                assert.strictEqual(
+                    args.kwargs.body,
+                    "<p>Test</p>",
+                    "should post with provided content in composer input");
+                assert.strictEqual(
+                    args.kwargs.message_type,
+                    "comment",
+                    "should set message type as 'comment'"
+                );
+                assert.strictEqual(
+                    args.kwargs.subtype,
+                    "mail.mt_comment",
+                    "should set subtype as 'comment'"
+                );
+                // simulate receiving a new message
+                const data = {
+                    author_id: [3, "Myself"],
+                    body: args.kwargs.body,
+                    channel_ids: [20],
+                    date: "2019-04-20 11:00:00",
+                    id: 101,
+                    message_type: args.kwargs.message_type,
+                    model: 'mail.channel',
+                    subtype: args.kwargs.subtype,
+                    record_name: 'General',
+                    res_id: 20,
+                };
+                const notifications = [
+                    [
+                        ['my-db', 'mail.channel', 20],
+                        data
+                    ]
+                ];
+                messagesData.push(data);
+                self.widget.call('bus_service', 'trigger', 'notification', notifications);
+                return Promise.resolve();
+            }
+            return this._super.apply(this, arguments);
+        },
+        params: { default_active_id: 'mail.channel_20' },
+        session: { partner_id: 3 },
+    });
+
+    assert.strictEqual(
+        document
+            .querySelectorAll(`.o_mail_component_Thread__noMessage`)
+            .length,
+        1,
+        "should display thread with no message initially");
+    assert.strictEqual(
+        document
+            .querySelectorAll(`.o_mail_component_Message`)
+            .length,
+        0,
+        "should display no message initially");
+
+    const editable = document.querySelector(`
+        .o_mail_component_ComposerTextInput
+        .note-editable`);
+
+    assert.strictEqual(
+        editable.innerHTML,
+        "",
+        "should have empty content initially");
+
+    // insert some HTML in editable
+    editable.focus();
+    document.execCommand('insertHTML', false, '<p>Test</p>');
+
+    assert.strictEqual(
+        editable.innerHTML,
+        "<p>Test</p>",
+        "should have inserted HTML in editable");
+    assert.strictEqual(
+        editable.textContent,
+        "Test",
+        "should have inserted text in editable");
+
+    editable.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter' }));
+
+    assert.verifySteps(['message_post']);
+
+    await testUtils.nextTick(); // re-render
+
+    assert.strictEqual(
+        editable.innerHTML,
+        "",
+        "should have no content in composer input after posting message");
+
+    assert.strictEqual(
+        document
+            .querySelectorAll(`.o_mail_component_Message`)
+            .length,
+        1,
+        "should display a message after posting message");
+
+    const message = document.querySelector(`.o_mail_component_Message`);
+
+    assert.strictEqual(
+        message.dataset.messageLocalId,
+        'mail.message_101',
+        "new message in thread should be linked to newly created message from message post");
+    assert.strictEqual(
+        message
+            .querySelector(`
+                :scope
+                .o_mail_component_Message__authorName`)
+            .textContent,
+        "Myself",
+        "new message in thread should be from myself");
+    assert.strictEqual(
+        message
+            .querySelector(`
+                :scope
+                .o_mail_component_Message__content`)
+            .innerHTML,
+        "<p>Test</p>",
+        "new message in thread should have content typed from composer text input");
 });
 
 });

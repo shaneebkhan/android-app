@@ -48,10 +48,6 @@
     display: none;
 }
 
-.o_mail_component_DiscussSidebarItem__input {
-    width: 100%;
-}
-
 .o_mail_component_DiscussSidebarItem__name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -60,6 +56,10 @@
         margin-left: $o-mail-discuss-sidebar-active-indicator-width + $o-mail-discuss-sidebar-active-indicator-margin-right;
         margin-right: $o-mail-discuss-sidebar-scrollbar-width;
     }
+}
+
+.o_mail_component_DiscussSidebarItem__nameInput {
+    width: 100%;
 }
 
 // ------------------------------------------------------------------
@@ -93,15 +93,15 @@
     background-color: $o-brand-primary;
 }
 
-.o_mail_component_DiscussSidebarItem__input {
-    outline: none;
-    border: none;
-    border-radius: 2px;
-}
-
 .o_mail_component_DiscussSidebarItem__name {
 
     &.o_unread {
         font-weight: bold;
     }
+}
+
+.o_mail_component_DiscussSidebarItem__nameInput {
+    outline: none;
+    border: none;
+    border-radius: 2px;
 }

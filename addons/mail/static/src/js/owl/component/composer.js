@@ -2,7 +2,7 @@ odoo.define('mail.component.Composer', function (require) {
 'use strict';
 
 const AttachmentList = require('mail.component.AttachmentList');
-const Input = require('mail.component.ComposerInput');
+const Input = require('mail.component.ComposerTextInput');
 const EmojisButton = require('mail.component.EmojisButton');
 
 const core = require('web.core');
@@ -100,11 +100,11 @@ class Composer extends Component {
     //--------------------------------------------------------------------------
 
     focus() {
-        this.refs.input.focus();
+        this.refs.textInput.focus();
     }
 
     focusout() {
-        this.refs.input.focusout();
+        this.refs.textInput.focusout();
     }
 
     //--------------------------------------------------------------------------
@@ -119,11 +119,11 @@ class Composer extends Component {
         this.env.store.dispatch('postMessageOnThread', {
             data: {
                 attachmentLocalIDs: this.state.attachmentLocalIDs,
-                content: this.refs.input.getValue(),
+                content: this.refs.textInput.getValue(),
             },
             threadLocalID: this.props.threadLocalID,
         });
-        this.refs.input.resetValue();
+        this.refs.textInput.resetValue();
         this.state.attachmentLocalIDs = [];
     }
 
@@ -233,7 +233,7 @@ class Composer extends Component {
      */
     _onClickCaptureGlobal(ev) {
         if (ev.target.closest(`[data-id="${this.id}"]`)) {
-            this.refs.input.saveRange();
+            this.refs.textInput.saveRange();
         }
     }
 
@@ -242,7 +242,7 @@ class Composer extends Component {
      * @param {MouseEvent} ev
      */
     _onClickSend(ev) {
-        if (!this.refs.input.getValue()) {
+        if (!this.refs.textInput.getValue()) {
             return;
         }
         ev.stopPropagation();
@@ -256,14 +256,14 @@ class Composer extends Component {
      * @param {string} ev.detail.unicode
      */
     _onEmojiSelection(ev) {
-        this.refs.input.insert(ev.detail.unicode);
+        this.refs.textInput.insert(ev.detail.unicode);
     }
 
     /**
      * @private
      * @param {CustomEvent} ev
      */
-    _onPostMessageInput(ev) {
+    _onPostMessageTextInput(ev) {
         this._postMessage();
     }
 

@@ -2,9 +2,9 @@
 <templates xml:space="preserve">
 
     <div
-        class="o_mail_component_ComposerInput"
+        class="o_mail_component_ComposerTextInput"
         owl="1"
-        t-name="mail.component.ComposerInput">
+        t-name="mail.component.ComposerTextInput">
         <textarea t-ref="textarea"/>
     </div>
 

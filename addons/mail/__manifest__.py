@@ -70,7 +70,7 @@
         'static/src/xml/owl/component/chat_window_manager.xml',
         'static/src/xml/owl/component/chatter.xml',
         'static/src/xml/owl/component/composer.xml',
-        'static/src/xml/owl/component/composer_input.xml',
+        'static/src/xml/owl/component/composer_text_input.xml',
         'static/src/xml/owl/component/dialog.xml',
         'static/src/xml/owl/component/dialog_manager.xml',
         'static/src/xml/owl/component/discuss.xml',

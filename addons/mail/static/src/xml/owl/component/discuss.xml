@@ -24,6 +24,7 @@
                         options="threadOptions"
                         threadLocalID="props.threadLocalID"
                         t-if="props.threadLocalID"
+                        t-key="props.threadLocalID"
                         t-on-redirect="_onRedirect"
                         t-ref="thread"/>
                     <div
@@ -49,6 +50,7 @@
                     class="o_mail_component_Discuss__thread"
                     options="threadOptions"
                     threadLocalID="props.threadLocalID"
+                    t-key="props.threadLocalID"
                     t-on-redirect="_onRedirect"
                     t-on-rendered="_onThreadRendered"
                     t-ref="thread"/>

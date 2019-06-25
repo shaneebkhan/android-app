@@ -93,15 +93,6 @@ function _computeAttachmentFiletype({ mimetype, type, url }) {
 
 /**
  * @private
- * @param {Array} [attachment_ids=[]]
- * @return {string[]}
- */
-function _computeMessageAttachmentLocalIDs(attachment_ids=[]) {
-    return attachment_ids.map(({ id }) => `ir.attachment_${id}`);
-}
-
-/**
- * @private
  * @return {string}
  */
 function _computeMessageBodyWithLinks(body) {
@@ -634,13 +625,12 @@ const mutations = {
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {integer} param1.currentPartnerID
      * @param {integer[]} param1.message_ids
      * @param {boolean} param1.starred
      */
     handleNotificationPartnerToggleStar(
         { commit, state },
-        { currentPartnerID, message_ids=[], starred }
+        { message_ids=[], starred }
     ) {
         const starredBoxLocalID = 'mail.box_starred';
         const starredBox = state.threads[starredBoxLocalID];
@@ -665,10 +655,7 @@ const mutations = {
                     },
                 });
             } else {
-                commit('_unsetMessageStar', {
-                    currentPartnerID,
-                    messageLocalID,
-                });
+                commit('_unsetMessageStar', { messageLocalID });
                 commit('updateThread', {
                     threadLocalID: starredBoxLocalID,
                     changes: {
@@ -1407,7 +1394,7 @@ const mutations = {
 
         Object.assign(message, {
             _model: 'mail.message',
-            attachmentLocalIDs: _computeMessageAttachmentLocalIDs(attachment_ids),
+            attachmentLocalIDs: attachment_ids.map(({ id }) => `ir.attachment_${id}`),
             authorLocalID: author_id ? `res.partner_${author_id[0]}` : undefined,
             body,
             bodyWithLinks: _computeMessageBodyWithLinks(body),
@@ -1931,19 +1918,18 @@ const mutations = {
      * @param {function} param0.commit
      * @param {Object} param0.state
      * @param {Object} param1
-     * @param {integer} param1.currentPartnerID
      * @param {string} param1.messageLocalID
      */
-    _unsetMessageStar({ commit, state }, { currentPartnerID, messageLocalID }) {
+    _unsetMessageStar({ commit, state }, { messageLocalID }) {
         const message = state.messages[messageLocalID];
-        if (!message.starred_partner_ids.includes(currentPartnerID)) {
+        if (!message.starred_partner_ids.includes(state.currentPartnerID)) {
             return;
         }
         commit('_updateMessage', {
             messageLocalID,
             changes: {
                 starred_partner_ids: message.starred_partner_ids.filter(id =>
-                    id !== currentPartnerID),
+                    id !== state.currentPartnerID),
             },
         });
     },

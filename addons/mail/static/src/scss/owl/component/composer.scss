@@ -56,11 +56,6 @@
     margin-top: 10px;
 }
 
-.o_mail_component_Composer__input {
-    flex: 1 1 auto;
-    align-self: stretch;
-}
-
 .o_mail_component_Composer__main {
     display: flex;
     align-items: flex-start;
@@ -74,6 +69,11 @@
     margin-left: 7px;
 }
 
+.o_mail_component_Composer__textInput {
+    flex: 1 1 auto;
+    align-self: stretch;
+}
+
 // ------------------------------------------------------------------
 // Style
 // ------------------------------------------------------------------
@@ -85,27 +85,22 @@
     &.o_with_avatar {
         border: 1px solid gray('300');
 
-        .o_mail_component_Composer__input > .note-editor {
+        .o_mail_component_Composer__command:last-child {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .o_mail_component_Composer__textInput > .note-editor {
             border-radius: 5px 0 0 5px;
 
             > .note-editing-area {
                 border-radius: 5px 0 0 5px;
             }
         }
-
-        .o_mail_component_Composer__command:last-child {
-            border-radius: 0 5px 5px 0;
-        }
     }
 
     &:not(.o_with_avatar) {
         border-top: 1px solid gray('300');
     }
-}
-
-.o_mail_component_Composer__input {
-    outline: none;
-    border: none;
 }
 
 .o_mail_component_Composer__command {
@@ -120,4 +115,9 @@
         background-color: gray('200');
         border-color: gray('200');
     }
+}
+
+.o_mail_component_Composer__textInput {
+    outline: none;
+    border: none;
 }

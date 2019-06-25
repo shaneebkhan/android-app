@@ -18,7 +18,7 @@ class MessageList extends Component {
     }
 
     mounted() {
-        if (this.options.scrollTop) {
+        if (this.options.scrollTop !== undefined) {
             this.el.scrollTop = this.options.scrollTop;
         } else {
             this.scrollToLastMessage();

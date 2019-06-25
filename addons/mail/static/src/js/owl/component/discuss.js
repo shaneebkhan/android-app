@@ -7,7 +7,7 @@ const Sidebar = require('mail.component.DiscussSidebar');
 const Thread = require('mail.component.Thread');
 const ThreadPreviewList = require('mail.component.ThreadPreviewList');
 
-const { Component, connect } = owl;
+const { Component, Observer, connect } = owl;
 
 class Discuss extends Component {
     /**
@@ -224,9 +224,9 @@ class Discuss extends Component {
      */
     _onSelectThread(ev) {
         if (this.refs.thread && this.refs.thread.hasMessages) {
-            this.state.threadCachesInfo[this.props.threadCacheLocalID] = {
+            Observer.set(this.state.threadCachesInfo, this.props.threadCacheLocalID, {
                 scrollTop: this.refs.thread.getScrollTop(),
-            };
+            });
         }
         const { threadLocalID } = ev.detail;
         this.env.store.commit('updateDiscuss', { threadLocalID });

@@ -24,7 +24,7 @@
                 o_mail_component_DiscussSidebarItem__name"
             t-if="props.thread.channel_type === 'chat' and state.renaming">
             <EditableText
-               class="o_mail_component_DiscussSidebarItem__input"
+               class="o_mail_component_DiscussSidebarItem__nameInput"
                placeholder="props.directPartner.name"
                t-on-cancel="_onCancelRenaming"
                t-on-clicked="_onClickedEditableText"

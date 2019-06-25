@@ -84,8 +84,10 @@
                     class="o_mail_component_Message__originThread"
                     t-if="hasDifferentOriginThread">
                     <t t-if="props.originThread._model === 'mail.channel'">
-                        (from <a href="#"
-                                 t-on-click="_onClickOriginThread">#<t t-esc="props.originThread.name"/></a>)
+                        (from <a
+                                class="o_mail_component_Message__originThreadLink"
+                                href="#"
+                                t-on-click="_onClickOriginThread">#<t t-esc="props.originThread.name"/></a>)
                     </t>
                     <t t-else="">
                         on <a href="#"
