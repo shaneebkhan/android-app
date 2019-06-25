@@ -415,6 +415,19 @@ var isBrowse = {
         });
     },
     /**
+     * Return true if the node is indented.
+     *
+     * @returns {Boolean}
+     */
+    isIndented: function () {
+        var margin = this.style && this.style['margin-left'];
+        if (!margin) {
+            return false;
+        }
+        margin = margin.slice(0, margin.length - 2); // remove the 'em'
+        return parseFloat(margin) > 0;
+    },
+    /**
      * Return true if the node is on a left edge (ignoring invisible text).
      *
      * @param {Boolean} [ignoreVirtual] true to ignore virtual text nodes

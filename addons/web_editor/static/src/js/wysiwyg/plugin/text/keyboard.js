@@ -20,27 +20,6 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
     // Public
     //--------------------------------------------------------------------------
 
-    /**
-     * Handle TAB keydown event.
-     *
-     * @param {Boolean} [untab] true for shift+tab
-     */
-    handleTab (untab) {
-        var range = this.dependencies.Range.getRange();
-        var isHandledByList = untab && range.scArch.isInList() ||
-            range.scArch.isLeftEdgeOfPred(node => node.isLi()) && range.so === 0;
-        if (isHandledByList) {
-            return; // todo: remove when indent text handled by paragraph
-        }
-        if (range.scArch.isInCell()) {
-            this._handleTabInCell(range.scArch, untab);
-        } else if (range.scArch.isLeftEdgeOfBlock() && this._isOffsetLeftEdge(range)) {
-            this.dependencies.Arch[untab ? 'outdent' : 'indent'](); // todo: handle via paragraph and list
-        } else if (!untab) {
-            this._insertTab();
-        }
-    }
-
     //--------------------------------------------------------------------------
     // Private
     //--------------------------------------------------------------------------
@@ -183,7 +162,7 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
      *
      * @private
      * @param {SummernoteEvent} se
-     * @param {jQueryEvent} e
+     * @param {Event} e
      * @returns {Boolean} true if case handled
      */
     _onKeydown (e) {
@@ -211,6 +190,9 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
             switch (e.keyCode) {
                 case 8: // BACKSPACE
                     handled = this._onBackspace(e);
+                    break;
+                case 9: // TAB
+                    handled = this._onTab(e);
                     break;
                 case 13: // ENTER
                     handled = this._onEnter(e);
@@ -249,20 +231,11 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
      * Handle BACKSPACE keydown event.
      *
      * @private
-     * @param {jQueryEvent} e
      * @returns {Boolean} true if case is handled and event default must be prevented
      */
-    _onBackspace (e) {
+    _onBackspace () {
         var range = this.dependencies.Range.getRange();
-        var isHandledByList = range.isCollapsed() && range.scArch.isLeftEdgeOfPred(node => node.isLi()) && range.so === 0;
-        if (isHandledByList) {
-            return; // todo: remove when indent text handled by paragraph
-        }
-        var paraAncestor = range.scArch.ancestor('isPara');
-        var isInIndentedPara = paraAncestor && !!paraAncestor.attributes.style['margin-left'];
-        if (isInIndentedPara && this._isOnLeftEdgeOf(paraAncestor, range)) {
-            this.dependencies.Arch.outdent(); // Outdent if on left edge of an indented para
-        } else if (!this._isOnLeftEdgeOf('isCell', range)) { // Do nothing if on left edge of a table cell
+        if (!this._isOnLeftEdgeOf('isCell', range)) { // Do nothing if on left edge of a table cell
             this._handleDeletion(true)
         }
         return true;
@@ -271,10 +244,9 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
      * Handle DELETE keydown event.
      *
      * @private
-     * @param {jQueryEvent} e
      * @returns {Boolean} true if case is handled and event default must be prevented
      */
-    _onDelete (e) {
+    _onDelete () {
         var range = this.dependencies.Range.getRange();
 
         // Special case
@@ -292,7 +264,7 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
      * Handle ENTER keydown event.
      *
      * @private
-     * @param {jQueryEvent} e
+     * @param {KeyboardEvent} e
      * @returns {Boolean} true if case is handled and event default must be prevented
      */
     _onEnter (e) {
@@ -311,6 +283,26 @@ we3.addPlugin('Keyboard', class extends we3.AbstractPlugin {
             }
         }
         return true;
+    }
+    /**
+     * Handle TAB keydown event.
+     *
+     * @private
+     * @param {KeyboardEvent} e
+     * @returns {Boolean} true if case is handled and event default must be prevented
+     */
+    _onTab (e) {
+        var handled = true;
+        var untab = !!e.shiftKey;
+        var range = this.dependencies.Range.getRange();
+        if (range.scArch.isInCell()) {
+            this._handleTabInCell(range.scArch, untab);
+        } else if (!untab) {
+            this._insertTab();
+        } else {
+            handled = false;
+        }
+        return handled;
     }
     /**
      * Handle visible char keydown event.

@@ -997,11 +997,143 @@ var TestToolbarList = class extends we3.AbstractPlugin {
                     '</ul>',
             },
         ]
+        this.indentTests = [
+            {
+                name: "Click INDENT: li -> indented li",
+                content: '<ul><li><p>dom</p></li><li><p>t◆o edit</p></li></ul>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnIndent, ['mousedown', 'click']);
+                },
+                test: '<ul><li><p>dom</p></li><li class="o_indent"><ul><li><p>t◆o edit</p></li></ul></li></ul>',
+            },
+        ];
+        this.outdentTests = [
+            {
+                name: "Click OUTDENT: indented li -> li",
+                content: '<ul><li><p>dom</p></li><li><ul><li><p>t◆o edit</p></li></ul></li></ul>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<ul><li><p>dom</p></li><li><p>t◆o edit</p></li></ul>',
+            },
+            {
+                name: "Click OUTDENT: indented li -> li (2)",
+                content: '<ul><li><p>dom</p></li><ul><li><p>t◆o edit</p></li></ul></ul>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<ul><li><p>dom</p></li><li><p>t◆o edit</p></li></ul>',
+            },
+            {
+                name: "Click OUTDENT on LI in OL in OL",
+                content: '<p>x</p>' +
+                    '<ol>' +
+                    '<li><p>aaa</p></li>' +
+                    '<li><ol>' +
+                    '<li><p>bbb</p></li>' +
+                    '<li><p>c◆cc</p></li>' +
+                    '<li><p>ddd</p></li>' +
+                    '</ol></li>' +
+                    '<li><p>eee</p></li>' +
+                    '</ol>' +
+                    '<p>y</p>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<p>x</p>' +
+                        '<ol>' +
+                        '<li><p>aaa</p></li>' +
+                        '<li class="o_indent"><ol>' +
+                        '<li><p>bbb</p></li>' +
+                        '</ol></li>' +
+                        '<li><p>c◆cc</p></li>' +
+                        '<li class="o_indent"><ol>' +
+                        '<li><p>ddd</p></li>' +
+                        '</ol></li>' +
+                        '<li><p>eee</p></li>' +
+                        '</ol>' +
+                        '<p>y</p>',
+            },
+            {
+                name: "Click OUTDENT on LI in OL in OL (2)",
+                content: '<p>x</p>' +
+                    '<ol>' +
+                    '<li><p>aaa</p></li>' +
+                    '<ol>' +
+                    '<li><p>bbb</p></li>' +
+                    '<li><p>c◆cc</p></li>' +
+                    '<li><p>ddd</p></li>' +
+                    '</ol>' +
+                    '<li><p>eee</p></li>' +
+                    '</ol>' +
+                    '<p>y</p>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<p>x</p>' +
+                        '<ol>' +
+                        '<li><p>aaa</p></li>' +
+                        '<li class="o_indent">' +
+                        '<ol>' +
+                        '<li><p>bbb</p></li>' +
+                        '</ol></li>' +
+                        '<li><p>c◆cc</p></li>' +
+                        '<li class="o_indent">' +
+                        '<ol>' +
+                        '<li><p>ddd</p></li>' +
+                        '</ol></li>' +
+                        '<li><p>eee</p></li>' +
+                        '</ol>' +
+                        '<p>y</p>',
+            },
+            {
+                name: "Click OUTDENT on LI in OL",
+                content:
+                    '<ol>' +
+                    '<li><p>aaa</p></li>' +
+                    '<li><p>b◆bb</p></li>' +
+                    '<li><p>ccc</p></li>' +
+                    '</ol>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<ol>' +
+                        '<li><p>aaab◆bb</p></li>' +
+                        '<li><p>ccc</p></li>' +
+                        '</ol>',
+            },
+            {
+                name: "Click OUTDENT on P with indent in a LI (must outdent the p)",
+                content:
+                    '<ul>' +
+                    '<li>' +
+                    '<ul>' +
+                    '<li>' +
+                    '<p style="margin-left: 1.5em;">d◆om</p>' +
+                    '</li>' +
+                    '</ul>' +
+                    '</li>' +
+                    '</ul>',
+                do: async function () {
+                    await self.dependencies.Test.triggerNativeEvents(self.btnOutdent, ['mousedown', 'click']);
+                },
+                test: '<ul>' +
+                        '<li class="o_indent">' +
+                        '<ul>' +
+                        '<li>' +
+                        '<p>d◆om</p>' +
+                        '</li>' +
+                        '</ul>' +
+                        '</li>' +
+                        '</ul>',
+            },
+        ];
         this.toolbarTests = this.ulTests
             .concat(this.olTests)
             .concat(this.checklistTests)
-            .concat(this.conversionTests);
-        // this.toolbarTests = (this.conversionTests);
+            .concat(this.conversionTests)
+            .concat(this.indentTests)
+            .concat(this.outdentTests);
     }
 
     start () {
@@ -1011,10 +1143,15 @@ var TestToolbarList = class extends we3.AbstractPlugin {
 
     test (assert) {
         var wysiwyg = document.getElementsByTagName('we3-editor')[0];
+
         var listGroup = wysiwyg.querySelector('we3-group[data-plugin="List"]');
         this.btnUl = listGroup.querySelector('we3-button[name="list-ul"]');
         this.btnOl = listGroup.querySelector('we3-button[name="list-ol"]');
         this.btnChecklist = listGroup.querySelector('[name="list-checklist"]');
+
+        var paraGroup = wysiwyg.querySelector('we3-group[data-plugin="Indent"]');
+        this.btnIndent = paraGroup.querySelector('we3-button[name="indent-in"]');
+        this.btnOutdent = paraGroup.querySelector('we3-button[name="indent-out"]');
         return this.dependencies.TestToolbar.test(assert, this.toolbarTests);
     }
 };

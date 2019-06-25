@@ -83,6 +83,7 @@ QUnit.module('web_editor', {
         TestArchAndRules: false,
         TestToolbarWand: false,
         TestToolbarFontStyle: false,
+        TestToolbarIndent: false,
         TestToolbarLink: false,
         TestToolbarList: false,
         TestKeyboardUnbreakable: false,
@@ -149,6 +150,14 @@ QUnit.module('web_editor', {
         };
         await createFormAndTest(this);
     });
+    QUnit.test('toolbar indent', async function (assert) {
+        assert.expect(9);
+        this.testOptions = {
+            assert: assert,
+            plugins: Object.assign({}, testPlugins, { TestToolbarIndent: true }),
+        };
+        await createFormAndTest(this);
+    });
     QUnit.test('toolbar link', async function (assert) {
         assert.expect(17);
         this.testOptions = {
@@ -158,7 +167,7 @@ QUnit.module('web_editor', {
         await createFormAndTest(this);
     });
     QUnit.test('toolbar list', async function (assert) {
-        assert.expect(63);
+        assert.expect(70);
         this.testOptions = {
             assert: assert,
             plugins: Object.assign({}, testPlugins, { TestToolbarList: true }),

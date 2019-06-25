@@ -1,8 +1,8 @@
 (function () {
 'use strict';
 
-we3.options.keyMap.pc['CTRL+SHIFT+NUM9'] = 'List.toggleList:checklist';
-we3.options.keyMap.mac['CMD+SHIFT+NUM9'] = 'List.toggleList:checklist';
+we3.options.keyMap.pc['CTRL+SHIFT+NUM9'] = 'List.toggle:checklist';
+we3.options.keyMap.mac['CMD+SHIFT+NUM9'] = 'List.toggle:checklist';
 
 // Custom node representing a list (ul, ol, checklist)
 var LIST = class extends we3.ArchNode {
@@ -88,7 +88,7 @@ var LIST = class extends we3.ArchNode {
         if (beforeList && beforeList.isList()) {
             return this._mergeContentsWithPreviousLi();
         }
-        return this._unlist(contents);
+        return this._unlist();
     }
 
     /**
@@ -555,7 +555,7 @@ we3.addArchNode('CHECKLIST_ITEM', CHECKLIST_ITEM);
 var ListPlugin = class extends we3.AbstractPlugin {
     constructor () {
         super(...arguments);
-        this.dependencies = ['Arch', 'FontStyle', 'Range'];
+        this.dependencies = ['Arch', 'Range'];
         this.templatesDependencies = ['/web_editor/static/src/xml/wysiwyg_list.xml'];
         this.buttons = {
             template: 'wysiwyg.buttons.list',
@@ -581,7 +581,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
     /**
      * Indent the list
      */
-    indentList () {
+    indent () {
         var rangeToPreserve = this.dependencies.Range.getRange();
         this.dependencies.Arch.indent();
         this.dependencies.Range.setRange(rangeToPreserve);
@@ -589,7 +589,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
     /**
      * Outdent the list
      */
-    outdentList () {
+    outdent () {
         var rangeToPreserve = this.dependencies.Range.getRange();
         this.dependencies.Arch.outdent();
         this.dependencies.Range.setRange(rangeToPreserve);
@@ -600,7 +600,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
      *
      * @param {string('ol'|'ul'|'checklist')} type the type of list to insert
      */
-    toggleList (type) {
+    toggle (type) {
         var rangeToPreserve = this.dependencies.Range.getRange();
         var selectedLeaves = this.dependencies.Range.getSelectedLeaves();
         if (this._isAllInList(selectedLeaves)) {
@@ -799,7 +799,7 @@ var ListPlugin = class extends we3.AbstractPlugin {
         var nodeNamesToRemove = ['li', 'ol', 'ul'];
         var liAncestors = this._selectedListItems();
         if (liAncestors.length && liAncestors.every(li => li.isIndented())) {
-            this.outdentList();
+            this.outdent();
         } else if (this.dependencies.Range.isCollapsed()) {
             var focusNode = this.dependencies.Range.getFocusedNode();
             this.dependencies.Arch.unwrapFrom(focusNode.id, nodeNamesToRemove);
@@ -844,6 +844,9 @@ var ListPlugin = class extends we3.AbstractPlugin {
      * @param {KeyboardEvent} e
      */
     _onKeyDown (e) {
+        if (e.defaultPrevented) {
+            return;
+        }
         var range = this.dependencies.Range.getRange();
         var isLeftEdgeOfLi = range.scArch.isLeftEdgeOfPred(node => node.isLi()) && range.so === 0;
         if (!range.isCollapsed() || !isLeftEdgeOfLi) {
@@ -853,15 +856,15 @@ var ListPlugin = class extends we3.AbstractPlugin {
             case 8: // BACKSPACE
                 e.preventDefault();
                 e.stopPropagation();
-                this.outdentList();
+                this.outdent();
                 break;
             case 9: // TAB
                 e.preventDefault();
                 e.stopPropagation();
                 if (e.shiftKey) {
-                    this.outdentList();
+                    this.outdent();
                 } else {
-                    this.indentList();
+                    this.indent();
                 }
                 break;
         }

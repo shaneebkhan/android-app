@@ -63,11 +63,5 @@
                 </we3-button>
             </we3-group>
         </we3-dropdown>
-        <we3-button name="indent-out" data-method="outdent" title="Outdent">
-            <i class="fa fa-outdent"></i>
-        </we3-button>
-        <we3-button name="indent-in" data-method="indent" title="Indent">
-            <i class="fa fa-indent"></i>
-        </we3-button>
     </we3-group>
 </templates>
