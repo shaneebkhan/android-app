@@ -74,6 +74,14 @@ var ListRenderer = BasicRenderer.extend({
     // Public
     //--------------------------------------------------------------------------
     /**
+     * Returns whether the list can be considered as editable
+     * 
+     * @returns {boolean}
+     */
+    getEditableState: function () {
+        return this.editable;
+    },
+    /**
      * Order to focus to be given to the content of the current view
      * @override
      * @public

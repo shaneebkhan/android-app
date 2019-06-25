@@ -290,7 +290,7 @@ ListRenderer.include({
      * Get the current multi-editable state of the list.
      * recordId can either be the current row or the current record.
      * 
-     * @param {string|number} recordId 
+     * @param {string|number} recordId
      * @returns {boolean}
      */
     inMultipleRecordEdition: function (recordId) {
@@ -298,7 +298,14 @@ ListRenderer.include({
             recordId = this._getRecordID(recordId);
         }
         var recordIds = _.union([recordId], this.selection);
-        return this._getEditableState() && recordIds.length > 1;
+        return this.getEditableState() && recordIds.length > 1;
+    },
+    /**
+     * @override
+     * @returns {boolean}
+     */
+    getEditableState: function () {
+        return this.editable || Boolean(this.selection.length);
     },
     /**
      * Removes the line associated to the given recordID (the index of the row
@@ -528,14 +535,6 @@ ListRenderer.include({
         }
     },
     /**
-     * Returns whether the list can be considered as editable
-     * 
-     * @returns {boolean}
-     */
-    _getEditableState: function () {
-        return Boolean(this.editable || this.selection.length);
-    },
-    /**
      *
      * @returns {integer}
      */
@@ -752,7 +751,7 @@ ListRenderer.include({
     _processColumns: function () {
         this._super.apply(this, arguments);
 
-        if (this._getEditableState()) {
+        if (this.getEditableState()) {
             var self = this;
             this.columns.forEach(function (column) {
                 if (column.attrs.width_factor) {
@@ -836,7 +835,7 @@ ListRenderer.include({
     _renderHeader: function () {
         var $thead = this._super.apply(this, arguments);
 
-        if (this._getEditableState()) {
+        if (this.getEditableState()) {
             var totalWidth = this.columns.reduce(function (acc, column) {
                 return acc + column.attrs.widthFactor;
             }, 0);
@@ -925,7 +924,7 @@ ListRenderer.include({
         this.currentRow = null;
         this.allRecordsIds = null;
         return this._super.apply(this, arguments).then(function () {
-            if (self._getEditableState()) {
+            if (self.getEditableState()) {
                 self.$('table').addClass('o_editable_list');
             }
         });
@@ -1024,9 +1023,9 @@ ListRenderer.include({
      * @override
      */
     _updateSelection: function () {
-        var previousState = this._getEditableState();
+        var previousState = this.getEditableState();
         this._super.apply(this, arguments);
-        var newState = this._getEditableState();
+        var newState = this.getEditableState();
         if (!this.editable && previousState !== newState) {
             this.$('table').toggleClass('o_editable_list', newState);
             this.trigger_up('change_mode', {
@@ -1100,7 +1099,7 @@ ListRenderer.include({
     _onCellClick: function (event) {
         // The special_click property explicitely allow events to bubble all
         // the way up to bootstrap's level rather than being stopped earlier.
-        if (!this._getEditableState() || $(event.target).prop('special_click')) {
+        if (!this.getEditableState() || $(event.target).prop('special_click')) {
             return;
         }
         var $td = $(event.currentTarget);
@@ -1135,12 +1134,12 @@ ListRenderer.include({
         var $target = $(ev.currentTarget);
         var $tr = $target.closest('tr');
 
-        if (this._getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && $tr.hasClass('o_selected_row')) {
+        if (this.getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && $tr.hasClass('o_selected_row')) {
             // enter on a textarea for example, let it bubble
             return;
         }
 
-        if (this._getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && !$tr.hasClass('o_selected_row') && !$tr.hasClass('o_group_header')) {
+        if (this.getEditableState() && ev.keyCode === $.ui.keyCode.ENTER && !$tr.hasClass('o_selected_row') && !$tr.hasClass('o_group_header')) {
             ev.stopPropagation();
             ev.preventDefault();
             if ($target.closest('td').hasClass('o_group_field_row_add')) {
@@ -1281,7 +1280,7 @@ ListRenderer.include({
      * @private
      */
     _onRowClicked: function () {
-        if (!this._getEditableState()) {
+        if (!this.getEditableState()) {
             this._super.apply(this, arguments);
         }
     },
@@ -1311,7 +1310,7 @@ ListRenderer.include({
      */
     _onWindowClicked: function (event) {
         // ignore clicks on readonly lists with no selected rows
-        if (!this._getEditableState()) {
+        if (!this.getEditableState()) {
             return;
         }
 

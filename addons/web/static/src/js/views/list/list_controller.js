@@ -378,15 +378,15 @@ var ListController = BasicController.extend({
         var value = Object.values(ev.data.changes)[0];
         var node = ev.target.__node;
         var recordIds = _.union([recordId], this.selectedRecords);
-        var validRecordIds = recordIds.reduce(function (result, otherRecordId) {
+        var validRecordIds = recordIds.reduce(function (result, nextRecordId) {
             // recordId has already been checked earlier
-            if (otherRecordId === recordId) {
+            if (nextRecordId === recordId) {
                 result.push(recordId);
             } else {
-                var record = self.model.get(otherRecordId);
+                var record = self.model.get(nextRecordId);
                 var modifiers = self.renderer._registerModifiers(node, record);
                 if (!modifiers.readonly && (!modifiers.required || value)) {
-                    result.push(otherRecordId);
+                    result.push(nextRecordId);
                 }
             }
             return result;
@@ -403,10 +403,10 @@ var ListController = BasicController.extend({
                     _t('Do you want to set the value on the %d valid selected records? (%d invalid)'),
                     validRecordIds.length, nbInvalid);
             }
-            // This is to prevent an issue (unknown source):
-            // When changing a value and pressing ENTER, it appears that
-            // the modal opens too fast, registers the ENTER key press and
-            // then confirms automatically.
+            // FIXME: This hideous promise fixes an issue (unknown source):
+            // When changing a value and pressing ENTER, it appears that the modal
+            // opens too fast, registers the ENTER key press and then confirms automatically.
+            // This slows it down, meaning that the tests need an extra nextTick after validation.
             new Promise(function (res) {
                 setTimeout(res);
             }).then(function () {
@@ -416,18 +416,14 @@ var ListController = BasicController.extend({
                             .then(function () {
                                 self._updateButtons('readonly');
                                 var state = self.model.get(self.handle);
-                                self.renderer.updateState(state, {});
-                                resolve();
+                                self.renderer.updateState(state, {}).then(resolve);
                             }).guardedCatch(function () {
                                 // Server error : changes are discarded
                                 self.model.discardChanges(recordId);
-                                self._confirmSave(recordId);
-                                reject();
+                                self._confirmSave(recordId).then(reject);
                             });
                     },
-                    cancel_callback: function () {
-                        reject();
-                    },
+                    cancel_callback: reject,
                 });
             });
         });
@@ -445,8 +441,7 @@ var ListController = BasicController.extend({
             // canBeSaved is called to display warnings
             if (this.canBeSaved(recordId)) {
                 var ev = this.recordEvents[recordId];
-                this.recordEvents[recordId] = null;
-                return (ev ? this._saveMultipleRecords(recordId, ev) : Promise.resolve());
+                return ev ? this._saveMultipleRecords(recordId, ev) : Promise.resolve();
             } else {
                 return Promise.reject();
             }
@@ -488,7 +483,8 @@ var ListController = BasicController.extend({
     _toggleCreateButton: function () {
         if (this.$buttons) {
             var state = this.model.get(this.handle);
-            var createHidden = this.editable && state.groupedBy.length && state.data.length;
+            var createHidden = this.renderer.getEditableState() &&
+                state.groupedBy.length && state.data.length;
             this.$buttons.find('.o_list_button_add').toggleClass('o_hidden', !!createHidden);
         }
     },
@@ -568,7 +564,6 @@ var ListController = BasicController.extend({
     _onChangeMode: function (ev) {
         ev.stopPropagation();
         var recordId = ev.data.recordId;
-        this.editable = ev.data.mode === 'edit';
         this.mode = ev.data.mode;
         if (recordId) {
             this.model.discardChanges(recordId);

@@ -4348,9 +4348,9 @@ QUnit.module('Views', {
         await testUtils.nextTick();
 
         assert.ok($('.modal').text().includes('2 valid'),
-             "the number of records should be correctly displayed (only 2 not readonly)");
+            "the number of records should be correctly displayed (only 2 not readonly)");
         assert.ok($('.modal').text().includes('2 invalid'),
-             "should display the number of invalid records");
+            "should display the number of invalid records");
 
         await testUtils.dom.click($('.modal .btn-primary'));
         assert.strictEqual(list.$('.o_data_row:eq(0) .o_data_cell').text(), "1yop666",
