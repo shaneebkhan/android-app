@@ -116,59 +116,6 @@ class OdooHook(object):
 
         return sys.modules[name]
 
-
-class UpgradeHook:
-    def find_module(self, name, path=None):
-        if name == "odoo.addons.base.maintenance":
-            if not get_resource_path("base", "maintenance"):
-                # if it doesn't exists on disk,
-                # we handle it ourself and will return an empty module.
-                return self
-
-        if name in {"odoo.upgrades", "odoo.addons.base.maintenance.migrations"}:
-            return self
-
-    def load_module(self, name):
-        assert name not in sys.modules
-
-        if name == "odoo.addons.base.maintenance":
-            # create an empty module stub
-            return self._empty_module(name)
-
-        # search first upgrades_path that is a package
-        for path in tools.config.get("upgrades_paths", "").split(","):
-            if os.path.exists(opj(path, "__init__.py")):
-                break
-        else:
-            # failback to legacy "maintenance/migrations" package
-            path = get_resource_path("base", "maintenance", "migrations")
-
-        if not path:
-            raise ImportError("No package found in `upgrades_paths`")
-
-        mod = types.ModuleType("odoo.upgrades")
-        mod.__loader__ = self
-
-        modfile = opj(path, "__init__.py")
-        mod.__file__ = modfile
-        mod.__path__ = [path]
-        mod.__package__ = "odoo"
-
-        # register module under multiple names
-        sys.modules["odoo.upgrades"] = sys.modules["odoo.addons.base.maintenance.migrations"] = mod
-        exec(open(modfile, 'rb').read(), mod.__dict__)
-        return sys.modules[name]
-
-    def _empty_module(self, name):
-        mod = types.ModuleType(name)
-        mod.__loader__ = self
-        mod.__file__ = "/dev/null"
-        mod.__path__ = []
-        mod.__package__ = name
-        sys.modules[name] = mod
-        return mod
-
-
 def initialize_sys_path():
     """
     Setup an import-hook to be able to import OpenERP addons from the different
@@ -202,7 +149,6 @@ def initialize_sys_path():
             ad_paths.append(ad)
 
     if not hooked:
-        sys.meta_path.insert(0, UpgradeHook())
         sys.meta_path.insert(0, OdooHook())
         sys.meta_path.insert(0, AddonsHook())
         hooked = True
