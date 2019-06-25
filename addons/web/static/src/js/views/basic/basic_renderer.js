@@ -120,7 +120,13 @@ var BasicRenderer = AbstractRenderer.extend({
         // state before evaluation
         defs.push(this._updateAllModifiers(record));
 
+        var self = this;
         return Promise.all(defs).then(function () {
+            _.each(self.allFieldWidgets[id], function (widget) {
+                if (widget.reflow) {
+                    widget.reflow();
+                }
+            });
             return resetWidgets;
         });
     },
