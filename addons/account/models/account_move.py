@@ -1758,7 +1758,7 @@ class AccountMove(models.Model):
 
         tax_repartition_lines_mapping = compute_tax_repartition_lines_mapping(move_vals)
 
-        for line_command in move_vals.get('line_ids', 0.0):
+        for line_command in move_vals.get('line_ids', []):
             line_vals = line_command[2]  # (0, 0, {...})
 
             # ==== Inverse debit / credit / amount_currency ====
