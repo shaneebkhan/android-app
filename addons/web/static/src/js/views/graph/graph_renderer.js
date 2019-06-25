@@ -292,6 +292,24 @@ return AbstractRenderer.extend({
         return this.state.origins[dataPt.originIndex];
     },
     /**
+     * Returns an object used to style chart elements indepently from the datasets.
+     *
+     * @private
+     * @returns {Object}
+     */
+    _getElementOptions: function () {
+        var elementOptions = {};
+        if (this.state.mode === 'bar') {
+            elementOptions.rectangle = {borderWidth: 1};
+        } else if (this.state.mode === 'line') {
+            elementOptions.line = {
+                tension: 0,
+                fill: false,
+            };
+        }
+        return elementOptions;
+    },
+    /**
      * Returns a DateClasses instance used to manage equivalence of dates.
      *
      * @private
@@ -670,6 +688,7 @@ return AbstractRenderer.extend({
             scales: this._getScaleOptions(),
             legend: this._getLegendOptions(datasetsCount),
             tooltips: this._getTooltipOptions(),
+            elements: this._getElementOptions(),
         };
     },
     /**
@@ -768,9 +787,6 @@ return AbstractRenderer.extend({
     _renderBarChart: function (dataPoints) {
         var self = this;
 
-        // style rectangles
-        Chart.defaults.global.elements.rectangle.borderWidth = 1;
-
         // prepare data
         var data = this._prepareData(dataPoints);
 
@@ -815,10 +831,6 @@ return AbstractRenderer.extend({
      */
     _renderLineChart: function (dataPoints) {
         var self = this;
-
-        // style lines
-        Chart.defaults.global.elements.line.tension = 0;
-        Chart.defaults.global.elements.line.fill = false;
 
         // prepare data
         var data = this._prepareData(dataPoints);
