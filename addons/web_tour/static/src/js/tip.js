@@ -146,7 +146,6 @@ var Tip = Widget.extend({
     },
     _reposition: function () {
         if (this.tip_opened) return;
-        if (!this.$el) return;
         this.$el.removeClass("o_animated");
 
         // Reverse left/right position if direction is right to left
