@@ -53,7 +53,7 @@ class Pricelist(models.Model):
 
     @api.multi
     def write(self, values):
-        _logger.info('PRICELIST WRITTEN: %s', values)
+        _logger.info('PRICELIST WRITTEN -- %s : %s', self, values)
         res = super(Pricelist, self).write(values)
 
     @api.multi
