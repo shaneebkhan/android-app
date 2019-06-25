@@ -61,6 +61,7 @@ class Holidays(models.Model):
             be attached to this project/task.
         """
         # create the timesheet on the vacation project
+        create_list = []
         for holiday in self.filtered(
                 lambda request: request.holiday_type == 'employee' and
                                 request.holiday_status_id.timesheet_project_id and
@@ -73,7 +74,7 @@ class Holidays(models.Model):
                 fields.Datetime.from_string(holiday.date_to),
             )
             for index, (day_date, work_hours_count) in enumerate(work_hours_data):
-                self.env['account.analytic.line'].sudo().create({
+                create_list.append({
                     'name': "%s (%s/%s)" % (holiday.name or '', index + 1, len(work_hours_data)),
                     'project_id': holiday_project.id,
                     'task_id': holiday_task.id,
@@ -84,7 +85,7 @@ class Holidays(models.Model):
                     'holiday_id': holiday.id,
                     'employee_id': holiday.employee_id.id,
                 })
-
+        self.env['account.analytic.line'].sudo().create(create_list)
         return super(Holidays, self)._validate_leave_request()
 
     @api.multi

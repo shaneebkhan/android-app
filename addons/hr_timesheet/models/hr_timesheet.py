@@ -56,26 +56,29 @@ class AccountAnalyticLine(models.Model):
     # ORM overrides
     # ----------------------------------------------------
 
-    @api.model
-    def create(self, values):
-        # compute employee only for timesheet lines, makes no sense for other lines
-        if not values.get('employee_id') and values.get('project_id'):
-            if values.get('user_id'):
-                ts_user_id = values['user_id']
-            else:
-                ts_user_id = self._default_user()
-            values['employee_id'] = self.env['hr.employee'].search([('user_id', '=', ts_user_id)], limit=1).id
-
-        values = self._timesheet_preprocess(values)
-        result = super(AccountAnalyticLine, self).create(values)
-        if result.project_id:  # applied only for timesheet
-            result._timesheet_postprocess(values)
-        return result
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # compute employee only for timesheet lines, makes no sense for other lines
+            if not vals.get('employee_id') and vals.get('project_id'):
+                if vals.get('user_id'):
+                    ts_user_id = vals['user_id']
+                else:
+                    ts_user_id = self._default_user()
+                vals['employee_id'] = self.env['hr.employee'].search([('user_id', '=', ts_user_id)], limit=1).id
+        vals_list = self._timesheet_preprocess(vals_list)
+        results = super(AccountAnalyticLine, self).create(vals_list)
+        for result, vals in zip(results, vals_list):
+            if result.project_id:  # applied only for timesheet
+                result._timesheet_postprocess(vals)
+        return results
 
     @api.multi
     def write(self, values):
-        values = self._timesheet_preprocess(values)
-        result = super(AccountAnalyticLine, self).write(values)
+        list_values = []
+        list_values.append(values)
+        values = self._timesheet_preprocess(list_values)
+        result = super(AccountAnalyticLine, self).write(values[0])
         # applied only for timesheet
         self.filtered(lambda t: t.project_id)._timesheet_postprocess(values)
         return result
@@ -110,36 +113,37 @@ class AccountAnalyticLine(models.Model):
                 ('task_id.project_id.privacy_visibility', '=', 'portal'),
                 ('task_id.message_partner_ids', 'child_of', [self.env.user.partner_id.commercial_partner_id.id])]
 
-    def _timesheet_preprocess(self, vals):
+    def _timesheet_preprocess(self, vals_list):
         """ Deduce other field values from the one given.
             Overrride this to compute on the fly some field that can not be computed fields.
-            :param values: dict values for `create`or `write`.
+            :param values: list of dict values for `create`or `write`.
         """
         # project implies analytic account
-        if vals.get('project_id') and not vals.get('account_id'):
-            project = self.env['project.project'].browse(vals.get('project_id'))
-            vals['account_id'] = project.analytic_account_id.id
-            vals['company_id'] = project.analytic_account_id.company_id.id
-            if not project.analytic_account_id.active:
-                raise UserError(_('The project you are timesheeting on is not linked to an active analytic account. Set one on the project configuration.'))
-        # employee implies user
-        if vals.get('employee_id') and not vals.get('user_id'):
-            employee = self.env['hr.employee'].browse(vals['employee_id'])
-            vals['user_id'] = employee.user_id.id
-        # force customer partner, from the task or the project
-        if (vals.get('project_id') or vals.get('task_id')) and not vals.get('partner_id'):
-            partner_id = False
-            if vals.get('task_id'):
-                partner_id = self.env['project.task'].browse(vals['task_id']).partner_id.id
-            else:
-                partner_id = self.env['project.project'].browse(vals['project_id']).partner_id.id
-            if partner_id:
-                vals['partner_id'] = partner_id
-        # set timesheet UoM from the AA company (AA implies uom)
-        if 'product_uom_id' not in vals and all([v in vals for v in ['account_id', 'project_id']]):  # project_id required to check this is timesheet flow
-            analytic_account = self.env['account.analytic.account'].sudo().browse(vals['account_id'])
-            vals['product_uom_id'] = analytic_account.company_id.project_time_mode_id.id
-        return vals
+        for vals in vals_list:
+            if vals.get('project_id') and not vals.get('account_id'):
+                project = self.env['project.project'].browse(vals.get('project_id'))
+                vals['account_id'] = project.analytic_account_id.id
+                vals['company_id'] = project.analytic_account_id.company_id.id
+                if not project.analytic_account_id.active:
+                    raise UserError(_('The project you are timesheeting on is not linked to an active analytic account. Set one on the project configuration.'))
+            # employee implies user
+            if vals.get('employee_id') and not vals.get('user_id'):
+                employee = self.env['hr.employee'].browse(vals['employee_id'])
+                vals['user_id'] = employee.user_id.id
+            # force customer partner, from the task or the project
+            if (vals.get('project_id') or vals.get('task_id')) and not vals.get('partner_id'):
+                partner_id = False
+                if vals.get('task_id'):
+                    partner_id = self.env['project.task'].browse(vals['task_id']).partner_id.id
+                else:
+                    partner_id = self.env['project.project'].browse(vals['project_id']).partner_id.id
+                if partner_id:
+                    vals['partner_id'] = partner_id
+            # set timesheet UoM from the AA company (AA implies uom)
+            if 'product_uom_id' not in vals and all([v in vals for v in ['account_id', 'project_id']]):  # project_id required to check this is timesheet flow
+                analytic_account = self.env['account.analytic.account'].sudo().browse(vals['account_id'])
+                vals['product_uom_id'] = analytic_account.company_id.project_time_mode_id.id
+        return vals_list
 
     @api.multi
     def _timesheet_postprocess(self, values):
