@@ -723,6 +723,7 @@
                                                domain="[('type_tax_use', '=?', parent.invoice_filter_type_domain)]"
                                                context="{'append_type_to_tax_name': not parent.invoice_filter_type_domain}"
                                                options="{'no_create': True}"
+                                               force_save="1"
                                                attrs="{'readonly': [
                                                     '|', '|',
                                                     ('display_type', 'in', ('line_section', 'line_note')),

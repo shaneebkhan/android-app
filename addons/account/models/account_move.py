@@ -751,7 +751,7 @@ class AccountMove(models.Model):
             else:
                 create_method = in_draft_mode and self.env['account.move.line'].new or self.env['account.move.line'].create
                 candidate = create_method({
-                    'name': self.invoice_payment_ref,
+                    'name': self.invoice_payment_ref or '',
                     'debit': balance < 0.0 and -balance or 0.0,
                     'credit': balance > 0.0 and balance or 0.0,
                     'quantity': 1.0,
@@ -773,7 +773,7 @@ class AccountMove(models.Model):
         terms_lines = terms_lines_to_keep
 
         # Update invoice_payment_ref.
-        self.invoice_payment_ref = terms_lines and terms_lines[0].name
+        self.invoice_payment_ref = terms_lines and terms_lines[0].name or ''
 
         # Update the date_maturity.
         self.invoice_date_due = max_date_maturity

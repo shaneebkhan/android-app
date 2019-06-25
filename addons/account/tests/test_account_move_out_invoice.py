@@ -97,7 +97,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
             'tax_exigible': True,
         }
         cls.term_line_vals_1 = {
-            'name': '/',
+            'name': '',
             'product_id': False,
             'account_id': cls.company_data['default_account_receivable'].id,
             'partner_id': cls.partner_a.id,
@@ -122,7 +122,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
             'journal_id': cls.company_data['default_journal_sale'].id,
             'date': fields.Date.from_string('2019-01-01'),
             'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
+            'invoice_payment_ref': '',
             'invoice_payment_term_id': cls.pay_terms_a.id,
             'amount_untaxed': 1200.0,
             'amount_tax': 210.0,
@@ -870,6 +870,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
             },
             {
                 **self.term_line_vals_1,
+                'name': self.invoice.name,
                 'debit': 0.0,
                 'credit': 1410.0,
             },
@@ -912,6 +913,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
             },
             {
                 **self.term_line_vals_1,
+                'name': self.invoice.name,
                 'debit': 0.0,
                 'credit': 1410.0,
             },
@@ -1094,6 +1096,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
                 },
                 {
                     **self.term_line_vals_1,
+                    'name': move.name,
                     'currency_id': self.currency_data['currency'].id,
                     'price_unit': -1430.0,
                     'price_subtotal': -1430.0,
@@ -1104,6 +1107,7 @@ class TestAccountMoveOutInvoiceOnchanges(InvoiceTestCommon):
                 },
             ], {
                 **self.move_vals,
+                'invoice_payment_ref': move.name,
                 'currency_id': self.currency_data['currency'].id,
                 'date': frozen_today,
                 'invoice_date': frozen_today,

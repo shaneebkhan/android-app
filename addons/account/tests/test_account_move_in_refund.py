@@ -95,7 +95,7 @@ class TestAccountMoveInRefundOnchanges(InvoiceTestCommon):
             'tax_exigible': True,
         }
         cls.term_line_vals_1 = {
-            'name': '/',
+            'name': '',
             'product_id': False,
             'account_id': cls.company_data['default_account_payable'].id,
             'partner_id': cls.partner_a.id,
@@ -120,7 +120,7 @@ class TestAccountMoveInRefundOnchanges(InvoiceTestCommon):
             'journal_id': cls.company_data['default_journal_purchase'].id,
             'date': fields.Date.from_string('2019-01-01'),
             'fiscal_position_id': False,
-            'invoice_payment_ref': '/',
+            'invoice_payment_ref': '',
             'invoice_payment_term_id': cls.pay_terms_a.id,
             'amount_untaxed': 960.0,
             'amount_tax': 168.0,
