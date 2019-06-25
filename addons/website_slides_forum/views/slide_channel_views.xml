@@ -15,7 +15,7 @@
                 </button>
             </xpath>
             <xpath expr="//field[@name='allow_comment']" position="after">
-                <field name="forum_id"/>
+                <field string="Forum" name="forum_id"/>
     		</xpath>
         </field>
     </record>

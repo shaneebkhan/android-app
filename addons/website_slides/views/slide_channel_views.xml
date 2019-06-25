@@ -76,7 +76,7 @@
                             <page string="Options">
                                 <group>
                                     <group string="Course">
-                                        <field name="channel_type" widget="radio"/>
+                                        <field string="Type" name="channel_type" widget="radio"/>
                                         <field name="user_id"/>
                                         <field name="website_id" options="{'no_create': True}" groups="website.group_multi_website"/>
                                         <!-- <field name="promote_strategy" widget="radio"/> -->
@@ -89,7 +89,7 @@
                                 </group>
                                 <group>
                                     <group string="Communication">
-                                        <field name="allow_comment"/>
+                                        <field string="Allow Rating" name="allow_comment"/>
                                         <field name="publish_template_id" domain="[('model','=','slide.slide')]"/>
                                         <field name="share_template_id" domain="[('model','=','slide.slide')]"/>
                                     </group>
