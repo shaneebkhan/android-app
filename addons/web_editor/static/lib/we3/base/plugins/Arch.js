@@ -849,10 +849,11 @@ var BaseArch = class extends we3.AbstractPlugin {
             }
             var offset = range.scID === archNode.id ? range.so : 0;
             archNode._triggerChange(offset);
-            if (archNode.isInList()) {
-                self[outdent ? '_outdentList' : '_indentList'](archNode);
-            } else {
+            var formatAncestor = archNode.ancestor('isFormatNode');
+            if (outdent && formatAncestor && formatAncestor.isIndented() && !formatAncestor.isLi() || !archNode.isInList()) {
                 self._indentText(archNode, outdent);
+            } else {
+                self[outdent ? '_outdentList' : '_indentList'](archNode);
             }
         });
         this._updateRendererFromChanges();
