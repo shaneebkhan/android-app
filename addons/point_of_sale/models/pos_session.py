@@ -588,6 +588,17 @@ class PosSession(models.Model):
         grouped_order_lines = groupby(map(prepare_line, order_lines), key=group_key)
         sales_lines = [compute_sale_line_val(key, order_line_group) for key, order_line_group in grouped_order_lines]
         taxes_lines = list(chain.from_iterable(compute_tax_line_vals(key, order_line_group) for key, order_line_group in grouped_order_lines))
+
+        # quality check before returning the line vals
+        # check if all taxes lines have account_id assigned, if not, the repartition line probably has no account_id set.
+        tax_names_no_account = [line['name'] for line in taxes_lines if line['account_id'] == False]
+        if len(tax_names_no_account) > 0:
+            error_message = _(
+                'Unable to close and validate the session.\n'
+                'Please set corresponding tax account in each repartition line of the following taxes: \n%s'
+            ) % ', '.join(tax_names_no_account)
+            raise UserError(error_message)
+
         return sales_lines + taxes_lines
 
     @api.model
