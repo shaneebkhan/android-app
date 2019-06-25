@@ -3,7 +3,7 @@ import logging
 import pprint
 import werkzeug
 
-from odoo import http
+from odoo import http, SUPERUSER_ID
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
@@ -17,5 +17,5 @@ class OgoneController(http.Controller):
     ], type='http', auth='none', csrf=False)
     def transfer_form_feedback(self, **post):
         _logger.info('Beginning form_feedback with post data %s', pprint.pformat(post))  # debug
-        request.env['payment.transaction'].sudo().form_feedback(post, 'transfer')
+        request.env['payment.transaction'].with_user(SUPERUSER_ID).form_feedback(post, 'transfer')
         return werkzeug.utils.redirect('/payment/process')
