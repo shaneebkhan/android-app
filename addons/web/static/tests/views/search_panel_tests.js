@@ -1856,6 +1856,51 @@ QUnit.module('Views', {
 
         actionManager.destroy();
     });
+
+   QUnit.test('search panel filters are kept between switch views', async function (assert) {
+        assert.expect(11);
+
+        var actionManager = await createActionManager({
+            actions: this.actions,
+            archs: this.archs,
+            data: this.data,
+            services: this.services,
+            mockRPC: function (route, args) {
+                if (route === '/web/dataset/search_read') {
+                    assert.step(JSON.stringify(args.domain));
+                }
+                return this._super.apply(this, arguments);
+            },
+
+        });
+
+        await actionManager.doAction(1);
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 4);
+
+        // select gold filter
+        await testUtils.dom.click(actionManager.$('.o_search_panel_filter input[type="checkbox"]:nth(0)'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 1);
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_list'));
+        assert.containsN(actionManager, '.o_data_row', 1);
+
+        // select silver filter
+        await testUtils.dom.click(actionManager.$('.o_search_panel_filter input[type="checkbox"]:nth(1)'));
+        assert.containsN(actionManager, '.o_data_row', 4);
+
+        await testUtils.dom.click(actionManager.$('.o_cp_switch_kanban'));
+        assert.containsN(actionManager, '.o_kanban_record:not(.o_kanban_ghost)', 4);
+
+        assert.verifySteps([
+            '[]', // initial search_read
+            '[["category_id","in",[6]]]', // kanban, after selecting the gold filter
+            '[["category_id","in",[6]]]', // list
+            '[["category_id","in",[6,7]]]', // list, after selecting the silver filter
+            '[["category_id","in",[6,7]]]', // kanban
+        ]);
+
+        actionManager.destroy();
+    });
 });
 
 });

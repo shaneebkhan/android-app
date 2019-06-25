@@ -595,11 +595,11 @@ QUnit.module('Views', {
         await testUtils.dom.triggerEvents($('.ui-autocomplete a:contains(Search More)'),
             ['mouseenter', 'click']);
 
+        assert.containsOnce(document.body, '.modal-dialog.modal-lg',
+            '1 modal present');
+
         var $modal = $('.modal-dialog.modal-lg');
-
-        assert.strictEqual($modal.length, 1, 'Modal present');
-
-        assert.notOk($modal.find('.o_search_panel').length, 'SearchPanel is not instanciated while in modal');
+        assert.containsNone($modal, '.o_search_panel', 'SearchPanel not instanciated in modal');
 
         form.destroy();
     });
