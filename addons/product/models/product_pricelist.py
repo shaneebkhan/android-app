@@ -46,10 +46,15 @@ class Pricelist(models.Model):
     @api.model
     def create(self, vals):
         p = super(Pricelist, self).create(vals)
-        print('CREATE PRICELIST :%s -- %s' % (vals, p.id))
+        _logger.info('CREATE PRICELIST :%s -- %s' % (vals, p.id))
         import traceback
         traceback.print_stack()
         return p
+
+    @api.multi
+    def write(self, values):
+        _logger.info('PRICELIST WRITTEN: %s', values)
+        res = super(Pricelist, self).write(values)
 
     @api.multi
     def name_get(self):
@@ -529,7 +534,6 @@ class PricelistItem(models.Model):
 
     @api.multi
     def write(self, values):
-        _logger.info('PRICELIST WRITTEN: %s', values)
         res = super(PricelistItem, self).write(values)
         # When the pricelist changes we need the product.template price
         # to be invalided and recomputed.
