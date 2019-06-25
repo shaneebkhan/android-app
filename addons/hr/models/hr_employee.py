@@ -36,6 +36,7 @@ class HrEmployeePrivate(models.Model):
     user_id = fields.Many2one('res.users', 'User', related='resource_id.user_id', store=True, readonly=False)
     user_partner_id = fields.Many2one(related='user_id.partner_id', related_sudo=False, string="User's partner")
     active = fields.Boolean('Active', related='resource_id.active', default=True, store=True, readonly=False)
+    company_id = fields.Many2one('res.company', 'Company', required=True)
     # private partner
     address_home_id = fields.Many2one(
         'res.partner', 'Private Address', help='Enter here the private address of the employee, not the one linked to your company.',
@@ -155,7 +156,7 @@ class HrEmployeePrivate(models.Model):
             search on an hr.employee returns a hr.employee recordset, even if you don't have access
             to this model, as the result of _search (the ids of the public employees) is to be
             browsed on the hr.employee model. This can be trusted as the ids of the public
-            employees exactly match the ids of the related hr.employee. 
+            employees exactly match the ids of the related hr.employee.
         """
         if self.check_access_rights('read', raise_exception=False):
             return super(HrEmployeePrivate, self)._search(args, offset=offset, limit=limit, order=order, count=count, access_rights_uid=access_rights_uid)
