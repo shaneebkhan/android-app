@@ -910,7 +910,8 @@ class GroupsImplied(models.Model):
         # is good, because the record cache behaves as a memo (the field is
         # never computed twice on a given group.)
         for g in self:
-            g.trans_implied_ids = g.implied_ids | g.implied_ids.trans_implied_ids
+            groups = g.implied_ids | g.implied_ids.trans_implied_ids
+            g.trans_implied_ids = groups
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -979,8 +980,11 @@ class UsersImplied(models.Model):
                 if not user.has_group('base.group_user'):
                     vals = {'groups_id': [(5, 0, 0)] + values['groups_id']}
                     super(UsersImplied, user).write(vals)
-                gs = set(concat(g.trans_implied_ids for g in user.groups_id))
-                vals = {'groups_id': [(4, g.id) for g in gs]}
+                lst = []
+                for g in user.groups_id:
+                    for g2 in g.trans_implied_ids:
+                        lst.append((4, g2.id))
+                vals = {'groups_id': lst}
                 super(UsersImplied, user).write(vals)
         return res
 

@@ -3324,7 +3324,6 @@ Fields:
             if not(self.env.uid == SUPERUSER_ID and not self.pool.ready):
                 bad_names.update(LOG_ACCESS_COLUMNS)
 
-        # DLE P34
         determine_inverses = {}
         records_to_inverse = {}
         protected = set()
@@ -3341,113 +3340,11 @@ Fields:
             for fname in sorted(vals, key=lambda x: self._fields[x].type=='monetary'):
                 if fname in bad_names:
                     continue
-                value = vals[fname]
+                # value = vals[fname]
                 field = self._fields.get(fname)
-                # DLE P59: `test_write_base_one2many` `test_performance.py`
-                # Write x2many inverses at the same time
-                toflush = False
-                for record in self:
-                    # DLE P46: need to remove the new records from the one2many field cache as they have been created now.
-                    # test `test_70_x2many_write`, discussion.very_important_messages |= Message.new({..})
-                    # DLE P68: `test_10_sellers`, `test_20_sellers_company`, be careful with inherited one2many fields,
-                    # e.g.`product.template` & `product.product` `seller_ids` field
-                    # if the field is not store, the command write will not happen, and in this case we must set the value to cache
-                    # so the modified is triggered for the inherited field
-                    if field.type not in ('one2many', 'many2many') or not field.store or not record.id:
-                        cache_value = field.convert_to_cache(value, record)
-
-                        # nothing to do, the record already has the newest value
-                        # DLE: What about one2many, many2many commands that are just adding ids to the existing values?
-                        # DLE P49: in an onchange, the record to which we applied a change already has its cache correctly set,
-                        # as we create the `new` record with already the onchanges values
-                        # `record = self.new(values)`
-                        # We nevertheless needs to trigger the write to trigger the modified to get the values that gets modified
-                        # because of this write.
-                        # Alternatively, in the `onchange` method, the new record must be created from the origin record values,
-                        # and then we assign the new values through __set__
-                        # `test_onchange_one2many_with_domain_on_related_field`
-                        if record.id and env.cache.contains(record, field) and (env.cache.get(record, field) == cache_value):
-                            continue
-
-                    # when updating a relational field, updates it's inverse fields, as well as those reelying on it's old value
-                    if field.relational:
-                        record.modified([field.name])
-                        for invf in record._field_inverses[field]:
-                            # DLE P60: `test_performance.py` `test_write_base_one2many`
-                            # record[field.name] is not in cache, and it will therefore fetch the one2many ids while it doesn't really need them,
-                            # e.g. for [(0, 0, {..})] which only add lines, you do not need to fetch the previous line nor invalidate their inverse.
-                            # You only need to invalidate the one you have in cache, not the other ones.
-                            for rec in self.env[field.comodel_name].browse(env.cache.get_value(record, field, [])):
-                                env.cache.remove(rec, invf)
-
-                    if field.type == 'many2many':
-                        # DLE P33: `odoo/addons/test_access_rights/tests/test_ir_rules.py`
-                        # test `test_many2many`
-                        # Apparently you can write on many2many values you can't read,
-                        # (You can read A but you can't read B. You should be able to add A & B on a many2many field but not
-                        # but when reading the many2many field, you should see only A, and not B)
-                        # so you should not cache the write value of your many2many, to force to refetch it and re-apply the record rules
-                        # or filter the values by which you can read, and cache only those, I am not sure what the most efficient
-                        # DLE P52: needs to filter out after all, because of onchanges, in the below test
-                        # test `test_onchange_specific`
-                        env.cache.invalidate([(field, record.ids)])
-                    # DLE P68
-                    if field.type not in ('one2many', 'many2many') or not field.store or not record.id:
-                        env.cache.set(record, field, cache_value)
-                    # DLE P2: We set the value to write in the cache, but then it can be overwritten by a prefetch when
-                    # reading another field of the same model. Writing the towrite sooner, before the computation of modified,
-                    # allows the possibility to not prefetch or ignore the reads of values to write
-                    # DLE P74: `test_92_binary_self_avatar_svg`
-                    # Avoid to postpone the write of other fields in towrite/_write,
-                    # so we keep the information on who (uid) is writting
-                    # `mimetype` of `ir.attachment` is a stored field which depends on the uid during the `write`
-                    # When writing on a binary field, e.g. `user.image = SVG`, it's considered an other_field,
-                    # and the `write` in `ir.attachment` was done through the `towrite` and the `flush`, which do not guarantee
-                    # the user.
-                    # Maybe there is something to do for performance, for instance by batching the field.write to all records
-                    if record.id and not field.column_type:
-                        field.write(record, value)
-                    elif record.id and field.store:
-                        # FP NOTE: we could simplify and keep the one in cache instead
-                        # FP TO CHECK: for one2many / many2many, we might concatenate the values instead of overwrite. (imagine 2 write of [(0,0,{})]
-                        # DLE P20: By writring field.convert_to_write(field.convert_to_record(field.convert_to_cache(value, record), record), record)
-                        # You missed the 2many commands such as [(4, 1), (4, 2)] which were converted to (1, 2), therefore completely replacing
-                        # the existing 2many value instead of just adding new ids to it.
-                        # DLE P65: Support translations in flush
-                        if field.translate:
-                            env.all.towrite[record._name][record.id].setdefault(field.name, {})[env.context.get('lang')] = value
-                        else:
-                            env.all.towrite[record._name][record.id][field.name] = value
-                        # DLE P11: When writing on `child_ids`, must write on `parent_id` of the one2many related records,
-                        # Otherwise, as we set in the case the correct value for the inverse field values thanks to the above `if field.relational`,
-                        # the above `if env.cache.contains(record, field) and (env.cache.get(record, field) == value):` matches
-                        # and we therefore actually never write the `parent_id` values in database.
-                        # See test test_duplicate_children_03
-                        if field.type.endswith('one2many'):
-                            # DLE P60
-                            for rec in self.env[field.comodel_name].browse(env.cache.get_value(record, field, [])):
-                                env.all.towrite[rec._name][rec.id][field.inverse_name] = rec._fields[field.inverse_name].convert_to_write(record, rec)
-
-                    # FP NOTE: possible huge optimization here: if field was already in todo, don't recall modified
-                    record.modified([fname])
-
-                    env.remove_todo(field, record)
-
-                    for invf in record._field_inverses[field]:
-                        if field.relational:
-                            # DLE P60
-                            records = self.env[field.comodel_name].browse(env.cache.get_value(record, field, []))
-                        else:
-                            records = record[field.name]
-                        toflush = not invf._update(records, record) or toflush
-
-                # flush if parent field
-                if self._parent_store and fname == self._parent_name:
-                    toflush = True
-
-                # DLE P59
-                if toflush:
-                    self.flush([fname])
+                field.write(self, vals)
+                env.remove_todo(field, self)
+            self.modified(list(vals.keys()))
 
             # DLE P34
             inverse_fields = [f.name for fs in determine_inverses.values() for f in fs]
@@ -3495,7 +3392,6 @@ Fields:
                             env.all.towrite[record._name][record.id]['write_date'] = False
                 self.env.cache.invalidate([(self._fields['write_date'], self.ids), (self._fields['write_uid'], self.ids)])
             to_validate._validate_fields(inverse_fields)
-
         return True
 
     @api.multi
@@ -3749,6 +3645,8 @@ Fields:
                     columns.append((name, field.column_format, col_val))
                     if field.translate is True:
                         translated_fields.add(field)
+                    if field.type =='many2one':
+                        other_fields.add(field)
                 else:
                     other_fields.add(field)
 
@@ -3764,23 +3662,17 @@ Fields:
 
         # put the new records in cache, and update inverse fields, for many2one
         # cachetoclear is an optimization to avoid modified()'s cost until other_fields are processed
-        cachetoclear = []
         records = self.browse(ids)
         for data, record in zip(data_list, records):
             data['record'] = record
-            # FP TODO: what about data['inherited'] here?
             for field in self._fields.values():
                 if field.type in ('one2many', 'many2many'):
                     self.env.cache.set(record, field, ())
             for fname,value in data['stored'].items():
                 field = self._fields[fname]
-                if field.type in ('one2many', 'many2many'):
-                    cachetoclear.append((record, field))
-                else:
+                if field.type not in ('one2many', 'many2many'):
                     value = field.convert_to_cache(value, record)
                     self.env.cache.set(record, field, value)
-                    for invf in record._field_inverses[field]:
-                        invf._update(record[field.name], record)
 
         # update parent_path
         records._parent_store_create()
@@ -3797,19 +3689,11 @@ Fields:
                 # discard default values from context for other fields
                 others = records.with_context(clean_context(self._context))
                 for field in sorted(other_fields, key=attrgetter('_sequence')):
-                    field.create([
-                        (other, data['stored'][field.name])
-                        for other, data in zip(others, data_list)
-                        if field.name in data['stored']
-                    ])
+                    for other, data in zip(others, data_list):
+                        field.write(other, data['stored'])
 
                 # mark fields to recompute
                 records.modified([field.name for field in other_fields])
-
-            # if value in cache has not been updated by other_fields, remove it
-            for record, field in cachetoclear:
-                if self.env.cache.contains(record, field) and not self.env.cache.get(record, field):
-                    self.env.cache.remove(record, field)
 
         # check Python constraints for stored fields
         records._validate_fields(name for data in data_list for name in data['stored'])
@@ -5252,17 +5136,11 @@ Fields:
         if origin is not None:
             origin = origin.id
         record = self.browse([NewId(origin, ref)])
-        record._cache.update(record._convert_to_cache(values, update=True))
 
-        # set inverse fields on new records in the comodel
-        for name in values:
+        for name in sorted(values, key=lambda x: self._fields[x].type=='monetary'):
             field = self._fields.get(name)
-            if field and field.relational:
-                inv_recs = record[name].filtered(lambda r: not r.id)
-                if inv_recs:
-                    inv_values = {invf.name: record._ids for invf in self._field_inverses[field]}
-                    for inv_rec in inv_recs:
-                        inv_rec._cache.update(inv_rec._convert_to_cache(inv_values, update=True))
+            field.write(record, values)
+            self.env.remove_todo(field, record)
 
         return record
 
@@ -5815,8 +5693,11 @@ Fields:
                 for subname in subnames:
                     new_lines.mapped(subname)
 
-        # create a new record with values, and attach ``self`` to it
+        # create a new record with values, and attach ``self`` to it, and set the new field (trigger computes)
+        value = values[field_onchange]
+        values[field_onchange] = self.field_onchange
         record = self.new(values, origin=self)
+        record.write({field_onchange: value})
 
         # make a snapshot based on the initial values of record
         snapshot0 = snapshot1 = Snapshot(record, nametree)

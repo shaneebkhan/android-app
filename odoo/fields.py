@@ -956,22 +956,23 @@ class Field(MetaField('DummyField', (object,), {})):
         """ Read the value of ``self`` on ``records``, and store it in cache. """
         return NotImplementedError("Method read() undefined on %s" % self)
 
-    def create(self, record_values):
-        """ Write the value of ``self`` on the given records, which have just
-        been created.
-
-        :param record_values: a list of pairs ``(record, value)``, where
-            ``value`` is in the format of method :meth:`BaseModel.write`
-        """
-        for record, value in record_values:
-            self.write(record, value)
-
-    def write(self, records, value):
+    def write(self, records, values):
         """ Write the value of ``self`` on ``records``.
 
         :param value: a value in the format of method :meth:`BaseModel.write`
         """
-        return NotImplementedError("Method write() undefined on %s" % self)
+        env = records.env
+        value = values[self.name]
+        cache_value = self.convert_to_cache(value, records)
+        records_mod = records.filtered(lambda x: not env.cache.contains(x, self) or (env.cache.get(x, self) != cache_value))
+        env.cache.update(records_mod, self, [cache_value]*len(records_mod))
+        for record in records_mod:
+            if self.store:
+                if self.translate:
+                    env.all.towrite[record._name][record.id].setdefault(self.name, {})[env.context.get('lang')] = value
+                else:
+                    env.all.towrite[record._name][record.id][self.name] = value
+        return records_mod
 
     ############################################################################
     #
@@ -1150,12 +1151,6 @@ class Integer(Field):
         if value and value > MAXINT:
             return float(value)
         return value
-
-    def _update(self, records, value):
-        # special case, when an integer field is used as inverse for a one2many
-        cache = records.env.cache
-        for record in records:
-            cache.set(record, self, value.id or 0)
 
     def convert_to_export(self, value, record):
         if value or value == 0:
@@ -1779,39 +1774,22 @@ class Binary(Field):
         for record in records:
             cache.set(record, self, data.get(record.id, False))
 
-    def create(self, record_values):
-        assert self.attachment
-        if not record_values:
-            return
-        # create the attachments that store the values
-        env = record_values[0][0].env
-        with env.norecompute():
-            env['ir.attachment'].sudo().with_context(
-                binary_field_real_user=env.user,
-            ).create([{
-                    'name': self.name,
-                    'res_model': self.model_name,
-                    'res_field': self.name,
-                    'res_id': record.id,
-                    'type': 'binary',
-                    'datas': value,
-                }
-                for record, value in record_values
-                if value
-            ])
+    def write(self, records, values):
+        if not self.attachment:
+            return super(Binary, self).write(records, values)
 
-    def write(self, records, value):
-        assert self.attachment
         # retrieve the attachments that store the values, and adapt them
         atts = records.env['ir.attachment'].sudo().search([
             ('res_model', '=', self.model_name),
             ('res_field', '=', self.name),
             ('res_id', 'in', records.ids),
         ])
+        value = values[self.name]
+        cache_value = self.convert_to_cache(value, records)
         with records.env.norecompute():
             if value:
                 # update the existing attachments
-                atts.write({'datas': value})
+                atts.write({'datas': cache_value})
                 atts_records = records.browse(atts.mapped('res_id'))
                 # create the missing attachments
                 if len(atts_records) < len(records):
@@ -1821,12 +1799,17 @@ class Binary(Field):
                             'res_field': self.name,
                             'res_id': record.id,
                             'type': 'binary',
-                            'datas': value,
+                            'datas': cache_value,
                         }
                         for record in (records - atts_records)
                     ])
             else:
                 atts.unlink()
+        for record in records:
+            records.env.cache.set(record, self, cache_value)
+            if self.store:
+                records.env.all.towrite[record._name][record.id][self.name] = value
+        return records
 
 
 class Selection(Field):
@@ -2107,12 +2090,6 @@ class Many2one(_Relational):
             conname = '%s_%s_fkey' % (model._table, self.name)
             model.env['ir.model.constraint']._reflect_constraint(model, conname, 'f', None, self._module)
 
-    def _update(self, records, value):
-        """ Update the cached value of ``self`` for ``records`` with ``value``. """
-        cache = records.env.cache
-        for record in records:
-            cache.set(record, self, self.convert_to_cache(value, record, validate=False))
-
     def convert_to_column(self, value, record, values=None, validate=True):
         return value or None
 
@@ -2171,6 +2148,32 @@ class Many2one(_Relational):
             return False
         return super(Many2one, self).convert_to_onchange(value, record, names)
 
+    # Many2one should mark modified records depending on old value
+    def write(self, records, values):
+        cache = records.env.cache
+        for record in records:
+            corecord = record[self.name]
+            if corecord:
+                for invf in records._field_inverses[self]:
+                    if cache.contains(corecord, invf):
+                        ids = set(cache.get(corecord, invf))
+                        if record.id in ids:
+                            ids.remove(record.id)
+                            cache.set(corecord, invf, tuple(ids))
+
+        records.modified([self.name])
+        records_mod = super(Many2one, self).write(records, values)
+
+        for record in records:
+            corecord = record[self.name]
+            if corecord:
+                for invf in records._field_inverses[self]:
+                    if cache.contains(corecord, invf):
+                        ids = set(cache.get(corecord, invf))
+                        ids.add(record.id)
+                        cache.set(corecord, invf, tuple(ids))
+        return records_mod
+
 
 class _RelationalMulti(_Relational):
     """ Abstract class for relational fields *2many. """
@@ -2180,76 +2183,13 @@ class _RelationalMulti(_Relational):
         'depends_context': ('active_test',),      # depends on context (active_test)
     }
     _convert_to_cache_read = True
-    def _update(self, records, value):
-        """ Update the cached value of ``self`` for ``records`` with ``value``, return True if everything is in cache. """
-        if not isinstance(records, BaseModel):
-            # the inverse of self is a non-relational field; do not update in
-            # this case, as we do not know whether the records are the ones that
-            # value makes reference to (via a res_model/res_id pair)
-            return
-        cache = records.env.cache
-        result = True
-        for record in records:
-            if cache.contains(record, self):
-                try:
-                    val = self.convert_to_cache(record[self.name] | value, record, validate=False)
-                    cache.set(record, self, val)
-                except Exception as exc:
-                    # delay the failure until the field is necessary
-                    cache.set_failed(record, [self], exc)
-            else:
-                result = False
-        return result
 
     def convert_to_cache(self, value, record, validate=True):
-        # cache format: tuple(ids)
-        if isinstance(value, BaseModel):
-            if validate and value._name != self.comodel_name:
-                raise ValueError("Wrong value for %s: %s" % (self, value))
-            ids = value._ids
-            if record and not record.id:
-                # x2many field value of new record is new records
-                ids = tuple(it and NewId(it) for it in ids)
-            return ids
-
-        elif isinstance(value, (list, tuple)):
-            # value is a list/tuple of commands, dicts or record ids
-            comodel = record.env[self.comodel_name]
-            # if record is new, the field's value is new records
-            if record and not record.id:
-                browse = lambda it: comodel.browse([it and NewId(it)])
-            else:
-                browse = comodel.browse
-            # determine the value ids
-            ids = OrderedSet(record[self.name]._ids)
-            # modify ids with the commands
-            for command in value:
-                if isinstance(command, (tuple, list)):
-                    if command[0] == 0:
-                        ids.add(comodel.new(command[2], ref=command[1]).id)
-                    elif command[0] == 1:
-                        line = browse(command[1])
-                        line.update(command[2])
-                        ids.add(line.id)
-                    elif command[0] in (2, 3):
-                        ids.discard(browse(command[1]).id)
-                    elif command[0] == 4:
-                        ids.add(browse(command[1]).id)
-                    elif command[0] == 5:
-                        ids.clear()
-                    elif command[0] == 6:
-                        ids = OrderedSet(browse(it).id for it in command[2])
-                elif isinstance(command, dict):
-                    ids.add(comodel.new(command).id)
-                else:
-                    ids.add(browse(command).id)
-            # return result as a tuple
-            return tuple(ids)
-
-        elif not value:
+        if not value:
             return ()
-
-        raise ValueError("Wrong value for %s: %s" % (self, value))
+        if isinstance(value, BaseModel):
+            return tuple(value.ids)
+        return value
 
     def convert_to_record(self, value, record):
         # use registry to avoid creating a recordset for the model
@@ -2260,29 +2200,7 @@ class _RelationalMulti(_Relational):
         return value.ids
 
     def convert_to_write(self, value, record):
-        inv_names = {field.name for field in record._field_inverses[self]}
-        # make result with new and existing records
-        result = [(6, 0, [])]
-        for record in value:
-            origin = record._origin
-            if not origin:
-                values = record._convert_to_write({
-                    name: record[name]
-                    for name in record._cache
-                    if name not in inv_names
-                })
-                result.append((0, 0, values))
-            else:
-                result[0][2].append(origin.id)
-                if record != origin:
-                    values = record._convert_to_write({
-                        name: record[name]
-                        for name in record._cache
-                        if name not in inv_names and record[name] != origin[name]
-                    })
-                    if values:
-                        result.append((1, origin.id, values))
-        return result
+        return value
 
     def convert_to_onchange(self, value, record, names):
         # return the recordset value as a list of commands; the commands may
@@ -2420,73 +2338,45 @@ class One2many(_RelationalMulti):
         for record in records:
             cache.set(record, self, tuple(group[record.id]))
 
-    def create(self, record_values):
-        self._write(record_values)
-
-    def write(self, records, value):
-        self._write([(records, value)])
-
-    def _write(self, records_commands_list):
-        # records_commands_list = [(records, commands), ...]
-        if not records_commands_list:
-            return
-
-        model = records_commands_list[0][0].browse()
-        comodel = model.env[self.comodel_name].with_context(**self.context)
+    def write(self, records, values):
+        # Update values by writing on related many2one
+        # The cache is updated by the many2one, no need to do it here
+        value = values[self.name]
+        if not value:
+            return records.browse([])
+        if isinstance(value, BaseModel):
+            value = [(6, 0, value.ids)]
+        comodel = records.env[self.comodel_name].with_context(**self.context)
         inverse = self.inverse_name
-
-        to_create = []                  # line vals to create
-        to_delete = []                  # line ids to delete
-        to_relink = {}                  # lines to relink {line_id: record_id}
-
-        def unlink(line_ids):
-            if getattr(comodel._fields[inverse], 'ondelete', False) == 'cascade':
-                to_delete.extend(line_ids)
-            else:
-                to_relink.update(dict.fromkeys(line_ids, False))
-
-        def flush():
-            if to_delete:
-                comodel.browse(to_delete).unlink()
-                to_delete.clear()
-            if to_create:
-                comodel.create(to_create)
-                to_create.clear()
-            if to_relink:
-                # group line ids to update by record id, and update them
-                groups = defaultdict(list)
-                lines = comodel.browse(to_relink).sudo().with_context(prefetch_fields=False)
-                for line, record_id in zip(lines, to_relink.values()):
-                    if int(line[inverse]) != record_id:
-                        groups[record_id].append(line.id)
-                for record_id, line_ids in groups.items():
-                    comodel.browse(line_ids).write({inverse: record_id})
-                to_relink.clear()
-
-        with model.env.norecompute():
-            for records, commands in records_commands_list:
-                for act in (commands or ()):
-                    if act[0] == 0:
-                        for record in records:
-                            to_create.append(dict(act[2], **{inverse: record.id}))
-                    elif act[0] == 1:
-                        comodel.browse(act[1]).write(act[2])
-                    elif act[0] == 2:
-                        to_delete.append(act[1])
-                    elif act[0] == 3:
-                        unlink([act[1]])
-                    elif act[0] == 4:
-                        to_relink[act[1]] = records[-1].id
-                    elif act[0] in (5, 6):
-                        flush()
-                        ids = act[2] if act[0] == 6 else []
-                        domain = self.get_domain_list(model) + [(inverse, 'in', records.ids)]
-                        if ids:
-                            domain = domain + [('id', 'not in', ids)]
-                        unlink(comodel.search(domain)._ids)
-                        to_relink.update(dict.fromkeys(ids, records[-1].id))
-
-            flush()
+        with records.env.norecompute():
+            for act in value:
+                if act[0] == 0:
+                    for record in records:
+                        if record.id:
+                            b = comodel.create(dict(act[2], **{inverse: record.id}))
+                        else:
+                            data = {inverse: record}
+                            data.update(act[2])
+                            comodel.new(data, origin=record._origin)
+                elif act[0] == 1:
+                    comodel.browse(act[1]).write(act[2])
+                elif act[0] == 2:
+                    comodel.browse(act[1]).unlink()
+                elif act[0] == 3:
+                    comodel.browse(act[1]).write({inverse: False})
+                elif act[0] == 4:
+                    comodel.browse(act[1]).write({inverse: records.ids[0]})
+                elif act[0] == 5:
+                    for record in records:
+                        record[self.name].write({inverse: False})
+                elif act[0] == 6:
+                    for record in records:
+                        newrec = comodel.browse(act[2])
+                        toremove = record[self.name] - newrec
+                        toremove.write({inverse: False})
+                        if record.id:
+                            newrec.write({inverse: record.id})
+        return records
 
 
 class Many2many(_RelationalMulti):
@@ -2663,132 +2553,83 @@ class Many2many(_RelationalMulti):
         for record in records:
             cache.set(record, self, tuple(group[record.id]))
 
-    def create(self, record_values):
-        self._write(record_values, create=True)
+    def write(self, records, values):
+        value = values[self.name]
+        if not value:
+            return records.browse([])
+        print('Writing', value, records)
+        if isinstance(value, BaseModel):
+            value = [(6, 0, value.ids)]
 
-    def write(self, records, value):
-        self._write([(records, value)])
-
-    def _write(self, records_commands_list, create=False):
-        # records_commands_list = [(records, commands), ...]
-        if not records_commands_list:
-            return
-
-        model = records_commands_list[0][0].browse()
-        comodel = model.env[self.comodel_name].with_context(**self.context)
-        cr = model.env.cr
-
-        # determine old relation {x: ys}
-        old_relation = defaultdict(set)
-        if not create:
-            # DLE P53: it was possible to add links to many2many fields while you had not the right to access the comodel records,
-            # but then it wasn't possible to remove this link using [(5,)], as it only removed the links of the records to which you had the read access right
-            # e.g. you have the access to self.id1, but not to self.id2
-            # the below added to the current records links to self.id1 & self.id2
-            # `container_user.write({'some_ids': [(6, 0, [self.id1, self.id2])]})`
-            # then, the below only removed self.id1, as you had no the access to self.id2
-            # `container_user.write({'some_ids': [(5,)]})`
-            # It should behave as many2one field: You can write in many2one field a record to which you don't have the access,
-            # as well as emptying the many2one field from this record to which you do not had the access.
-            # test `test_many2many`
-            tables = ['"%s"' % model.env[comodel._name]._table]
-            if '"%s"' % self.relation not in tables:
-                tables.append('"%s"' % self.relation)
-            query = """
-                SELECT {rel}.{id1}, {rel}.{id2} FROM {tables}
-                WHERE {rel}.{id1} IN %s AND {rel}.{id2}={table}.id AND {cond}
-            """.format(
-                rel=self.relation, id1=self.column1, id2=self.column2,
-                table=comodel._table, tables=",".join(tables),
-                cond="1=1",
-            )
-            ids = {rid for recs, cs in records_commands_list for rid in recs.ids}
-            cr.execute(query, [tuple(ids)])
-            for x, y in cr.fetchall():
-                old_relation[x].add(y)
-
-        # determine new relation {x: ys}
-        new_relation = defaultdict(set)
-        for x, ys in old_relation.items():
-            new_relation[x] = set(ys)
-
-        # operations on new relation
-        def relation_add(xs, y):
-            for x in xs:
-                new_relation[x].add(y)
-
-        def relation_remove(xs, y):
-            for x in xs:
-                new_relation[x].discard(y)
-
-        def relation_set(xs, ys):
-            for x in xs:
-                new_relation[x] = set(ys)
-
-        def relation_delete(ys):
-            # the pairs (x, y) have been cascade-deleted from relation
-            for ys1 in old_relation.values():
-                ys1.difference_update(ys)
-            for ys1 in new_relation.values():
-                ys1.difference_update(ys)
-
-        to_create = []                  # line vals to create [(ids, vals)]
-        to_delete = []                  # line ids to delete
-
-        with model.env.norecompute():
-            for records, commands in records_commands_list:
-                for act in (commands or ()):
-                    if not isinstance(act, (list, tuple)) or not act:
-                        continue
-                    if act[0] == 0:
-                        to_create.append((records._ids, act[2]))
-                    elif act[0] == 1:
+        cache = records.env.cache
+        comodel = records.env[self.comodel_name].with_context(**self.context)
+        cr = records.env.cr
+        toinsert = []
+        tounlink = []
+        with records.env.norecompute():
+            for record in records:
+                links = record[self.name]
+                for act in value:
+                    if act[0] == 0:            # create act[2]
+                        if record.id:
+                            newrec = comodel.create(act[2])
+                            links |= newrec
+                            if record.id:
+                                toinsert.append((record.id, newrec.id))
+                        else:
+                            newrec = comodel.new(act[2])
+                            links |= newrec
+                        for invf in records._field_inverses[self]:
+                            cache.set(newrec, invf, record.ids)
+                    elif act[0] == 1:         # update record act[1] of values act[2]
                         comodel.browse(act[1]).write(act[2])
-                    elif act[0] == 2:
-                        to_delete.append(act[1])
-                    elif act[0] == 3:
-                        relation_remove(records._ids, act[1])
-                    elif act[0] == 4:
-                        relation_add(records._ids, act[1])
-                    elif act[0] in (5, 6):
-                        # new lines must no longer be linked to records
-                        to_create = [(set(ids) - set(records._ids), vals)
-                                     for (ids, vals) in to_create]
-                        relation_set(records._ids, act[2] if act[0] == 6 else ())
+                    elif act[0] == 2:         # delete record act[1]
+                        links -= comodel.browse(act[1])
+                        comodel.browse(act[1]).unlink()
+                    elif act[0] == 3:         # unlink record act[1]
+                        rec = comodel.browse(act[1])
+                        links -= rec
+                        if record.id and act[1]:
+                            tounlink.append((record.id, act[1]))
+                        for invf in records._field_inverses[self]:
+                            cache.invalidate([(invf, rec.ids)])
+                    elif act[0] == 4:        # link record act[1]
+                        rec = comodel.browse(act[1])
+                        links |= rec
+                        if record.id and rec.id:
+                            toinsert.append((record.id, rec.id))
+                        for invf in records._field_inverses[self]:
+                            cache.invalidate([(invf, rec.ids)])
+                    elif act[0] == 5:        # unlink all records
+                        tounlink += [(record.id, x.id) for x in links if x and record.id]
+                        links = links.browse()
+                        for invf in records._field_inverses[self]:
+                            cache.invalidate([(invf, record[self.name].ids)])
+                    elif act[0] == 6:        # link records act[2] and remove others
+                        for rid in links.ids:
+                            if (rid not in act[2]) and record.id and rid:
+                                tounlink.append((record.id, rid))
+                        for rid in act[2]:
+                            if (rid not in links.ids) and record.id and rid:
+                                toinsert.append((record.id, rid))
+                        links = comodel.browse(act[2])
+                        for invf in records._field_inverses[self]:
+                            cache.invalidate([(invf, act[2])])
+                cache.set(record, self, links.ids)
 
-            if to_create:
-                # create lines in batch, and link them
-                lines = comodel.create([vals for ids, vals in to_create])
-                for line, (ids, vals) in zip(lines, to_create):
-                    relation_add(ids, line.id)
-
-            if to_delete:
-                # delete lines in batch
-                comodel.browse(to_delete).unlink()
-                relation_delete(to_delete)
-
-        # process pairs to add (beware of duplicates)
-        pairs = [(x, y) for x, ys in new_relation.items() for y in ys - old_relation[x]]
-        if pairs:
+        if toinsert:
             query = "INSERT INTO {} ({}, {}) VALUES {} ON CONFLICT DO NOTHING".format(
-                self.relation, self.column1, self.column2, ", ".join(["%s"] * len(pairs)),
+                self.relation, self.column1, self.column2, ", ".join(["%s"] * len(toinsert)),
             )
-            cr.execute(query, pairs)
-            # DLE P35: Update the many2many field cache with the new added values
-            # `odoo/addons/test_new_api/tests/test_new_fields.py`
-            # `test_11_stored`
-            for record_id, co_record_ids in new_relation.items():
-                self._update(model.browse(record_id), comodel.browse(co_record_ids))
+            cr.execute(query, toinsert)
 
-        # process pairs to remove
-        pairs = [(x, y) for x, ys in old_relation.items() for y in ys - new_relation[x]]
-        if pairs:
+        if tounlink:
             # express pairs as the union of cartesian products:
             #    pairs = [(1, 11), (1, 12), (1, 13), (2, 11), (2, 12), (2, 14)]
             # -> y_to_xs = {11: {1, 2}, 12: {1, 2}, 13: {1}, 14: {2}}
             # -> xs_to_ys = {{1, 2}: {11, 12}, {2}: {14}, {1}: {13}}
             y_to_xs = defaultdict(set)
-            for x, y in pairs:
+            for x, y in tounlink:
                 y_to_xs[y].add(x)
             xs_to_ys = defaultdict(set)
             for y, xs in y_to_xs.items():
@@ -2800,6 +2641,8 @@ class Many2many(_RelationalMulti):
             )
             params = [arg for xs, ys in xs_to_ys.items() for arg in [tuple(xs), tuple(ys)]]
             cr.execute(query, params)
+
+        return records
 
 
 class Id(Field):
