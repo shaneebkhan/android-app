@@ -58,6 +58,8 @@ class PosConfig(models.Model):
         x = self.env['product.pricelist'].search([('currency_id', '=', self.env.company.currency_id.id)], limit=1)
         _logger.info('DEFAULT PRICELIST: %s', x)
         _logger.info('SEARCHED CURRENCY ID: %s', self.env.company.currency_id.id)
+        for p in self.env['product.pricelist'].search([]):
+            _logger.info('PRICELIST AVAIL: %s (%s) -- CURRENCY ID: %s', p.name, p.id, p.currency_id)
         return x
 
     def _get_group_pos_manager(self):
