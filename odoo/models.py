@@ -1224,6 +1224,14 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         """
         from odoo.http import request
         user = self.env.user
+        sumode = self.env.sumode
+
+        def user_has_group(gid):
+            result = sumode or user.has_group(gid)
+            if group_ext_id == 'base.group_no_one':
+                # the group_no_one is effective in debug mode only
+                result = result and request and request.session.debug
+            return result
 
         has_groups = []
         not_has_groups = []
@@ -1234,23 +1242,11 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
             else:
                 has_groups.append(group_ext_id)
 
-        for group_ext_id in not_has_groups:
-            if group_ext_id == 'base.group_no_one':
-                # check: the group_no_one is effective in debug mode only
-                if user.has_group(group_ext_id) and request and request.session.debug:
-                    return False
-            else:
-                if user.has_group(group_ext_id):
-                    return False
+        if any(user_has_group(gid) for gid in not_has_groups):
+            return False
 
-        for group_ext_id in has_groups:
-            if group_ext_id == 'base.group_no_one':
-                # check: the group_no_one is effective in debug mode only
-                if user.has_group(group_ext_id) and request and request.session.debug:
-                    return True
-            else:
-                if user.has_group(group_ext_id):
-                    return True
+        if any(user_has_group(gid) for gid in has_groups):
+            return True
 
         return not has_groups
 
