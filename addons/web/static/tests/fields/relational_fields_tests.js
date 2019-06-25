@@ -992,8 +992,8 @@ QUnit.module('relational_fields', {
         form.destroy();
     });
 
-    QUnit.only('overflowing status are re-computed when modifiers have been applied', async function (assert) {
-        assert.expect(3);
+    QUnit.test('overflowing status are re-computed when modifiers have been applied', async function (assert) {
+        assert.expect(6);
 
         // force the width of the webclient in this test
         var style = document.createElement('style');
@@ -1024,34 +1024,24 @@ QUnit.module('relational_fields', {
                     '</header>' +
                     '<field name="int_field"/>' +
                 '</form>',
-            res_id: 1,
             viewOptions: {
                 mode: 'edit',
             },
-            debug: 1,
+            res_id: 1,
         });
 
-        assert.containsN(form, '.o_statusbar_status > .o_arrow_button', 5);
+        assert.containsNone(form, '.o_statusbar_buttons > button:visible');
+        assert.containsN(form, '.o_statusbar_status > button:not(.dropdown-toggle)', 5);
 
-        await testUtils.field.editInput(form.$('.o_field_widget[name="int_field"]'), '0');
+        await testUtils.fields.editInput(form.$('.o_field_widget[name="int_field"]'), '0');
 
-        // assert.containsOnce(form, '.o_statusbar_status .dropdown-menu');
+        assert.containsN(form, '.o_statusbar_buttons > button:visible', 2);
+        assert.containsN(form, '.o_statusbar_status > button:not(.dropdown-toggle)', 2);
+        assert.containsOnce(form, '.o_statusbar_status > button.dropdown-toggle');
+        assert.containsN(form, '.o_statusbar_status .dropdown-menu > button', 3);
 
-        // var statusBar = form.$('.o_statusbar_status').get(0);
-        // var moreButton = form.$('.o_statusbar_status > button.dropdown-toggle').get(0);
-        // var statusbarWidth = statusBar.offsetWidth;
-        // var moreButtonWidth = moreButton.offsetWidth;
-        // var statusButtonsWidth = 0;
-        // form.$('.o_statusbar_status > button:not(.dropdown-toggle)').each(function () {
-        //     statusButtonsWidth += this.offsetWidth;
-        // });
-
-        // // all visible buttons must be displayed in a single row
-        // assert.strictEqual((statusButtonsWidth + moreButtonWidth), statusbarWidth);
-        // assert.strictEqual(statusBar.offsetHeight, moreButton.offsetHeight);
-
-        // style.remove();
-        // form.destroy();
+        style.remove();
+        form.destroy();
     });
 
     QUnit.module('FieldSelection');
