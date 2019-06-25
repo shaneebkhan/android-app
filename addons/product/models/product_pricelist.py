@@ -40,6 +40,14 @@ class Pricelist(models.Model):
         ('without_discount', 'Show public price & discount to the customer')],
         default='with_discount')
 
+    @api.model
+    def create(self, vals):
+        p = super(Pricelist, self).create(vals)
+        print('CREATE PRICELIST :%s -- %s' % (vals, p.id))
+        import traceback
+        traceback.print_stack()
+        return p
+
     @api.multi
     def name_get(self):
         return [(pricelist.id, '%s (%s)' % (pricelist.name, pricelist.currency_id.name)) for pricelist in self]

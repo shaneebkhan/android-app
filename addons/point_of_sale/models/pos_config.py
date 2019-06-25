@@ -52,7 +52,9 @@ class PosConfig(models.Model):
         return self.env['account.journal'].search([('type', '=', 'sale'), ('company_id', '=', self.env.company.id)], limit=1)
 
     def _default_pricelist(self):
-        return self.env['product.pricelist'].search([('currency_id', '=', self.env.company.currency_id.id)], limit=1)
+        x = self.env['product.pricelist'].search([('currency_id', '=', self.env.company.currency_id.id)], limit=1)
+        print('DEFAULT PRICELIST: %s' % x)
+        return x
 
     def _get_group_pos_manager(self):
         return self.env.ref('point_of_sale.group_pos_manager')
@@ -334,6 +336,7 @@ class PosConfig(models.Model):
 
     @api.model
     def create(self, values):
+        print('CREATE POS CONFIG : %s' % values)
         if values.get('is_posbox') and values.get('iface_customer_facing_display'):
             if values.get('customer_facing_display_html') and not values['customer_facing_display_html'].strip():
                 values['customer_facing_display_html'] = self._compute_default_customer_html()
