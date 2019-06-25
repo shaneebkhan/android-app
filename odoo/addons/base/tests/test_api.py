@@ -263,7 +263,7 @@ class TestAPI(common.TransactionCase):
         partner.country_id, partner.child_ids
         data = partner._convert_to_write(partner._cache)
         self.assertEqual(data['country_id'], partner.country_id.id)
-        self.assertEqual(data['child_ids'], [(6, 0, partner.child_ids.ids)])
+        self.assertEqual(data['child_ids'], partner.child_ids)
 
     @mute_logger('odoo.models')
     def test_60_prefetch(self):

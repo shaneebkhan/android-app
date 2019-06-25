@@ -113,15 +113,31 @@ class test(models.Model):
                 print('      (',line.id,') ', line.name, line.name2, line.intx2)
 
     def test(self):
-        main = self.create({
-            'name': 'main',
-        })
-        second = self.create({
-            'name': 'second',
-        })
+        U = self.env["res.users"]
+        G = self.env["res.groups"]
+        group_user = self.env.ref('base.group_user')
+        group_no_one = self.env.ref('base.group_no_one')
 
-        self.recompute()
-        crash_here_to_rollback          # noqa
+        group_A = G.create({"name": "A"})
+        group_AA = G.create({"name": "AA", "implied_ids": [(6, 0, [group_A.id])]})
+        group_B = G.create({"name": "B"})
+        group_BB = G.create({"name": "BB", "implied_ids": [(6, 0, [group_B.id])]})
+        group_C = G.create({"name": "C"})
+
+        user_a = U.create({"name": "a", "login": "a", "groups_id": [(6, 0, [group_AA.id, group_user.id])]})
+        user_b = U.create({"name": "b", "login": "b", "groups_id": [(6, 0, [group_BB.id])]})
+
+        assert user_a.groups_id == (group_AA + group_A + group_user + group_no_one)
+
+        user_b.write({"groups_id": [(4, group_C.id)]})
+        user_a.write({"groups_id": [(4, group_C.id)]})
+
+        assert user_a.groups_id == (group_AA + group_A + group_C + group_user + group_no_one)
+        # As user_b is not an internal user, all its groups are removed
+        assert user_b.groups_id == group_C
+
+        crash_here_rollback
+
 
 
 class test_line(models.Model):

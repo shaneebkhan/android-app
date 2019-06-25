@@ -2342,7 +2342,7 @@ class One2many(_RelationalMulti):
         # Update values by writing on related many2one
         # The cache is updated by the many2one, no need to do it here
         value = values[self.name]
-        if not value:
+        if (not value) or (not records):
             return records.browse([])
         if isinstance(value, BaseModel):
             value = [(6, 0, value.ids)]
@@ -2565,6 +2565,8 @@ class Many2many(_RelationalMulti):
             return records.browse([])
         if isinstance(value, BaseModel):
             value = [(6, 0, value.ids)]
+        if value and isinstance(value[0], int):
+            value = [(6, 0, value)]
 
         cache = records.env.cache
         comodel = records.env[self.comodel_name].with_context(**self.context)
@@ -2622,12 +2624,6 @@ class Many2many(_RelationalMulti):
                             cache.invalidate([(invf, act[2])])
                 cache.set(record, self, links.ids)
 
-        if toinsert:
-            query = "INSERT INTO {} ({}, {}) VALUES {} ON CONFLICT DO NOTHING".format(
-                self.relation, self.column1, self.column2, ", ".join(["%s"] * len(toinsert)),
-            )
-            cr.execute(query, toinsert)
-
         if tounlink:
             # express pairs as the union of cartesian products:
             #    pairs = [(1, 11), (1, 12), (1, 13), (2, 11), (2, 12), (2, 14)]
@@ -2646,6 +2642,12 @@ class Many2many(_RelationalMulti):
             )
             params = [arg for xs, ys in xs_to_ys.items() for arg in [tuple(xs), tuple(ys)]]
             cr.execute(query, params)
+
+        if toinsert:
+            query = "INSERT INTO {} ({}, {}) VALUES {} ON CONFLICT DO NOTHING".format(
+                self.relation, self.column1, self.column2, ", ".join(["%s"] * len(toinsert)),
+            )
+            cr.execute(query, toinsert)
 
         return records
 
