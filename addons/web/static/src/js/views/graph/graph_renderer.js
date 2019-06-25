@@ -463,6 +463,7 @@ return AbstractRenderer.extend({
                     // stacked: this.state.mode === 'bar' && this.state.stacked,
                     ticks: {
                         callback: this._formatValue.bind(this),
+                        suggestedMax: 0,
                         suggestedMin: 0,
                     }
                 }],
