@@ -874,7 +874,6 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
         cr = self._cr
         cr.execute('SAVEPOINT model_load')
 
-        fields_path = fields
         fields = [fix_import_export_id_paths(f) for f in fields]
         fg = self.fields_get()
 
@@ -947,7 +946,7 @@ class BaseModel(MetaModel('DummyModel', (object,), {'_register': False})):
 
         # make 'flush' available to the methods below, in the case where XMLID
         # resolution fails, for instance
-        flush_self = self.with_context(import_flush=flush, fields_path=fields_path)
+        flush_self = self.with_context(import_flush=flush)
         extracted = flush_self._extract_records(fields, data, log=messages.append)
         converted = flush_self._convert_records(extracted, log=messages.append)
 
