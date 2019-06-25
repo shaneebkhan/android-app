@@ -53,6 +53,16 @@ var LIST = class extends we3.ArchNode {
         return this.nodeName === 'ul';
     }
     /**
+     * Return a list of list items (`li`) inside this list.
+     * By default, return only the first level list item children.
+     *
+     * @param {boolean} [all] true to include contained indented lists
+     * @returns {ArchNode []}
+     */
+    items (all) {
+        return this.descendents(node => node.isLi(), all);
+    }
+    /**
      * Get the list's type (ol, ul, checklist)
      *
      * @returns {string}
@@ -65,6 +75,96 @@ var LIST = class extends we3.ArchNode {
      */
     get type () {
         return 'LIST';
+    }
+    /**
+     * Remove the list, preserving its contents, unlisted.
+     * If the list is preceded by another list, move the contents to
+     * the previous list item and return that list item.
+     * 
+     * @returns {ArchNode|undefined}
+     */
+    unlist () {
+        var beforeList = this.previousSibling();
+        if (beforeList && beforeList.isList()) {
+            return this._mergeContentsWithPreviousLi();
+        }
+        return this._unlist(contents);
+    }
+
+    /**
+     * After moving the contents of a list to another list,
+     * call this to clean the new edges.
+     *
+     * @private
+     * @param {ArchNode []} contents
+     */
+    _cleanEdgesAfterUnlistMerge (contents) {
+        var mergeOptions = {
+            doNotRemoveEmpty: true,
+        };
+        if (contents.length) {
+            contents[0].deleteEdge(true, mergeOptions);
+        }
+        var prev = this.previousSibling();
+        this.remove();
+        if (prev) {
+            prev.deleteEdge(false, mergeOptions);
+        }
+    }
+    /**
+     * Moving the contents of a list to its preceding list
+     *
+     * @private
+     * @returns {ArchNode}
+     */
+    _mergeContentsWithPreviousLi () {
+        var beforeList = this.previousSibling();
+        var li = this.items()[0];
+        var contents = li.childNodes.slice();
+
+        /* do not move a trailing BR to the previous node
+        or move nodes after a trailing BR */
+        this._removeTrailingBR(beforeList);
+        this._removeTrailingBR(contents);
+
+        var previousLi = beforeList.items(true).pop();
+        contents.slice().forEach(node => previousLi.append(node));
+        this._cleanEdgesAfterUnlistMerge(contents);
+
+        return previousLi;
+    }
+    /**
+     * Remove the `node`'s last leaf (or the last element
+     * in the  `node` array) it it's a `BR`.
+     *
+     * @private
+     * @param {ArchNode|ArchNode []} node
+     */
+    _removeTrailingBR (node) {
+        if (Array.isArray(node)) {
+            if (node[node.length - 1].isBR()) {
+                node.pop();
+            }
+        } else {
+            var lastLeaf = node.lastLeaf();
+            if (lastLeaf.isBR()) {
+                lastLeaf.remove();
+            }
+        }
+    }
+    /**
+     * Move the contents of the list out of the list and remove the list.
+     *
+     * @private
+     */
+    _unlist () {
+        var self = this;
+        var li = this.items()[0];
+        var contents = li.childNodes.slice();
+        /* if there is nothing before the list or it's not another list,
+        just insert the new content before the list */
+        contents.slice().forEach(node => self.before(node));
+        this.remove();
     }
 }
 we3.addArchNode('LIST', LIST);
@@ -131,52 +231,19 @@ var li = class extends we3.ArchNode {
             this.unwrap();
             this.unwrap();
         } else {
-            // isolate the li
-            this.parent.split(this.index() + 1, true);
-            var next = this.parent.split(this.index(), true);
-            var prev = this.parent.previousSibling();
-            if (prev) {
-                prev.removeIfEmpty();
-            }
-            var li = next.descendents(node => node.isLi())[0];
-            var contents = li.childNodes.slice();
-            var listAncestor = next.ancestor('isList');
-            var beforeList = listAncestor.previousSibling();
-            if (beforeList && beforeList.isList()) {
-                // do not move stuff after a trailing BR
-                var lastLeaf = beforeList.lastLeaf();
-                if (lastLeaf.isBR()) {
-                    lastLeaf.remove();
-                }
-                // do not move a trailing BR to the previous node
-                if (contents[contents.length - 1].isBR()) {
-                    contents.pop();
-                }
-                // move the li's contents to the previous li if any
-                var lis = beforeList.descendents(node => node.isLi(), true);
-                var lastLi = lis[lis.length - 1];
-                contents.slice().forEach(function (node) {
-                    lastLi.append(node);
-                });
-                if (contents.length) {
-                    contents[0].deleteEdge(true, {
-                        doNotRemoveEmpty: true,
-                    });
-                }
-                var newNext = listAncestor.previousSibling();
-                listAncestor.remove();
-                if (newNext) {
-                    newNext.deleteEdge(false, {
-                        doNotRemoveEmpty: true,
-                    });
-                }
-                return lastLi;
-            }
-            // if there is nothing before the list or it's not another list,
-            // just insert the new content before the list
-            contents.slice().forEach(node => listAncestor.before(node));
-            listAncestor.remove();
+            this.unlist();
         }
+    }
+    unlist () {
+        // isolate the li
+        this.parent.split(this.index() + 1, true);
+        var next = this.parent.split(this.index(), true);
+        var prev = this.parent.previousSibling();
+        if (prev) {
+            prev.removeIfEmpty();
+        }
+        // remove its list parent, preserving its contents
+        next.ancestor('isList').unlist();
     }
     /**
      * @override
