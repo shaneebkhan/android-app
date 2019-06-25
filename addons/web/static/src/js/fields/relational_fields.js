@@ -2526,10 +2526,9 @@ var FieldStatus = AbstractField.extend({
         }
     },
     /**
-     * We first do a 'fake' rendering such that we can then compute the width
-     * of each button (including the potential 'More' button). Then, when the
-     * widget will be in the DOM, we will compute the list of buttons that must
-     * be put in the 'More' dropdown (see @reflow).
+     * The rendering of this widget depends on the available space, so we don't
+     * render it if it's not yet in the DOM (in that case, the rendering will
+     * be triggered later on, just after being inserted into the DOM).
      *
      * @override _render from AbstractField
      * @private
