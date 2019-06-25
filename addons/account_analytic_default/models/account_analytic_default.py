@@ -78,5 +78,5 @@ class AccountMoveLine(models.Model):
             date=self.date_maturity,
             company_id=self.move_id.company_id.id
         )
-        self.account_analytic_id = rec.analytic_id.id
+        self.analytic_account_id = rec.analytic_id.id
         self.analytic_tag_ids = rec.analytic_tag_ids.ids

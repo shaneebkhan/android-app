@@ -607,7 +607,8 @@ class AccountMove(models.Model):
                         'credit': diff_balance < 0.0 and -diff_balance or 0.0,
                     })
                 else:
-                    rounding_lines = self.env['account.move.line'].new({
+                    create_method = in_draft_mode and self.env['account.move.line'].new or self.env['account.move.line'].create
+                    rounding_lines = create_method({
                         'name': _('%s (rounding)') % biggest_tax_line.name,
                         'debit': diff_balance > 0.0 and diff_balance or 0.0,
                         'credit': diff_balance < 0.0 and -diff_balance or 0.0,
@@ -621,6 +622,7 @@ class AccountMove(models.Model):
                         'company_currency_id': self.company_id.currency_id.id,
                         'date_maturity': False,
                         'tax_repartition_line_id': biggest_tax_line.tax_repartition_line_id.id,
+                        'tax_exigible': biggest_tax_line.tax_exigible,
                         'is_rounding_line': True,
                         'exclude_from_invoice_tab': True,
                         'sequence': 9999,
@@ -687,9 +689,9 @@ class AccountMove(models.Model):
 
         # Compute the date to be used during the computation of the payment terms.
         if self.invoice_payment_term_id:
-            terms_date = self.invoice_date or fields.Date.context_today(self)
+            current_date = self.invoice_date or fields.Date.context_today(self)
         else:
-            terms_date = self.invoice_date_due or self.invoice_date or today
+            current_date = self.invoice_date_due or self.invoice_date or today
 
         # Handle the special case in which there is no remaining base/tax lines. In such case, simply drop all
         # payment term lines.
@@ -711,7 +713,7 @@ class AccountMove(models.Model):
                 account = self.partner_id.property_account_payable_id
             else:
                 account = None
-        elif self.type in ('out_receipt', 'in_receipt', 'out_invoice', 'out_refund', 'in_invoice', 'in_refund'):
+        elif self._is_invoice():
             # Search new account.
             domain = [('company_id', '=', self.company_id.id)]
             domain.append(('internal_type', '=', 'receivable' if self.type in ('out_invoice', 'out_refund', 'out_receipt') else 'payable'))
@@ -725,17 +727,17 @@ class AccountMove(models.Model):
         max_date_maturity = False
         if self.invoice_payment_term_id:
             to_compute = self.invoice_payment_term_id.compute(
-                totals_map['total_balance'], date_ref=terms_date, currency=self.currency_id)
+                totals_map['total_balance'], date_ref=current_date, currency=self.currency_id)
             if self.currency_id != self.company_id.currency_id:
                 # Multi-currencies.
                 to_compute_currency = self.invoice_payment_term_id.compute(
-                    totals_map['total_amount_currency'], date_ref=terms_date, currency=self.currency_id)
+                    totals_map['total_amount_currency'], date_ref=current_date, currency=self.currency_id)
                 to_compute = [(b[0], b[1], ac[1]) for b, ac in zip(to_compute, to_compute_currency)]
             else:
                 # Single-currency.
                 to_compute = [(b[0], b[1], 0.0) for b in to_compute]
         else:
-            to_compute = [(fields.Date.to_string(terms_date), totals_map['total_balance'], totals_map['total_amount_currency'])]
+            to_compute = [(fields.Date.to_string(current_date), totals_map['total_balance'], totals_map['total_amount_currency'])]
 
         # Recompute amls: update existing line or create new one for each payment term.
         terms_lines_to_keep = self.env['account.move.line']
