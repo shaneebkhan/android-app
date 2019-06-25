@@ -2364,8 +2364,8 @@ class AccountMoveLine(models.Model):
         else:
             return False
 
-    @api.model
-    def _get_computed_business_vals(self, price_unit, quantity, discount, currency, product, partner, taxes, move_type):
+    @api.multi
+    def _get_computed_business_vals(self, price_unit=None, quantity=None, discount=None, currency=None, product=None, partner=None, taxes=None, move_type=None):
         ''' This method is used to compute 'price_total' & 'price_subtotal'.
 
         :param price_unit:  The current price unit.
@@ -2378,6 +2378,15 @@ class AccountMoveLine(models.Model):
         :param move_type:   The type of the move.
         :return:            A dictionary containing 'price_subtotal' & 'price_total'.
         '''
+        self.ensure_one()
+        price_unit = price_unit or self.price_unit
+        quantity = quantity or self.quantity
+        discount = discount or self.discount
+        currency = currency or self.currency_id
+        product = product or self.product_id
+        partner = partner or self.partner_id
+        taxes = taxes or self.tax_ids
+        move_type = move_type or self.move_id.type
         res = {}
 
         # Compute 'price_subtotal'.
@@ -2394,8 +2403,8 @@ class AccountMoveLine(models.Model):
             res['price_total'] = res['price_subtotal'] = subtotal
         return res
 
-    @api.model
-    def _get_computed_accounting_vals(self, price_subtotal, move_type, currency, company, date):
+    @api.multi
+    def _get_computed_accounting_vals(self, price_subtotal=None, move_type=None, currency=None, company=None, date=None):
         ''' This method is used to recompute the values of 'amount_currency', 'debit', 'credit' due to a change made
         in some business fields (affecting the 'price_subtotal' field).
 
@@ -2406,6 +2415,12 @@ class AccountMoveLine(models.Model):
         :param date:            The move's date.
         :return:                A dictionary containing 'debit', 'credit', 'amount_currency'.
         '''
+        self.ensure_one()
+        price_subtotal = price_subtotal or self.price_subtotal
+        move_type = move_type or self.move_id.type
+        currency = currency or self.currency_id
+        company = company or self.move_id.company_id
+        date = date or self.move_id.date
         if self.move_id._is_outbound(move_type):
             sign = 1
         elif self.move_id._is_inbound(move_type):
@@ -2430,8 +2445,8 @@ class AccountMoveLine(models.Model):
                 'credit': price_subtotal < 0.0 and -price_subtotal or 0.0,
             }
 
-    @api.model
-    def _get_inversed_accounting_vals(self, quantity, discount, balance, move_type, currency, taxes):
+    @api.multi
+    def _get_inversed_accounting_vals(self, quantity=None, discount=None, balance=None, move_type=None, currency=None, taxes=None):
         ''' This method is used to recompute the values of 'quantity', 'discount', 'price_unit' due to a change made
         in some accounting fields such as 'balance'.
 
@@ -2446,6 +2461,13 @@ class AccountMoveLine(models.Model):
         :param taxes:       The applied taxes.
         :return:            A dictionary containing 'quantity', 'discount', 'price_unit'.
         '''
+        self.ensure_one()
+        quantity = quantity or self.quantity,
+        discount = discount or self.discount,
+        balance = balance or self.balance,
+        move_type = move_type or self.move_id.type,
+        currency = currency or self.currency_id,
+        taxes = taxes or self.tax_ids,
         if self.move_id._is_outbound(move_type):
             sign = 1
         elif self.move_id._is_inbound(move_type):
@@ -2542,24 +2564,8 @@ class AccountMoveLine(models.Model):
                 continue
             if not line.move_id._is_invoice():
                 continue
-            line.update(line._get_inversed_accounting_vals(
-                line.quantity,
-                line.discount,
-                line.balance,
-                line.move_id.type,
-                line.currency_id,
-                line.tax_ids,
-            ))
-            line.update(line._get_computed_business_vals(
-                line.price_unit,
-                line.quantity,
-                line.discount,
-                line.currency_id,
-                line.product_id,
-                line.partner_id,
-                line.tax_ids,
-                line.move_id.type,
-            ))
+            line.update(line._get_inversed_accounting_vals())
+            line.update(line._get_computed_business_vals())
 
     @api.onchange('debit')
     def _onchange_debit(self):
@@ -2580,24 +2586,8 @@ class AccountMoveLine(models.Model):
                 continue
             if not line.move_id._is_invoice():
                 continue
-            line.update(line._get_inversed_accounting_vals(
-                line.quantity,
-                line.discount,
-                line.amount_currency,
-                line.move_id.type,
-                line.currency_id,
-                line.tax_ids,
-            ))
-            line.update(line._get_computed_business_vals(
-                line.price_unit,
-                line.quantity,
-                line.discount,
-                line.currency_id,
-                line.product_id,
-                line.partner_id,
-                line.tax_ids,
-                line.move_id.type,
-            ))
+            line.update(line._get_inversed_accounting_vals())
+            line.update(line._get_computed_business_vals())
 
     @api.onchange('quantity', 'discount', 'price_unit', 'tax_ids')
     def _onchange_price_subtotal(self):
@@ -2605,23 +2595,8 @@ class AccountMoveLine(models.Model):
             if not line.move_id._is_invoice():
                 continue
 
-            line.update(line._get_computed_business_vals(
-                line.price_unit,
-                line.quantity,
-                line.discount,
-                line.currency_id,
-                line.product_id,
-                line.partner_id,
-                line.tax_ids,
-                line.move_id.type,
-            ))
-            line.update(line._get_computed_accounting_vals(
-                line.price_subtotal,
-                line.move_id.type,
-                line.currency_id,
-                line.move_id.company_id,
-                line.move_id.date
-            ))
+            line.update(line._get_computed_business_vals())
+            line.update(line._get_computed_accounting_vals())
 
     @api.onchange('currency_id')
     def _onchange_currency(self):
@@ -2842,11 +2817,8 @@ class AccountMoveLine(models.Model):
                         move.type,
                     ))
                     vals.update(self._get_computed_accounting_vals(
-                        vals['price_subtotal'],
-                        move.type,
-                        currency,
-                        move.company_id,
-                        move.date,
+                        price_subtotal=vals['price_subtotal'],
+                        currency=currency,
                     ))
 
             # Ensure consistency between taxes & tax exigibility fields.
@@ -2904,41 +2876,18 @@ class AccountMoveLine(models.Model):
             if any(field in vals for field in ACCOUNTING_FIELDS):
                 price_subtotal = line.currency_id and line.amount_currency or line.debit - line.credit
                 to_write = self._get_inversed_accounting_vals(
-                    line.quantity,
-                    line.discount,
-                    price_subtotal,
-                    line.move_id.type,
-                    line.currency_id,
-                    line.tax_ids,
+                    price_subtotal=price_subtotal,
                 )
-                to_write.update(self._get_computed_business_vals(
-                    to_write.get('price_unit', line.price_unit),
-                    to_write.get('quantity', line.quantity),
-                    to_write.get('discount', line.discount),
-                    line.currency_id,
-                    line.product_id,
-                    line.partner_id,
-                    line.tax_ids,
-                    line.move_id.type,
+                to_write.update(line._get_computed_business_vals(
+                    price_unit=to_write.get('price_unit', line.price_unit),
+                    quantity=to_write.get('quantity', line.quantity),
+                    discount=to_write.get('discount', line.discount),
                 ))
                 super(AccountMoveLine, line).write(to_write)
             elif any(field in vals for field in BUSINESS_FIELDS):
-                to_write = self._get_computed_business_vals(
-                    line.price_unit,
-                    line.quantity,
-                    line.discount,
-                    line.currency_id,
-                    line.product_id,
-                    line.partner_id,
-                    line.tax_ids,
-                    line.move_id.type,
-                )
-                to_write.update(self._get_computed_accounting_vals(
-                    to_write['price_subtotal'],
-                    line.move_id.type,
-                    line.currency_id,
-                    line.move_id.company_id,
-                    line.move_id.date,
+                to_write = self._get_computed_business_vals()
+                to_write.update(line._get_computed_accounting_vals(
+                    price_subtotal=to_write['price_subtotal'],
                 ))
                 super(AccountMoveLine, line).write(to_write)
 
