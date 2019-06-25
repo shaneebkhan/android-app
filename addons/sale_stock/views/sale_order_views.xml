@@ -60,10 +60,18 @@
             <field name="arch" type="xml">
                 <xpath expr="//page/field[@name='order_line']/tree/field[@name='product_uom_qty']" position="after">
                     <field name="is_storable" invisible="1"/>
-                    <field name="qty_at_date" invisible="0" decoration-danger="qty_at_date &lt; 0"/>
-                    <button icon="fa-info-circle" class="enabled" title="Available Quantity" name="action_open_stock_details" type="object" attrs="{'invisible': [('is_storable', '=', False)]}"/>
+                    <field name="qty_at_date" invisible="1"/>
+                    <button icon="fa-info-circle" class="enabled" title="Available Quantity" name="action_open_stock_details" type="object" attrs="{'invisible': [('is_storable', '=', False)]}" js-class="sale_order_info_button"/>
                 </xpath>
             </field>
         </record>
+
+
+        <template id="sale_order_line_view_list_css" name="sale.order.line.view.list.css" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <script type="text/javascript" src="/sale_stock/static/src/js/qty_at_date_view.js"></script>
+                <script type="text/javascript" src="/sale_stock/static/src/js/qty_at_date_controller.js"></script>
+            </xpath>
+        </template>
     </data>
 </odoo>

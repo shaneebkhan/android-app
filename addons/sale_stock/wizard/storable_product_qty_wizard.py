@@ -13,11 +13,13 @@ class StockProductQuantityWizard(models.TransientModel):
         result['on_hand_at_date'] = sale_order_line.qty_at_date
         result['on_hand'] = product_id.qty_available
         result['product_uom_id'] = sale_order_line.product_uom.id
+        result['product_id'] = product_id.id
         return result
 
     on_hand_at_date = fields.Float('On Hand At Delivery Date')
     on_hand = fields.Float('Available On Hand')
     product_uom_id = fields.Many2one('uom.uom', 'Unit of Measure', required=True, readonly=True)
+    product_id = fields.Many2one('product.product')
 
     def action_open_forcasted(self):
         pass

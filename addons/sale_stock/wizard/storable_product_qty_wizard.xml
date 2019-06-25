@@ -5,6 +5,7 @@
         <field name="model">sale.order.line.wizard</field>
         <field name="arch" type="xml">
             <form string="Quantity">
+                <field name="product_id" invisible="1"/>
                 <group class="col-4">
                     <label for="on_hand_at_date" string="On Hand At Delivery Date" class="text-nowrap"/>
                     <div class="o_row">
@@ -18,7 +19,8 @@
                     </div>
                 </group>
                 <group>
-                    <button string="Go To Forecasted stock" class="btn btn-link" name="action_open_forcasted"/>
+                    <button string="Go To Forecasted stock" class="btn btn-link" name="stock.action_stock_level_forecast_report_product"
+                    context="{'default_product_id': product_id}"/>
                 </group>
                 <footer>
                     <button string="OK" class="btn-primary" special="cancel"/>
