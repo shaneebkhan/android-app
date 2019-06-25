@@ -2,6 +2,7 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import datetime
 import dateutil
+import itertools
 import logging
 import time
 from collections import defaultdict, Mapping
@@ -1579,6 +1580,49 @@ class IrModelData(models.Model):
             res_id = data.res_id
             to_unlink.add((model, res_id))
 
+        def unlink_groupby(to_unlink):
+            undeletable = self.browse()
+            # group by sequences of the same model
+            to_unlink_groups = []
+            for model, ids in itertools.groupby(to_unlink, lambda rec: rec[0]):
+                ids = [id[1] for id in ids]
+                to_unlink_groups.append([model, ids])
+            for model, ids in to_unlink_groups:
+                external_ids = self.search([
+                    ('model', '=', model),
+                    ('res_id', 'in', ids)
+                ])
+                if external_ids - datas:
+                    continue
+                if model == 'ir.model.fields':
+                    for id in ids:
+                        field = self.env[model].browse(id).with_context(prefetch_fields=0)
+                        if not field.exists():
+                            sub_ex_ids = external_ids.filtered(lambda r: r.res_id == id)
+                            _logger.info('Deleting orphan external_ids %s', sub_ex_ids)
+                            sub_ex_ids.unlink()
+                            ids.remove(id)
+                            continue
+                        if (field.name in models.LOG_ACCESS_COLUMNS and
+                                field.model in self.env and self.env[field.model]._log_access):
+                            ids.remove(id)
+                            continue
+                        if field.name == 'id':
+                            ids.remove(id)
+                            continue
+                _logger.info('Deleting %s@%s', ids, model)
+                recordset = self.env[model].browse(ids).with_context(prefetch_fields=False)
+                try:
+                    self._cr.execute('SAVEPOINT record_unlink_save_batch')
+                    recordset.unlink()
+                except Exception:
+                    _logger.info('Unable to delete %s@%s', ids, model, exc_info=True)
+                    undeletable += external_ids
+                    self._cr.execute('ROLLBACK TO SAVEPOINT record_unlink_save_batch')
+                else:
+                    self._cr.execute('RELEASE SAVEPOINT record_unlink_save_batch')
+            return undeletable
+
         def unlink_if_refcount(to_unlink):
             undeletable = self.browse()
             for model, res_id in to_unlink:
@@ -1613,7 +1657,7 @@ class IrModelData(models.Model):
             return undeletable
 
         # Remove non-model records first, then model fields, and finish with models
-        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] not in ('ir.model', 'ir.model.fields', 'ir.model.constraint'))
+        undeletable += unlink_groupby(item for item in to_unlink if item[0] not in ('ir.model', 'ir.model.fields', 'ir.model.constraint'))
 
         # Remove copied views. This must happen after removing all records from
         # the modules to remove, otherwise ondelete='restrict' may prevent the
@@ -1623,17 +1667,17 @@ class IrModelData(models.Model):
         modules = self.env['ir.module.module'].search([('name', 'in', modules_to_remove)])
         modules._remove_copied_views()
 
-        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model.constraint')
+        undeletable += unlink_groupby(item for item in to_unlink if item[0] == 'ir.model.constraint')
 
         constraints = self.env['ir.model.constraint'].search([('module', 'in', modules.ids)])
         constraints._module_data_uninstall()
 
-        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model.fields')
+        undeletable += unlink_groupby(item for item in to_unlink if item[0] == 'ir.model.fields')
 
         relations = self.env['ir.model.relation'].search([('module', 'in', modules.ids)])
         relations._module_data_uninstall()
 
-        undeletable += unlink_if_refcount(item for item in to_unlink if item[0] == 'ir.model')
+        undeletable += unlink_groupby(item for item in to_unlink if item[0] == 'ir.model')
 
 
         (datas - undeletable).unlink()
