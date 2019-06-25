@@ -1074,17 +1074,6 @@ actual arch.
                 field = model._fields.get(node.get('name'))
                 if field:
                     editable = editable and self._field_is_editable(field, node)
-                    parent = node.getparent()
-                    if parent is not None and parent.tag == 'searchpanel':
-                        select = node.get('select', 'one')
-                        if select == 'multi' and field.type not in ('selection', 'many2one', 'many2many'):
-                            raise ValidationError(
-                                _('Wrong field type in search panel. "multi" only applies to m2o, m2m and selection. Field: "%s"') % field.name
-                            )
-                        elif field.type not in ('selection', 'many2one'):
-                            raise ValidationError(
-                                _('Wrong field type in search panel. "one" only applies to x2m and selection. Field: "%s"') % field.name
-                            )
 
             for key, val in node.items():
                 if not val:
@@ -1143,10 +1132,7 @@ actual arch.
         attrs_fields = []
         if self.env.context.get('check_field_names'):
             editable = self.env.context.get('view_is_editable', True)
-            try:
-                attrs_fields = self.get_attrs_field_names(node, Model, editable)
-            except ValidationError as err:
-                self.raise_view_error(str(err), view_id)
+            attrs_fields = self.get_attrs_field_names(node, Model, editable)
 
         fields_def = self.postprocess(model, node, view_id, False, fields)
         self._postprocess_access_rights(model, node)
