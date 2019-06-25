@@ -1573,6 +1573,23 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
         'i': 'png',
         'P': 'svg+xml',
     },
+    /**
+     * Returns the image URL from a model.
+     * 
+     * @param {string} model    model from which to retrieve the image
+     * @param {string} res_id   id of the record
+     * @param {string} field    name of the image field
+     * @param {string} unique   an unique integer for the record, usually __last_update
+     */
+    _getImageUrl: function (model, res_id, field, unique) {
+        return session.url('/web/image', {
+            model: model,
+            id: JSON.stringify(res_id),
+            field: field,
+            // unique forces a reload of the image when the record has been updated	
+            unique: field_utils.format.datetime(unique).replace(/[^0-9]/g, ''),
+        });
+    },
     _render: function () {
         var self = this;
         var url = this.placeholder;
@@ -1581,7 +1598,9 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
                 // Use magic-word technique for detecting image type
                 url = 'data:image/' + (this.file_type_magic_word[this.value[0]] || 'png') + ';base64,' + this.value;
             } else {
-                url = this._getImageUrl(this.model, this.res_id, this.nodeOptions.preview_image || this.name, this.recordData.__last_update);
+                var field = this.nodeOptions.preview_image || this.name;
+                var unique = this.recordData.__last_update;
+                url = this._getImageUrl(this.model, this.res_id, field, unique);
             }
         }
         var $img = $(qweb.render("FieldBinaryImage-img", {widget: this, url: url}));
@@ -1605,31 +1624,39 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
             self.do_warn(_t("Image"), _t("Could not display the selected image."));
         });
 
-        this._super.apply(this, arguments);
+        return this._super.apply(this, arguments);
     },
-    _renderReadonly: function() {
+    /**
+     * Only enable the zoom on image in read-only mode, and if the option if enabled.
+     * 
+     * @override
+     * @private
+     */
+    _renderReadonly: function () {
         this._super.apply(this, arguments);
 
-        if(this.nodeOptions.zoom)
-        {
-            var url = this._getImageUrl(this.model, this.res_id, 'image', this.recordData.__last_update);
+        if(this.nodeOptions.zoom) {
+            var unique = this.recordData.__last_update;
+            var url = this._getImageUrl(this.model, this.res_id, 'image', unique);
+            var $img;
 
             if(this.nodeOptions.background)
             {
-                if('tag' in this.nodeOptions)
+                if('tag' in this.nodeOptions) {
                     this.tagName = this.nodeOptions['tag'];
+                }
 
-                if('class' in this.attrs)
-                    this.$el.addClass(this.attrs['class']);
+                if('class' in this.attrs) {
+                    this.$el.addClass(this.attrs.class);
+                }
 
-                var url_thumb = this._getImageUrl(this.model, this.res_id, 'image_medium', this.recordData.__last_update);
+                var urlThumb = this._getImageUrl(this.model, this.res_id, 'image_medium', unique);
 
                 this.$el.empty();
-                var $img = this.$el;
-                $img.css('backgroundImage', 'url(' + url_thumb + ')');
-            }
-            else {
-                var $img = this.$el.find('img');
+                $img = this.$el;
+                $img.css('backgroundImage', 'url(' + urlThumb + ')');
+            } else {
+                $img = this.$('img');
             }
 
             if(this.recordData.image) {
@@ -1640,29 +1667,19 @@ var FieldBinaryImage = AbstractFieldBinary.extend({
                     event: 'mouseenter',
                     attach: '.o_content',
                     attachToTarget: true,
-                    onShow: this._checkImageSize,
-                    beforeAttach: this._changeFlyoutSize,
+                    onShow: function () {
+                        if(this.$zoom.height() < 256 && this.$zoom.width() < 256) {
+                            this.hide();
+                        }
+                    },
+                    beforeAttach: function () {
+                        this.$flyout.css({ width: '512px', height: '512px' });
+                    },
                     preventClicks: this.nodeOptions.preventClicks,
                 });
             }
         }
     },
-    _getImageUrl: function(model, res_id, field, unique) {
-        return session.url('/web/image', {
-            model: model,
-            id: JSON.stringify(res_id),
-            field: field,
-            unique: field_utils.format.datetime(unique).replace(/[^0-9]/g, ''),
-        });
-    },
-    _checkImageSize: function() {
-        if(this.$zoom.height() < 256 && this.$zoom.width() < 256) {
-            this.hide();
-        }
-    },
-    _changeFlyoutSize: function() {
-        this.$flyout.css({'width': '512px', 'height': '512px'});
-    }
 });
 
 var FieldBinaryFile = AbstractFieldBinary.extend({

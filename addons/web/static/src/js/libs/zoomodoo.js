@@ -90,8 +90,7 @@ ZoomOdoo.prototype._init = function () {
 
         if (this.opts.preventClicks) {
             this.$target.on('click.zoomodoo', function (e) { e.preventDefault(); });
-        }
-        else {
+        } else {
             var self = this;
             this.$target.on('click.zoomodoo', function (e) { self.hide(); self.$target.unbind(); });
         }
@@ -131,10 +130,12 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
     {
         this.opts.beforeAttach.call(this);
 
-        if(this.$zoom.height() < this.$flyout.height())
+        if(this.$zoom.height() < this.$flyout.height()) {
              this.$flyout.css('height', this.$zoom.height() + 'px');
-        if(this.$zoom.width() < this.$flyout.width())
+        }
+        if(this.$zoom.width() < this.$flyout.width()) {
              this.$flyout.css('width', this.$zoom.width() + 'px');
+        }
 
         var offset = this.$target.offset();
         var left = offset.left - this.$flyout.width();
@@ -152,8 +153,7 @@ ZoomOdoo.prototype.show = function (e, testMouseOver) {
         // Prevents the flyout to overflow 
         if(left + this.$flyout.width() > $(document).width()) {
             this.$flyout.css('width',  $(document).width() - left + 'px');
-        }
-        else if(left == 0) // Limit the max width if displayed on the left
+        } else if(left === 0) // Limit the max width if displayed on the left
         {
             this.$flyout.css('width', offset.left + 'px');
         }
