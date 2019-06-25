@@ -15,7 +15,7 @@
                             <field name="receivable_account_id" />
                             <field name="is_cash_count" />
                             <field name="cash_journal_id" attrs="{'invisible': [('is_cash_count', '=', False)], 'required': [('is_cash_count', '=', True)]}" />
-                            <field name="split_transactions" />
+                            <field name="split_transactions" groups="base.group_no_one" />
                         </group>
                         <group>
                         </group>

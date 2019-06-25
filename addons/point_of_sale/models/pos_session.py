@@ -123,8 +123,14 @@ class PosSession(models.Model):
         copy=False)
     move_id = fields.Many2one('account.move', string='Journal Entry')
     payment_method_ids = fields.Many2many('pos.payment.method', string='Payment Methods')
+    payment_count = fields.Integer(compute='_compute_payment_count')
 
     _sql_constraints = [('uniq_name', 'unique(name)', "The name of this POS Session must be unique !")]
+
+    @api.multi
+    def _compute_payment_count(self):
+        for session in self:
+            session.payment_count = len(session.order_ids.mapped('pos_payment_ids'))
 
     @api.multi
     def _compute_order_count(self):

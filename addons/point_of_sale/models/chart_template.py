@@ -32,7 +32,7 @@ class AccountChartTemplate(models.Model):
 
     def _create_default_pos_receivable_account(self, company):
         vals = {
-            'name': 'Account Receivable PoS',
+            'name': _('Account Receivable PoS'),
             'code': '101210',
             'user_type_id': self.env.ref('account.data_account_type_receivable').id,
             'reconcile': True,
@@ -43,7 +43,7 @@ class AccountChartTemplate(models.Model):
 
     def _create_cash_payment_method(self, receivable_account, cash_journal):
         vals = {
-            'name': 'Cash',
+            'name': _('Cash'),
             'receivable_account_id': receivable_account.id,
             'is_cash_count': True,
             'cash_journal_id': cash_journal.id,
@@ -52,7 +52,7 @@ class AccountChartTemplate(models.Model):
 
     def _create_bank_payment_method(self, receivable_account):
         vals = {
-            'name': 'Bank',
+            'name': _('Bank'),
             'receivable_account_id': receivable_account.id,
             'is_cash_count': False,
         }

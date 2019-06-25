@@ -75,15 +75,18 @@
                             name="action_show_payments_list"
                             type="object"
                             class="oe_stat_button"
-                            icon="fa-bars"
-                            string="Pos Payments">
+                            icon="fa-dollar"
+                            >
+                            <field name="payment_count" widget="statinfo" string="Payments"/>
                         </button>
                         <button
                             name="show_journal_items"
                             type="object"
                             class="oe_stat_button"
                             icon="fa-pencil-square"
-                            string="Journal Items">
+                            string="Journal Items"
+                            attrs="{'invisible':[('move_id', '=', False)]}"
+                            >
                         </button>
                     </div>
                     <h1 class="oe_title">
@@ -95,8 +98,8 @@
                         <group>
                             <field name="user_id"/>
                             <field name="currency_id" invisible="1"/>
-                            <field name="config_id"/>
-                            <field name="move_id" />
+                            <field name="config_id" readonly="1" />
+                            <field name="move_id" readonly="1" />
                         </group>
                         <group>
                             <field name="start_at" attrs="{'invisible' : [('state', '=', 'opening_control')]}"/>
