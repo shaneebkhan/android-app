@@ -478,7 +478,6 @@ class AccountMove(models.Model):
                 taxes_map[key]['alive'] = True
             line.tax_exigible = tax_exigible
 
-
         # Compute / update taxes lines.
         for grouping_key, values in taxes_map.items():
             # Don't create tax lines with zero balance.
@@ -1192,7 +1191,7 @@ class AccountMove(models.Model):
     @api.depends('type', 'line_ids.amount_residual')
     def _compute_payments_widget_reconciled_info(self):
         for move in self:
-            if move.state != 'posted' or move.type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt'):
+            if move.state != 'posted' or not move._is_invoice():
                 continue
             reconciled_vals = move._get_reconciled_info_JSON_values()
             if reconciled_vals:
@@ -1469,15 +1468,13 @@ class AccountMove(models.Model):
         moves = super(AccountMove, self).create(vals_list)
 
         # Trigger 'action_invoice_paid' when the invoice is directly paid at its creation.
-        moves.filtered(lambda move: move.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
-                                    and move.invoice_payment_state in ('paid', 'in_payment')).action_invoice_paid()
+        moves.filtered(lambda move: move._is_invoice() and move.invoice_payment_state in ('paid', 'in_payment')).action_invoice_paid()
 
         return moves
 
     @api.multi
     def write(self, vals):
-        not_paid_invoices = self.filtered(lambda move: move.type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')
-                                                       and move.invoice_payment_state not in ('paid', 'in_payment'))
+        not_paid_invoices = self.filtered(lambda move: move._is_invoice() and move.invoice_payment_state not in ('paid', 'in_payment'))
 
         if self._move_autocomplete_invoice_lines_write(vals):
             res = True
@@ -1719,7 +1716,7 @@ class AccountMove(models.Model):
             if move_vals['type'] not in ('out_refund', 'in_refund'):
                 return mapping
 
-            for line_command in move_vals.get('line_ids', 0.0):
+            for line_command in move_vals.get('line_ids', []):
                 line_vals = line_command[2]  # (0, 0, {...})
 
                 if line_vals.get('tax_ids') and line_vals['tax_ids'][0][2]:
@@ -1740,7 +1737,7 @@ class AccountMove(models.Model):
 
         tax_repartition_lines_mapping = compute_tax_repartition_lines_mapping(move_vals)
 
-        for line_command in move_vals.get('line_ids', 0.0):
+        for line_command in move_vals.get('line_ids', []):
             line_vals = line_command[2]  # (0, 0, {...})
 
             # ==== Inverse debit / credit / amount_currency ====
