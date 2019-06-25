@@ -47,6 +47,12 @@ publicWidget.registry.AccountPortalSidebar = PortalSidebar.extend({
         // Set it to 0 first to handle the case where scrollHeight is too big for its content.
         $el.height(0);
         $el.height($wrapwrap[0].scrollHeight);
+
+        // scroll to the right place after iframe resize
+        var $target = $(window.location.hash);
+        if ($target.length) {
+            $('html,body').scrollTop($target.offset().top);
+        }
     },
     /**
      * @private
