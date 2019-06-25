@@ -836,10 +836,7 @@ class AccountMove(models.Model):
                 'total_balance': 0.0,
                 'total_amount_currency': 0.0,
             }
-            for line in lines_map['base_lines']:
-                totals_map['total_balance'] += line.balance
-                totals_map['total_amount_currency'] += line.amount_currency
-            for line in lines_map['tax_lines']:
+            for line in lines_map['base_lines'] + lines_map['tax_lines']:
                 totals_map['total_balance'] += line.balance
                 totals_map['total_amount_currency'] += line.amount_currency
 
