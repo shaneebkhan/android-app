@@ -6,7 +6,7 @@ import json
 import logging
 import unicodedata
 
-from odoo import api, models, _
+from odoo import api, http, models, _
 from odoo.http import request
 from odoo.tools import ustr
 
@@ -83,19 +83,13 @@ class Http(models.AbstractModel):
         currencies = Currency.search([]).read(['symbol', 'position', 'decimal_places'])
         return {c['id']: {'symbol': c['symbol'], 'position': c['position'], 'digits': [69,c['decimal_places']]} for c in currencies}
 
-    def _neuter_mimetype(self, mimetype, user):
-        wrong_type = 'ht' in mimetype or 'xml' in mimetype or 'svg' in mimetype
-        if wrong_type and not user._is_system():
-            return 'text/plain'
-        return mimetype
-
     def _process_uploaded_files(self, files, model, res_id, generate_token=False):
         Model = self.env['ir.attachment']
         args = []
         for ufile in files:
 
             filename = ufile.filename
-            mimetype = self._neuter_mimetype(ufile.content_type, request.env.user)
+            mimetype = http._neuter_mimetype(ufile.content_type, request.env.user)
             if request.httprequest.user_agent.browser == 'safari':
                 # Safari sends NFD UTF-8 (where é is composed by 'e' and [accent])
                 # we need to send it the same stuff, otherwise it'll fail

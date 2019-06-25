@@ -1655,5 +1655,33 @@ def set_header_field(headers, name, value):
     return list(dictheaders.items())
 
 
+def neuter_mimetype(self, mimetype, user):
+    """ Return the given `mimetype` if it is considered a safe type, or if the
+    `user` is admin. Otherwise return 'text/plain'.
+
+    A type is considered safe if displaying such file in the browser does not
+    lead to the possibility of executing arbitrary code such as JavaScript. This
+    excludes all types containing 'ht' (htm, html, xhtml, ...), 'xml' or 'svg'.
+
+    For security reasons this function should be called before saving an
+    attachment from an unsafe source, such as a standard user. The result of the
+    function should be stored as the attachment mimetype because we have routes
+    that can display such attachments in the browser, and they rely on the value
+    of this field.
+
+    :param mimetype: the mimetype to neuter
+    :type mimetype: string
+
+    :param user: the user trying to upload a file
+    :type user: recordset of one res_users
+
+    :return: the neutered mimetype
+    :rtype: string
+    """
+    if any(t in mimetype for t in ['ht', 'xml', 'svg']) and not user._is_system():
+        return 'text/plain'
+    return mimetype
+
+
 #  main wsgi handler
 root = Root()
