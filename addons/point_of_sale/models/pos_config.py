@@ -7,6 +7,9 @@ from uuid import uuid4
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class AccountCashboxLine(models.Model):
     _inherit = 'account.cashbox.line'
@@ -53,8 +56,8 @@ class PosConfig(models.Model):
 
     def _default_pricelist(self):
         x = self.env['product.pricelist'].search([('currency_id', '=', self.env.company.currency_id.id)], limit=1)
-        print('DEFAULT PRICELIST: %s' % x)
-        print('SEARCHED CURRENCY ID: %s' % self.env.company.currency_id.id)
+        _logger.info('DEFAULT PRICELIST: %s', x)
+        _logger.info('SEARCHED CURRENCY ID: %s', self.env.company.currency_id.id)
         return x
 
     def _get_group_pos_manager(self):
@@ -337,7 +340,7 @@ class PosConfig(models.Model):
 
     @api.model
     def create(self, values):
-        print('CREATE POS CONFIG : %s' % values)
+        _logger.info('CREATE POS CONFIG : %s', values)
         if values.get('is_posbox') and values.get('iface_customer_facing_display'):
             if values.get('customer_facing_display_html') and not values['customer_facing_display_html'].strip():
                 values['customer_facing_display_html'] = self._compute_default_customer_html()
