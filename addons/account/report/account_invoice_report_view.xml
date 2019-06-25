@@ -44,7 +44,7 @@
         <field name="model_id">account.invoice.report</field>
         <field name="domain">[]</field>
         <field name="user_id" eval="False"/>
-        <field name="context">{'group_by': ['invoice_date:month', 'categ_id'], 'residual_invisible':True}</field>
+        <field name="context">{'group_by': ['invoice_date:month', 'product_categ_id'], 'residual_invisible':True}</field>
     </record>
     <record id="filter_invoice_refund" model="ir.filters">
         <field name="name">By Credit Note</field>
@@ -85,7 +85,7 @@
                 <group expand="1" string="Group By">
                     <filter string="Salesperson" name='user' context="{'group_by':'user_id'}"/>
                     <filter string="Partner" name="partner_id" context="{'group_by':'partner_id','residual_visible':True}"/>
-                    <filter string="Product Category" name="category_product" context="{'group_by':'categ_id','residual_invisible':True}"/>
+                    <filter string="Product Category" name="category_product" context="{'group_by':'product_categ_id','residual_invisible':True}"/>
                     <filter string="Status" name="status" context="{'group_by':'state'}"/>
                     <filter string="Analytic Account" name="analytic_account_id" context="{'group_by':'analytic_account_id'}" groups="analytic.group_analytic_accounting" />
                     <filter string="Company" name="company" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>

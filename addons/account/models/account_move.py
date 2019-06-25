@@ -2022,6 +2022,8 @@ class AccountMove(models.Model):
 
     @api.multi
     def _get_report_base_filename(self):
+        if any(not move._is_invoice() for move in self):
+            raise UserError(_("Only invoices could be printed."))
         return self._get_invoice_display_name()
 
     @api.multi
