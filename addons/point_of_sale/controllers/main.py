@@ -12,12 +12,28 @@ _logger = logging.getLogger(__name__)
 class PosController(http.Controller):
 
     @http.route('/pos/web', type='http', auth='user')
-    def pos_web(self, **k):
-        # if user not logged in, log him in
-        pos_sessions = request.env['pos.session'].search([
-            ('state', '=', 'opened'),
-            ('user_id', '=', request.session.uid),
-            ('rescue', '=', False)])
+    def pos_web(self, config_id=False, debug=False, **k):
+        """Open a pos session for the given config.
+
+        The right pos session will be selected to open, if non is open yet a new session will be created.
+
+        :param debug: The debug mode to load the session in.
+        :type debug: str.
+        :param config_id: id of the config that has to be loaded.
+        :type config_id: str.
+        :returns: object -- The rendered pos session.
+        """
+        pos_session = False
+        if not config_id:
+            pos_sessions = request.env['pos.session'].search([
+                ('state', '=', 'opened'),
+                ('user_id', '=', request.session.uid),
+                ('rescue', '=', False)])
+        else:
+            pos_sessions = request.env['pos.session'].search([
+                ('state', '=', 'opened'),
+                ('config_id', '=', int(config_id)),
+                ('rescue', '=', False)])
         if not pos_sessions:
             return werkzeug.utils.redirect('/web#action=point_of_sale.action_client_pos_menu')
         pos_sessions.login()

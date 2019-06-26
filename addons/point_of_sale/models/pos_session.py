@@ -315,15 +315,19 @@ class PosSession(models.Model):
 
     @api.multi
     def open_frontend_cb(self):
+        """Open the pos interface with config_id as an extra argument.
+            
+        In vanilla PoS each user can only have one active session, therefore it was not needed to pass the config_id
+        on opening a session. It is also possible to login to sessions created by other users.
+            
+        :returns: dict
+        """
         if not self.ids:
             return {}
-        for session in self.filtered(lambda s: s.user_id.id != self.env.uid):
-            raise UserError(_("You cannot use the session of another user. This session is owned by %s. "
-                              "Please first close this one to use this point of sale.") % session.user_id.name)
         return {
             'type': 'ir.actions.act_url',
             'target': 'self',
-            'url':   '/pos/web/',
+            'url':   '/pos/web?config_id=%d' % self.config_id.id,
         }
 
     @api.multi

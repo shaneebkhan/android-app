@@ -8,6 +8,7 @@ var models = require('point_of_sale.models');
 var screens = require('point_of_sale.screens');
 var core = require('web.core');
 var rpc = require('web.rpc');
+var session = require('web.session');
 
 var QWeb = core.qweb;
 var _t = core._t;
@@ -276,16 +277,16 @@ var TableWidget = PosBaseWidget.extend({
         }
         return notifications;
     },
-        update_click_handlers: function(editing){
-            var self = this;
-            this.$el.off('mouseup touchend touchcancel click dragend');
+    update_click_handlers: function(editing){
+        var self = this;
+        this.$el.off('mouseup touchend touchcancel click dragend');
 
-            if (editing) {
-                this.$el.on('mouseup touchend touchcancel', function(event){ self.click_handler(event,$(this)); });
-            } else {
-                this.$el.on('click dragend', function(event){ self.click_handler(event,$(this)); });
-            }
-        },
+        if (editing) {
+            this.$el.on('mouseup touchend touchcancel', function(event){ self.click_handler(event,$(this)); });
+        } else {
+            this.$el.on('click dragend', function(event){ self.click_handler(event,$(this)); });
+        }
+    },
     renderElement: function(){
         var self = this;
         this.order_count    = this.pos.get_table_orders(this.table).length;
@@ -754,8 +755,8 @@ chrome.OrderSelectorWidget.include({
 var _super_posmodel = models.PosModel.prototype;
 models.PosModel = models.PosModel.extend({
     initialize: function(session, attributes) {
+        _super_posmodel.initialize.call(this,session,attributes);
         this.table = null;
-        return _super_posmodel.initialize.call(this,session,attributes);
     },
 
     transfer_order_to_different_table: function () {
@@ -767,26 +768,124 @@ models.PosModel = models.PosModel.extend({
         this.set_table(null);
     },
 
+    /**
+     * Request the orders of the table with given id.
+     * @param {number} table_id.
+     * @param {dict} options.
+     * @param {number} options.timeout optional timeout parameter for the rpc call.
+     * @return {Promise}
+     */
+    _get_from_server: function (table_id, options) {
+        options = options || {};
+        var self = this;
+        var timeout = typeof options.timeout === 'number' ? options.timeout : 7500;
+        return rpc.query({
+                model: 'pos.order',
+                method: 'get_table_draft_orders',
+                args: [table_id],
+                kwargs: {context: session.user_context},
+            }, {
+                timeout: timeout,
+                shadow: false,
+            })
+    },
+
     // changes the current table.
     set_table: function(table) {
-        if (!table) { // no table ? go back to the floor plan, see ScreenSelector
-            this.set_order(null);
-        } else if (this.order_to_transfer_to_different_table) {
-            this.order_to_transfer_to_different_table.table = table;
-            this.order_to_transfer_to_different_table.save_to_db();
-            this.order_to_transfer_to_different_table = null;
+        var self = this;
+        if (!table || this.order_to_transfer_to_different_table) { // no table ? go back to the floor plan, see ScreenSelector
 
-            // set this table
-            this.set_table(table);
+            var order_ids = [];
+            var table_orders = this.get_order_list();
+            table_orders.forEach(function(o){
+                order_ids.push(o.uid);
+            });
+
+            if (this.order_to_transfer_to_different_table && table) {
+                this.order_to_transfer_to_different_table.table = table;
+                this.order_to_transfer_to_different_table.save_to_db();
+                order_ids.push(this.order_to_transfer_to_different_table.uid);
+                table_orders.push(this.order_to_transfer_to_different_table);
+            }
+
+            var orders_to_sync = this.db.get_unpaid_orders_to_sync(order_ids);
+            var ids_to_remove = this.db.get_ids_to_remove_from_server();
+            this.set('synch',{ state: 'connecting', pending: orders_to_sync.length + ids_to_remove.length});
+
+            this._save_to_server(orders_to_sync, {'draft' : true})
+                .then(function (server_ids) {
+                    server_ids.forEach(function(server_id){
+                        table_orders.some(function(o){
+                            if (o.name === server_id.pos_reference) {
+                                o.server_id = server_id.id;
+                                o.save_to_db();
+                            }
+                        });
+                    });
+                    if (!ids_to_remove.length) {
+                        self.set({synch: { state:'connected', pending: 0 }});
+                    } else {
+                        self.set('synch',{ state: 'connecting', pending: ids_to_remove.length});
+                        self._remove_from_server(ids_to_remove)
+                            .then(function(server_ids) {
+                             self.db.set_ids_removed_from_server(server_ids);
+                            self.set({synch: { state:'connected', pending: 0 }});
+                            }).catch(function(reason){
+                                self.gui.show_popup('error',{
+                                    'title':_t('Orders could not be removed'),
+                                    'body': _t('You must be connected to the internet to save your changes.'),
+                                });
+                                console.error('Failed to send orders:', order_ids);
+                                self.set('synch', { state: 'error', pending: 0 });
+                            });
+                    }
+                }).catch(function(reason){
+                    self.gui.show_popup('error',{
+                        'title':_t('Changes could not be saved'),
+                        'body': _t('You must be connected to the internet to save your changes.'),
+                    });
+                    console.error('Failed to send orders:', order_ids);
+                    self.set('synch', { state: 'error', pending: 0 });
+                }).finally(function(){
+                    if (self.order_to_transfer_to_different_table && table) {
+                        self.order_to_transfer_to_different_table = null;
+                        self.set_table(table);
+                    }
+                });
+
+            this.set_order(null); // unset curent selected order
 
         } else {
             this.table = table;
-            var orders = this.get_order_list();
-            if (orders.length) {
-                this.set_order(orders[0]); // and go to the first one ...
-            } else {
-                this.add_new_order();  // or create a new order with the current table
-            }
+
+            this.set('synch',{ state: 'connecting', pending: 0 });
+            this._get_from_server(table.id)
+                .then(function (server_orders) {
+                    var orders = self.get_order_list();
+                    orders.forEach(function(order){
+                        if (order.server_id !== false){
+                            self.get("orders").remove(order);
+                            order.destroy();
+                        }
+                    });
+                    server_orders.forEach(function(server_order){
+                        if (server_order.lines.length){
+                            var new_order = new models.Order({},{pos: self, json: server_order});
+                            self.get("orders").add(new_order);
+                            new_order.save_to_db();
+                        }
+                    })
+                    self.set({synch: { state:'connected', pending: 0 }});
+                }).catch(function(reason){
+                    self.set('synch', { state: 'error', pending: 0 });
+                }).finally(function(){
+                    var orders = self.get_order_list();
+                    if (orders.length) {
+                        self.set_order(orders[0]); // and go to the first one ...
+                    } else {
+                        self.add_new_order();  // or create a new order with the current table
+                    }
+                });
         }
     },
 
@@ -860,6 +959,9 @@ models.PosModel = models.PosModel.extend({
     on_removed_order: function(removed_order,index,reason){
         if (this.config.iface_floorplan) {
             var order_list = this.get_order_list();
+            if (reason === 'abandon') {
+                this.db.set_order_to_remove_from_server(removed_order);
+            }
             if( (reason === 'abandon' || removed_order.temporary) && order_list.length > 0){
                 this.set_order(order_list[index] || order_list[order_list.length -1]);
             }else{

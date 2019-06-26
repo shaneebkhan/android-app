@@ -252,9 +252,20 @@ exports.PosModel = Backbone.Model.extend({
     },{
         model:  'pos.session',
         fields: ['id', 'journal_ids','name','user_id','config_id','start_at','stop_at','sequence_number','login_number'],
-        domain: function(self){ return [['state','=','opened'],['user_id','=',session.uid]]; },
+        domain: function(self){ 
+            return [['state','=','opened']]; 
+        },
         loaded: function(self,pos_sessions){
-            self.pos_session = pos_sessions[0];
+            var given_config = new RegExp('[\?&]config_id=([^&#]*)').exec(window.location.href);
+            if (given_config && given_config[1]){
+                pos_sessions.some(function(session){
+                    if (session.config_id[0] === parseInt(given_config[1])){
+                        self.pos_session = session;
+                    }
+                });
+                //self.pos_session = return [['state', '=', 'opened'], ['config_id', '=', given_config[1]]];
+            }
+            if (!self.pos_session) self.pos_session = pos_sessions[0];
         },
     },{
         model: 'pos.config',
@@ -922,6 +933,27 @@ exports.PosModel = Backbone.Model.extend({
         });
     },
 
+    /**
+     * returns the args for the rpc call sending the orders to the server.
+     *
+     * Overwritable function to set the call args.
+     * @param {array} orders list of orders.
+     * @param {dict} options dictionary of options to be added to args.
+     * @param {boolean} options.to_invoice optional parameter to indicate if the orders should be invoiced.
+     * @param {boolean} options.draft optional parameter to indicate if the orders should be saved as draft.
+     * @return {dict}
+     */
+    _get_args_to_save_to_server: function(orders, options){
+        var args = [_.map(orders, function (order) {
+                order.to_invoice = options.to_invoice || false;
+                return order;
+            })];
+        if ('draft' in options) {
+            args.push(options['draft']);
+        }
+        return args;
+    },
+
     // send an array of orders to the server
     // available options:
     // - timeout: timeout for the rpc call in ms
@@ -944,10 +976,7 @@ exports.PosModel = Backbone.Model.extend({
 
         // we try to send the order. shadow prevents a spinner if it takes too long. (unless we are sending an invoice,
         // then we want to notify the user that we are waiting on something )
-        var args = [_.map(orders, function (order) {
-                order.to_invoice = options.to_invoice || false;
-                return order;
-            })];
+        var args = self._get_args_to_save_to_server(orders, options);
         return rpc.query({
                 model: 'pos.order',
                 method: 'create_from_ui',
@@ -981,6 +1010,50 @@ exports.PosModel = Backbone.Model.extend({
                     self.set('failed',error);
                 }
                 console.error('Failed to send orders:', orders);
+            });
+    },
+
+    /**
+     * Remove orders with given ids from the database.
+     * @param {array<number>} server_ids ids of the orders to be removed.
+     * @param {dict} options.
+     * @param {number} options.timeout optional timeout parameter for the rpc call.
+     * @return {Promise<array<number>>} returns a promise of the ids successfully removed.
+     */
+    _remove_from_server: function (server_ids, options) {
+        options = options || {};
+        if (!server_ids || !server_ids.length) {
+            return Promise.resolve([]);
+        }
+
+        var self = this;
+        var timeout = typeof options.timeout === 'number' ? options.timeout : 7500 * server_ids.length;
+
+        return rpc.query({
+                model: 'pos.order',
+                method: 'remove_from_ui',
+                args: [server_ids],
+                kwargs: {context: session.user_context},
+            }, {
+                timeout: timeout,
+                shadow: true,
+            })
+            .then(function (ids) {
+                self.db.set_ids_removed_from_server(server_ids);
+                return server_ids;
+            }).catch(function (reason){
+                var error = reason.message;
+                if(error.code === 200 ){    // Business Logic Error, not a connection problem
+                    //if warning do not need to display traceback!!
+                    if (error.data.exception_type == 'warning') {
+                        delete error.data.debug;
+                    }
+                }
+                self.gui.show_popup('error',{
+                    'title':_t('Changes could not be saved'),
+                    'body': _t('You must be connected to the internet to save your changes.'),
+                });
+                console.error('Failed to remove orders:', server_ids);
             });
     },
 
@@ -1346,7 +1419,7 @@ exports.Orderline = Backbone.Model.extend({
         this.price = json.price_unit;
         this.set_discount(json.discount);
         this.set_quantity(json.qty, 'do not recompute unit price');
-        this.id    = json.id;
+        this.id = json.id !== undefined ? json.id : orderline_id++;
         orderline_id = Math.max(this.id+1,orderline_id);
         var pack_lot_lines = json.pack_lot_ids;
         for (var i = 0; i < pack_lot_lines.length; i++) {
@@ -2147,6 +2220,8 @@ exports.Order = Backbone.Model.extend({
         this.uid = json.uid;
         this.name = _t("Order ") + this.uid;
         this.validation_date = json.creation_date;
+        this.server_id = json.server_id ? json.server_id : false;
+        this.user_id = json.user_id;
 
         if (json.fiscal_position_id) {
             var fiscal_position = _.find(this.pos.fiscal_positions, function (fp) {
@@ -2208,7 +2283,7 @@ exports.Order = Backbone.Model.extend({
         this.paymentlines.each(_.bind( function(item) {
             return paymentLines.push([0, 0, item.export_as_JSON()]);
         }, this));
-        return {
+        var json = {
             name: this.get_name(),
             amount_paid: this.get_total_paid() - this.get_change(),
             amount_total: this.get_total_with_tax(),
@@ -2224,8 +2299,13 @@ exports.Order = Backbone.Model.extend({
             uid: this.uid,
             sequence_number: this.sequence_number,
             creation_date: this.validation_date || this.creation_date, // todo: rename creation_date in master
-            fiscal_position_id: this.fiscal_position ? this.fiscal_position.id : false
+            fiscal_position_id: this.fiscal_position ? this.fiscal_position.id : false,
+            server_id: this.server_id ? this.server_id : false,
         };
+        if (!this.is_paid && this.user_id) {
+            json.user_id = this.user_id;
+        }
+        return json;
     },
     export_for_printing: function(){
         var orderlines = [];

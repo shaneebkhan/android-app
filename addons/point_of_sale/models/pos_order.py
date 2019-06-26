@@ -48,6 +48,8 @@ class PosOrder(models.Model):
             'amount_total':  ui_order['amount_total'],
             'amount_tax':  ui_order['amount_tax'],
             'amount_return':  ui_order['amount_return'],
+            'to_invoice': ui_order['to_invoice'] if "to_invoice" in ui_order else False,
+            'temporary': ui_order['temporary'] if "temporary" in ui_order else False,
         }
 
     def _payment_fields(self, ui_paymentline):
@@ -113,47 +115,47 @@ class PosOrder(models.Model):
             order['statement_ids'] = payments_to_keep
             order['amount_return'] = 0
 
-    @api.model
-    def _process_order(self, pos_order):
-        pos_session = self.env['pos.session'].browse(pos_order['pos_session_id'])
-        if pos_session.state == 'closing_control' or pos_session.state == 'closed':
-            pos_order['pos_session_id'] = self._get_valid_session(pos_order).id
-        order = self.create(self._order_fields(pos_order))
-        prec_acc = order.pricelist_id.currency_id.decimal_places
-        journal_ids = set()
-        for payments in pos_order['statement_ids']:
-            if not float_is_zero(payments[2]['amount'], precision_digits=prec_acc):
-                order.add_payment(self._payment_fields(payments[2]))
-            journal_ids.add(payments[2]['journal_id'])
+    #@api.model
+    #def _process_order(self, pos_order):
+    #    pos_session = self.env['pos.session'].browse(pos_order['pos_session_id'])
+    #    if pos_session.state == 'closing_control' or pos_session.state == 'closed':
+    #        pos_order['pos_session_id'] = self._get_valid_session(pos_order).id
+    #    order = self.create(self._order_fields(pos_order))
+    #    prec_acc = order.pricelist_id.currency_id.decimal_places
+    #    journal_ids = set()
+    #    for payments in pos_order['statement_ids']:
+    #        if not float_is_zero(payments[2]['amount'], precision_digits=prec_acc):
+    #            order.add_payment(self._payment_fields(payments[2]))
+    #        journal_ids.add(payments[2]['journal_id'])
 
-        if pos_session.sequence_number <= pos_order['sequence_number']:
-            pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
-            pos_session.refresh()
+    #    if pos_session.sequence_number <= pos_order['sequence_number']:
+    #        pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
+    #        pos_session.refresh()
 
-        if not float_is_zero(pos_order['amount_return'], prec_acc):
-            cash_journal_id = pos_session.cash_journal_id.id
-            if not cash_journal_id:
-                # Select for change one of the cash journals used in this
-                # payment
-                cash_journal = self.env['account.journal'].search([
-                    ('type', '=', 'cash'),
-                    ('id', 'in', list(journal_ids)),
-                ], limit=1)
-                if not cash_journal:
-                    # If none, select for change one of the cash journals of the POS
-                    # This is used for example when a customer pays by credit card
-                    # an amount higher than total amount of the order and gets cash back
-                    cash_journal = [statement.journal_id for statement in pos_session.statement_ids if statement.journal_id.type == 'cash']
-                    if not cash_journal:
-                        raise UserError(_("No cash statement found for this session. Unable to record returned cash."))
-                cash_journal_id = cash_journal[0].id
-            order.add_payment({
-                'amount': -pos_order['amount_return'],
-                'payment_date': fields.Date.context_today(self),
-                'payment_name': _('return'),
-                'journal': cash_journal_id,
-            })
-        return order
+    #    if not float_is_zero(pos_order['amount_return'], prec_acc):
+    #        cash_journal_id = pos_session.cash_journal_id.id
+    #        if not cash_journal_id:
+    #            # Select for change one of the cash journals used in this
+    #            # payment
+    #            cash_journal = self.env['account.journal'].search([
+    #                ('type', '=', 'cash'),
+    #                ('id', 'in', list(journal_ids)),
+    #            ], limit=1)
+    #            if not cash_journal:
+    #                # If none, select for change one of the cash journals of the POS
+    #                # This is used for example when a customer pays by credit card
+    #                # an amount higher than total amount of the order and gets cash back
+    #                cash_journal = [statement.journal_id for statement in pos_session.statement_ids if statement.journal_id.type == 'cash']
+    #                if not cash_journal:
+    #                    raise UserError(_("No cash statement found for this session. Unable to record returned cash."))
+    #            cash_journal_id = cash_journal[0].id
+    #        order.add_payment({
+    #            'amount': -pos_order['amount_return'],
+    #            'payment_date': fields.Date.context_today(self),
+    #            'payment_name': _('return'),
+    #            'journal': cash_journal_id,
+    #        })
+    #    return order
 
     def _prepare_analytic_account(self, line):
         '''This method is designed to be inherited in a custom module'''
@@ -749,37 +751,80 @@ class PosOrder(models.Model):
     def action_pos_order_done(self):
         return self._create_account_move_line()
 
+    def _pos_order_invoice(self, order):
+         order.action_pos_order_invoice()
+         order.invoice_id.sudo().with_context(force_company=self.env.user.company_id.id).action_invoice_open()
+         order.account_move = order.invoice_id.move_id
+
+    def _set_pos_order_paid(self, order):
+        try:
+            order.action_pos_order_paid()
+        except psycopg2.DatabaseError:
+            # do not hide transactional errors, the order(s) won't be saved!
+            raise
+        except Exception as e:
+            _logger.error('Could not fully process the POS Order: %s', tools.ustr(e))
+
     @api.model
-    def create_from_ui(self, orders):
+    def create_from_ui(self, orders, draft=False):
+        """ Create and update Orders from the frontend PoS application.
+
+        Create new orders and update orders that are in draft status. If an order already exists with a status
+        diferent from 'draft'it will be discareded, otherwise it will be saved to the database. If saved with 
+        'draft' status the order can be overwritten later by this function.
+
+        :param orders: dictionary with the orders to be created.
+        :type orders: dict.
+        :param draft: Indicate if the orders are ment to be finalised or temporarily saved.
+        :type draft: bool.
+        :Returns: list -- list of db-ids for the created and updated orders.
+        """
+        #if not 'table_id' in orders[0]['data']:
+        #    return super().create_from_ui(orders)
+        
         # Keep only new orders
-        submitted_references = [o['data']['name'] for o in orders]
-        pos_order = self.search([('pos_reference', 'in', submitted_references)])
-        existing_orders = pos_order.read(['pos_reference'])
-        existing_references = set([o['pos_reference'] for o in existing_orders])
-        orders_to_save = [o for o in orders if o['data']['name'] not in existing_references]
+        orders_to_save = []
+        orders_to_update = []
         order_ids = []
 
-        for tmp_order in orders_to_save:
-            to_invoice = tmp_order['to_invoice']
-            order = tmp_order['data']
-            if to_invoice:
-                self._match_payment_to_invoice(order)
-            pos_order = self._process_order(order)
-            order_ids.append(pos_order.id)
+        existing_orders = self.search([('id', 'in', [o['data']['server_id'] for o in orders if 'server_id' in o['data']]),('state', '=', 'draft')])
+        orders_to_save = [o for o in orders if 'server_id' not in o['data'] or not o['data']['server_id']]
 
-            try:
-                pos_order.action_pos_order_paid()
-            except psycopg2.DatabaseError:
-                # do not hide transactional errors, the order(s) won't be saved!
-                raise
-            except Exception as e:
-                _logger.error('Could not fully process the POS Order: %s', tools.ustr(e))
+        orders_to_update = [o for o in orders if 'server_id' in o['data'] and o['data']['server_id'] in existing_orders.ids]
 
-            if to_invoice:
-                pos_order.action_pos_order_invoice()
-                pos_order.invoice_id.sudo().with_context(force_company=self.env.user.company_id.id).action_invoice_open()
-                pos_order.account_move = pos_order.invoice_id.move_id
-        return order_ids
+        for order in orders_to_save:
+            order_ids.append(self._create_or_update_order(order, draft))
+        for order in orders_to_update:
+            existing_order = existing_orders.search([('id', '=', order['data']['server_id'])], limit=1)
+            order_ids.append(self._create_or_update_order(order, draft, existing_order))
+        return self.search_read(
+                domain = [('id', 'in', order_ids)],
+                fields = ['id', 'pos_reference']
+                )
+
+    #@api.model
+    #def create_from_ui(self, orders):
+    #    # Keep only new orders
+    #    submitted_references = [o['data']['name'] for o in orders]
+    #    pos_order = self.search([('pos_reference', 'in', submitted_references)])
+    #    existing_orders = pos_order.read(['pos_reference'])
+    #    existing_references = set([o['pos_reference'] for o in existing_orders])
+    #    orders_to_save = [o for o in orders if o['data']['name'] not in existing_references]
+    #    order_ids = []
+
+    #    for tmp_order in orders_to_save:
+    #        to_invoice = tmp_order['to_invoice']
+    #        order = tmp_order['data']
+    #        if to_invoice:
+    #            self._match_payment_to_invoice(order)
+    #        pos_order = self._process_order(order)
+    #        order_ids.append(pos_order.id)
+    #        
+    #        self._set_pos_order_paid(pos_order);
+
+    #        if to_invoice:
+    #            self._pos_order_invoice(pos_order)
+    #    return order_ids
 
     def test_paid(self):
         """A Point of Sale is paid when the sum
@@ -1042,6 +1087,152 @@ class PosOrder(models.Model):
             'target': 'current',
         }
 
+    @api.model
+    def remove_from_ui(self, server_ids):
+        """ Remove orders from the frontend PoS application
+
+        Remove orders from the server by id.
+        :param server_ids: list of the id's of orders to remove from the server.
+        :type server_ids: list.
+        :returns: list -- list of db-ids for the removed orders.
+        """
+        orders = self.search([('id', 'in', server_ids)])
+        for o in orders:
+            o.write({'state': 'cancel'})
+            o.sudo().with_context(force_company=self.env.user.company_id.id).unlink()
+        return orders.read(['id'])
+
+    def _create_or_update_order(self, order, draft = False, existing_order = False):
+        """ Create an order from an given dictionary.
+
+        This function creates or update an order from an given dictionary.
+
+        :param order: representation of an order.
+        :type order: dict.
+        :param draft: Indicate that the pos_order is not validated yet.
+        :type draft: bool.
+        :param existing_order: order to be updated or False.
+        :type existing_order: pos.order.
+        :returns: int -- id of created/updated pos_order.
+        """
+        to_invoice = order['to_invoice'] if not draft else False
+        order = order['data']
+        if to_invoice:
+            self._match_payment_to_invoice(order)
+        pos_order = self._process_order(order, draft, existing_order)
+
+        if not draft:
+            self._set_pos_order_paid(pos_order)
+        if to_invoice:
+            self._pos_order_invoice(pos_order)
+        return pos_order.id
+
+    @api.model
+    def _process_order(self, pos_order, draft = False, existing_order = False):
+        """Create or update an pos.order from a given dictionary.
+
+        :param pos_order: dictionary representing the order.
+        :type pos_order: dict.
+        :param draft: Indicate that the pos_order is not validated yet.
+        :type draft: bool.
+        :param existing_order: order to be updated or False.
+        :type existing_order: pos.order.
+        :returns pos.order
+        """
+
+        def process_order_lines():
+            """Create pos.order.lines from the dictionary given to the parent function.
+
+            If the order_line is an updated version of an existing one, the existing order_line will first be 
+            removed before making a new one.
+            """
+            process_line = partial(self.env['pos.order.line']._order_line_fields, session_id=pos_order['pos_session_id'])
+            order_lines_to_keep = []
+            for order_line in [order_line for order_line in pos_order['lines'] 
+                    if 'server_id' in order_line[2] and order_line[2]['server_id']]:
+                    existing_line = self.env['pos.order.line'].search([('id', '=', order_line[2]['server_id'])])
+                    existing_line.write(order_line[2])
+                    order_lines_to_keep.append(order_line[2]['server_id'])
+            self.env['pos.order.line'].search([
+                ('id', 'not in', order_lines_to_keep),
+                ('order_id', '=', order.id)
+                    ]).unlink()
+            for order_line in [order_line for order_line in pos_order['lines'] 
+                    if not ('server_id' in order_line[2] and order_line[2]['server_id'])]:
+                    order_line[2]['order_id'] = order.id
+                    self.env['pos.order.line'].create(order_line[2])
+
+
+        def process_payment_lines():
+            """Create account.bank.statement.lines from the dictionary given to the parent function.
+
+            If the payment_line is an updated version of an existing one, the existing payment_line will first be 
+            removed before making a new one.
+            """
+            prec_acc = order.pricelist_id.currency_id.decimal_places
+            bank_statement_line_ids_to_keep = []
+            for payments in [payments for payments in pos_order['statement_ids']
+                    if 'server_id' in payments[2] and payments[2]['server_id']]:
+                existing_payment = self.env['account.bank.statement.line'].search([('id', '=', payments[2]['server_id'])])
+                existing_payment.write(self._payment_fields(payments[2]))
+                bank_statement_line_ids_to_keep.append(payments[2]['server_id'])
+
+            self.env['account.bank.statement.line'].search([
+                ('id', 'not in', bank_statement_line_ids_to_keep),
+                ('pos_statement_id', '=', order.id)
+                ]).unlink()
+
+            for payments in [payments for payments in pos_order['statement_ids']
+                    if not ('server_id' in payments[2] and payments[2]['server_id'])
+                    and not float_is_zero(payments[2]['amount'], precision_digits=prec_acc)]:
+                order.add_payment(self._payment_fields(payments[2]))
+
+            if not draft and not float_is_zero(pos_order['amount_return'], prec_acc):
+                cash_journal_id = pos_session.cash_journal_id.id
+                if not cash_journal_id:
+                    # Select for change one of the cash journals used in this
+                    # payment
+                    journal_ids = set([payments[2]['journal_id'] for payments in pos_order['statement_ids']])
+                    cash_journal = self.env['account.journal'].search([
+                        ('type', '=', 'cash'),
+                        ('id', 'in', list(journal_ids)),
+                    ], limit=1)
+                    if not cash_journal:
+                        # If none, select for change one of the cash journals of the POS
+                        # This is used for example when a customer pays by credit card
+                        # an amount higher than total amount of the order and gets cash back
+                        cash_journal = [statement.journal_id for statement in pos_session.statement_ids if statement.journal_id.type == 'cash']
+                        if not cash_journal:
+                            raise UserError(_("No cash statement found for this session. Unable to record returned cash."))
+                    cash_journal_id = cash_journal[0].id
+                order.add_payment({
+                    'amount': -pos_order['amount_return'],
+                    'payment_date': fields.Date.context_today(self),
+                    'payment_name': _('return'),
+                    'journal': cash_journal_id,
+                })
+
+
+        pos_session = self.env['pos.session'].browse(pos_order['pos_session_id'])
+        if pos_session.state == 'closing_control' or pos_session.state == 'closed':
+            pos_order['pos_session_id'] = self._get_valid_session(pos_order).id
+
+        order = False
+        if not existing_order:
+            order = self.create(self._order_fields(pos_order))
+
+            if pos_session.sequence_number <= pos_order['sequence_number']:
+                pos_session.write({'sequence_number': pos_order['sequence_number'] + 1})
+                pos_session.refresh()
+        else:
+            order = existing_order
+            pos_order['user_id'] = order.user_id.id
+            order.write(self._order_fields(pos_order))
+
+        process_payment_lines()
+        process_order_lines()
+
+        return order
 
 class PosOrderLine(models.Model):
     _name = "pos.order.line"
@@ -1101,6 +1292,11 @@ class PosOrderLine(models.Model):
 
     @api.model
     def create(self, values):
+        if values.get('server_id'):
+            order_line = self.search([('id', '=', values.get('server_id'))])
+            if order_line:
+                order_line.write(values)
+                return order_line
         if values.get('order_id') and not values.get('name'):
             # set name based on the sequence specified on the config
             config_id = self.order_id.browse(values['order_id']).session_id.config_id.id

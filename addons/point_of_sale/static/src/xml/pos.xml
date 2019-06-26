@@ -1471,7 +1471,12 @@
                     <t t-if='order === widget.pos.get_order()'>
                         <span class="order-button select-order selected" t-att-data-uid="order.uid">
                             <span class='order-sequence'>
-                                <t t-esc='order.sequence_number' />
+                                <t t-if="order.server_id">
+                                    S-<t t-esc='order.server_id'/>
+                                </t>
+                                <t t-else="">
+                                    <t t-esc='order.sequence_number'/>
+                                </t>
                             </span>
                             <t t-esc="moment(order.creation_date).format('hh:mm')"/>
                         </span>
